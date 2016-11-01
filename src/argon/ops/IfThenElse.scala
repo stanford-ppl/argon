@@ -16,7 +16,6 @@ trait IfThenElseCore extends BoolCore with EmbeddedControls {
     def mirror(f:Tx) = __ifThenElse(f(cond), f(thenp), f(elsep))
 
     freqs   = normal(cond) ++ cold(thenp) ++ cold(elsep)
-    binds   = thenp.effects ++ elsep.effects
     aliases = List(thenp.result, elsep.result)
   }
 

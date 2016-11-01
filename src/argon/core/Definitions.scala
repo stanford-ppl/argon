@@ -53,18 +53,53 @@ trait Definitions extends Blocks { self: Statements =>
   abstract class Def {
     def outputTypes: List[Typ[_]]
 
-    /** Scheduling dependencies **/
+    /** Scheduling dependencies -- used to calculate schedule for IR based on dependencies **/
+    // Inputs: symbol dataflow dependencies for this Def.
+    // Default: All symbols in the Def's constructor AND block results
     var inputs: List[Sym] = recursive.collectList(syms)(this)
+
+    // Reads: symbols *dereferenced* by this Def.
+    // Default: All symbol inputs
     var reads: List[Sym] = inputs
-    var binds: List[Sym] = Nil
+
+    // Freqs: symbol frequency hints used in code motion - less than 0.75f is "cold", while greater than 100f is "hot"
+    // Code motion makes an attempt to schedule "hot" symbols early (move out of blocks)
+    // Default: All symbol inputs have a frequency of 1.0f ("normal")
     var freqs: List[(Sym,Float)] = Nil
+
+    // Blocks: scopes associated with this Def
+    // Default: All blocks in the Def's constructor
     var blocks: List[Block[_]] = recursive.collectList{case b: Block[_] => b}(this)
 
-    /** Alias hints **/
+    // Binds: symbols "bound" by this Def
+    // Bound symbols define the start of scopes. Effectful symbols in a scope typically must be bound.
+    // Default: All effects included in all scopes associated with this Def
+    var binds: List[Sym] = blocks.flatMap(_.effects)
+
+
+
+    /** Alias hints -- used to check/disallow unsafe mutable aliasing **/
+
+    // Aliases: inputs to this Def which *may* equal to the output of this Def
+    // Default: all inputs to this symbol
+    // TODO: Is this really the most sensible rule for aliasing?
     var aliases: List[Sym] = recursive.collectList(syms)(this)
+
+    // Contains: inputs which may be returned when dereferencing the output of this Def
+    // E.g. y = Array(x): contains should return x
+    // Default: no symbols
     var contains: List[Sym] = Nil
+
+    // Extracts: inputs which, when dereferenced, may return the output of this Def
+    // E.g. y = ArrayApply(x): extracts should return x
+    // Default: no symbols
     var extracts: List[Sym] = Nil
+
+    // Copies: inputs which, when dereferenced, may return the same pointer as dereferencing the output of this Def
+    // E.g. y = ArrayCopy(x): copies should return x
+    // Default: no symbols
     var copies: List[Sym] = Nil
+
 
     /** Mirroring and Mutating **/
     def mutate(f:Tx): Unit = throw new Exception("Cannot mutate immutable node")
@@ -121,18 +156,17 @@ trait Definitions extends Blocks { self: Statements =>
     case Block(res: Sym,_,_) => res
   }
 
-
-  final def symsFreq(a: Any): List[(Sym,Float)] = recursive.collectLists {
+  private def symsFreq(a: Any): List[(Sym,Float)] = recursive.collectLists {
     case s:Sym => Iterable((s, 1.0f))
     case d:Def => d.freqs
   }(a)
 
-  def normal(e: Any) = symsFreq(e)
-  def hot(e: Any) = symsFreq(e).map{case (s,f) => (s,f*1000.0f) }
-  def cold(e: Any) = symsFreq(e).map{case (s,f) => (s, f*0.5f) }
+  final def normal(e: Any) = symsFreq(e)
+  final def hot(e: Any) = symsFreq(e).map{case (s,f) => (s,f*1000.0f) }
+  final def cold(e: Any) = symsFreq(e).map{case (s,f) => (s, f*0.5f) }
 
-  def aliasSyms(a: Any): Set[Sym]   = recursive.collectSets{case s: Sym => Set(s) case d: Def => d.aliases }(a)
-  def containSyms(a: Any): Set[Sym] = recursive.collectSets{case d: Def => d.contains}(a)
-  def extractSyms(a: Any): Set[Sym] = recursive.collectSets{case d: Def => d.extracts}(a)
-  def copySyms(a: Any): Set[Sym]    = recursive.collectSets{case d: Def => d.copies}(a)
+  final def aliasSyms(a: Any): Set[Sym]   = recursive.collectSets{case s: Sym => Set(s) case d: Def => d.aliases }(a)
+  final def containSyms(a: Any): Set[Sym] = recursive.collectSets{case d: Def => d.contains}(a)
+  final def extractSyms(a: Any): Set[Sym] = recursive.collectSets{case d: Def => d.extracts}(a)
+  final def copySyms(a: Any): Set[Sym]    = recursive.collectSets{case d: Def => d.copies}(a)
 }

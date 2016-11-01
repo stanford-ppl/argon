@@ -53,7 +53,7 @@ trait Blocks extends Effects { self: Statements =>
   }
   /**
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
-    * ll assumptions about the current context carry over unchanged.
+    * All assumptions about the current context carry over unchanged.
     */
   def stageScopeInline[S<:Sym:Typ](block: => S): Block[S] = {
     val saveContext = context
