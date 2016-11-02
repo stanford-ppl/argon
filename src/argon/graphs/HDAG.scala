@@ -24,17 +24,17 @@ class HDAG[Edge,Node,Metadata](implicit elike: EdgeLike[Int,Edge], nlike: NodeLi
   override def dependentsOf(edge: EdgeId): List[NodeId] = EdgeData.dependents(edge)
   override def producerOf(edge: EdgeId): NodeId = EdgeData.producer(edge)
 
-  override def getMetadata(edge: EdgeId): Set[Metadata] = {
-    if (edge < globalMetadata.length) globalMetadata(edge) else Set.empty
+  override def getMetadata(edge: EdgeId): Map[Class[_],Metadata] = {
+    if (edge < globalMetadata.length) globalMetadata(edge) else Map.empty
   }
   override def addMetadata(edge: EdgeId, m: Metadata): Unit = {
     while (edge >= globalMetadata.length)
-      globalMetadata += Set.empty
+      globalMetadata += Map.empty[Class[_],Metadata]
 
-    globalMetadata(edge) += m
+    globalMetadata(edge) += (m.getClass -> m)
   }
-  override def setMetadata(edge: EdgeId, m: Set[Metadata]): Unit = globalMetadata(edge) = m
-  override def removeMetadata(edge: EdgeId, m: Metadata): Unit = globalMetadata(edge) -= m
+  override def setMetadata(edge: EdgeId, m: Map[Class[_],Metadata]): Unit = globalMetadata(edge) = m
+  override def removeMetadata(edge: EdgeId, m: Metadata): Unit = globalMetadata(edge) -= m.getClass
 
 
   // Based on performance testing LongMap is slightly faster than others (even with casting)

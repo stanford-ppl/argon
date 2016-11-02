@@ -11,8 +11,8 @@ trait PrintCore extends TextCore with VoidCore {
   eval[Println]{case Println(Const(s: String)) => System.out.println(s) }
 
   /** Internal methods **/
-  def misc_println(x: Text)(implicit ctx: SrcCtx): Void = stageSimple(Print(x))(ctx)
-  def misc_print(x: Text)(implicit ctx: SrcCtx): Void = stageSimple(Println(x))(ctx)
+  def misc_println(x: Text)(implicit ctx: SrcCtx): Void = stageSimple(Println(x))(ctx)
+  def misc_print(x: Text)(implicit ctx: SrcCtx): Void = stageSimple(Print(x))(ctx)
 }
 
 trait PrintAPI extends PrintCore {

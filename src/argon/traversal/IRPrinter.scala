@@ -12,7 +12,7 @@ trait IRPrinter extends Traversal {
 
   def strMeta(lhs: Sym) {
     debugs(c" - Type: ${lhs.tp}")
-    metadata.get(lhs).foreach{m => if (null == m) c" - ${m.key}: NULL" else debugs(c" - ${m.key}: $m") }
+    metadata.get(lhs).foreach{m => if (null == m) c" - ${m._1}: NULL" else debugs(c" - ${m._2}: $m") }
   }
 
   override def visit(lhs: Sym, rhs: Op[_]) = {

@@ -8,7 +8,7 @@ import argon.utils.deleteExts
 import argon.Config
 import argon.traversal.IRPrinter
 
-trait App extends AppCore with BoolAPI with IfThenElseAPI with PrintAPI with TextAPI with VoidAPI { self =>
+trait App extends AppCore with BoolAPI with IfThenElseAPI with PrintAPI with TextAPI with VoidAPI with IntegerAPI { self =>
   lazy val printer = new IRPrinter { override val IR: App.this.type = App.this }
   printer.verbosity = 3
 
@@ -85,6 +85,25 @@ object Test7 extends App {
   }
 }
 
+object Test8 extends App {
+  @staged
+  def main(): Void = {
+    val x = randomInt()
+    val y = randomInt()
+    println(x + 0)
+    println(-(-x))
+  }
+}
+
+object Test9 extends App {
+  @staged
+  def main(): Void = {
+    val x = randomInt()
+    val y = randomInt()
+    println(!(x != y))
+  }
+}
+
 
 
 class Testbench extends FlatSpec {
@@ -98,5 +117,7 @@ class Testbench extends FlatSpec {
   "Test5" should "compile" in { Test5.main(noargs) }
   "Test6" should "compile" in { Test6.main(noargs) }
   "Test7" should "compile" in { Test7.main(noargs) }
+  "Test8" should "compile" in { Test8.main(noargs) }
+  "Test9" should "compile" in { Test9.main(noargs) }
 
 }

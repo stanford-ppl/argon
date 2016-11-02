@@ -20,6 +20,7 @@ trait Symbols extends Typs with Metadata with Base with Reporting { self: Statem
     final def id: Int = __id
 
     final def withCtx(ctx: SrcCtx): Sym = { ctxsOf(this) = ctx +: ctxsOf(this); this }
+    final def setCtx(ctx: SrcCtx): Sym = { ctxsOf(this) = List(ctx); this }
     final override def hashCode(): Int = id
 
     final override def equals(x: Any) = x match {

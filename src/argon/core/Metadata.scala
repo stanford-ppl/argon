@@ -32,7 +32,7 @@ trait Metadata extends Lattices { self: Statements =>
     private def add[M<:Metadata[M]:Manifest](edge:Int, m:Option[M]):Unit = {
       val meta = graph.getMetadata(edge)
       val k = keyOf[M]
-      val prev = meta.find(_.key == k).map(_.asInstanceOf[M])
+      val prev = meta.get(k).map(_.asInstanceOf[M])
       val entry = join(m, prev) //metaUpdate(m, prev)
       if (entry.isDefined) graph.addMetadata(edge, entry.get)
       else if (prev.isDefined) graph.removeMetadata(edge, prev.get)
@@ -40,9 +40,9 @@ trait Metadata extends Lattices { self: Statements =>
     def apply[M<:Metadata[M]:Manifest](edge:Sym):Option[M] = this.apply[M](edge.id)
     private def apply[M<:Metadata[M]:Manifest](edge:Int):Option[M] = {
       val k = keyOf[M]
-      graph.getMetadata(edge).find(_.key == k).map(_.asInstanceOf[M])
+      graph.getMetadata(edge).get(k).map(_.asInstanceOf[M])
     }
-    def get(edge:Sym):Set[Metadata[_]] = graph.getMetadata(edge.id)
-    def set(edge:Sym, m:Set[Metadata[_]]):Unit = graph.setMetadata(edge.id, m)
+    def get(edge:Sym):Map[Class[_],Metadata[_]] = graph.getMetadata(edge.id)
+    def set(edge:Sym, m:Map[Class[_],Metadata[_]]):Unit = graph.setMetadata(edge.id, m)
   }
 }

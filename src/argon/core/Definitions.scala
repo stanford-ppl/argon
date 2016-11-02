@@ -8,6 +8,7 @@ import virtualized.SourceContext
 import scala.collection.immutable.Queue
 import scala.collection.mutable
 import scala.language.higherKinds
+import scala.util.control.NoStackTrace
 
 trait Definitions extends Blocks { self: Statements =>
   type Tx = Transformer{val IR: self.type }
@@ -50,40 +51,41 @@ trait Definitions extends Blocks { self: Statements =>
   def eval[O<:Op[_]:Manifest](func: PartialFunction[O,Sym]) = evalFat[O](func andThen(k => List(k)) )
 
 
-  abstract class Def {
+  /** Generalized Def representation which can have arbitrary output(s) -- roughly equivalent to LMS's FatDef **/
+  abstract class Def extends Product {
     def outputTypes: List[Typ[_]]
 
     /** Scheduling dependencies -- used to calculate schedule for IR based on dependencies **/
     // Inputs: symbol dataflow dependencies for this Def.
     // Default: All symbols in the Def's constructor AND block results
-    var inputs: List[Sym] = recursive.collectList(syms)(this)
+    var inputs: List[Sym] = recursive.collectLists(__syms)(productIterator)
 
     // Reads: symbols *dereferenced* by this Def.
     // Default: All symbol inputs
     var reads: List[Sym] = inputs
 
     // Freqs: symbol frequency hints used in code motion - less than 0.75f is "cold", while greater than 100f is "hot"
-    // Code motion makes an attempt to schedule "hot" symbols early (move out of blocks)
+    // Code motion makes an attempt to schedule unbound "hot" symbols early (move out of blocks)
     // Default: All symbol inputs have a frequency of 1.0f ("normal")
     var freqs: List[(Sym,Float)] = Nil
 
     // Blocks: scopes associated with this Def
     // Default: All blocks in the Def's constructor
-    var blocks: List[Block[_]] = recursive.collectList{case b: Block[_] => b}(this)
+    var blocks: List[Block[_]] = recursive.collectList{case b: Block[_] => b}(productIterator)
 
     // Binds: symbols "bound" by this Def
     // Bound symbols define the start of scopes. Effectful symbols in a scope typically must be bound.
+    // Dataflow dependents of bound syms up until but not including the binding Def make up the majority of a scope
     // Default: All effects included in all scopes associated with this Def
     var binds: List[Sym] = blocks.flatMap(_.effects)
 
 
 
     /** Alias hints -- used to check/disallow unsafe mutable aliasing **/
-
     // Aliases: inputs to this Def which *may* equal to the output of this Def
     // Default: all inputs to this symbol
     // TODO: Is this really the most sensible rule for aliasing?
-    var aliases: List[Sym] = recursive.collectList(syms)(this)
+    var aliases: List[Sym] = recursive.collectLists(__syms)(productIterator)
 
     // Contains: inputs which may be returned when dereferencing the output of this Def
     // E.g. y = Array(x): contains should return x
@@ -102,9 +104,9 @@ trait Definitions extends Blocks { self: Statements =>
 
 
     /** Mirroring and Mutating **/
-    def mutate(f:Tx): Unit = throw new Exception("Cannot mutate immutable node")
-
+    def mutate(f:Tx): Unit = throw new Exception("Cannot mutate immutable node") with NoStackTrace
     def fatMirror(f:Tx): List[Sym]
+
 
     def updateNode(orig:List[Sym],f:Tx): List[Sym] = {
       try {
@@ -117,7 +119,7 @@ trait Definitions extends Blocks { self: Statements =>
     }
     def mirrorNode(orig: List[Sym], f:Tx): List[Sym] = fatMirror(f)
 
-    def rewriteOrElse(ss: => List[Sym]): List[Sym] = rewriteRules.get(this.getClass) match {
+    final def rewriteOrElse(ss: => List[Sym]): List[Sym] = rewriteRules.get(this.getClass) match {
       case Some(rules) => rules.find(_.isDefinedAt(this)).map(_.apply(this)).getOrElse(ss)
       case None => ss
     }
@@ -139,22 +141,26 @@ trait Definitions extends Blocks { self: Statements =>
     override def mirrorNode(orig: List[Sym], f:Tx): List[Sym] = orig
   }
 
+  /** Most common variant of Def - returns only one symbol of one type **/
   abstract class Op[R:Typ] extends Def {
     def mirror(f:Tx): R
 
     final override def outputTypes = List(implicitly[Typ[R]])
     final override def fatMirror(f:Tx): List[Sym] = List(this.mirror(f).asInstanceOf[Sym])
-    final val mR = typ[R]
+    val mR = typ[R]
   }
   abstract class Op2[A:Typ,R:Typ] extends Op[R] { val mA = typ[A] }
   abstract class Op3[A:Typ,B:Typ,R:Typ] extends Op2[A,R] { val mB = typ[B] }
   abstract class Op4[A:Typ,B:Typ,C:Typ,R:Typ] extends Op3[A,B,R] { val mC = typ[C] }
   abstract class Op5[A:Typ,B:Typ,C:Typ,D:Typ,R:Typ] extends Op4[A,B,C,R] { val mD = typ[D] }
 
-  private val syms: PartialFunction[Any,Sym] = {
-    case s: Sym => s
-    case Block(res: Sym,_,_) => res
+  private val __syms: PartialFunction[Any,List[Sym]] = {
+    case s: Sym => List(s)
+    case Block(res: Sym,_,_) => List(res)
+    case d: Def => d.inputs
   }
+  def syms(a: Any): List[Sym] = if (__syms.isDefinedAt(a)) syms(a) else Nil
+
 
   private def symsFreq(a: Any): List[(Sym,Float)] = recursive.collectLists {
     case s:Sym => Iterable((s, 1.0f))

@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/argon.iml" filepath="$PROJECT_DIR$/argon.iml" />
       <module fileurl="file://$PROJECT_DIR$/../scala-virtualized/scala-virtualized.iml" filepath="$PROJECT_DIR$/../scala-virtualized/scala-virtualized.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../spatial/spatial.iml" filepath="$PROJECT_DIR$/../spatial/spatial.iml" />
     </modules>
   </component>
 </project>

@@ -11,7 +11,7 @@ trait ForwardTransformer extends Transformer with Traversal { self =>
     log(c"Mirror: $stm")
     stm.lhs.foreach{s =>
       if (stm.lhs.length > 1) log(c"$s")
-      metadata.get(s).foreach{m => log(c" - ${m.key}: $m") }
+      metadata.get(s).foreach{m => log(c" - ${m._1}: ${m._2}") }
     }
 
     val lhs2 = mirror(stm.lhs, stm.rhs)
@@ -23,12 +23,12 @@ trait ForwardTransformer extends Transformer with Traversal { self =>
         metadata.set(s2, m2)
       }
       if (lhs2.length > 1) log(c"$s2")
-      metadata.get(s2).foreach{m => log(c" - ${m.key}: $m") }
+      metadata.get(s2).foreach{m => log(c" - ${m._1}: ${m._2}") }
     }
     lhs2
   }
 
   final def mirror(lhs: List[Sym], rhs: Def): List[Sym] = rhs.mirrorNode(lhs, self.asInstanceOf[Tx])
-  final def mirror(props: Set[Metadata[_]]): Set[Metadata[_]] = props.map{m => mirror(m) }
+  final def mirror(props: Map[Class[_],Metadata[_]]): Map[Class[_],Metadata[_]] = props.mapValues{m => mirror(m) }
   final def mirror[M<:Metadata[_]](m: M): M = m.mirror(self.asInstanceOf[Tx]).asInstanceOf[M]
 }

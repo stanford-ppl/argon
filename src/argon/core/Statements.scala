@@ -19,13 +19,19 @@ trait Statements extends Definitions with ArgonExceptions {
 
 
   // --- Staging
-  def fresh[T:Typ]:T = single[T](registerDef(NoDef[T](), Nil, canCSE = false)(implicitly[SourceContext]))
+  def fresh[T:Typ]:T = single[T](registerDef(NoDef[T](), Nil)(implicitly[SourceContext]))
 
-  private def registerDefWithCSE(d:Def)(ctx:SrcCtx):List[Sym] = defCache.get(d) match {
-    case Some(syms) => syms.map(_.withCtx(ctx))
-    case None => registerDef(d, Nil, canCSE = true)(ctx)
+  private def registerDefWithCSE(d:Def)(ctx:SrcCtx):List[Sym] = {
+    // log(c"Checking defCache for $d")
+    // log(c"Def cache: " + defCache.map{case (d,ss) => c"$d -> $ss"}.mkString("\n"))
+    val syms = defCache.get(d) match {
+      case Some(ss) => ss.map(_.withCtx(ctx))
+      case None => registerDef(d, Nil)(ctx)
+    }
+    defCache(d) = syms
+    syms
   }
-  private def registerDef(d:Def, extraDeps:List[Sym], canCSE:Boolean)(ctx:SrcCtx): List[Sym] = d.rewriteOrElse({
+  private def registerDef(d:Def, extraDeps:List[Sym])(ctx:SrcCtx): List[Sym] = d.rewriteOrElse({
     val outputs = d.outputTypes.map(_.next)
     val bounds = d.binds
     val freqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).sum)
@@ -39,9 +45,11 @@ trait Statements extends Definitions with ArgonExceptions {
     log(c"  freqs = $inputs")
 
     outputs
-  }).map(_.withCtx(ctx))
+  }).map(_.setCtx(ctx))
 
   def stageDefEffectful(d:Def, u:Effects)(ctx:SrcCtx):List[Sym] = {
+    log(c"Staging $d, effects = $u")
+
     val effects = u andAlso Read(mutableInputs(d))
 
     if (effects == Pure) registerDefWithCSE(d)(ctx)
@@ -50,7 +58,7 @@ trait Statements extends Definitions with ArgonExceptions {
       val deps = effectDependencies(effects)
 
       def stageEffects(canCSE:Boolean):List[Sym] = {
-        val ss = registerDef(d, deps, canCSE)(ctx)
+        val ss = if (canCSE) registerDefWithCSE(d)(ctx) else registerDef(d, deps)(ctx)
         ss.foreach { s =>
           effectsOf(s) = effectsOf(s) andAlso effects
           depsOf(s) = depsOf(s) ++ deps

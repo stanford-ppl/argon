@@ -1,3 +1,3 @@
 package argon.core
 
-abstract class Core extends Statements
+trait Core extends Statements
