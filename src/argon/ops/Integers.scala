@@ -2,28 +2,54 @@ package argon.ops
 
 import scala.language.implicitConversions
 
-
-trait IntegerCore extends FixedPointCore {
-  /** Staged types **/
-  case class Int32() extends FixedPoint[Signed,B32,B0] { self =>
-    override type LibType = Int
-    override val tp = Int32Typ.asInstanceOf[Typ[self.type]]
-
-    def unary_-(implicit ctx: SrcCtx) = neg[Signed,B32,B0,Int32](this)
-    def unary_~(implicit ctx: SrcCtx) = inv[Signed,B32,B0,Int32](this)
-    def + (that: Int32)(implicit ctx: SrcCtx) = add[Signed,B32,B0,Int32](this,that)
-    def - (that: Int32)(implicit ctx: SrcCtx) = sub[Signed,B32,B0,Int32](this,that)
-    def * (that: Int32)(implicit ctx: SrcCtx) = mul[Signed,B32,B0,Int32](this,that)
-    def / (that: Int32)(implicit ctx: SrcCtx) = div[Signed,B32,B0,Int32](this,that)
-    def & (that: Int32)(implicit ctx: SrcCtx) = and[Signed,B32,B0,Int32](this,that)
-    def | (that: Int32)(implicit ctx: SrcCtx) =  or[Signed,B32,B0,Int32](this,that)
-    def < (that: Int32)(implicit ctx: SrcCtx) =  lt[Signed,B32,B0,Int32](this,that)
-    def <=(that: Int32)(implicit ctx: SrcCtx) = leq[Signed,B32,B0,Int32](this,that)
-    def > (that: Int32)(implicit ctx: SrcCtx) =  lt[Signed,B32,B0,Int32](that,this)
-    def >=(that: Int32)(implicit ctx: SrcCtx) = leq[Signed,B32,B0,Int32](that,this)
-    def % (that: Int32)(implicit ctx: SrcCtx) = mod[Signed,B32,Int32](this,that)
+trait IntegerOps extends FixedPointAPI {
+  type Int32 <: Int32Ops
+  protected trait Int32Ops {
+    def unary_-(implicit ctx: SrcCtx): Int32
+    def unary_~(implicit ctx: SrcCtx): Int32
+    def + (that: Int32)(implicit ctx: SrcCtx): Int32
+    def - (that: Int32)(implicit ctx: SrcCtx): Int32
+    def * (that: Int32)(implicit ctx: SrcCtx): Int32
+    def / (that: Int32)(implicit ctx: SrcCtx): Int32
+    def & (that: Int32)(implicit ctx: SrcCtx): Int32
+    def | (that: Int32)(implicit ctx: SrcCtx): Int32
+    def < (that: Int32)(implicit ctx: SrcCtx): Bool
+    def <=(that: Int32)(implicit ctx: SrcCtx): Bool
+    def > (that: Int32)(implicit ctx: SrcCtx): Bool
+    def >=(that: Int32)(implicit ctx: SrcCtx): Bool
+    def % (that: Int32)(implicit ctx: SrcCtx): Int32
   }
-  implicit object Int32Typ extends FxPTyp[Int32] {
+
+  def randomInt()(implicit ctx: SrcCtx): Int32
+
+  implicit def lift(x: Int): Int32
+  implicit val Int32Type: Num[Int32]
+}
+trait IntegerAPI extends IntegerOps {
+  type Int = Int32
+}
+
+trait IntegerCore extends IntegerOps with FixedPointCore {
+  /** Staged types **/
+  case class Int32() extends FixedPoint[Signed,B32,B0] with Int32Ops { self =>
+    override type LibType = Int
+    override val tp = Int32Type.asInstanceOf[Typ[self.type]]
+
+    def unary_-(implicit ctx: SrcCtx): Int32 = neg[Signed,B32,B0,Int32](this)
+    def unary_~(implicit ctx: SrcCtx): Int32 = inv[Signed,B32,B0,Int32](this)
+    def + (that: Int32)(implicit ctx: SrcCtx): Int32 = add[Signed,B32,B0,Int32](this,that)
+    def - (that: Int32)(implicit ctx: SrcCtx): Int32 = sub[Signed,B32,B0,Int32](this,that)
+    def * (that: Int32)(implicit ctx: SrcCtx): Int32 = mul[Signed,B32,B0,Int32](this,that)
+    def / (that: Int32)(implicit ctx: SrcCtx): Int32 = div[Signed,B32,B0,Int32](this,that)
+    def & (that: Int32)(implicit ctx: SrcCtx): Int32 = and[Signed,B32,B0,Int32](this,that)
+    def | (that: Int32)(implicit ctx: SrcCtx): Int32 =  or[Signed,B32,B0,Int32](this,that)
+    def < (that: Int32)(implicit ctx: SrcCtx): Bool  =  lt[Signed,B32,B0,Int32](this,that)
+    def <=(that: Int32)(implicit ctx: SrcCtx): Bool  = leq[Signed,B32,B0,Int32](this,that)
+    def > (that: Int32)(implicit ctx: SrcCtx): Bool  =  lt[Signed,B32,B0,Int32](that,this)
+    def >=(that: Int32)(implicit ctx: SrcCtx): Bool  = leq[Signed,B32,B0,Int32](that,this)
+    def % (that: Int32)(implicit ctx: SrcCtx): Int32 = mod[Signed,B32,Int32](this,that)
+  }
+  implicit object Int32Type extends FxPTyp[Int32] {
     override def next = Int32()
     override def typeArguments = Nil
     override def stagedClass = classOf[Int32]
@@ -32,8 +58,9 @@ trait IntegerCore extends FixedPointCore {
     override def isSigned: Boolean = true
     override def intBits: Int = 32
     override def fracBits: Int = 0
-    lazy val zero = fresh[Int32].asConst(0)
-    lazy val one  = fresh[Int32].asConst(1)
+    lazy val zero: Int32 = fresh[Int32].asConst(0)
+    lazy val one: Int32  = fresh[Int32].asConst(1)
+    def random(implicit ctx: SrcCtx): Int32 = randomInt()
   }
 
   /** Virtualized methods **/
@@ -42,10 +69,10 @@ trait IntegerCore extends FixedPointCore {
   def infix_equals(a: Int32, b: Int32)(implicit ctx: SrcCtx): Bool = eql[Signed,B32,B0,Int32](a,b)
 
 
-  def isInt32[T:Typ] = typ[T] <:< Int32Typ
+  def isInt32[T:Typ] = typ[T] <:< Int32Type
   implicit def lift(c: Int): Int32 = fresh[Int32].asConst(c)
 
-  def randomInt()(implicit ctx: SrcCtx) = stageSimple(RandomInt())(ctx)
+  def randomInt()(implicit ctx: SrcCtx): Int32 = stageSimple(RandomInt())(ctx)
 
   case class RandomInt() extends Op[Int32] { def mirror(f:Tx) = randomInt() }
 
@@ -68,6 +95,3 @@ trait IntegerCore extends FixedPointCore {
   eval[RandomInt]{case _ => scala.util.Random.nextInt() }
 }
 
-trait IntegerAPI extends IntegerCore with FixedPointAPI {
-  type Int = Int32
-}

@@ -1,8 +1,9 @@
 package argon.core
 
 import argon.State
+import virtualized.{Typs,EmbeddedControls}
 
-trait Base {
+trait Base extends Typs with EmbeddedControls {
   type SrcCtx = virtualized.SourceContext
 
   def reset(): Unit = {
@@ -11,5 +12,4 @@ trait Base {
     State.EVAL = false
     State.pass = 1
   }
-
 }

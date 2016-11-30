@@ -20,7 +20,7 @@ trait Definitions extends Blocks { self: Statements =>
     }
   }
 
-  def here = implicitly[SourceContext]
+  protected val here = SourceContext("","",0,0,"")
 
   private val rewriteRules = mutable.HashMap[Class[_], Queue[PartialFunction[Def, List[Sym]]]]()
 
@@ -125,7 +125,7 @@ trait Definitions extends Blocks { self: Statements =>
     }
 
     private[Definitions] var __id: Int = 0
-    protected final implicit val here: SrcCtx = implicitly[SourceContext]
+    implicit val src: SrcCtx = SourceContext("","",0,0,"")
     final def id = this.__id
   }
 

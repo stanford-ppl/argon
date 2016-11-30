@@ -1,8 +1,10 @@
 package argon.ops
+import argon.core.Base
 
-import virtualized.EmbeddedControls
+trait IfThenElseOps extends Base with BoolOps
+trait IfThenElseAPI extends IfThenElseOps
 
-trait IfThenElseCore extends BoolCore with EmbeddedControls {
+trait IfThenElseCore extends IfThenElseOps with BoolCore {
   /** Virtualized methods **/
   def __ifThenElse[S<:Sym:Typ](cond: Bool, thenp: => S, elsep: => S)(implicit ctx: SrcCtx): S = {
     val thenBlk = stageScope(thenp)
@@ -26,5 +28,3 @@ trait IfThenElseCore extends BoolCore with EmbeddedControls {
     case e@IfThenElse(Def(Not(c)),thenp,elsep) => __ifThenElse(c,elsep.result,thenp.result)(e.mR, here)
   }
 }
-
-trait IfThenElseAPI extends IfThenElseCore

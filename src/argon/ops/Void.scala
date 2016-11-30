@@ -1,9 +1,18 @@
 package argon.ops
 
-import argon.core.Core
+import argon.core.{Base,Core}
 import scala.language.implicitConversions
 
-trait VoidCore extends Core {
+trait VoidOps extends Base {
+  type Void
+  implicit def lift(x: Unit): Void
+  implicit val VoidType: Typ[Void]
+}
+trait VoidAPI extends VoidOps {
+  type Unit = Void
+}
+
+trait VoidCore extends VoidOps with Core {
   case class Void() extends Sym { self =>
     override type LibType = Unit
     def tp = VoidType.asInstanceOf[Typ[self.type]]
@@ -16,9 +25,7 @@ trait VoidCore extends Core {
     override def isPrimitive = true
   }
 
-  implicit def unit_to_void(x: Unit): Void = fresh[Void].asConst(())
+  implicit def lift(x: Unit): Void = fresh[Void].asConst(())
 }
 
-trait VoidAPI extends VoidCore {
-  type Unit = Void
-}
+

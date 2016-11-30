@@ -1,9 +1,8 @@
 package argon.core
 
 import argon.graphs.EdgeLike
-import virtualized.Typs
 
-trait Symbols extends Typs with Metadata with Base with Reporting { self: Statements =>
+trait Symbols extends Metadata with Base with Reporting { self: Statements =>
 
   abstract class Sym { self =>
     type LibType

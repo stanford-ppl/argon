@@ -1,6 +1,10 @@
 package argon.ops
+import argon.core.Base
 
-trait FixedPointCore extends BoolCore with NumCore {
+trait FixedPointOps extends Base with BoolAPI with NumAPI
+trait FixedPointAPI extends FixedPointOps
+
+trait FixedPointCore extends FixedPointOps with BoolCore with NumCore with CustomBitWidths {
   type Z = B0
 
   abstract class FxPTyp[T<:Sym] extends Num[T] {
@@ -10,17 +14,6 @@ trait FixedPointCore extends BoolCore with NumCore {
   }
 
   abstract class FixedPoint[S:Sign,I:Bits,F:Bits] extends Sym
-
-  /*case class FltPt[G:Bits,E:Bits](init: Option[BigDecimal] = None) extends Sym { self =>
-    override type LibType = BigDecimal
-    val tp = fltPtTyp[G,E].asInstanceOf[Typ[self.type]]
-  }
-  implicit def fltPtTyp[G:Bits,E:Bits]: Typ[FltPt[G,E]] = new Typ[FltPt[G,E]] {
-    override def next = new FltPt[G,E]()
-    override def typeArguments = Nil
-    override def stagedClass = classOf[FltPt[G,E]]
-    override def isPrimitive = true
-  }*/
 
   /** IR Nodes **/
   abstract class FixOp[S:Sign,I:Bits,F:Bits,FP<:FixedPoint[S,I,F]:FxPTyp] extends Op[FP] {
@@ -75,7 +68,8 @@ trait FixedPointCore extends BoolCore with NumCore {
   }
   rewrite[FixSub[_,_,_,_]]{
     case e@FixSub(a, b) if b == e.mFP.zero => a
-    //case e@FixSub(a, b) if a == e.mFP.zero => stage(FixNeg(b)(e.mS,e.mI,e.mF,e.mFP))(here)
+    // TODO: Wow this is ugly
+    case e: FixSub[s,i,f,fp] if e.x == e.mFP.zero => stage( FixNeg[s,i,f,fp](e.y.asInstanceOf[fp])(e.mS,e.mI,e.mF,e.mFP.asInstanceOf[FxPTyp[fp]]) )(here)(e.mFP.asInstanceOf[Typ[fp]])
   }
   rewrite[FixMul[_,_,_,_]]{
     case e@FixMul(a, b) if a == e.mFP.zero => e.mFP.zero
@@ -100,11 +94,8 @@ trait FixedPointCore extends BoolCore with NumCore {
 
   rewrite[Not]{
     case Not(Def(e: FixNeq[s,i,f,fp])) => stage(FixEql[s,i,f,fp](e.x.asInstanceOf[fp],e.y.asInstanceOf[fp])(e.mS,e.mI,e.mF,e.mFP.asInstanceOf[FxPTyp[fp]]))(here)
-    //case Not(Def(e@FixEql(x,y))) => uneraseFxP(e.mS,e.mI,e.mF,e.mFP){(mS,mI,mF,mFP) => stage(FixNeq(x,y)(mS,mI,mF,mFP)(here) }
-    //case Not(Def(e@FixLt(x,y)))  => uneraseFxP(e.mS,e.mI,e.mF,e.mFP){(mS,mI,mF,mFP) => stage(FixLeq(x,y)(mS,mI,mF,mFP)(here) }
-    //case Not(Def(e@FixLeq(x,y))) => uneraseFxP(e.mS,e.mI,e.mF,e.mFP){(mS,mI,mF,mFP) => stage(FixLt(x,y)(mS,mI,mF,mFP)(here) }
+    case Not(Def(e: FixEql[s,i,f,fp])) => stage(FixNeq[s,i,f,fp](e.x.asInstanceOf[fp],e.y.asInstanceOf[fp])(e.mS,e.mI,e.mF,e.mFP.asInstanceOf[FxPTyp[fp]]))(here)
+    case Not(Def(e: FixLt[s,i,f,fp]))  => stage(FixLeq[s,i,f,fp](e.y.asInstanceOf[fp],e.x.asInstanceOf[fp])(e.mS,e.mI,e.mF,e.mFP.asInstanceOf[FxPTyp[fp]]))(here)
+    case Not(Def(e: FixLeq[s,i,f,fp])) => stage(FixLt[s,i,f,fp](e.y.asInstanceOf[fp],e.x.asInstanceOf[fp])(e.mS,e.mI,e.mF,e.mFP.asInstanceOf[FxPTyp[fp]]))(here)
   }
 }
-
-
-trait FixedPointAPI extends FixedPointCore

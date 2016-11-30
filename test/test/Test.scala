@@ -1,15 +1,15 @@
 package test
 
 import org.scalatest.FlatSpec
-import virtualized.{staged,SourceContext}
-import argon.AppCore
+import virtualized.{SourceContext, staged}
+import argon.{AppCore, CompilerCore, Config}
 import argon.ops._
 import argon.utils.deleteExts
-import argon.Config
 import argon.traversal.IRPrinter
 
-trait App extends AppCore with BoolAPI with IfThenElseAPI with PrintAPI with TextAPI with VoidAPI with IntegerAPI { self =>
-  lazy val printer = new IRPrinter { override val IR: App.this.type = App.this }
+trait App extends AppCore with BoolAPI with IfThenElseAPI with PrintAPI with TextAPI with VoidAPI with IntegerAPI
+trait Compiler extends CompilerCore with BoolCore with IfThenElseCore with PrintCore with TextCore with IntegerCore { self =>
+  lazy val printer = new IRPrinter { override val IR: Compiler.this.type = Compiler.this }
   printer.verbosity = 3
 
   passes += printer
@@ -19,9 +19,10 @@ trait App extends AppCore with BoolAPI with IfThenElseAPI with PrintAPI with Tex
     super.settings()
   }
 }
+trait Test extends Compiler with App
 
 
-object Test1 extends App {
+object Test1 extends Test {
   def main(): Void = {
     val x = randomBool()
     val y = randomBool()
@@ -29,7 +30,7 @@ object Test1 extends App {
   }
 }
 
-object Test2 extends App {
+object Test2 extends Test {
   @staged
   def main(): Void = {
     val x = randomBool()
@@ -38,7 +39,7 @@ object Test2 extends App {
   }
 }
 
-object Test3 extends App {
+object Test3 extends Test {
   @staged
   def main(): Void = {
     val x = !randomBool()
@@ -47,7 +48,7 @@ object Test3 extends App {
   }
 }
 
-object Test4 extends App {
+object Test4 extends Test {
   @staged
   def main(): Void = {
     val x = randomBool() && randomBool()
@@ -56,7 +57,7 @@ object Test4 extends App {
   }
 }
 
-object Test5 extends App {
+object Test5 extends Test {
   @staged
   def main(): Void = {
     val x = randomBool() && randomBool()
@@ -65,7 +66,7 @@ object Test5 extends App {
   }
 }
 
-object Test6 extends App {
+object Test6 extends Test {
   @staged
   def main(): Void = {
     val x = randomBool()
@@ -75,7 +76,7 @@ object Test6 extends App {
   }
 }
 
-object Test7 extends App {
+object Test7 extends Test {
   @staged
   def main(): Void = {
     val x = randomBool()
@@ -85,7 +86,7 @@ object Test7 extends App {
   }
 }
 
-object Test8 extends App {
+object Test8 extends Test {
   @staged
   def main(): Void = {
     val x = randomInt()
@@ -95,7 +96,7 @@ object Test8 extends App {
   }
 }
 
-object Test9 extends App {
+object Test9 extends Test {
   @staged
   def main(): Void = {
     val x = randomInt()

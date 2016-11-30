@@ -1,11 +1,11 @@
 package argon
-
 import argon.graphs.HDAG
-import core.Core
-import ops.VoidCore
+import argon.core.Core
+import argon.ops.{VoidAPI, VoidCore}
+import argon.utils.deleteExts
 
 import scala.collection.mutable.ArrayBuffer
-import argon.utils.deleteExts
+
 
 trait CompilerCore extends Core with VoidCore { self =>
   val passes: ArrayBuffer[CompilerPass] = ArrayBuffer.empty[CompilerPass]
@@ -32,9 +32,6 @@ trait CompilerCore extends Core with VoidCore { self =>
     val time = (System.currentTimeMillis - start).toFloat
     msg(s"Completed in " + "%.4f".format(time/1000) + " seconds")
   }
-}
-
-trait AppCore extends CompilerCore {
 
   private def appReadable(x: Any) = readable(x)
 
@@ -44,4 +41,10 @@ trait AppCore extends CompilerCore {
       case _ => appReadable(x)
     }
   }
+}
+
+trait AppCore extends VoidAPI {
+  def main(): Void
+
+
 }

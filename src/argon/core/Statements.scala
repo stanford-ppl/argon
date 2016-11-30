@@ -19,7 +19,7 @@ trait Statements extends Definitions with ArgonExceptions {
 
 
   // --- Staging
-  def fresh[T:Typ]:T = single[T](registerDef(NoDef[T](), Nil)(implicitly[SourceContext]))
+  def fresh[T:Typ]:T = single[T](registerDef(NoDef[T](), Nil)(here))
 
   private def registerDefWithCSE(d:Def)(ctx:SrcCtx):List[Sym] = {
     // log(c"Checking defCache for $d")

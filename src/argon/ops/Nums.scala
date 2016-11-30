@@ -1,18 +1,23 @@
 package argon.ops
 
-import argon.core.Core
+import argon.core.{Base, Core}
 
-trait NumCore extends Core with CustomBitWidths {
-  abstract class Num[T<:Sym] extends Typ[T] {
+trait NumOps extends Base {
+  abstract class Num[T] extends Typ[T] {
     def zero: T
     def one: T
+    def random(implicit ctx: SrcCtx): T
     //def ones: T
   }
-  def num[T<:Sym:Num] = implicitly[Num[T]]
 
-  case class NumRandom[T<:Sym:Num](t: Num[T]) extends Op[T] { def mirror(f: Tx) = random[T]() }
+  def zero[T:Num]: T = implicitly[Num[T]].zero
+  def one[T:Num]: T = implicitly[Num[T]].one
+  def random[T:Num](implicit ctx: SrcCtx): T = implicitly[Num[T]].random
+}
+trait NumAPI extends NumOps
 
-  def random[T<:Sym:Num]()(implicit ctx: SrcCtx): T = stageSimple( NumRandom[T](num[T]) )(ctx)
+
+trait NumCore extends NumOps with Core {
+  def num[T:Num] = implicitly[Num[T]]
 }
 
-trait NumAPI extends NumCore

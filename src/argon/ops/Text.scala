@@ -1,14 +1,37 @@
 package argon.ops
 
 import scala.language.implicitConversions
-import virtualized.EmbeddedControls
+import argon.core.Base
 import virtualized.SourceContext
 
-trait TextCore extends BoolCore with EmbeddedControls {
+trait TextOps extends Base with BoolAPI {
+  type Text <: TextInfixOps
+  protected trait TextInfixOps {
+    def +(that: Text)(implicit ctx: SrcCtx): Text
+    def !=(that: Text)(implicit ctx: SrcCtx): Bool
+    def ==(that: Text)(implicit ctx: SrcCtx): Bool
+    def equals(that: Text)(implicit ctx: SrcCtx): Bool
+  }
+
+  implicit def lift(x: String): Text
+  implicit val TextType: Typ[Text]
+  def textify[S:Typ](s: S)(implicit ctx: SrcCtx): Text
+}
+trait TextAPI extends TextOps {
+  type String = Text
+}
+
+
+trait TextCore extends TextOps with BoolCore {
   /** Staged type **/
-  case class Text() extends Sym {
+  case class Text() extends Sym with TextInfixOps {
     override type LibType = String
     def tp = TextType.asInstanceOf[Typ[this.type]]
+
+    def +(that: Text)(implicit ctx: SrcCtx): Text = text_concat(this, that)(ctx)
+    def !=(that: Text)(implicit ctx: SrcCtx): Bool = text_differ(this, that)(ctx)
+    def ==(that: Text)(implicit ctx: SrcCtx): Bool = text_equals(this, that)(ctx)
+    def equals(that: Text)(implicit ctx: SrcCtx): Bool = text_equals(this, that)(ctx)
   }
   implicit object TextType extends Typ[Text] {
     override def next: Text = Text()
@@ -37,9 +60,6 @@ trait TextCore extends BoolCore with EmbeddedControls {
   def infix_!=(s: String, b: Text)(implicit ctx: SrcCtx): Bool = text_differ(lift(s), b)(ctx)
   def infix_equals(s: String, b: Text)(implicit ctx: SrcCtx): Bool = text_equals(lift(s), b)(ctx)
 
-  /** Implicit lifting **/
-  implicit def lift(x: String): Text = fresh[Text].asConst(x)
-
   /** IR Nodes **/
   case class ToString[S:Typ](a: S) extends Op[Text] { def mirror(f:Tx) = textify(f(a)) }
   case class TextConcat(a: Text, b: Text) extends Op[Text] { def mirror(f:Tx) = text_concat(f(a),f(b)) }
@@ -56,16 +76,13 @@ trait TextCore extends BoolCore with EmbeddedControls {
   rewrite[TextEquals]{ case TextEquals(Const(a: String), Const(b: String)) => lift(a == b) }
   rewrite[TextDiffer]{ case TextDiffer(Const(a: String), Const(b: String)) => lift(a != b) }
 
-  rewrite[Not]{ case Not(Def(TextEquals(a,b))) => text_differ(a,b) }
-  rewrite[Not]{ case Not(Def(TextDiffer(a,b))) => text_equals(a,b) }
+  rewrite[Not]{ case Not(Def(TextEquals(a,b))) => text_differ(a,b)(here) }
+  rewrite[Not]{ case Not(Def(TextDiffer(a,b))) => text_equals(a,b)(here) }
 
   /** Internal methods **/
+  implicit def lift(x: String): Text = fresh[Text].asConst(x)
   def textify[S:Typ](s: S)(implicit ctx: SrcCtx): Text = stage(ToString(s))(ctx)
   def text_concat(a: Text, b: Text)(implicit ctx: SrcCtx): Text = stage(TextConcat(a, b))(ctx)
   def text_equals(a: Text, b: Text)(implicit ctx: SrcCtx): Bool = stage(TextEquals(a,b))(ctx)
   def text_differ(a: Text, b: Text)(implicit ctx: SrcCtx): Bool = stage(TextDiffer(a,b))(ctx)
-}
-
-trait TextAPI extends TextCore {
-  type String = Text
 }
