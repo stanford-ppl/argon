@@ -1,55 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="1e1c0298-2473-4f5c-8635-48a00a7ce872" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/dictionaries/david.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/libraries/org_scalatest_scalatest_2_11_2_2_2.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/libraries/scala_2_11.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/argon/AppCore.scala" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/argon/core/Staging.scala" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/argon/graphs/Edge.scala" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/argon/graphs/Node.scala" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/argon/ops/Bits.scala" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/argon/ops/FixPt.scala" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../scala-virtualized/src/scala/virtualized/CurriedUpdate.scala" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/argon/core/Core.scala" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/argon/graphs/EdgeLike.scala" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/argon/graphs/NodeLike.scala" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/argon/ops/FixedPoint.scala" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/argon/ops/Integers.scala" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/test/test/Test.scala" afterPath="" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/argon/ops/Bool.scala" afterPath="$PROJECT_DIR$/src/argon/ops/Bools.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/scala_compiler.xml" afterPath="$PROJECT_DIR$/.idea/scala_compiler.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/argon.iml" afterPath="$PROJECT_DIR$/argon.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/CompilerCore.scala" afterPath="$PROJECT_DIR$/src/argon/CompilerCore.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/Config.scala" afterPath="$PROJECT_DIR$/src/argon/Config.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/core/Base.scala" afterPath="$PROJECT_DIR$/src/argon/core/Base.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/core/BlockTraversal.scala" afterPath="$PROJECT_DIR$/src/argon/core/BlockTraversal.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/core/Blocks.scala" afterPath="$PROJECT_DIR$/src/argon/core/Blocks.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/core/Definitions.scala" afterPath="$PROJECT_DIR$/src/argon/core/Definitions.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/core/Effects.scala" afterPath="$PROJECT_DIR$/src/argon/core/Effects.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/core/Exceptions.scala" afterPath="$PROJECT_DIR$/src/argon/core/Exceptions.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/core/Metadata.scala" afterPath="$PROJECT_DIR$/src/argon/core/Metadata.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/core/Reporting.scala" afterPath="$PROJECT_DIR$/src/argon/core/Reporting.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/core/Statements.scala" afterPath="$PROJECT_DIR$/src/argon/core/Statements.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/core/Symbols.scala" afterPath="$PROJECT_DIR$/src/argon/core/Symbols.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/core/Traversal.scala" afterPath="$PROJECT_DIR$/src/argon/core/Traversal.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/graphs/AbstractHDAG.scala" afterPath="$PROJECT_DIR$/src/argon/graphs/AbstractHDAG.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/graphs/GraphMetadata.scala" afterPath="$PROJECT_DIR$/src/argon/graphs/GraphMetadata.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/graphs/HDAG.scala" afterPath="$PROJECT_DIR$/src/argon/graphs/HDAG.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/ops/CustomBitWidths.scala" afterPath="$PROJECT_DIR$/src/argon/ops/CustomBitWidths.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/ops/IfThenElse.scala" afterPath="$PROJECT_DIR$/src/argon/ops/IfThenElse.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/ops/Nums.scala" afterPath="$PROJECT_DIR$/src/argon/ops/Nums.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/ops/Prints.scala" afterPath="$PROJECT_DIR$/src/argon/ops/Prints.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/ops/Text.scala" afterPath="$PROJECT_DIR$/src/argon/ops/Text.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/ops/Void.scala" afterPath="$PROJECT_DIR$/src/argon/ops/Void.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/transform/ForwardTransformer.scala" afterPath="$PROJECT_DIR$/src/argon/transform/ForwardTransformer.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/transform/Transformer.scala" afterPath="$PROJECT_DIR$/src/argon/transform/Transformer.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/traversal/IRPrinter.scala" afterPath="$PROJECT_DIR$/src/argon/traversal/IRPrinter.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/argon/utils.scala" afterPath="$PROJECT_DIR$/src/argon/utils.scala" />
-    </list>
+    <list default="true" id="1e1c0298-2473-4f5c-8635-48a00a7ce872" name="Default" comment="" />
     <ignored path="argon.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path="$PROJECT_DIR$/out/" />
