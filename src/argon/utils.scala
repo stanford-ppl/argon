@@ -1,14 +1,13 @@
 package argon
 
 import java.io.File
-
 import org.apache.commons.lang3.StringEscapeUtils.escapeJava
 
 import scala.collection.mutable
 
 object utils {
 
-  def escape(raw: String): String = "\"" + escapeJava(raw) + "\""
+  def escapeString(raw: String): String = "\"" + escapeJava(raw) + "\""
   def escapeChar(raw: Char): String = "'"+escapeJava(raw.toString)+"'"
 
   def deleteExts(path: String, ext: String) = {

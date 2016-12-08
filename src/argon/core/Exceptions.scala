@@ -6,11 +6,12 @@ abstract class CompilerException(msg: String, console: => Unit) extends
 
 trait ArgonExceptions extends Reporting { this: Statements =>
 
-  final def str(lhs: Sym): String = lhs match {
+  final def str(lhs: Sym[_]): String = lhs match {
     case Def(rhs) => c"$lhs = $rhs"
-    case sym => c"$sym"
+    case Const(c) => c"$lhs = $c"
+    case _ => c"$lhs [bound]"
   }
-  final def str(lhs: List[Sym]): String = lhs.head match {
+  final def str(lhs: List[Sym[_]]): String = lhs.head match {
     case Def(rhs) => c"$lhs = $rhs"
     case syms => c"$syms"
   }
@@ -18,14 +19,14 @@ trait ArgonExceptions extends Reporting { this: Statements =>
   class UninitializedEffectContextException() extends
     CompilerException("Attempted to stage effectful node outside effect context", ())
 
-  case class RedefinedSymbolException(s: Sym, d1: Def, d2: Def) extends
+  case class RedefinedSymbolException(s: Sym[_], d1: Def, d2: Def) extends
     CompilerException(c"Symbol $s was redefined during staging", {
       error(c"$s was redefined during staging: ")
       error(c"First:  $s = $d1")
       error(c"Second: $s = $d2")
     })
 
-  case class IllegalStageHereException(save: List[Sym], context: List[Sym]) extends
+  case class IllegalStageHereException(save: List[Sym[_]], context: List[Sym[_]]) extends
     CompilerException("Staging effects 'here' did not leave outer information intact", {
       error("While staging effects 'here', saved context was not preserved:")
       error("Saved:")
@@ -34,15 +35,15 @@ trait ArgonExceptions extends Reporting { this: Statements =>
       context.foreach { s => error(str(s)) }
     })
 
-  class CodegenException(codegen: String, lhs: Sym, rhs: Def) extends
+  class CodegenException(codegen: String, lhs: Sym[_], rhs: Def) extends
     CompilerException(c"Don't know how to generate $codegen code for $lhs = $rhs", {
       error(c"[$codegen] Don't know how to generate code for $lhs = $rhs")
     })
 
-  class EffectsOrderException(res: Any, expected: Seq[Stm], actual: Seq[Stm], missing: Seq[Stm]) extends
+  class EffectsOrderException(res: Sym[_], expected: Seq[Stm], actual: Seq[Stm], missing: Seq[Stm]) extends
     CompilerException(c"Violated ordering of effects", {
       error(c"Violated ordering of effects while traversing block result: ")
-      res match {case s:Sym => error(str(s)); case _ => }
+      error(str(res))
       error("expected: ")
       expected.foreach{stm => error(c"  $stm")}
       error("actual: ")
@@ -51,10 +52,7 @@ trait ArgonExceptions extends Reporting { this: Statements =>
       missing.foreach{stm => error(c"  $stm")}
     })
 
-  class UndefinedNextException(tp: Typ[_]) extends
-    CompilerException(c"Next is undefined for staged type $tp", {error(c"Next is undefined for staged type $tp") })
-
-  class FlexEvaluationException(s: Sym) extends
+  class FlexEvaluationException(s: Sym[_]) extends
     CompilerException(c"Unable to evaluate $s", {error(c"Unable to flex evaluate ${str(s)}") })
 
   class UndefinedMirrorException(x: Any) extends
@@ -66,7 +64,7 @@ trait ArgonExceptions extends Reporting { this: Statements =>
   class TraversalFailedToCompleteException(msg: String) extends
     CompilerException(msg, {error(msg)})
 
-  class NoFieldException(s: Sym, index: String) extends
+  class NoFieldException(s: Sym[_], index: String) extends
     CompilerException(c"Attempted to unwrap undefined field $index from record $s", {
       error(c"Attempted to unwrap undefined field $index from record ${str(s)}")
     })
@@ -76,7 +74,7 @@ trait ArgonExceptions extends Reporting { this: Statements =>
     console
   }
 
-  case class IllegalMutableSharingError(s: Sym, aliases: Set[Sym])(ctx: SrcCtx) extends
+  case class IllegalMutableSharingError(s: Sym[_], aliases: Set[Sym[_]])(ctx: SrcCtx) extends
     UserException(s"Illegal sharing of mutable objects $aliases ", {
       error(c"$ctx: Illegal sharing of mutable objects: ")
       aliases.foreach{alias =>
@@ -85,7 +83,7 @@ trait ArgonExceptions extends Reporting { this: Statements =>
       error(c"  Caused in this definition ${str(s)}")
     })
 
-  case class IllegalMutationError(s: Sym, mutated: Set[Sym])(ctx: SrcCtx) extends
+  case class IllegalMutationError(s: Sym[_], mutated: Set[Sym[_]])(ctx: SrcCtx) extends
     UserException(c"Illegal mutation of immutable symbols $mutated", {
       error(c"$ctx: Illegal mutation of immutable symbols")
       mutated.foreach { mut =>

@@ -2,9 +2,9 @@ package argon.core
 
 import argon.Config
 import java.io.{File, PrintStream}
+import scala.virtualized.SourceContext
 
 trait Reporting {
-
   private var logstream: PrintStream = System.out
 
   final def withLog[T](dir: String, filename: String)(blk: => T): T = {
@@ -28,15 +28,18 @@ trait Reporting {
     result
   }
 
-  final def log(x: => Any) = if (Config.verbosity >= 3) logstream.println(x)
-  final def debug(x: => Any) = if (Config.verbosity >= 2) logstream.println(x)
-  final def msg(x: => Any) = if (Config.verbosity >= 1) {
+  final def log(x: => Any): Unit = if (Config.verbosity >= 3) logstream.println(x)
+  final def debug(x: => Any): Unit = if (Config.verbosity >= 2) logstream.println(x)
+  final def msg(x: => Any): Unit = if (Config.verbosity >= 1) {
     logstream.println(x)
     if (logstream != System.out) System.out.println(x)
   }
-  final def report(x: => Any) = if (Config.verbosity >= 0) System.out.println(x)
-  final def warn(x: => Any) = System.err.println(s"[\u001B[33mwarn\u001B[0m] $x")
-  final def error(x: => Any) = System.err.println(s"[\u001B[31merror\u001B[0m] $x")
+  final def report(x: => Any): Unit = if (Config.verbosity >= 0) System.out.println(x)
+  final def warn(x: => Any): Unit = System.err.println(s"[\u001B[33mwarn\u001B[0m] $x")
+  final def error(x: => Any): Unit = System.err.println(s"[\u001B[31merror\u001B[0m] $x")
+
+  final def warn(ctx: SourceContext, x: => Any): Unit = warn(ctx.toString() + ": " + x)
+  final def error(ctx: SourceContext, x: => Any): Unit = error(ctx.toString() + ": " + x)
 
   def readable(x: Any): String = x match {
     //case s:Sym         => "x"+s.id

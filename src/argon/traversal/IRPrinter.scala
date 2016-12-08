@@ -1,24 +1,25 @@
 package argon.traversal
 
-import argon.core.{Core,Traversal}
-import argon.utils.{escape,escapeChar}
+import argon.core.Staging
+import argon.core.Traversal
+import argon.utils.{escapeString,escapeChar}
 
 // Print IR + metadata for each encountered symbol
 trait IRPrinter extends Traversal {
-  val IR: Core
+  val IR: Staging
   import IR._
 
   override val name = "PrinterPlus"
 
-  def strMeta(lhs: Sym) {
+  def strMeta(lhs: Sym[_]) {
     debugs(c" - Type: ${lhs.tp}")
-    metadata.get(lhs).foreach{m => if (null == m) c" - ${m._1}: NULL" else debugs(c" - ${m._2}: $m") }
+    metadata.get(lhs).foreach{m => if (null == m) c" - ${m._1}: NULL" else debugs(c" - ${m._1}: ${m._2}") }
   }
 
-  override def visit(lhs: Sym, rhs: Op[_]) = {
+  override def visit(lhs: Sym[_], rhs: Op[_]) = {
     rhs.inputs.foreach{
       case sym@Const(c: String) =>
-        msgs(c"$sym = ${escape(c)}")
+        msgs(c"$sym = ${escapeString(c)}")
         strMeta(sym)
       case sym@Const(c: Char) =>
         msgs(c"$sym = ${escapeChar(c)}")
@@ -47,11 +48,11 @@ trait IRPrinter extends Traversal {
     if (rhs.blocks.nonEmpty) msgs(c"} // End of $lhs")
   }
 
-  override def visitBlock[S:Typ](b: Block[S]) = {
+  override def visitBlock[S:Staged](b: Block[S]) = {
     msgs(c"Scheduling $b")
     super.visitBlock(b)
   }
 
   // Only run traversal if debugging/verbose mode is enabled
-  override def run[S:Typ](b: Block[S]) = if (verbosity > 0) super.run(b) else b
+  override def run[S:Staged](b: Block[S]) = if (verbosity > 0) super.run(b) else b
 }

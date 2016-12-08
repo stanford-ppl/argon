@@ -1,10 +1,11 @@
 package argon.core
 
 import argon.State
-import virtualized.{Typs,EmbeddedControls}
+import scala.virtualized.{SourceContext,EmbeddedControls}
 
-trait Base extends Typs with EmbeddedControls {
-  type SrcCtx = virtualized.SourceContext
+trait Base extends EmbeddedControls with Reporting {
+  type SrcCtx = SourceContext
+  type Staged[T]
 
   def reset(): Unit = {
     State.flex = false

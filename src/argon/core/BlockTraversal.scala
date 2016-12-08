@@ -6,7 +6,7 @@ trait BlockTraversal {
 
   protected var innerScope: Seq[Int] = _
 
-  private def availableStms = if (innerScope ne null) innerScope else 0 until IR.graph.curNodeId
+  private def availableStms = if (innerScope ne null) innerScope else 0 until IR.curNodeId
 
   private def withInnerScope[A](scope: Seq[Int])(body: => A): A = {
     val saveInner = innerScope
@@ -16,8 +16,8 @@ trait BlockTraversal {
     result
   }
 
-  private def scopeSanityCheck[S:Typ](block: Block[S], scope: Seq[Int]): Unit = {
-    val observable = block.effects.flatMap(defOf).map(_.id).distinct // node ids for effect producers
+  private def scopeSanityCheck[T:Staged](block: Block[T], scope: Seq[Int]): Unit = {
+    val observable = block.effects.map(defOf).map(_.id).distinct // node ids for effect producers
     val actual = observable intersect scope
     val missing = observable diff actual
     if (missing.nonEmpty) {
@@ -28,11 +28,10 @@ trait BlockTraversal {
     }
   }
 
-  final def traverseBlock(block: Block[_]): Unit = __traverseBlock(block)(mtyp(block.tp))
-  final def __traverseBlock[T:Typ](block: Block[T]): Unit = {
-    val res  = block.getResult match {case s: Sym => Some(s); case _ => None}
-    val join = block.effects ++ res
-    val schedule = IR.graph.getLocalSchedule(availableNodes = availableStms, result = join.map(_.id))
+  final def traverseBlock(block: Block[_]): Unit = __traverseBlock(block)(mstg(block.tp))
+  final def __traverseBlock[T:Staged](block: Block[T]): Unit = {
+    val join = block.getResult +: block.effects
+    val schedule = IR.getLocalSchedule(availableNodes = availableStms, result = join.map(_.id))
 
     scopeSanityCheck(block, schedule)
 

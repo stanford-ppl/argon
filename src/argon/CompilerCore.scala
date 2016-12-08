@@ -1,13 +1,11 @@
 package argon
-import argon.graphs.HDAG
-import argon.core.Core
-import argon.ops.{VoidAPI, VoidCore}
+import argon.core.Staging
+import argon.ops.VoidExp
 import argon.utils.deleteExts
 
 import scala.collection.mutable.ArrayBuffer
 
-
-trait CompilerCore extends Core with VoidCore { self =>
+trait CompilerCore extends Staging with VoidExp { self =>
   val passes: ArrayBuffer[CompilerPass] = ArrayBuffer.empty[CompilerPass]
 
   def main(): Void
@@ -33,18 +31,10 @@ trait CompilerCore extends Core with VoidCore { self =>
     msg(s"Completed in " + "%.4f".format(time/1000) + " seconds")
   }
 
-  private def appReadable(x: Any) = readable(x)
-
-  val graph = new HDAG[Sym,Def,Metadata[_]] {
-    override def readable(x: Any): String = x match {
-      case x: Tuple3[_,_,_] => c"${x._1} = ${x._2} [inputs = ${x._3}]"
-      case _ => appReadable(x)
-    }
+  override def readable(x: Any): String = x match {
+    case x: Tuple3[_,_,_] => c"${x._1} = ${x._2} [inputs = ${x._3}]"
+    case _ => super.readable(x)
   }
 }
 
-trait AppCore extends VoidAPI {
-  def main(): Void
 
-
-}

@@ -2,40 +2,9 @@ package argon.graphs
 
 import scala.collection.mutable
 
-class HDAG[Edge,Node,Metadata](implicit elike: EdgeLike[Int,Edge], nlike: NodeLike[Int,Node])
-  extends AbstractHDAG[Int,Int,Edge,Node]()(elike,nlike) with GraphMetadata[Int,Metadata] {
-
-  type EdgeId = Int
-  type NodeId = Int
-
-  final val firstEdgeId:EdgeId = 0
-  var curEdgeId:EdgeId = 0
-  var curNodeId:NodeId = 0
-  override def nextEdgeId():Unit = {curEdgeId += 1}
-  override def nextNodeId():Unit = {curNodeId += 1}
-
-  override def addDependent(edge: EdgeId, dependent:NodeId): Unit = EdgeData.dependents(edge) ::= dependent
-  override def nodeOutputs(node: NodeId) = NodeData.outputs(node) until NodeData.outputs(node+1)
-  override def nodeInputs(node: NodeId): List[EdgeId] = NodeData.inputs(node)
-  override def nodeBounds(node: NodeId): List[EdgeId] = NodeData.bounds(node)
-  override def nodeFreqs(node: NodeId): List[Float] = NodeData.freqs(node)
-  override def nodeOf(node: NodeId): Node = NodeData.value(node)
-  override def edgeOf(edge: EdgeId): Edge = EdgeData.value(edge)
-  override def dependentsOf(edge: EdgeId): List[NodeId] = EdgeData.dependents(edge)
-  override def producerOf(edge: EdgeId): NodeId = EdgeData.producer(edge)
-
-  override def getMetadata(edge: EdgeId): Map[Class[_],Metadata] = {
-    if (edge < globalMetadata.length) globalMetadata(edge) else Map.empty
-  }
-  override def addMetadata(edge: EdgeId, m: Metadata): Unit = {
-    while (edge >= globalMetadata.length)
-      globalMetadata += Map.empty[Class[_],Metadata]
-
-    globalMetadata(edge) += (m.getClass -> m)
-  }
-  override def setMetadata(edge: EdgeId, m: Map[Class[_],Metadata]): Unit = globalMetadata(edge) = m
-  override def removeMetadata(edge: EdgeId, m: Metadata): Unit = globalMetadata(edge) -= m.getClass
-
+trait HDAG extends AbstractHDAG with GraphMetadata {
+  override type EdgeId = Int
+  override type NodeId = Int
 
   // Based on performance testing LongMap is slightly faster than others (even with casting)
   type OrderCache = scala.collection.mutable.LongMap[(NodeId,Int)]

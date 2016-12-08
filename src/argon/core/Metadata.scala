@@ -1,10 +1,9 @@
 package argon.core
 
-import argon.graphs.GraphMetadata
+import argon.graphs.{HDAG,Edge}
 
-trait Metadata extends Lattices { self: Statements =>
-
-  val graph: GraphMetadata[Int,Metadata[_]]
+trait Metadata extends HDAG with Lattices { self: Statements =>
+  type MetaData = Metadata[_]
 
   abstract class Metadata[T] { self =>
     def meet(that: T): T = this.asInstanceOf[T]
@@ -26,23 +25,23 @@ trait Metadata extends Lattices { self: Statements =>
   object metadata {
     private def keyOf[M<:Metadata[M]:Manifest] = manifest[M].runtimeClass.asInstanceOf[Class[M]]
 
-    def add[M<:Metadata[M]:Manifest](edge:Sym, m:M):Unit = this.add(edge.id, Some(m))
-    def add[M<:Metadata[M]:Manifest](edge:Sym, m:Option[M]):Unit = this.add(edge.id, m)
-    private def add[M<:Metadata[M]:Manifest](edge:Int, m:M):Unit = this.add(edge, Some(m))
-    private def add[M<:Metadata[M]:Manifest](edge:Int, m:Option[M]):Unit = {
-      val meta = graph.getMetadata(edge)
+    def add[M<:Metadata[M]:Manifest](edge:Edge, m:M):Unit = this.add(edge.id, Some(m))
+    def add[M<:Metadata[M]:Manifest](edge:Edge, m:Option[M]):Unit = this.add(edge.id, m)
+    private def add[M<:Metadata[M]:Manifest](id:Int, m:M):Unit = this.add(id, Some(m))
+    private def add[M<:Metadata[M]:Manifest](id:Int, m:Option[M]):Unit = {
+      val meta = getMetadata(id)
       val k = keyOf[M]
       val prev = meta.get(k).map(_.asInstanceOf[M])
       val entry = join(m, prev) //metaUpdate(m, prev)
-      if (entry.isDefined) graph.addMetadata(edge, entry.get)
-      else if (prev.isDefined) graph.removeMetadata(edge, prev.get)
+      if (entry.isDefined) addMetadata(id, entry.get)
+      else if (prev.isDefined) removeMetadata(id, prev.get)
     }
-    def apply[M<:Metadata[M]:Manifest](edge:Sym):Option[M] = this.apply[M](edge.id)
-    private def apply[M<:Metadata[M]:Manifest](edge:Int):Option[M] = {
+    def apply[M<:Metadata[M]:Manifest](edge: Edge): Option[M] = this.apply[M](edge.id)
+    private[Metadata] def apply[M<:Metadata[M]:Manifest](id:Int):Option[M] = {
       val k = keyOf[M]
-      graph.getMetadata(edge).get(k).map(_.asInstanceOf[M])
+      getMetadata(id).get(k).map(_.asInstanceOf[M])
     }
-    def get(edge:Sym):Map[Class[_],Metadata[_]] = graph.getMetadata(edge.id)
-    def set(edge:Sym, m:Map[Class[_],Metadata[_]]):Unit = graph.setMetadata(edge.id, m)
+    def get(edge:Edge):Map[Class[_],Metadata[_]] = getMetadata(edge.id)
+    def set(edge:Edge, m:Map[Class[_],Metadata[_]]):Unit = setMetadata(edge.id, m)
   }
 }

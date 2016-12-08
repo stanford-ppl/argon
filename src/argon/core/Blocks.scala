@@ -14,21 +14,23 @@ trait Blocks extends Effects { self: Statements =>
     * @param summary: effects summary for the entire scope
     * @param effects: list of all symbols with effectful nodes in the scope
     */
-  case class Block[S:Typ](private[Blocks] val __result: S, summary: Effects, effects: List[Sym]) {
-    val tp: Typ[_] = typ[S]
-    def result: S = if (eX.isDefined) eX.get.run(this).__result else __result
+  case class Block[T:Staged](private[Blocks] val __result: Sym[T], summary: Effects, effects: List[Sym[_]]) {
+    def tp: Staged[_] = stg[T]
+    def result: T = if (eX.isDefined) wrap(eX.get.run(this).__result) else wrap(__result)
 
-    def getResult: S = __result
+    def inline: Sym[T] = if (eX.isDefined) eX.get.run(this).__result else throw new Exception("TODO")
+
+    def getResult: Sym[T] = __result
   }
 
   /**
     * Computes an *external* summary for a seq of nodes
     * (Ignores reads/writes on data allocated within the scope)
     */
-  def summarizeScope(context: List[Sym]): Effects = {
+  def summarizeScope(context: List[Sym[_]]): Effects = {
     var effects = Pure
-    val allocs = new mutable.HashSet[Sym]
-    def clean(xs: Set[Sym]) = xs diff allocs
+    val allocs = new mutable.HashSet[Sym[_]]
+    def clean(xs: Set[Sym[_]]) = xs diff allocs
     for (s@Effectful(u2, _) <- context) {
       if (u2.isMutable) allocs += s
       effects = effects andThen u2.copy(reads = clean(u2.reads), writes = clean(u2.writes))
@@ -40,7 +42,7 @@ trait Blocks extends Effects { self: Statements =>
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
     */
-  def stageScope[S<:Sym:Typ](block: => S): Block[S] = {
+  def stageScope[T:Staged](block: => T): Block[T] = {
     val saveContext = context
     context = Nil
 
@@ -49,13 +51,13 @@ trait Blocks extends Effects { self: Statements =>
     context = saveContext
 
     val effects = summarizeScope(deps)
-    Block[S](result, effects, deps)
+    Block[T](unwrap(result), effects, deps)
   }
   /**
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
     * All assumptions about the current context carry over unchanged.
     */
-  def stageScopeInline[S<:Sym:Typ](block: => S): Block[S] = {
+  def stageScopeInline[T:Staged](block: => T): Block[T] = {
     val saveContext = context
     if (saveContext eq null) context = Nil
 
@@ -70,7 +72,7 @@ trait Blocks extends Effects { self: Statements =>
     val effects = summarizeScope(deps)
     context = saveContext
 
-    Block[S](result, effects, deps)
+    Block[T](unwrap(result), effects, deps)
   }
 
   /** Compiler debugging **/

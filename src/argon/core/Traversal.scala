@@ -34,7 +34,7 @@ trait Traversal extends BlockTraversal { self =>
   def debugs(x: => Any) = debug("  "*tab + x)
   def msgs(x: => Any) = msg("  "*tab + x)
 
-  final def pass[S:Typ](b: Block[S]): Block[S] = if (shouldRun) {
+  final def pass[T:Staged](b: Block[T]): Block[T] = if (shouldRun) {
     val outfile = State.paddedPass + " " + name + ".log"
     State.pass += 1
     if (verbosity >= 1) {
@@ -56,9 +56,9 @@ trait Traversal extends BlockTraversal { self =>
   def retry() { _retry = true }
   def silence() { verbosity = -1 }
 
-  def preprocess[S:Typ](b: Block[S]): Block[S] = { b }
-  def postprocess[S:Typ](b: Block[S]): Block[S] = { b }
-  def visitBlock[S:Typ](b: Block[S]): Block[S] = {
+  def preprocess[S:Staged](b: Block[S]): Block[S] = { b }
+  def postprocess[S:Staged](b: Block[S]): Block[S] = { b }
+  def visitBlock[S:Staged](b: Block[S]): Block[S] = {
     tab += 1
     traverseBlock(b)
     tab -= 1
@@ -68,7 +68,7 @@ trait Traversal extends BlockTraversal { self =>
   /**
     * Run traversal/analysis on a given block until convergence or maximum # of iterations reached
     */
-  def run[S:Typ](b: Block[S]): Block[S] = if (shouldRun) {
+  def run[S:Staged](b: Block[S]): Block[S] = if (shouldRun) {
     val saveVerbosity = Config.verbosity
     Config.verbosity = this.verbosity
 
@@ -105,9 +105,9 @@ trait Traversal extends BlockTraversal { self =>
     if (recurse == Always) super.visitStm(stm)
   }
 
-  def visit(lhs: Sym, rhs: Op[_]): Unit = {
+  def visit(lhs: Sym[_], rhs: Op[_]): Unit = {
     if (recurse == Default) stmOf(lhs).foreach(super.visitStm)
   }
 
-  def visitFat(lhs: List[Sym], rhs: Def): Unit = {}
+  def visitFat(lhs: List[Sym[_]], rhs: Def): Unit = {}
 }

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="scala-2.11">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/PPL/hyperdsl/scala-virtualized/target/scala-2.11/scala-virtualized_2.11-0.1.jar!/" />
+      <root url="jar://$USER_HOME$/PPL/hyperdsl/scala-virtualized/target/scala-2.11/scala-virtualized_2.11-0.1-sources.jar!/" />
+      <root url="jar://$USER_HOME$/PPL/hyperdsl/scala-virtualized/target/scala-2.11/scala-virtualized_2.11-0.1-javadoc.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

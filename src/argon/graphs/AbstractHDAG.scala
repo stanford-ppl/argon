@@ -4,11 +4,14 @@ import argon.core.CompilerException
 import argon.core.Reporting
 
 import scala.collection.mutable
-import scala.language.higherKinds
 
-abstract class AbstractHDAG[EdgeId,NodeId,Edge,Node](implicit elike: EdgeLike[EdgeId,Edge], nlike: NodeLike[NodeId,Node]) extends Reporting {
-  import elike._
-  import nlike._
+trait AbstractHDAG extends Reporting {
+  type EdgeId = Int
+  type NodeId = Int
+  type Triple = (Iterable[Edge], Node, Iterable[Edge]) // outputs, node, inputs
+
+  var curEdgeId : EdgeId = 0
+  var curNodeId : NodeId = 0
 
   class RecursiveScheduleException(result: Any, xs: List[String]) extends
     CompilerException(c"Recursive schedule while scheduling result $result", {
@@ -16,7 +19,6 @@ abstract class AbstractHDAG[EdgeId,NodeId,Edge,Node](implicit elike: EdgeLike[Ed
       xs.foreach{x => error(s"  $x") }
     })
 
-  type Triple = (Iterable[Edge], Node, Iterable[Edge]) // outputs, node, inputs
 
   /** Recursive (cyclic) graphs are unsupported **/
   def checkIfAcyclic(root: Any, components: List[List[NodeId]]) = components.foreach{x =>
@@ -26,11 +28,6 @@ abstract class AbstractHDAG[EdgeId,NodeId,Edge,Node](implicit elike: EdgeLike[Ed
     }
   }
 
-  val firstEdgeId:EdgeId
-  var curEdgeId:EdgeId
-  var curNodeId:NodeId
-  def nextEdgeId():Unit
-  def nextNodeId():Unit
 
   object EdgeData {
     val value = mutable.ArrayBuffer[Edge]()
@@ -40,42 +37,45 @@ abstract class AbstractHDAG[EdgeId,NodeId,Edge,Node](implicit elike: EdgeLike[Ed
 
   object NodeData {
     val value   = mutable.ArrayBuffer[Node]()
-    val outputs = mutable.ArrayBuffer[EdgeId](firstEdgeId)  // nodeId :: nodeId+1 ==> edges for this node
+    val outputs = mutable.ArrayBuffer[EdgeId](0)            // nodeId :: nodeId+1 ==> edges for this node
     val inputs  = mutable.ArrayBuffer[List[EdgeId]]()       // Dataflow edges (reverse) -- per node
     val bounds  = mutable.ArrayBuffer[List[EdgeId]]()       // Edges bound by this node
     val freqs   = mutable.ArrayBuffer[List[Float]]()        // Frequency hints for code motion
   }
 
-  def addDependent(edge:EdgeId, dependent:NodeId): Unit
-  def nodeOutputs(id:NodeId):Iterable[EdgeId]
-  def nodeInputs(node: NodeId): List[EdgeId]
-  def nodeBounds(node: NodeId): List[EdgeId]
-  def nodeFreqs(node: NodeId): List[Float]
-  def nodeOf(id: NodeId): Node
-  def edgeOf(id: EdgeId): Edge
-  def dependentsOf(id: EdgeId): List[NodeId]
-  def producerOf(id: EdgeId): NodeId
+  def nodeOutputs(node: NodeId) = NodeData.outputs(node) until NodeData.outputs(node+1)
+  def nodeInputs(node: NodeId): List[EdgeId] = NodeData.inputs(node)
+  def nodeBounds(node: NodeId): List[EdgeId] = NodeData.bounds(node)
+  def nodeFreqs(node: NodeId): List[Float] = NodeData.freqs(node)
+  def nodeOf(node: NodeId): Node = NodeData.value(node)
+  def edgeOf(edge: EdgeId): Edge = EdgeData.value(edge)
+  def dependentsOf(edge: EdgeId): List[NodeId] = EdgeData.dependents(edge)
+  def producerOf(edge: EdgeId): NodeId = EdgeData.producer(edge)
   def triple(id: NodeId): Triple = (nodeOutputs(id).map(edgeOf), nodeOf(id), nodeInputs(id).map(edgeOf))
 
-  final def addNode(inputs: List[(Edge,Float)], outputs:List[Edge], binds: List[Edge], node: Node) {
-    outputs.foreach { out =>
+  final def addNode(ins: List[Edge], outs: List[Edge], binds: List[Edge], freqs: List[Float], node: Node) = {
+    outs.foreach { out =>
       out.id = curEdgeId
+
       EdgeData.value += out
       EdgeData.producer += curNodeId
       EdgeData.dependents += Nil
-      nextEdgeId()
+
+      curEdgeId += 1
+      out
     }
-    val ins = inputs.map(_._1)
-    ins.foreach { in => addDependent(in.id, curNodeId) }
+    ins.foreach { in => EdgeData.dependents(in.id) ::= curNodeId }
 
     node.id = curNodeId
     NodeData.value += node
     NodeData.outputs += curEdgeId
     NodeData.inputs += ins.map(_.id)
     NodeData.bounds += binds.map(_.id)
-    NodeData.freqs += inputs.map(_._2)
+    NodeData.freqs += freqs
 
-    nextNodeId()
+    curNodeId += 1
+
+    outs
   }
 
   // --- Scheduling

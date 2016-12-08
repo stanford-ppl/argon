@@ -1,14 +1,14 @@
-package test
+package argon.test
 
 import org.scalatest.FlatSpec
-import virtualized.{SourceContext, staged}
+import scala.virtualized.{SourceContext, virtualize}
 import argon.{AppCore, CompilerCore, Config}
 import argon.ops._
 import argon.utils.deleteExts
 import argon.traversal.IRPrinter
 
-trait App extends AppCore with BoolAPI with IfThenElseAPI with PrintAPI with TextAPI with VoidAPI with IntegerAPI
-trait Compiler extends CompilerCore with BoolCore with IfThenElseCore with PrintCore with TextCore with IntegerCore { self =>
+trait App extends AppCore with BoolAPI with IfThenElseAPI with PrintAPI with TextAPI with VoidAPI with FixPtAPI
+trait Compiler extends CompilerCore with BoolExp with IfThenElseExp with PrintExp with TextExp with FixPtExp { self =>
   lazy val printer = new IRPrinter { override val IR: Compiler.this.type = Compiler.this }
   printer.verbosity = 3
 
@@ -31,7 +31,7 @@ object Test1 extends Test {
 }
 
 object Test2 extends Test {
-  @staged
+  @virtualize
   def main(): Void = {
     val x = randomBool()
     val y = if (x) lift(false) else lift(true)
@@ -40,7 +40,7 @@ object Test2 extends Test {
 }
 
 object Test3 extends Test {
-  @staged
+  @virtualize
   def main(): Void = {
     val x = !randomBool()
     val y = if (x) lift(false) else lift(true)
@@ -49,7 +49,7 @@ object Test3 extends Test {
 }
 
 object Test4 extends Test {
-  @staged
+  @virtualize
   def main(): Void = {
     val x = randomBool() && randomBool()
     val y = if (x) lift(false) else lift(true)
@@ -58,7 +58,7 @@ object Test4 extends Test {
 }
 
 object Test5 extends Test {
-  @staged
+  @virtualize
   def main(): Void = {
     val x = randomBool() && randomBool()
     val y = if (x) randomBool() else randomBool()
@@ -67,7 +67,7 @@ object Test5 extends Test {
 }
 
 object Test6 extends Test {
-  @staged
+  @virtualize
   def main(): Void = {
     val x = randomBool()
     val y = randomBool()
@@ -77,7 +77,7 @@ object Test6 extends Test {
 }
 
 object Test7 extends Test {
-  @staged
+  @virtualize
   def main(): Void = {
     val x = randomBool()
     val y = randomBool()
@@ -87,20 +87,20 @@ object Test7 extends Test {
 }
 
 object Test8 extends Test {
-  @staged
+  @virtualize
   def main(): Void = {
-    val x = randomInt()
-    val y = randomInt()
+    val x = random[Int]
+    val y = random[Int]
     println(x + 0)
     println(-(-x))
   }
 }
 
 object Test9 extends Test {
-  @staged
+  @virtualize
   def main(): Void = {
-    val x = randomInt()
-    val y = randomInt()
+    val x = random[Int]
+    val y = random[Int]
     println(!(x != y))
   }
 }

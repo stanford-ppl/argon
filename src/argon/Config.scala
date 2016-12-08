@@ -13,12 +13,12 @@ object Config {
 
   val cwd = System.getProperty("user.dir")
 
-  var verbosity: Int = getProperty("tungsten.verbosity", "2").toInt
-  var genDir: String = getProperty("tungsten.out", s"$cwd/gen")
-  var logDir: String = getProperty("tungsten.logs", s"$cwd/logs")
-  var unsafe: Boolean = getProperty("tungsten.unsafe", "false").toBoolean
-  var lib:  Boolean = getProperty("tungsten.lib", "false").toBoolean
-  var name: String = getProperty("tungsten.name", "app")
-  var clearLogs: Boolean = getProperty("tungsten.clearLogs", "false").toBoolean
-  var unwrapStructs: Boolean = getProperty("tungsten.unwrap", "true").toBoolean
+  var verbosity: Int = getProperty("argon.verbosity", "2").toInt
+  var genDir: String = getProperty("argon.out", s"$cwd/gen")
+  var logDir: String = getProperty("argon.logs", s"$cwd/logs")
+  var unsafe: Boolean = getProperty("argon.unsafe", "false").toBoolean
+  var lib:  Boolean = getProperty("argon.lib", "false").toBoolean
+  var name: String = getProperty("argon.name", "app")
+  var clearLogs: Boolean = getProperty("argon.clearLogs", "false").toBoolean
+  var unwrapStructs: Boolean = getProperty("argon.unwrap", "true").toBoolean
 }
