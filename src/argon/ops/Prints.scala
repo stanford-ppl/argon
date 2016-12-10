@@ -12,7 +12,7 @@ trait Prints extends Base with Texts with Voids {
   def print(x: Text)(implicit ctx: SrcCtx): Void
   def println(x: Text)(implicit ctx: SrcCtx): Void
 }
-trait PrintAPI extends Prints with TextAPI with VoidAPI
+trait PrintApi extends Prints with TextApi with VoidApi
 
 
 trait PrintExp extends Prints with TextExp with VoidExp {

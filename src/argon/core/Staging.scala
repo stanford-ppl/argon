@@ -1,9 +1,9 @@
 package argon.core
 
 trait Staging extends Statements {
-  def fresh[T:Staged]: T = single[T](registerDef(BoundSymbol[T](), Nil)(here))
-  def liftConst[T:Staged](c: Any): T = single[T](registerDefWithCSE(Constant[T](stg[T], c))(here))
-  def liftParam[T:Staged](c: Any): T = single[T](registerDefWithCSE(Parameter[T](stg[T], c))(here))
+  def fresh[T:Staged]: T = single[T](registerDef(NoOp[T](), Nil)(here))
+  def const[T:Staged](c: Any): T = single[T](registerDef(NoOp[T](), Nil, __const(c))(here))
+  def param[T:Staged](c: Any): T = single[T](registerDef(NoOp[T](), Nil, __param(c))(here))
 
   def stageDef(d: Def)(ctx: SrcCtx): List[Sym[_]]                   = stageDefPure(d)(ctx)
   def stageDefPure(d: Def)(ctx: SrcCtx): List[Sym[_]]               = stageDefEffectful(d, Pure)(ctx)
@@ -35,7 +35,7 @@ trait Staging extends Statements {
     d.rewriteOrElse{ registerDef(d, extraDeps)(ctx) }.map(_.setCtx(ctx))
   }
 
-  private def registerDef(d: Def, extraDeps: List[Sym[_]])(ctx: SrcCtx): List[Sym[_]] = {
+  private def registerDef(d: Def, extraDeps: List[Sym[_]], symbol: Staged[Any] => Sym[Any] = __sym)(ctx: SrcCtx): List[Sym[_]] = {
     val bounds = d.binds
     val dfreqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).sum)
     val freqs = d.inputs.map { in => dfreqs.getOrElse(in, 1.0f) } ++ extraDeps.distinct.map { d => 1.0f }

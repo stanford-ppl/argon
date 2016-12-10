@@ -6,7 +6,7 @@ trait Voids extends Base {
   implicit def lift(x: Unit): Void
   implicit val VoidType: Staged[Void]
 }
-trait VoidAPI extends Voids {
+trait VoidApi extends Voids {
   type Unit = Void
 }
 
@@ -21,7 +21,7 @@ trait VoidExp extends Voids with Staging {
     override def isPrimitive = true
   }
 
-  implicit def lift(x: Unit): Void = liftConst[Void](x)
+  implicit def lift(x: Unit): Void = const[Void](x)
 }
 
 

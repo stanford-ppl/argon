@@ -1,7 +1,7 @@
 package argon.ops
 import argon.core.Base
 
-trait Bools extends Base with NumAPI {
+trait Bools extends Base with NumApi {
   type Bool <: BoolOps
   /** Infix operations **/
   protected trait BoolOps {
@@ -11,15 +11,21 @@ trait Bools extends Base with NumAPI {
     def ^ (that: Bool)(implicit ctx: SrcCtx): Bool
   }
 
+  implicit class BooleanBoolOps(x: Boolean) {
+    def &&(y: Bool)(implicit ctx: SrcCtx): Bool = lift(x) && y
+    def ||(y: Bool)(implicit ctx: SrcCtx): Bool = lift(x) || y
+    def ^ (y: Bool)(implicit ctx: SrcCtx): Bool = lift(x) ^ y
+  }
+
   /** Direct operations **/
   def randomBool()(implicit ctx: SrcCtx): Bool
 
   /** Internal **/
   implicit def lift(x: Boolean): Bool
-  implicit val BoolType: Bit[Bool]
+  implicit val BoolType: Bits[Bool]
 }
 
-trait BoolAPI extends Bools {
+trait BoolApi extends Bools {
   type Boolean = Bool
 }
 
@@ -34,15 +40,15 @@ trait BoolExp extends Bools with NumExp {
   def infix_==(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = stage(XNor(x.s,y.s))(ctx)
   def infix_!=(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = stage(XOr(x.s,y.s))(ctx)
 
-  implicit object BoolType extends Bit[Bool] {
+  implicit object BoolType extends Bits[Bool] {
     override def wrap(x: Sym[Bool]): Bool = Bool(x)
     override def unwrap(x: Bool): Sym[Bool] = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[Bool]
     override def isPrimitive = true
 
-    lazy val one: Bool = liftConst[Bool](true)
-    lazy val zero: Bool = liftConst[Bool](false)
+    lazy val one: Bool = const[Bool](true)
+    lazy val zero: Bool = const[Bool](false)
     def random(implicit ctx: SrcCtx): Bool = randomBool()
   }
 
@@ -95,6 +101,6 @@ trait BoolExp extends Bools with NumExp {
   //eval[RandomBool]{ case _ => scala.util.Random.nextBoolean() }
 
   /** Internal methods **/
-  implicit def lift(x: Boolean): Bool = liftConst[Bool](x)
-  def bool(x: Boolean): Sym[Bool] = liftConst[Bool](x).s
+  implicit def lift(x: Boolean): Bool = const[Bool](x)
+  def bool(x: Boolean): Sym[Bool] = const[Bool](x).s
 }

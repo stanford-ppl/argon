@@ -2,7 +2,7 @@ package argon.ops
 import argon.core.Base
 import scala.virtualized.SourceContext
 
-trait Texts extends Base with BoolAPI {
+trait Texts extends Base with BoolApi {
   type Text <: TextOps
   protected trait TextOps {
     def +(that: Text)(implicit ctx: SrcCtx): Text
@@ -15,7 +15,7 @@ trait Texts extends Base with BoolAPI {
   implicit val TextType: Staged[Text]
   def textify[S:Staged](s: S)(implicit ctx: SrcCtx): Text
 }
-trait TextAPI extends Texts {
+trait TextApi extends Texts {
   type String = Text
 }
 
@@ -76,8 +76,8 @@ trait TextExp extends Texts with BoolExp {
   rewrite[Not]{ case Not(Def(TextDiffer(a,b))) => text_equals(wrap(a),wrap(b)).s }
 
   /** Internal methods **/
-  implicit def lift(x: String): Text = liftConst[Text](x)
-  def text(x: String): Sym[Text] = liftConst[Text](x).s
+  implicit def lift(x: String): Text = const[Text](x)
+  def text(x: String): Sym[Text] = const[Text](x).s
   def textify[S:Staged](s: S)(implicit ctx: SrcCtx): Text = stage(ToString(unwrap(s)))(ctx)
   def text_concat(a: Text, b: Text)(implicit ctx: SrcCtx): Text = stage(TextConcat(a.s, b.s))(ctx)
   def text_equals(a: Text, b: Text)(implicit ctx: SrcCtx): Bool = stage(TextEquals(a.s, b.s))(ctx)

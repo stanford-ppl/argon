@@ -123,43 +123,24 @@ trait Definitions extends Blocks { self: Statements =>
   abstract class Op5[A:Staged,B:Staged,C:Staged,D:Staged,R:Staged] extends Op4[A,B,C,R] { val mD = stg[D] }
 
   /** Specialized "No-op" Defs **/
-  abstract class NoOp[T:Staged] extends Def {
+  case class NoOp[T:Staged]() extends Def {
     val outputTypes = List(stg[T])
     def fatMirror(f:Tx): List[Sym[_]] = throw new Exception("Cannot mirror NoDefs")
     override def mirrorNode(orig: List[Sym[_]], f:Tx): List[Sym[_]] = orig
   }
 
-  case class BoundSymbol[T:Staged]() extends NoOp[T]
-  case class Constant[T](staged: Staged[T], c: Any) extends NoOp[T]()(staged)
-  case class Parameter[T](staged: Staged[T], c: Any) extends NoOp[T]()(staged)
+  // case class BoundSymbol[T:Staged]() extends NoOp[T]
+  // case class Constant[T](staged: Staged[T], c: Any) extends NoOp[T]()(staged)
+  // case class Parameter[T](staged: Staged[T], c: Any) extends NoOp[T]()(staged)
 
 
-  /** API **/
+  /** Api **/
   object Def {
     def unapply(s: Sym[_]): Option[Def] = defOf(s) match {
       case _:NoOp[_] => None
       case d => Some(d)
     }
   }
-
-  def constUnapply(s: Sym[_]): Option[Any] = defOf(s) match {
-    case Constant(_, c) => Some(c)
-    case _ => None
-  }
-  def paramUnapply(s: Sym[_]): Option[Any] = defOf(s) match {
-    case Constant(_, c) => Some(c)
-    case Parameter(_, c) => Some(c)
-    case _ => None
-  }
-
-  object Const {
-    def unapply(s: Sym[_]): Option[Any] = constUnapply(s)
-  }
-
-  object Param {
-    def unapply(s: Sym[_]): Option[Any] = paramUnapply(s)
-  }
-
 
   // --- Helper functions
   private[core] def defOf(s:Sym[_]): Def = defFromSymId(s.id)

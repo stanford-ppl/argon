@@ -1,7 +1,7 @@
 package argon
 
-import argon.ops.VoidAPI
+import argon.ops.VoidApi
 
-trait AppCore extends VoidAPI {
+trait AppCore extends VoidApi {
   def main(): Void
 }

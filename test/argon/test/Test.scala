@@ -7,7 +7,7 @@ import argon.ops._
 import argon.utils.deleteExts
 import argon.traversal.IRPrinter
 
-trait App extends AppCore with BoolAPI with IfThenElseAPI with PrintAPI with TextAPI with VoidAPI with FixPtAPI
+trait App extends AppCore with BoolApi with IfThenElseApi with PrintApi with TextApi with VoidApi with FixPtApi
 trait Compiler extends CompilerCore with BoolExp with IfThenElseExp with PrintExp with TextExp with FixPtExp { self =>
   lazy val printer = new IRPrinter { override val IR: Compiler.this.type = Compiler.this }
   printer.verbosity = 3
@@ -24,8 +24,8 @@ trait Test extends Compiler with App
 
 object Test1 extends Test {
   def main(): Void = {
-    val x = randomBool()
-    val y = randomBool()
+    val x = random[Boolean]
+    val y = random[Boolean]
     println(x && y)
   }
 }
@@ -33,7 +33,7 @@ object Test1 extends Test {
 object Test2 extends Test {
   @virtualize
   def main(): Void = {
-    val x = randomBool()
+    val x = random[Boolean]
     val y = if (x) lift(false) else lift(true)
     println(y)
   }
@@ -42,7 +42,7 @@ object Test2 extends Test {
 object Test3 extends Test {
   @virtualize
   def main(): Void = {
-    val x = !randomBool()
+    val x = !random[Boolean]
     val y = if (x) lift(false) else lift(true)
     println(y)
   }
@@ -51,7 +51,7 @@ object Test3 extends Test {
 object Test4 extends Test {
   @virtualize
   def main(): Void = {
-    val x = randomBool() && randomBool()
+    val x = random[Boolean] && random[Boolean]
     val y = if (x) lift(false) else lift(true)
     println(y)
   }
@@ -60,8 +60,8 @@ object Test4 extends Test {
 object Test5 extends Test {
   @virtualize
   def main(): Void = {
-    val x = randomBool() && randomBool()
-    val y = if (x) randomBool() else randomBool()
+    val x = random[Boolean] && random[Boolean]
+    val y = if (x) random[Boolean] else random[Boolean]
     println(y)
   }
 }
@@ -69,8 +69,8 @@ object Test5 extends Test {
 object Test6 extends Test {
   @virtualize
   def main(): Void = {
-    val x = randomBool()
-    val y = randomBool()
+    val x = random[Boolean]
+    val y = random[Boolean]
     val z = if (x) x && y else x || y
     println(z)
   }
@@ -79,8 +79,8 @@ object Test6 extends Test {
 object Test7 extends Test {
   @virtualize
   def main(): Void = {
-    val x = randomBool()
-    val y = randomBool()
+    val x = random[Boolean]
+    val y = random[Boolean]
     val z = if (x) { if (x && y) randomBool() else if (x || y) randomBool() else randomBool() } else lift(true)
     println(z)
   }
@@ -92,6 +92,7 @@ object Test8 extends Test {
     val x = random[Int]
     val y = random[Int]
     println(x + 0)
+    println(0 + x)
     println(-(-x))
   }
 }
