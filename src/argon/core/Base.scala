@@ -16,8 +16,14 @@ trait Base extends EmbeddedControls with Reporting {
     State.pass = 1
   }
 
-  /** Including evidence of Staged[B] as an implicit parameter to Lift instances leads to problems with implicit
-    * ambiguity when calling lift(x), since the return type of lift depends on the second type parameter of Lift */
+  /** Lift[A,B] is used in place of Staged[T] for return types of user facing blocks, where the user may either
+    * give an unstaged constant or a staged symbol as the return value.
+    *
+    * NOTE: Including evidence of Staged[B] as an implicit parameter to Lift instances leads to problems with implicit
+    * ambiguity when calling lift(x), since the compiler may attempt to resolve Staged[B] before it resolves Lift[A,B],
+    * causing any implicit value or def with result Staged[_] in scope to qualify.
+    **/
+
   @implicitNotFound(msg = "Cannot find way to lift type ${A}. Try adding explicit lift(_) calls to return value(s).")
   trait Lift[A,B] {
     def staged: Staged[B]

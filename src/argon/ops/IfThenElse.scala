@@ -6,12 +6,6 @@ trait IfThenElseApi extends IfThenElseOps with BoolApi
 
 trait IfThenElseExp extends IfThenElseOps with BoolExp {
   /** Virtualized methods **/
-  /*def __ifThenElse[T:Staged](cond: Bool, thenp: => T, elsep: => T)(implicit ctx: SrcCtx): T = {
-    val unwrapThen = () => unwrap(thenp) // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse = () => unwrap(elsep) // wrapping it as a Function0 allows it to be delayed
-    wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
-  }*/
-  // TODO: This version is ambiguous with the one above. Any way to solve this?
   def __ifThenElse[A,B](cond: Bool, thenp: => A, elsep: => A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = {
     implicit val staged: Staged[B] = l.staged
     val unwrapThen = () => unwrap(lift(thenp) ) // directly calling unwrap(thenp) forces thenp to be evaluated here

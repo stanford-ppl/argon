@@ -47,7 +47,7 @@ trait Definitions extends Blocks { self: Staging =>
     /** Alias hints -- used to check/disallow unsafe mutable aliasing **/
     // Aliases: inputs to this Def which *may* equal to the output of this Def
     // Default: all inputs to this symbol
-    // TODO: Is this really the most sensible rule for aliasing?
+    // TODO: Is this really the most sensible default rule for aliasing?
     var aliases: List[Sym[_]] = recursive.collectLists(__syms)(productIterator)
 
     // Contains: inputs which may be returned when dereferencing the output of this Def
