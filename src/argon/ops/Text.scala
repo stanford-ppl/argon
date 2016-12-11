@@ -11,9 +11,10 @@ trait Texts extends Base with BoolApi {
     def equals(that: Text)(implicit ctx: SrcCtx): Bool
   }
 
-  implicit def lift(x: String): Text
+  implicit object String2Text extends Lift[String,Text] { val staged = TextType }
+  implicit def string2text(x: String): Text = lift(x)
   implicit val TextType: Staged[Text]
-  def textify[S:Staged](s: S)(implicit ctx: SrcCtx): Text
+  def textify[T:Staged](x: T)(implicit ctx: SrcCtx): Text
 }
 trait TextApi extends Texts {
   type String = Text
@@ -21,13 +22,36 @@ trait TextApi extends Texts {
 
 
 trait TextExp extends Texts with BoolExp {
-  /** Staged type **/
+  /** API **/
   case class Text(s: Sym[Text]) extends TextOps {
-    def +(that: Text)(implicit ctx: SrcCtx): Text = text_concat(this, that)(ctx)
-    def !=(that: Text)(implicit ctx: SrcCtx): Bool = text_differ(this, that)(ctx)
-    def ==(that: Text)(implicit ctx: SrcCtx): Bool = text_equals(this, that)(ctx)
-    def equals(that: Text)(implicit ctx: SrcCtx): Bool = text_equals(this, that)(ctx)
+    def +(that: Text)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, that.s))
+    def !=(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_differ(this.s, that.s))
+    def ==(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
+    def equals(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
   }
+
+  def textify[T:Staged](x: T)(implicit ctx: SrcCtx): Text = Text(sym_tostring(x.s))
+
+  /** Virtualized methods **/
+  def infix_toString[S:Staged](x: S)(implicit ctx: SrcCtx): Text = textify(x)
+  def infix_+[R:Staged](x1: String, x2: R)(implicit ctx: SrcCtx): Text = string2text(x1) + textify(x2)
+  def infix_+[L:Staged](x1: L, x2: String)(implicit ctx: SrcCtx): Text = textify(x1) + string2text(x2)
+  def infix_+[L:Staged,R:Staged](x1: L, x2: R)(implicit ctx: SrcCtx): Text = textify(x1) + textify(x2)
+  def infix_==(x: Text, a: Any)(implicit ctx: SrcCtx): Bool = a match {
+    case y: Text   => x == y
+    case s: String => x == string2text(s)
+    case _         => boolean2bool(false)
+  }
+  def infix_!=(x: Text, a: Any)(implicit ctx: SrcCtx): Bool = a match {
+    case y: Text   => x != y
+    case s: String => x != string2text(s)
+    case _         => boolean2bool(false)
+  }
+  def infix_==(s: String, b: Text)(implicit ctx: SrcCtx): Bool = string2text(s) == b
+  def infix_!=(s: String, b: Text)(implicit ctx: SrcCtx): Bool = string2text(s) != b
+
+
+  /** Staged Type **/
   implicit object TextType extends Staged[Text] {
     override def wrap(x: Sym[Text]) = Text(x)
     override def unwrap(x: Text) = x.s
@@ -36,50 +60,42 @@ trait TextExp extends Texts with BoolExp {
     override def isPrimitive = true
   }
 
-  /** Virtualized methods **/
-  def infix_toString[S:Staged](x: S)(implicit ctx: SrcCtx): Text = textify(x)
-  def infix_+[R:Staged](x1: String, x2: R)(implicit ctx: SrcCtx): Text = text_concat(lift(x1),textify(x2))(ctx)
-  def infix_+[L:Staged](x1: L, x2: String)(implicit ctx: SrcCtx): Text = text_concat(textify(x1),lift(x2))(ctx)
-  def infix_+[L:Staged,R:Staged](x1: L, x2: R)(implicit ctx: SrcCtx): Text = text_concat(textify(x1),textify(x2))(ctx)
-  def infix_==(x: Text, a: Any)(implicit ctx: SrcCtx): Bool = a match {
-    case y: Text   => text_equals(x, y)(ctx)
-    case s: String => text_equals(x, lift(s))(ctx)
-    case _         => lift(false)
-  }
-  def infix_equals(x: Text, a: Any)(implicit ctx: SrcCtx): Bool = infix_==(x, a)(ctx)
-  def infix_!=(x: Text, a: Any)(implicit ctx: SrcCtx): Bool = a match {
-    case y: Text   => text_differ(x, y)(ctx)
-    case s: String => text_differ(x, lift(s))(ctx)
-    case _         => lift(false)
-  }
-  def infix_==(s: String, b: Text)(implicit ctx: SrcCtx): Bool = text_equals(lift(s), b)(ctx)
-  def infix_!=(s: String, b: Text)(implicit ctx: SrcCtx): Bool = text_differ(lift(s), b)(ctx)
-  def infix_equals(s: String, b: Text)(implicit ctx: SrcCtx): Bool = text_equals(lift(s), b)(ctx)
+
+  /** Constant Lifting **/
+  def text(x: String): Sym[Text] = const[Text](x)
 
   /** IR Nodes **/
-  case class ToString[S:Staged](a: Sym[S]) extends Op[Text] { def mirror(f:Tx) = textify(f(a)) }
-  case class TextConcat(a: Sym[Text], b: Sym[Text]) extends Op[Text] { def mirror(f:Tx) = text_concat(f(a),f(b)) }
-  case class TextEquals(a: Sym[Text], b: Sym[Text]) extends Op[Bool] { def mirror(f:Tx) = text_equals(f(a),f(b)) }
-  case class TextDiffer(a: Sym[Text], b: Sym[Text]) extends Op[Bool] { def mirror(f:Tx) = text_differ(f(a),f(b)) }
+  case class ToString[S:Staged](x: Sym[S]) extends Op[Text] { def mirror(f:Tx) = sym_tostring(f(x)) }
+  case class TextConcat(x: Sym[Text], y: Sym[Text]) extends Op[Text] { def mirror(f:Tx) = text_concat(f(x),f(y)) }
+  case class TextEquals(x: Sym[Text], y: Sym[Text]) extends Op[Bool] { def mirror(f:Tx) = text_equals(f(x),f(y)) }
+  case class TextDiffer(x: Sym[Text], y: Sym[Text]) extends Op[Bool] { def mirror(f:Tx) = text_differ(f(x),f(y)) }
 
-  /** Rewrite rules **/
-  rewrite[ToString[_]]{ case ToString(Const(s)) => text(s.toString)  /* TODO: Always correct? */ }
-  rewrite[TextConcat]{
-    case TextConcat(Const(a: String), Const(b: String)) => text(a + b)
-    case TextConcat(Const(""), y)                       => y
-    case TextConcat(x, Const(""))                       => x
+  /** Smart Constructors **/
+  def sym_tostring[S:Staged](x: Sym[S])(implicit ctx: SrcCtx): Sym[Text] = x match {
+    case Const(c: String) => text(c)
+    //case Const(c) => text(c.toString)
+    case a if a.tp == TextType => a.asInstanceOf[Sym[Text]]
+    case _ => stage(ToString(x))(ctx)
   }
-  rewrite[TextEquals]{ case TextEquals(Const(a: String), Const(b: String)) => bool(a == b) }
-  rewrite[TextDiffer]{ case TextDiffer(Const(a: String), Const(b: String)) => bool(a != b) }
+  def text_concat(x: Sym[Text], y: Sym[Text])(implicit ctx: SrcCtx): Sym[Text] = (x,y) match {
+    case (Const(a: String), Const(b: String)) => text(a + b)
+    case (Const(""), b) => b
+    case (a, Const("")) => a
+    case _ => stage( TextConcat(x,y) )(ctx)
+  }
+  def text_equals(x: Sym[Text], y: Sym[Text])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+    case (Const(a: String), Const(b: String)) => bool(a == b)
+    case _ => stage( TextEquals(x,y) )(ctx)
+  }
+  def text_differ(x: Sym[Text], y: Sym[Text])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+    case (Const(a: String), Const(b: String)) => bool(a == b)
+    case _ => stage( TextDiffer(x,y) )(ctx)
+  }
 
-  rewrite[Not]{ case Not(Def(TextEquals(a,b))) => text_differ(wrap(a),wrap(b)).s }
-  rewrite[Not]{ case Not(Def(TextDiffer(a,b))) => text_equals(wrap(a),wrap(b)).s }
-
-  /** Internal methods **/
-  implicit def lift(x: String): Text = const[Text](x)
-  def text(x: String): Sym[Text] = const[Text](x).s
-  def textify[S:Staged](s: S)(implicit ctx: SrcCtx): Text = stage(ToString(unwrap(s)))(ctx)
-  def text_concat(a: Text, b: Text)(implicit ctx: SrcCtx): Text = stage(TextConcat(a.s, b.s))(ctx)
-  def text_equals(a: Text, b: Text)(implicit ctx: SrcCtx): Bool = stage(TextEquals(a.s, b.s))(ctx)
-  def text_differ(a: Text, b: Text)(implicit ctx: SrcCtx): Bool = stage(TextDiffer(a.s, b.s))(ctx)
+  /** Rewrite Rules **/
+  override def bool_not(x: Sym[Bool])(implicit ctx: SrcCtx): Sym[Bool] = x match {
+    case Op(TextEquals(a,b)) => text_differ(a,b)
+    case Op(TextDiffer(a,b)) => text_equals(a,b)
+    case _ => super.bool_not(x)
+  }
 }

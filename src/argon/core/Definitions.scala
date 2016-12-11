@@ -9,29 +9,10 @@ import scala.collection.immutable.Queue
 import scala.collection.mutable
 import scala.util.control.NoStackTrace
 
-trait Definitions extends Blocks { self: Statements =>
+trait Definitions extends Blocks { self: Staging =>
   type Tx = Transformer{val IR: self.type }
 
   protected val here = implicitly[SourceContext]
-
-  private val rewriteRules = mutable.HashMap[Class[_], Queue[PartialFunction[Def, List[Sym[_]]]]]()
-
-  def rewriteFat[D<:Def:Manifest](func: PartialFunction[Any, List[Sym[_]]]) = {
-    val key = manifest[D].runtimeClass
-    if (!rewriteRules.contains(key)) rewriteRules(key) = Queue.empty
-    rewriteRules(key) :+= func.asInstanceOf[PartialFunction[Def,List[Sym[_]]]]
-  }
-
-  def rewrite[O<:Op[_]:Manifest](func: PartialFunction[Any,Sym[_]]) = rewriteFat[O](func andThen(k => List(k)) )
-
-  private val evalRules = mutable.HashMap[Class[_], Queue[PartialFunction[Def, List[Sym[_]]]]]()
-  def evalFat[D<:Def:Manifest](func: PartialFunction[D, List[Sym[_]]]) = {
-    val key = manifest[D].runtimeClass
-    if (!evalRules.contains(key)) evalRules(key) = Queue.empty
-    evalRules(key) :+= func.asInstanceOf[PartialFunction[Def,List[Sym[_]]]]
-  }
-  def eval[O<:Op[_]:Manifest](func: PartialFunction[O,Sym[_]]) = evalFat[O](func andThen(k => List(k)) )
-
 
   /** Generalized Def representation which can have arbitrary output(s) -- roughly equivalent to LMS's FatDef **/
   abstract class Def extends Node with Product {
@@ -101,26 +82,21 @@ trait Definitions extends Blocks { self: Statements =>
     }
     def mirrorNode(orig: List[Sym[_]], f:Tx): List[Sym[_]] = fatMirror(f)
 
-    final def rewriteOrElse(ss: => List[Sym[_]]): List[Sym[_]] = rewriteRules.get(this.getClass) match {
-      case Some(rules) => rules.find(_.isDefinedAt(this)).map(_.apply(this)).getOrElse(ss)
-      case None => ss
-    }
-
     implicit val src: SrcCtx = here
   }
 
   /** Most common variant of Def - returns only one symbol of one type **/
   abstract class Op[R:Staged] extends Def {
-    def mirror(f:Tx): R
+    def mirror(f:Tx): Sym[R]
 
     final override def outputTypes = List(implicitly[Staged[R]])
-    final override def fatMirror(f:Tx): List[Sym[_]] = List(this.mirror(f).asInstanceOf[Sym[_]])
-    val mR = stg[R]
+    final override def fatMirror(f:Tx): List[Sym[_]] = List(this.mirror(f))
+    def mR = stg[R]
   }
-  abstract class Op2[A:Staged,R:Staged] extends Op[R] { val mA = stg[A] }
-  abstract class Op3[A:Staged,B:Staged,R:Staged] extends Op2[A,R] { val mB = stg[B] }
-  abstract class Op4[A:Staged,B:Staged,C:Staged,R:Staged] extends Op3[A,B,R] { val mC = stg[C] }
-  abstract class Op5[A:Staged,B:Staged,C:Staged,D:Staged,R:Staged] extends Op4[A,B,C,R] { val mD = stg[D] }
+  abstract class Op2[A:Staged,R:Staged] extends Op[R] { def mA = stg[A] }
+  abstract class Op3[A:Staged,B:Staged,R:Staged] extends Op2[A,R] { def mB = stg[B] }
+  abstract class Op4[A:Staged,B:Staged,C:Staged,R:Staged] extends Op3[A,B,R] { def mC = stg[C] }
+  abstract class Op5[A:Staged,B:Staged,C:Staged,D:Staged,R:Staged] extends Op4[A,B,C,R] { def mD = stg[D] }
 
   /** Specialized "No-op" Defs **/
   case class NoOp[T:Staged]() extends Def {
@@ -141,10 +117,17 @@ trait Definitions extends Blocks { self: Statements =>
       case d => Some(d)
     }
   }
+  object Op {
+    def unapply[T](s: Sym[T]): Option[Op[T]] = defOf(s) match {
+      case _:NoOp[_] => None
+      case d:Op[_] => Some(d.asInstanceOf[Op[T]])
+      case _ => None
+    }
+  }
 
   // --- Helper functions
-  private[core] def defOf(s:Sym[_]): Def = defFromSymId(s.id)
-  private[core] def hasDef(x:Sym[_]): Boolean = Def.unapply(x).isDefined
+  def defOf(s:Sym[_]): Def = defFromSymId(s.id)
+  def hasDef(x:Sym[_]): Boolean = Def.unapply(x).isDefined
 
   private val __syms: PartialFunction[Any,List[Sym[_]]] = {
     case s: Sym[_] => List(s)

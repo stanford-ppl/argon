@@ -1,9 +1,10 @@
-package argon.core
+package argon.traversal
 
+import argon.core.Statements
 import argon.{Config, State}
 
 /**
-  * Single traversal of the IR with pre- and post- processing
+  * Single or iterative traversal of the IR with pre- and post- processing
   */
 trait Traversal extends BlockTraversal { self =>
   val IR: Statements

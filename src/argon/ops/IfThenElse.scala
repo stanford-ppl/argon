@@ -6,25 +6,36 @@ trait IfThenElseApi extends IfThenElseOps with BoolApi
 
 trait IfThenElseExp extends IfThenElseOps with BoolExp {
   /** Virtualized methods **/
-  def __ifThenElse[T:Staged](cond: Bool, thenp: => T, elsep: => T)(implicit ctx: SrcCtx): T = {
-    val thenBlk = stageScope(thenp)
-    val elseBlk = stageScope(elsep)
-    val effects = thenBlk.summary orElse elseBlk.summary
-    stageEffectful(IfThenElse(unwrap(cond), thenBlk, elseBlk), effects)(ctx)
+  /*def __ifThenElse[T:Staged](cond: Bool, thenp: => T, elsep: => T)(implicit ctx: SrcCtx): T = {
+    val unwrapThen = () => unwrap(thenp) // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = () => unwrap(elsep) // wrapping it as a Function0 allows it to be delayed
+    wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
+  }*/
+  // TODO: This version is ambiguous with the one above. Any way to solve this?
+  def __ifThenElse[A,B](cond: Bool, thenp: => A, elsep: => A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = {
+    implicit val staged: Staged[B] = l.staged
+    val unwrapThen = () => unwrap(lift(thenp) ) // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = () => unwrap(lift(elsep) ) // wrapping it as a Function0 allows it to be delayed
+    wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 
-  /** IR nodes **/
+  /** IR Nodes **/
   case class IfThenElse[T:Staged](cond: Sym[Bool], thenp: Block[T], elsep: Block[T]) extends Op[T] {
-    def mirror(f:Tx) = __ifThenElse(f(cond), f(thenp), f(elsep))
+    def mirror(f:Tx) = ifThenElse[T](f(cond), f(thenp), f(elsep))
 
     freqs   = normal(cond) ++ cold(thenp) ++ cold(elsep)
     aliases = List(thenp.getResult, elsep.getResult)
   }
 
-  /** Rewrite rules **/
-  rewrite[IfThenElse[_]]{
-    case IfThenElse(Const(true),thenp,_)  => thenp.inline
-    case IfThenElse(Const(false),_,elsep) => elsep.inline
-    case e@IfThenElse(Def(Not(c)),thenp,elsep) => unwrap(__ifThenElse(wrap(c),elsep.result,thenp.result)(e.mR, here))(e.mR)
+  /** Smart Constructor **/
+  def ifThenElse[T:Staged](cond: Sym[Bool], thenp: => Sym[T], elsep: => Sym[T])(implicit ctx: SrcCtx): Sym[T] = cond match {
+    case Const(true) if context != null => thenp // Inlining is not valid if there is no outer context
+    case Const(false) if context != null => elsep
+    case Op(Not(x)) => ifThenElse(x, elsep, thenp)
+    case _ =>
+      val thenBlk = stageScope(thenp)
+      val elseBlk = stageScope(elsep)
+      val effects = thenBlk.summary orElse elseBlk.summary
+      stageEffectful(IfThenElse(cond, thenBlk, elseBlk), effects)(ctx)
   }
 }

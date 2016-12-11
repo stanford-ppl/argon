@@ -17,7 +17,7 @@ trait CompilerCore extends Staging with VoidExp { self =>
 
     Config.name = c"${self.getClass}".replace('.','-')
     val start = System.currentTimeMillis()
-    var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageScope { main() } }
+    var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageScope { main().s } }
 
     if (Config.clearLogs) deleteExts(Config.logDir, ".log")
 

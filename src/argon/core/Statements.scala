@@ -2,7 +2,7 @@ package argon.core
 
 import scala.collection.mutable
 
-trait Statements extends Definitions with ArgonExceptions {
+trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   // -- State
   protected val defCache = new mutable.HashMap[Def, List[Sym[_]]]
   protected val shallowAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
@@ -19,17 +19,17 @@ trait Statements extends Definitions with ArgonExceptions {
     case stm => Some(stm)
   }
 
-  private[core] def stmFromNodeId(id: Int): Stm = {
+  private[argon] def stmFromNodeId(id: Int): Stm = {
     val x = triple(id)
     Stm(x._1.toList.map(_.asInstanceOf[Sym[_]]), x._2.asInstanceOf[Def])
   }
-  private[core] def stmFromSymId(id: Int): Stm  = {
+  private[argon] def stmFromSymId(id: Int): Stm  = {
     val node = producerOf(id)
     stmFromNodeId(node)
   }
-  private[core] def symFromSymId(id: Int): Sym[_] = edgeOf(id).asInstanceOf[Sym[_]]
-  private[core] def defFromNodeId(id: Int): Def = nodeOf(id).asInstanceOf[Def]
-  private[core] def defFromSymId(id: Int): Def  = defFromNodeId(producerOf(id))
+  private[argon] def symFromSymId(id: Int): Sym[_] = edgeOf(id).asInstanceOf[Sym[_]]
+  private[argon] def defFromNodeId(id: Int): Def = nodeOf(id).asInstanceOf[Def]
+  private[argon] def defFromSymId(id: Int): Def  = defFromNodeId(producerOf(id))
 
   // --- Symbol aliasing
   private def noPrims(x:Set[Sym[_]]) = x.filterNot { s => s.tp.isPrimitive || !hasDef(s) }

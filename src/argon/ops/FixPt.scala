@@ -1,8 +1,6 @@
 package argon.ops
 
 trait FixPts extends Nums with Bools with CustomBitWidths {
-  type FxP[T] <: Num[T]
-
   type FixPt[S,I,F] <: FixPtOps[S,I,F]
   type Int64 = FixPt[TRUE,_64,_0]
   type Int32 = FixPt[TRUE,_32,_0]
@@ -56,7 +54,10 @@ trait FixPts extends Nums with Bools with CustomBitWidths {
     def % [S:BOOL,I:INT](y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = lift[S,I,_0] % y
   }
 
-  implicit def fixPtType[S:BOOL,I:INT,F:INT]: FxP[FixPt[S,I,F]]
+  implicit object Int2FixPt extends Lift[Int,Int32] { val staged = fixPtType[TRUE,_32,_0] }
+  implicit object Long2FixPt extends Lift[Int,Int64] { val staged = fixPtType[TRUE,_64,_0] }
+
+  implicit def fixPtType[S:BOOL,I:INT,F:INT]: Num[FixPt[S,I,F]]
   implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F]
   implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F]
 
@@ -71,45 +72,38 @@ trait FixPtApi extends FixPts with NumApi with BoolApi {
 
 
 trait FixPtExp extends FixPts with NumExp with BoolExp {
-  /** API Wrapper **/
+  /** API **/
   case class FixPt[S:BOOL,I:INT,F:INT](s: Sym[FixPt[S,I,F]]) extends FixPtOps[S,I,F] {
-    def unary_-(implicit ctx: SrcCtx): FixPt[S,I,F] = stage(FixNeg(this.s))(ctx)
-    def unary_~(implicit ctx: SrcCtx): FixPt[S,I,F] = stage(FixInv(this.s))(ctx)
-    def + (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = stage(FixAdd(this.s,that.s))(ctx)
-    def - (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = stage(FixSub(this.s,that.s))(ctx)
-    def * (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = stage(FixMul(this.s,that.s))(ctx)
-    def / (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = stage(FixDiv(this.s,that.s))(ctx)
-    def & (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = stage(FixAnd(this.s,that.s))(ctx)
-    def | (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = stage( FixOr(this.s,that.s))(ctx)
-    def < (that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = stage( FixLt(this.s,that.s))(ctx)
-    def <=(that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = stage(FixLeq(this.s,that.s))(ctx)
-    def > (that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = stage( FixLt(that.s,this.s))(ctx)
-    def >=(that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = stage(FixLeq(that.s,this.s))(ctx)
+    def unary_-(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_neg(this.s))
+    def unary_~(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_inv(this.s))
+    def + (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_add(this.s,that.s))
+    def - (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_sub(this.s,that.s))
+    def * (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_mul(this.s,that.s))
+    def / (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_div(this.s,that.s))
+    def & (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_and(this.s,that.s))
+    def | (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt( fix_or(this.s,that.s))
+    def < (that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool( fix_lt(this.s,that.s))
+    def <=(that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool(fix_leq(this.s,that.s))
+    def > (that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool( fix_lt(that.s,this.s))
+    def >=(that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool(fix_leq(that.s,this.s))
   }
-  def infix_!=[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = stage(FixNeq(x.s,y.s))(ctx)
-  def infix_==[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = stage(FixEql(x.s,y.s))(ctx)
+  def infix_!=[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = Bool(fix_neq(x.s,y.s))
+  def infix_==[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = Bool(fix_eql(x.s,y.s))
 
-  /** Staged type **/
-  abstract class FxP[T] extends Num[T] {
-    def isSigned: Boolean
-    def intBits: Int
-    def fracBits: Int
+  def mod[S:BOOL,I:INT](x: FixPt[S,I,_0], y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = FixPt[S,I,_0](fix_mod(x.s, y.s))
 
-    def mS: BOOL[_]
-    def mI: INT[_]
-    def mF: INT[_]
-  }
 
-  class FixPtType[S:BOOL,I:INT,F:INT]() extends FxP[FixPt[S,I,F]] {
+  /** Staged Types **/
+  class FixPtType[S:BOOL,I:INT,F:INT]() extends Num[FixPt[S,I,F]] {
     override def wrap(s: Sym[FixPt[S,I,F]]): FixPt[S,I,F] = FixPt[S,I,F](s)
     override def unwrap(x: FixPt[S,I,F]) = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[FixPt[S,I,F]]
     override def isPrimitive = true
 
-    lazy val zero = const[FixPt[S,I,F]](0)
-    lazy val one = const[FixPt[S,I,F]](1)
-    override def random(implicit ctx: SrcCtx): FixPt[S, I, F] = randomFixPt[S,I,F]
+    lazy val zero = int2fixpt[S,I,F](0)
+    lazy val one = int2fixpt[S,I,F](1)
+    override def random(implicit ctx: SrcCtx): FixPt[S, I, F] = FixPt[S,I,F](fix_random[S,I,F]())
 
     override def negate(x: FixPt[S,I,F])(implicit ctx: SrcCtx) = -x
     override def plus(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x + y
@@ -119,19 +113,19 @@ trait FixPtExp extends FixPts with NumExp with BoolExp {
     def isSigned: Boolean = implicitly[BOOL[S]].v
     def intBits: Int = implicitly[INT[I]].v
     def fracBits: Int = implicitly[INT[F]].v
-    override def mS = BOOL[S]
-    override def mI = INT[I]
-    override def mF = INT[F]
+    def mS = BOOL[S]
+    def mI = INT[I]
+    def mF = INT[F]
 
     override def hashCode() = (isSigned, intBits, fracBits).##
     override def equals(x: Any) = x match {
-      case t:FxP[_] => t.isSigned == this.isSigned &&
-                       t.intBits == this.intBits &&
-                       t.fracBits == this.fracBits
+      case t:FixPtType[_,_,_] => t.isSigned == this.isSigned &&
+                                 t.intBits == this.intBits &&
+                                 t.fracBits == this.fracBits
       case _ => false
     }
   }
-  implicit def fixPtType[S:BOOL,I:INT,F:INT]: FxP[FixPt[S,I,F]] = new FixPtType[S,I,F]
+  implicit def fixPtType[S:BOOL,I:INT,F:INT]: Num[FixPt[S,I,F]] = new FixPtType[S,I,F]
 
   object FixPtType {
     def unapply(x:Staged[_]):Option[(Boolean, Int, Int)] = x match {
@@ -140,8 +134,8 @@ trait FixPtExp extends FixPts with NumExp with BoolExp {
     }
   }
 
-  /** Constant lifting **/
-  private def createConstant[S:BOOL,I:INT,F:INT](x: Any, enWarn: Boolean = true): FixPt[S,I,F] = {
+  /** Constant Lifting **/
+  private def createConstant[S:BOOL,I:INT,F:INT](x: Any, enWarn: Boolean = true): Sym[FixPt[S,I,F]] = {
     val sign = BOOL[S].v
     val ibits = INT[I].v
     val fbits = INT[F].v
@@ -154,7 +148,7 @@ trait FixPtExp extends FixPts with NumExp with BoolExp {
     val MAX_INTEGRAL_VALUE = if (sign) (BigInt(1) << (ibits-1)) - 1 else (BigInt(1) << ibits) - 1
     val MIN_INTEGRAL_VALUE = if (sign) -(BigInt(1) << (ibits-1)) else BigInt(0)
 
-    def makeInteger(v: BigInt): FixPt[S,I,F] = {
+    def makeInteger(v: BigInt): Sym[FixPt[S,I,F]] = {
       val clampedV = if (v > MAX_INTEGRAL_VALUE) {
         if (enWarn) {
           warn(s"Loss of precision detected: $tp cannot represent $x. Using maximum $MAX_INTEGRAL_VALUE.")
@@ -183,16 +177,12 @@ trait FixPtExp extends FixPts with NumExp with BoolExp {
         sys.exit()
     }
   }
-  implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = createConstant[S,I,F](x)
-  implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = createConstant[S,I,F](x)
+  implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
+  implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
 
-  def fixpt[T](x: BigInt)(tp: FxP[T]): Sym[T] = {
-    createConstant(x, enWarn=false)(tp.mS,tp.mI,tp.mF).asInstanceOf[Sym[T]]
-  }
+  def fixpt[S:BOOL,I:INT,F:INT](x: BigInt): Sym[FixPt[S,I,F]] = createConstant[S,I,F](x, enWarn=false)
 
-
-
-  /** Nodes **/
+  /** IR Nodes **/
   abstract class FixPtOp[S:BOOL,I:INT,F:INT] extends Op[FixPt[S,I,F]] {
     def mS = BOOL[S]
     def mI = INT[I]
@@ -206,107 +196,113 @@ trait FixPtExp extends FixPts with NumExp with BoolExp {
     def tp = fixPtType[S,I,F]
   }
 
-  case class FixInv[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = ~f(x) }
-  case class FixNeg[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = -f(x) }
+  case class FixInv[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_inv(f(x)) }
+  case class FixNeg[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_neg(f(x)) }
 
-  case class FixAdd[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = f(x) + f(y) }
-  case class FixSub[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = f(x) - f(y) }
-  case class FixMul[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = f(x) * f(y) }
-  case class FixDiv[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]])(implicit val ctx: SrcCtx) extends FixPtOp[S,I,F] {
-    // TODO: Better spot for this?
-    y match {
-      case Const(0) => warn(ctx, "Division by constant 0 detected")
-      case _ =>
-    }
+  case class FixAdd[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_add(f(x), f(y)) }
+  case class FixSub[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_sub(f(x), f(y)) }
+  case class FixMul[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_mul(f(x), f(y)) }
+  case class FixDiv[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_div(f(x), f(y)) }
+  case class FixAnd[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_and(f(x), f(y)) }
+  case class FixOr [S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) =  fix_or(f(x), f(y)) }
+  case class FixLt [S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = fix_lt(f(x), f(y)) }
+  case class FixLeq[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = fix_leq(f(x), f(y)) }
+  case class FixNeq[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = fix_neq(f(x), f(y)) }
+  case class FixEql[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = fix_eql(f(x), f(y)) }
+  case class FixMod[S:BOOL,I:INT](x: Sym[FixPt[S,I,_0]], y: Sym[FixPt[S,I,_0]]) extends FixPtOp[S,I,_0] { def mirror(f:Tx) = fix_mod(f(x), f(y)) }
 
-    def mirror(f:Tx) = f(x) / f(y)
+  case class RandomFixPt[S:BOOL,I:INT,F:INT]() extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_random[S,I,F]() }
+
+
+
+  /** Smart constructors **/
+  def fix_neg[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = x match {
+    case Const(c:BigInt) => fixpt[S,I,F](-c)
+    case Op(FixNeg(x)) => x
+    case _ => stage(FixNeg(x))(ctx)
   }
-  case class FixAnd[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = f(x) & f(y) }
-  case class FixOr [S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = f(x) | f(y) }
-  case class FixLt [S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = f(x) < f(y) }
-  case class FixLeq[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = f(x) <= f(y) }
-  case class FixNeq[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = infix_!=(f(x),f(y)) }
-  case class FixEql[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = infix_==(f(x),f(y)) }
-  case class FixMod[S:BOOL,I:INT](x: Sym[FixPt[S,I,_0]], y: Sym[FixPt[S,I,_0]]) extends FixPtOp[S,I,_0] { def mirror(f:Tx) = f(x) % f(y) }
+  def fix_inv[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = x match {
+    case Const(c:BigInt) => fixpt[S,I,F](~c)
+    case Op(FixInv(x)) => x
+    case _ => stage(FixInv(x))(ctx)
+  }
+  def fix_add[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a:BigInt), Const(b:BigInt)) => fixpt[S,I,F](a + b)
+    case (a, Const(0)) => a                               // a + 0 => a
+    case (Const(0), b) => b                               // 0 + a => a
+    case (a, Op(FixNeg(b))) if a == b => fixpt[S,I,F](0)  // a + -a => 0
+    case (Op(FixNeg(a)), b) if a == b => fixpt[S,I,F](0)  // -a + a => 0
+    case _ => stage(FixAdd(x,y))(ctx)
+  }
+  def fix_sub[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a:BigInt), Const(b:BigInt)) => fixpt[S,I,F](a - b)
+    case (a, Const(0)) => a
+    case (Const(0), a) => stage(FixNeg(a))(ctx)
+    case _ => stage(FixSub(x,y))(ctx)
+  }
 
-  case class RandomFixPt[S:BOOL,I:INT,F:INT]() extends FixPtOp[S,I,F] { def mirror(f:Tx) = randomFixPt[S,I,F] }
+  def fix_mul[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigInt), Const(b: BigInt)) => fixpt[S,I,F](a * b)
+    case (_, b@Const(0)) => b
+    case (a@Const(0), _) => a
+    case (a, Const(1)) => a
+    case (Const(1), b) => b
+    case _ => stage(FixMul(x, y) )(ctx)
+  }
+  def fix_div[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigInt), Const(b: BigInt)) => fixpt[S,I,F](a / b)
+    case (a, Const(1)) => a
+    case (_, Const(0)) => warn(ctx, "Division by constant 0 detected"); stage(FixDiv(x,y))(ctx)
+    case _ => stage(FixDiv(x,y))(ctx)
+  }
+  def fix_and[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigInt), Const(b: BigInt)) => fixpt[S,I,F](a & b)
+    case (a@Const(0), _) => a
+    case (_, b@Const(0)) => b
+    case _ => stage(FixAnd(x,y))(ctx)
+  }
+  def fix_or[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigInt), Const(b: BigInt)) => fixpt[S,I,F](a | b)
+    case (a, Const(0)) => a
+    case (Const(0), b) => b
+    case _ => stage(FixOr(x,y))(ctx)
+  }
+  def fix_lt[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+    case (Const(a: BigInt), Const(b: BigInt)) => bool(a < b)
+    case _ => stage( FixLt(x,y))(ctx)
+  }
 
-
-  /** Direct methods **/
-  def mod[S:BOOL,I:INT](x: FixPt[S,I,_0], y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = stage(FixMod(x.s,y.s))(ctx)
-  def randomFixPt[S:BOOL,I:INT,F:INT](implicit ctx: SrcCtx): FixPt[S,I,F] = stageSimple(RandomFixPt[S,I,F]())(ctx)
+  def fix_leq[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+    case (Const(a: BigInt), Const(b: BigInt)) => bool(a <= b)
+    case _ => stage(FixLeq(x,y))(ctx)
+  }
+  def fix_neq[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+    case (Const(a: BigInt), Const(b: BigInt)) => bool(a != b)
+    case _ => stage(FixNeq(x,y))(ctx)
+  }
+  def fix_eql[S:BOOL,I:INT,F:INT](x: Sym[FixPt[S,I,F]], y: Sym[FixPt[S,I,F]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+    case (Const(a: BigInt), Const(b: BigInt)) => bool(a == b)
+    case _ => stage(FixEql(x,y))(ctx)
+  }
+  def fix_mod[S:BOOL,I:INT](x: Sym[FixPt[S,I,_0]], y: Sym[FixPt[S,I,_0]])(implicit ctx: SrcCtx): Sym[FixPt[S,I,_0]] = (x,y) match {
+    case (Const(a: BigInt), Const(b: BigInt)) => fixpt[S,I,_0](a % b)
+    case (a, Const(1)) => fixpt[S,I,_0](0)
+    case _ => stage(FixMod(x,y))(ctx)
+  }
+  def fix_random[S:BOOL,I:INT,F:INT]()(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = stageSimple(RandomFixPt[S,I,F]())(ctx)
 
 
   /** Rewrite rules **/
-  rewrite[FixInv[_,_,_]] {
-    case node@FixInv(Const(c:BigInt)) => fixpt(~c)(node.tp)
-    case Def(FixInv(x)) => x
-  }
-  rewrite[FixNeg[_,_,_]] {
-    case node@FixNeg(Const(c:BigInt)) => fixpt(-c)(node.tp)
-    case FixNeg(Def(FixNeg(x))) => x
-  }
-  rewrite[FixAdd[_,_,_]] {
-    case node@FixAdd(Const(a: BigInt), Const(b: BigInt)) => fixpt(a + b)(node.tp)
-    case FixAdd(a, Const(0)) => a   // Note that Const comparison only checks value equality, not type
-    case FixAdd(Const(0), b) => b
-    case node@FixAdd(a, Def(FixNeg(b))) if a == b => fixpt(0)(node.tp)
-    case node@FixAdd(Def(FixNeg(a)), b) if a == b => fixpt(0)(node.tp)
-  }
-  rewrite[FixSub[_,_,_]] {
-    case node@FixSub(Const(a: BigInt), Const(b: BigInt)) => fixpt(a - b)(node.tp)
-    case FixSub(a, Const(0)) => a
-    case e@FixSub(Const(0), a) => stage(FixNeg(a)(e.mS,e.mI,e.mF))(here)(e.tp).s
-  }
-  rewrite[FixMul[_,_,_]] {
-    case node@FixMul(Const(a: BigInt), Const(b: BigInt)) => fixpt(a * b)(node.tp)
-    case FixMul(_, b@Const(0)) => b
-    case FixMul(a@Const(0), _) => a
-    case FixMul(a, Const(1)) => a
-    case FixMul(Const(1), b) => b
-  }
-  rewrite[FixDiv[_,_,_]] {
-    case node@FixDiv(Const(a: BigInt), Const(b: BigInt)) => fixpt(a / b)(node.tp)
-    case FixDiv(a, Const(1)) => a
+  override def bool_not(x: Sym[Bool])(implicit ctx: SrcCtx): Sym[Bool] = x match {
+    case Def(node@FixNeq(a,b)) => stage( FixEql(a,b)(node.mS,node.mI,node.mF) )(ctx)
+    case Def(node@FixEql(a,b)) => stage( FixNeq(a,b)(node.mS,node.mI,node.mF) )(ctx)
+    case Def( node@FixLt(a,b)) => stage( FixLeq(a,b)(node.mS,node.mI,node.mF) )(ctx)
+    case Def(node@FixLeq(a,b)) => stage(  FixLt(a,b)(node.mS,node.mI,node.mF) )(ctx)
+    case _ => super.bool_not(x)
   }
 
-  rewrite[FixAnd[_,_,_]] {
-    case node@FixAnd(Const(a: BigInt), Const(b: BigInt)) => fixpt(a & b)(node.tp)
-    case FixAnd(a@Const(0), _) => a
-    case FixAnd(_, b@Const(0)) => b
-  }
 
-  rewrite[FixOr[_,_,_]] {
-    case node@FixOr(Const(a: BigInt), Const(b: BigInt)) => fixpt(a | b)(node.tp)
-    case FixOr(a, Const(0)) => a
-    case FixOr(Const(0), b) => b
-  }
-
-  rewrite[FixLt[_,_,_]] {
-    case FixLt(Const(a: BigInt), Const(b: BigInt)) => bool(a < b)
-  }
-  rewrite[FixLeq[_,_,_]] {
-    case FixLeq(Const(a: BigInt), Const(b: BigInt)) => bool(a <= b)
-  }
-  rewrite[FixNeq[_,_,_]] {
-    case FixNeq(Const(a: BigInt), Const(b: BigInt)) => bool(a != b)
-  }
-  rewrite[FixEql[_,_,_]] {
-    case FixEql(Const(a: BigInt), Const(b: BigInt)) => bool(a == b)
-  }
-
-  rewrite[FixMod[_,_]] {
-    case node@FixMod(Const(a: BigInt), Const(b: BigInt)) => fixpt(a % b)(node.tp)
-    case node@FixMod(a, Const(1)) => fixpt(0)(node.tp)
-  }
-
-  rewrite[Not] {
-    case Not(Def(node@FixNeq(x,y))) => stage( FixEql(x,y)(node.mS,node.mI,node.mF) )(here).s
-    case Not(Def(node@FixEql(x,y))) => stage( FixNeq(x,y)(node.mS,node.mI,node.mF) )(here).s
-    case Not(Def(node@FixLt(x,y)))  => stage( FixLeq(y,x)(node.mS,node.mI,node.mF) )(here).s
-    case Not(Def(node@FixLeq(x,y))) => stage( FixLt(y,x)(node.mS,node.mI,node.mF) )(here).s
-  }
-
+  /** Internal methods **/
   override def readable(x: Any): String = x match {
     case FixPtType(true,64,0) => s"Long"
     case FixPtType(true,32,0) => s"Int"

@@ -1,8 +1,7 @@
 package argon.traversal
 
 import argon.core.Staging
-import argon.core.Traversal
-import argon.utils.{escapeString,escapeChar}
+import argon.utils.{escapeChar, escapeString}
 
 // Print IR + metadata for each encountered symbol
 trait IRPrinter extends Traversal {

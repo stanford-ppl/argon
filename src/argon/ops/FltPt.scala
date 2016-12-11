@@ -1,7 +1,6 @@
 package argon.ops
 
 trait FltPts extends Nums with Bools with CustomBitWidths {
-  type FlP[T] <: Num[T]
   type FltPt[G,E] <: FltPtOps[G,E]
   // Significand bits includes sign bit
   // ASSUMPTION: floating point representation is always signed (for now)
@@ -66,8 +65,10 @@ trait FltPts extends Nums with Bools with CustomBitWidths {
     def >=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] >= y
   }
 
+  implicit object Float2FltPt extends Lift[Float,Float32] { val staged = fltPtType[_24,_8] }
+  implicit object Double2FltPt extends Lift[Double,Float64] { val staged = fltPtType[_53,_11] }
 
-  implicit def fltPtType[G:INT,E:INT]: FlP[FltPt[G,E]]
+  implicit def fltPtType[G:INT,E:INT]: Num[FltPt[G,E]]
   implicit def int2fltpt[G:INT,E:INT](x: Int): FltPt[G,E]
   implicit def long2fltpt[G:INT,E:INT](x: Long): FltPt[G,E]
   implicit def float2fltpt[G:INT,E:INT](x: Float): FltPt[G,E]
@@ -81,40 +82,33 @@ trait FltPtAPI extends FltPts with NumApi with BoolApi {
 
 
 trait FltPtExp extends FltPts with NumExp with BoolExp {
-  /** API Wrapper **/
+  /** API **/
   case class FltPt[G:INT,E:INT](s: Sym[FltPt[G,E]]) extends FltPtOps[G,E] {
-    def unary_-(implicit ctx: SrcCtx): FltPt[G,E] = stage(FltNeg(this.s))(ctx)
-    def + (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = stage(FltAdd(this.s,that.s))(ctx)
-    def - (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = stage(FltSub(this.s,that.s))(ctx)
-    def * (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = stage(FltMul(this.s,that.s))(ctx)
-    def / (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = stage(FltDiv(this.s,that.s))(ctx)
-    def < (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = stage( FltLt(this.s,that.s))(ctx)
-    def <=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = stage(FltLeq(this.s,that.s))(ctx)
-    def > (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = stage( FltLt(that.s,this.s))(ctx)
-    def >=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = stage(FltLeq(that.s,this.s))(ctx)
+    def unary_-(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_neg(this.s))
+    def + (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_add(this.s,that.s))
+    def - (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_sub(this.s,that.s))
+    def * (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_mul(this.s,that.s))
+    def / (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_div(this.s,that.s))
+    def < (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool( flt_lt(this.s,that.s))
+    def <=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(this.s,that.s))
+    def > (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool( flt_lt(that.s,that.s))
+    def >=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(that.s,that.s))
   }
-  def infix_!=[G:INT,E:INT](x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = stage(FltNeq(x.s,y.s))(ctx)
-  def infix_==[G:INT,E:INT](x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = stage(FltEql(x.s,y.s))(ctx)
+  def infix_!=[G:INT,E:INT](x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = Bool(flt_neq(x.s,y.s))
+  def infix_==[G:INT,E:INT](x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = Bool(flt_eql(x.s,y.s))
 
 
   /** Staged type **/
-  abstract class FlP[T] extends Num[T] {
-    def sigBits: Int
-    def expBits: Int
-    def mG: INT[_]
-    def mE: INT[_]
-  }
-
-  class FltPtType[G:INT,E:INT]() extends FlP[FltPt[G,E]] {
+  class FltPtType[G:INT,E:INT]() extends Num[FltPt[G,E]] {
     override def wrap(s: Sym[FltPt[G,E]]): FltPt[G,E] = FltPt[G,E](s)
     override def unwrap(x: FltPt[G,E]) = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[FltPt[G,E]]
     override def isPrimitive = true
 
-    lazy val zero = const[FltPt[G,E]](0)
-    lazy val one = const[FltPt[G,E]](1)
-    override def random(implicit ctx: SrcCtx): FltPt[G,E] = randomFltPt[G,E]
+    lazy val zero = int2fltpt[G,E](0)
+    lazy val one = int2fltpt[G,E](1)
+    override def random(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_random[G,E]())
 
     override def negate(x: FltPt[G,E])(implicit ctx: SrcCtx) = -x
     override def plus(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x + y
@@ -128,11 +122,11 @@ trait FltPtExp extends FltPts with NumExp with BoolExp {
 
     override def hashCode() = (sigBits, expBits).##
     override def equals(x: Any) = x match {
-      case t:FlP[_] => t.sigBits == this.sigBits && t.expBits == this.expBits
+      case t:FltPtType[_,_] => t.sigBits == this.sigBits && t.expBits == this.expBits
       case _ => false
     }
   }
-  implicit def fltPtType[G:INT,E:INT]: FlP[FltPt[G,E]] = new FltPtType[G,E]
+  implicit def fltPtType[G:INT,E:INT]: Num[FltPt[G,E]] = new FltPtType[G,E]()
 
   object FltPtType {
     def unapply(x:Staged[_]):Option[(Int, Int)] = x match {
@@ -143,13 +137,13 @@ trait FltPtExp extends FltPts with NumExp with BoolExp {
 
 
   /** Constant lifting **/
-  private def createConstant[G:INT,E:INT](x: Any, enWarn: Boolean = true): FltPt[G,E] = {
+  private def createConstant[G:INT,E:INT](x: Any, enWarn: Boolean = true): Sym[FltPt[G,E]] = {
     val gbits = INT[G].v
     val ebits = INT[E].v
     val tp = s"$gbits.$ebits floating point"
     val FLP = readable(fltPtType[G,E])
 
-    def makeFloat(v: BigDecimal): FltPt[G,E] = {
+    def makeFloat(v: BigDecimal): Sym[FltPt[G,E]] = {
       // TODO: Precision checking
       const[FltPt[G,E]](v)
     }
@@ -167,14 +161,12 @@ trait FltPtExp extends FltPts with NumExp with BoolExp {
     }
   }
 
-  implicit def int2fltpt[G:INT,E:INT](x: Int): FltPt[G,E] = createConstant[G,E](x)
-  implicit def long2fltpt[G:INT,E:INT](x: Long): FltPt[G,E] = createConstant[G,E](x)
-  implicit def float2fltpt[G:INT,E:INT](x: Float): FltPt[G,E] = createConstant[G,E](x)
-  implicit def double2fltpt[G:INT,E:INT](x: Double): FltPt[G,E] = createConstant[G,E](x)
+  implicit def int2fltpt[G:INT,E:INT](x: Int): FltPt[G,E] = FltPt(createConstant[G,E](x))
+  implicit def long2fltpt[G:INT,E:INT](x: Long): FltPt[G,E] = FltPt(createConstant[G,E](x))
+  implicit def float2fltpt[G:INT,E:INT](x: Float): FltPt[G,E] = FltPt(createConstant[G,E](x))
+  implicit def double2fltpt[G:INT,E:INT](x: Double): FltPt[G,E] = FltPt(createConstant[G,E](x))
 
-  def fltpt[T](x: BigDecimal)(tp: FlP[T]): Sym[T] = {
-    createConstant(x, enWarn=false)(tp.mG,tp.mE).asInstanceOf[Sym[T]]
-  }
+  def fltpt[G:INT,E:INT](x: BigDecimal): Sym[FltPt[G,E]] = createConstant[G,E](x, enWarn=false)
 
 
   /** Nodes **/
@@ -189,62 +181,72 @@ trait FltPtExp extends FltPts with NumExp with BoolExp {
     def tp = fltPtType[G,E]
   }
 
-  case class FltNeg[G:INT,E:INT](x: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = -f(x) }
+  case class FltNeg[G:INT,E:INT](x: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_neg(f(x)) }
 
-  case class FltAdd[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = f(x) + f(y) }
-  case class FltSub[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = f(x) - f(y) }
-  case class FltMul[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = f(x) * f(y) }
-  case class FltDiv[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit val ctx: SrcCtx) extends FltPtOp[G,E] {
-    def mirror(f:Tx) = f(x) / f(y)
-  }
-  case class FltLt [G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = f(x) < f(y) }
-  case class FltLeq[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = f(x) <= f(y) }
-  case class FltNeq[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = infix_!=(f(x),f(y)) }
-  case class FltEql[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = infix_==(f(x),f(y)) }
+  case class FltAdd[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_add(f(x), f(y)) }
+  case class FltSub[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_sub(f(x), f(y)) }
+  case class FltMul[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_mul(f(x), f(y)) }
+  case class FltDiv[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_div(f(x), f(y)) }
+  case class FltLt [G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_lt(f(x), f(y)) }
+  case class FltLeq[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_leq(f(x), f(y)) }
+  case class FltNeq[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_neq(f(x), f(y)) }
+  case class FltEql[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_eql(f(x), f(y)) }
 
-  case class RandomFltPt[G:INT,E:INT]() extends FltPtOp[G,E] { def mirror(f:Tx) = randomFltPt[G,E] }
+  case class RandomFltPt[G:INT,E:INT]() extends FltPtOp[G,E] { def mirror(f:Tx) = flt_random[G,E]() }
 
 
-  /** Rewrite rules **/
-  rewrite[FltNeg[_,_]]{
-    case node@FltNeg(Const(c:BigDecimal)) => fltpt(-c)(node.tp)
-    case FltNeg(Def(FltNeg(x))) => x
+  /** Smart constructors **/
+  def flt_neg[G:INT,E:INT](x: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = x match {
+    case Const(c:BigDecimal) => fltpt[G,E](-c)
+    case Op(FltNeg(x)) => x
+    case _ => stage(FltNeg(x))(ctx)
   }
-  rewrite[FltAdd[_,_]]{
-    case node@FltAdd(Const(a:BigDecimal),Const(b:BigDecimal)) => fltpt(a + b)(node.tp)
+  def flt_add[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = (x,y) match {
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => fltpt[G,E](a + b)
+    case _ => stage(FltAdd(x,y))(ctx)
   }
-  rewrite[FltSub[_,_]]{
-    case node@FltSub(Const(a:BigDecimal),Const(b:BigDecimal)) => fltpt(a - b)(node.tp)
+  def flt_sub[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = (x,y) match {
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => fltpt[G,E](a - b)
+    case _ => stage(FltSub(x,y))(ctx)
   }
-  rewrite[FltMul[_,_]]{
-    case node@FltMul(Const(a:BigDecimal),Const(b:BigDecimal)) => fltpt(a * b)(node.tp)
+  def flt_mul[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = (x,y) match {
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => fltpt[G,E](a * b)
+    case _ => stage(FltMul(x,y))(ctx)
   }
-  rewrite[FltDiv[_,_]]{
-    case node@FltDiv(Const(a:BigDecimal),Const(b:BigDecimal)) => fltpt(a / b)(node.tp)
+  def flt_div[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = (x,y) match {
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => fltpt[G,E](a / b)
+    case _ => stage(FltDiv(x,y))(ctx)
   }
-  rewrite[FltLt[_,_]]{
-    case FltLt(Const(a:BigDecimal),Const(b:BigDecimal)) => bool(a < b)
+  def flt_lt[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => bool(a < b)
+    case _ => stage(FltLt(x,y))(ctx)
   }
-  rewrite[FltLeq[_,_]]{
-    case FltLeq(Const(a:BigDecimal),Const(b:BigDecimal)) => bool(a <= b)
+  def flt_leq[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => bool(a <= b)
+    case _ => stage(FltLeq(x,y))(ctx)
   }
-  rewrite[FltNeq[_,_]]{
-    case FltNeq(Const(a:BigDecimal),Const(b:BigDecimal)) => bool(a != b)
+  def flt_neq[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => bool(a != b)
+    case _ => stage(FltNeq(x,y))(ctx)
   }
-  rewrite[FltEql[_,_]]{
-    case FltEql(Const(a:BigDecimal),Const(b:BigDecimal)) => bool(a == b)
+  def flt_eql[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => bool(a == b)
+    case _ => stage(FltEql(x,y))(ctx)
+  }
+  def flt_random[G:INT,E:INT]()(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = stageSimple(RandomFltPt[G,E]())(ctx)
+
+
+  /** Other rewrite rules **/
+  override def bool_not(x: Sym[Bool])(implicit ctx: SrcCtx): Sym[Bool] = x match {
+    case Op(node@FltNeq(a,b)) => stage( FltEql(a,b)(node.mG,node.mE) )(ctx)
+    case Op(node@FltEql(a,b)) => stage( FltNeq(a,b)(node.mG,node.mE) )(ctx)
+    case Op( node@FltLt(a,b)) => stage( FltLeq(a,b)(node.mG,node.mE) )(ctx)
+    case Op(node@FltLeq(a,b)) => stage(  FltLt(a,b)(node.mG,node.mE) )(ctx)
+    case _ => super.bool_not(x)
   }
 
-  rewrite[Not] {
-    case Not(Def(node@FltNeq(x,y))) => stage( FltEql(x,y)(node.mG,node.mE) )(here).s
-    case Not(Def(node@FltEql(x,y))) => stage( FltNeq(x,y)(node.mG,node.mE) )(here).s
-    case Not(Def(node@FltLt(x,y)))  => stage( FltLeq(y,x)(node.mG,node.mE) )(here).s
-    case Not(Def(node@FltLeq(x,y))) => stage( FltLt(y,x)(node.mG,node.mE) )(here).s
-  }
 
   /** Internal methods **/
-  def randomFltPt[G:INT,E:INT](implicit ctx: SrcCtx): FltPt[G,E] = stageSimple(RandomFltPt[G,E]())(ctx)
-
   override def readable(x: Any): String = x match {
     case FltPtType(53,11) => "Double"
     case FltPtType(24,8)  => "Float"

@@ -2,7 +2,7 @@ package argon.core
 
 import scala.collection.mutable
 
-trait Effects extends Symbols { this: Statements =>
+trait Effects extends Symbols { this: Staging =>
   var context: List[Sym[_]] = _
   final def checkContext(): Unit = if (context == null) throw new UninitializedEffectContextException()
 

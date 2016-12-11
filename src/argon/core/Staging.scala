@@ -1,9 +1,10 @@
 package argon.core
 
 trait Staging extends Statements {
-  def fresh[T:Staged]: T = single[T](registerDef(NoOp[T](), Nil)(here))
-  def const[T:Staged](c: Any): T = single[T](registerDef(NoOp[T](), Nil, __const(c))(here))
-  def param[T:Staged](c: Any): T = single[T](registerDef(NoOp[T](), Nil, __param(c))(here))
+  def fresh[T:Staged]: Sym[T] = single[T](registerDef(NoOp[T](), Nil)(here))
+  def const[T:Staged](c: Any): Sym[T] = single[T](registerDef(NoOp[T](), Nil, __const(c))(here))
+  def param[T:Staged](c: Any): Sym[T] = single[T](registerDef(NoOp[T](), Nil, __param(c))(here))
+  private[argon] def __lift[A,B](x: A)(implicit l: Lift[A,B]): B = l.staged.wrap(const[B](x)(l.staged))
 
   def stageDef(d: Def)(ctx: SrcCtx): List[Sym[_]]                   = stageDefPure(d)(ctx)
   def stageDefPure(d: Def)(ctx: SrcCtx): List[Sym[_]]               = stageDefEffectful(d, Pure)(ctx)
@@ -11,31 +12,25 @@ trait Staging extends Statements {
   def stageDefSimple(d: Def)(ctx: SrcCtx): List[Sym[_]]             = stageDefEffectful(d, Simple)(ctx)
   def stageDefMutable(d: Def)(ctx: SrcCtx): List[Sym[_]]            = stageDefEffectful(d, Mutable)(ctx)
 
-  def stage[T:Staged](op: Op[T])(ctx: SrcCtx): T                   = single[T](stageDef(op)(ctx))
-  def stagePure[T:Staged](op: Op[T])(ctx: SrcCtx): T               = single[T](stageDefPure(op)(ctx))
-  def stageWrite[T:Staged](ss: Sym[_]*)(op: Op[T])(ctx: SrcCtx): T = single[T](stageDefWrite(ss:_*)(op)(ctx))
-  def stageSimple[T:Staged](op: Op[T])(ctx: SrcCtx): T             = single[T](stageDefSimple(op)(ctx))
-  def stageMutable[T:Staged](op: Op[T])(ctx: SrcCtx): T            = single[T](stageDefMutable(op)(ctx))
-  def stageEffectful[T:Staged](op: Op[T], u: Effects)(ctx: SrcCtx) = single[T](stageDefEffectful(op, u)(ctx))
+  def stage[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]                      = single[T](stageDef(op)(ctx))
+  def stagePure[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stageDefPure(op)(ctx))
+  def stageWrite[T:Staged](ss: Sym[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T]    = single[T](stageDefWrite(ss:_*)(op)(ctx))
+  def stageSimple[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefSimple(op)(ctx))
+  def stageMutable[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]               = single[T](stageDefMutable(op)(ctx))
+  def stageEffectful[T:Staged](op: Op[T], u: Effects)(ctx: SrcCtx): Sym[T] = single[T](stageDefEffectful(op, u)(ctx))
 
   private def registerDefWithCSE(d: Def)(ctx: SrcCtx): List[Sym[_]] = {
     // log(c"Checking defCache for $d")
     // log(c"Def cache: " + defCache.map{case (d,ss) => c"$d -> $ss"}.mkString("\n"))
     val syms = defCache.get(d) match {
       case Some(ss) => ss.map(_.withCtx(ctx))
-      case None => rewriteOrRegisterDef(d, Nil)(ctx)
+      case None => registerDef(d, Nil)(ctx)
     }
     defCache(d) = syms
     syms
   }
 
-  // TODO: It's rather awkward to create a Def, and then check to see if we can rewrite it to something else.
-  // Is there a better way we can isolate the rewrite rules without having an existing node?
-  private def rewriteOrRegisterDef(d: Def, extraDeps: List[Sym[_]])(ctx: SrcCtx): List[Sym[_]] = {
-    d.rewriteOrElse{ registerDef(d, extraDeps)(ctx) }.map(_.setCtx(ctx))
-  }
-
-  private def registerDef(d: Def, extraDeps: List[Sym[_]], symbol: Staged[Any] => Sym[Any] = __sym)(ctx: SrcCtx): List[Sym[_]] = {
+  private def registerDef(d: Def, extraDeps: List[Sym[_]], symbol: Staged[_] => Sym[Any] = __sym)(ctx: SrcCtx): List[Sym[Any]] = {
     val bounds = d.binds
     val dfreqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).sum)
     val freqs = d.inputs.map { in => dfreqs.getOrElse(in, 1.0f) } ++ extraDeps.distinct.map { d => 1.0f }
@@ -50,7 +45,7 @@ trait Staging extends Statements {
     log(c"  binds = $bounds")
     log(c"  freqs = ${d.inputs}")
 
-    outputs
+    outputs.map(_.setCtx(ctx))
   }
 
 
@@ -66,7 +61,7 @@ trait Staging extends Statements {
       val deps = effectDependencies(effects)
 
       def stageEffects(canCSE: Boolean): List[Sym[_]] = {
-        val ss = if (canCSE) registerDefWithCSE(d)(ctx) else rewriteOrRegisterDef(d, deps)(ctx)
+        val ss = if (canCSE) registerDefWithCSE(d)(ctx) else registerDef(d, deps)(ctx)
         ss.foreach { s =>
           effectsOf(s) = effectsOf(s) andAlso effects
           depsOf(s) = depsOf(s) ++ deps
@@ -96,5 +91,5 @@ trait Staging extends Statements {
   }
 
 
-  private def single[T:Staged](xx: List[Sym[_]]): T = wrap(xx.head.asInstanceOf[Sym[T]])
+  private def single[T:Staged](xx: List[Sym[_]]): Sym[T] = xx.head.asInstanceOf[Sym[T]]
 }

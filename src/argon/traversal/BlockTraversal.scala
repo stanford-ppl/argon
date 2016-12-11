@@ -1,4 +1,6 @@
-package argon.core
+package argon.traversal
+
+import argon.core.Statements
 
 trait BlockTraversal {
   val IR: Statements

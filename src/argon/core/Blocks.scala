@@ -1,8 +1,10 @@
 package argon.core
 
+import argon.traversal.Traversal
+
 import scala.collection.mutable
 
-trait Blocks extends Effects { self: Statements =>
+trait Blocks extends Effects { self: Staging =>
   type CompilerPass = Traversal{val IR: Blocks.this.type }
 
   // --- State
@@ -42,7 +44,7 @@ trait Blocks extends Effects { self: Statements =>
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
     */
-  def stageScope[T:Staged](block: => T): Block[T] = {
+  def stageScope[T:Staged](block: => Sym[T]): Block[T] = {
     val saveContext = context
     context = Nil
 
@@ -51,13 +53,13 @@ trait Blocks extends Effects { self: Statements =>
     context = saveContext
 
     val effects = summarizeScope(deps)
-    Block[T](unwrap(result), effects, deps)
+    Block[T](result, effects, deps)
   }
   /**
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
     * All assumptions about the current context carry over unchanged.
     */
-  def stageScopeInline[T:Staged](block: => T): Block[T] = {
+  def stageScopeInline[T:Staged](block: => Sym[T]): Block[T] = {
     val saveContext = context
     if (saveContext eq null) context = Nil
 
@@ -72,7 +74,7 @@ trait Blocks extends Effects { self: Statements =>
     val effects = summarizeScope(deps)
     context = saveContext
 
-    Block[T](unwrap(result), effects, deps)
+    Block[T](result, effects, deps)
   }
 
   /** Compiler debugging **/

@@ -1,6 +1,7 @@
 package argon.transform
 
-import argon.core.{Statements, Traversal}
+import argon.core.Statements
+import argon.traversal.Traversal
 
 trait ForwardTransformer extends Transformer with Traversal { self =>
   val IR: Statements

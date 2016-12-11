@@ -34,7 +34,7 @@ object Test2 extends Test {
   @virtualize
   def main(): Void = {
     val x = random[Boolean]
-    val y = if (x) lift(false) else lift(true)
+    val y = if (x) false else true
     println(y)
   }
 }
@@ -43,7 +43,7 @@ object Test3 extends Test {
   @virtualize
   def main(): Void = {
     val x = !random[Boolean]
-    val y = if (x) lift(false) else lift(true)
+    val y = if (x) false else true
     println(y)
   }
 }
@@ -52,7 +52,7 @@ object Test4 extends Test {
   @virtualize
   def main(): Void = {
     val x = random[Boolean] && random[Boolean]
-    val y = if (x) lift(false) else lift(true)
+    val y = if (x) false else true
     println(y)
   }
 }
@@ -81,7 +81,7 @@ object Test7 extends Test {
   def main(): Void = {
     val x = random[Boolean]
     val y = random[Boolean]
-    val z = if (x) { if (x && y) randomBool() else if (x || y) randomBool() else randomBool() } else lift(true)
+    val z = if (x) { if (x && y) random[Boolean] else if (x || y) random[Boolean] else random[Boolean] } else lift(true)
     println(z)
   }
 }
