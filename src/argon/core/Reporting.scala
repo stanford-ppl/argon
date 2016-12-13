@@ -6,6 +6,11 @@ import scala.virtualized.SourceContext
 
 trait Reporting {
   private var logstream: PrintStream = System.out
+  private var _errors = 0
+  def hadErrors = _errors > 0
+  def nErrors = _errors
+
+  def plural(x: Int, sing: String, plur: String): String = if (x == 1) sing else plur
 
   final def withLog[T](dir: String, filename: String)(blk: => T): T = {
     val save = logstream
@@ -39,22 +44,40 @@ trait Reporting {
   final def error(x: => Any): Unit = System.err.println(s"[\u001B[31merror\u001B[0m] $x")
 
   final def warn(ctx: SourceContext, x: => Any): Unit = warn(ctx.toString() + ": " + x)
-  final def error(ctx: SourceContext, x: => Any): Unit = error(ctx.toString() + ": " + x)
+  final def error(ctx: SourceContext, x: => Any): Unit = {
+    error(ctx.toString() + ": " + x)
+    _errors += 1
+  }
+
+  final def warn(ctx: SourceContext): Unit = if (ctx.lineContent.isDefined) {
+    warn(ctx.lineContent.get)
+    warn(" "*(ctx.column-1) + "^")
+  }
+  final def error(ctx: SourceContext): Unit = if (ctx.lineContent.isDefined) {
+    error(ctx.lineContent.get)
+    error(" "*(ctx.column-1) + "^")
+  }
 
   def readable(x: Any): String = x match {
     //case s:Sym         => "x"+s.id
     case c:Class[_]    => c.getName.split('$').last.replace("class ", "")
 
-    case p:Iterable[_] => if (p.isEmpty) "Nil" else p.map(readable).mkString("(", ", ", ")")
+    case p:Iterable[_] => if (p.isEmpty) "Nil" else p.map(readable).mkString("Seq(", ",", ")")
     case p:Product     => if (p.productIterator.isEmpty) c"${p.productPrefix}"
-                          else c"${p.productPrefix}${p.productIterator.toList}"
+                          else c"""${p.productPrefix}(${p.productIterator.map(readable).mkString(", ")})"""
     case _ => x.toString
   }
 
-  implicit class ReportHelper(sc: StringContext) {
-    def c(args: Any*): String = {
-      sc.raw(args.map(readable): _*).stripMargin
-    }
+  def userReadable(x: Any): String = x match {
+    case c:Class[_]    => c.getName.split('$').last.replace("class ", "")
+    case _ => x.toString
+  }
+
+  implicit class CompileReportHelper(sc: StringContext) {
+    def c(args: Any*): String = sc.raw(args.map(readable): _*).stripMargin
+  }
+  implicit class FrontendReportHelper(sc: StringContext) {
+    def u(args: Any*): String = sc.raw(args.map(userReadable): _*).stripMargin
   }
 
 }

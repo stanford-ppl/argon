@@ -10,6 +10,12 @@ object utils {
   def escapeString(raw: String): String = "\"" + escapeJava(raw) + "\""
   def escapeChar(raw: Char): String = "'"+escapeJava(raw.toString)+"'"
 
+  def escapeConst(x: Any): String = x match {
+    case c: String => escapeString(c)
+    case c: Char => escapeChar(c)
+    case c => c.toString
+  }
+
   def deleteExts(path: String, ext: String) = {
     val files: Array[String] = Option(new File(path).list).map(_.filter(_.endsWith(ext))).getOrElse(Array.empty)
     files.foreach{filename =>

@@ -1,6 +1,6 @@
 package argon.ops
 
-trait FixPts extends Nums with Bools with CustomBitWidths {
+trait FixPts extends Nums with CustomBitWidths with Casts {
   type FixPt[S,I,F] <: FixPtOps[S,I,F]
   type Int64 = FixPt[TRUE,_64,_0]
   type Int32 = FixPt[TRUE,_32,_0]
@@ -26,7 +26,7 @@ trait FixPts extends Nums with Bools with CustomBitWidths {
   }
 
   implicit class IntFixPtOps(x: Int) {
-    private def lift[S:BOOL,I:INT,F:INT]: FixPt[S,I,F] = int2fixpt[S,I,F](x)
+    private def lift[S:BOOL,I:INT,F:INT](implicit ctx: SrcCtx): FixPt[S,I,F] = int2fixpt[S,I,F](x)
     def + [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] + y
     def - [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] - y
     def * [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] * y
@@ -40,7 +40,7 @@ trait FixPts extends Nums with Bools with CustomBitWidths {
     def % [S:BOOL,I:INT](y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = lift[S,I,_0] % y
   }
   implicit class LongFixPtOps(x: Long) {
-    private def lift[S:BOOL,I:INT,F:INT]: FixPt[S,I,F] = long2fixpt[S,I,F](x)
+    private def lift[S:BOOL,I:INT,F:INT](implicit ctx: SrcCtx): FixPt[S,I,F] = long2fixpt[S,I,F](x)
     def + [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] + y
     def - [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] - y
     def * [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] * y
@@ -55,15 +55,15 @@ trait FixPts extends Nums with Bools with CustomBitWidths {
   }
 
   implicit object Int2FixPt extends Lift[Int,Int32] { val staged = fixPtType[TRUE,_32,_0] }
-  implicit object Long2FixPt extends Lift[Int,Int64] { val staged = fixPtType[TRUE,_64,_0] }
+  implicit object Long2FixPt extends Lift[Long,Int64] { val staged = fixPtType[TRUE,_64,_0] }
 
   implicit def fixPtType[S:BOOL,I:INT,F:INT]: Num[FixPt[S,I,F]]
-  implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F]
-  implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F]
+  implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int)(implicit ctx: SrcCtx): FixPt[S,I,F]
+  implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long)(implicit ctx: SrcCtx): FixPt[S,I,F]
 
   def mod[S:BOOL,I:INT](x: FixPt[S,I,_0], y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0]
 }
-trait FixPtApi extends FixPts with NumApi with BoolApi {
+trait FixPtApi extends FixPts with NumApi with CastApi {
   type Long  = Int64
   type Int   = Int32
   type Short = Int16
@@ -71,7 +71,7 @@ trait FixPtApi extends FixPts with NumApi with BoolApi {
 }
 
 
-trait FixPtExp extends FixPts with NumExp with BoolExp {
+trait FixPtExp extends FixPts with NumExp with CastExp {
   /** API **/
   case class FixPt[S:BOOL,I:INT,F:INT](s: Sym[FixPt[S,I,F]]) extends FixPtOps[S,I,F] {
     def unary_-(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_neg(this.s))
@@ -101,14 +101,17 @@ trait FixPtExp extends FixPts with NumExp with BoolExp {
     override def stagedClass = classOf[FixPt[S,I,F]]
     override def isPrimitive = true
 
-    lazy val zero = int2fixpt[S,I,F](0)
-    lazy val one = int2fixpt[S,I,F](1)
+    override def zero(implicit ctx: SrcCtx) = int2fixpt[S,I,F](0)
+    override def one(implicit ctx: SrcCtx) = int2fixpt[S,I,F](1)
     override def random(implicit ctx: SrcCtx): FixPt[S, I, F] = FixPt[S,I,F](fix_random[S,I,F]())
 
     override def negate(x: FixPt[S,I,F])(implicit ctx: SrcCtx) = -x
     override def plus(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x + y
     override def minus(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x - y
     override def times(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x * y
+
+    override def lessThan(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x < y
+    override def equal(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = infix_==(x, y)
 
     def isSigned: Boolean = implicitly[BOOL[S]].v
     def intBits: Int = implicitly[INT[I]].v
@@ -135,32 +138,23 @@ trait FixPtExp extends FixPts with NumExp with BoolExp {
   }
 
   /** Constant Lifting **/
-  private def createConstant[S:BOOL,I:INT,F:INT](x: Any, enWarn: Boolean = true): Sym[FixPt[S,I,F]] = {
+  private def createConstant[S:BOOL,I:INT,F:INT](x: Any, enWarn: Boolean = true)(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = {
     val sign = BOOL[S].v
     val ibits = INT[I].v
     val fbits = INT[F].v
 
-    val s = if (sign) "signed" else "unsigned"
-    val t = s"$ibits.$fbits"
-    val tp = s"$s $t fixed point"
-    val FXP = readable(fixPtType[S,I,F])
+    val tp = fixPtType[S,I,F]
 
     val MAX_INTEGRAL_VALUE = if (sign) (BigInt(1) << (ibits-1)) - 1 else (BigInt(1) << ibits) - 1
     val MIN_INTEGRAL_VALUE = if (sign) -(BigInt(1) << (ibits-1)) else BigInt(0)
 
     def makeInteger(v: BigInt): Sym[FixPt[S,I,F]] = {
       val clampedV = if (v > MAX_INTEGRAL_VALUE) {
-        if (enWarn) {
-          warn(s"Loss of precision detected: $tp cannot represent $x. Using maximum $MAX_INTEGRAL_VALUE.")
-          warn(s"Use the explicit annotation $x.as[$FXP] to clear this warning")
-        }
+        if (enWarn) new LiftOverflowError(tp, x)(ctx)
         MAX_INTEGRAL_VALUE
       }
       else if (v < MIN_INTEGRAL_VALUE) {
-        if (enWarn) {
-          warn(s"Loss of precision detected: $tp cannot represent $x. Using minimum $MIN_INTEGRAL_VALUE.")
-          warn(s"Use the explicit annotation $x.as[$FXP] to clear this warning")
-        }
+        if (enWarn) new LiftUnderflowError(tp, x)(ctx)
         MIN_INTEGRAL_VALUE
       }
       else v
@@ -177,10 +171,39 @@ trait FixPtExp extends FixPts with NumExp with BoolExp {
         sys.exit()
     }
   }
-  implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
-  implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
+  implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
+  implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
+  override def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l match {
+    case Int2FixPt => FixPt(createConstant[TRUE,_32,_0](x)).asInstanceOf[B]
+    case Long2FixPt => FixPt(createConstant[TRUE,_32,_0](x)).asInstanceOf[B]
+    case _ => super.__lift(x)
+  }
 
-  def fixpt[S:BOOL,I:INT,F:INT](x: BigInt): Sym[FixPt[S,I,F]] = createConstant[S,I,F](x, enWarn=false)
+  def fixpt[S:BOOL,I:INT,F:INT](x: BigInt)(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = createConstant[S,I,F](x, enWarn=false)
+
+  override protected def cast[T:Num,R:Num](x: T)(implicit ctx: SrcCtx): R = (num[T],num[R]) match {
+    case (a:FixPtType[s,i,f],b:FixPtType[s2,i2,f2]) =>
+      implicit val mS: BOOL[s] = a.mS
+      implicit val mI: INT[i] = a.mI
+      implicit val mF: INT[f] = a.mF
+      implicit val mS2: BOOL[s2] = b.mS
+      implicit val mI2: INT[i2] = b.mI
+      implicit val mF2: INT[f2] = b.mF
+      wrap(fix_convert[s,i,f,s2,i2,f2](x.asInstanceOf[FixPt[s,i,f]].s)).asInstanceOf[R]
+
+    case _ => super.cast[T,R](x)
+  }
+
+  override protected def castLift[R:Num](x: Any)(implicit ctx: SrcCtx): R = num[R] match {
+    case tp:FixPtType[s,i,f] =>
+      implicit val mS: BOOL[s] = tp.mS
+      implicit val mI: INT[i] = tp.mI
+      implicit val mF: INT[f] = tp.mF
+      FixPt(createConstant[s,i,f](x, enWarn = false)).asInstanceOf[R]
+    case _ => super.castLift[R](x)
+  }
+
+
 
   /** IR Nodes **/
   abstract class FixPtOp[S:BOOL,I:INT,F:INT] extends Op[FixPt[S,I,F]] {
@@ -213,6 +236,9 @@ trait FixPtExp extends FixPts with NumExp with BoolExp {
 
   case class RandomFixPt[S:BOOL,I:INT,F:INT]() extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_random[S,I,F]() }
 
+  case class FixConvert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Sym[FixPt[S,I,F]]) extends FixPtOp[S2,I2,F2] {
+    def mirror(f:Tx) = fix_convert[S,I,F,S2,I2,F2](x)
+  }
 
 
   /** Smart constructors **/
@@ -291,6 +317,10 @@ trait FixPtExp extends FixPts with NumExp with BoolExp {
   }
   def fix_random[S:BOOL,I:INT,F:INT]()(implicit ctx: SrcCtx): Sym[FixPt[S,I,F]] = stageSimple(RandomFixPt[S,I,F]())(ctx)
 
+  def fix_convert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Sym[FixPt[_,_,_]])(implicit ctx: SrcCtx): Sym[FixPt[S2,I2,F2]] = {
+    stage(FixConvert[S,I,F,S2,I2,F2](x.asInstanceOf[Sym[FixPt[S,I,F]]]))(ctx)
+  }
+
 
   /** Rewrite rules **/
   override def bool_not(x: Sym[Bool])(implicit ctx: SrcCtx): Sym[Bool] = x match {
@@ -304,12 +334,15 @@ trait FixPtExp extends FixPts with NumExp with BoolExp {
 
   /** Internal methods **/
   override def readable(x: Any): String = x match {
-    case FixPtType(true,64,0) => s"Long"
-    case FixPtType(true,32,0) => s"Int"
-    case FixPtType(true,16,0) => s"Short"
-    case FixPtType(true,8,0)  => s"Char"
     case FixPtType(sign,ibits,fbits) => s"FixPt[$sign,$ibits,$fbits]"
     case _ => super.readable(x)
+  }
+
+  override def userReadable(x: Any): String = x match {
+    case FixPtType(true,32,0) => "Int"
+    case FixPtType(true,64,0) => "Long"
+    case tp:FixPtType[_,_,_] => u"FixPt[${tp.mS},${tp.mI},${tp.mF}]"
+    case _ => super.userReadable(x)
   }
 }
 

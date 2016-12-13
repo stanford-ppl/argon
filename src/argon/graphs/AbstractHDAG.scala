@@ -1,23 +1,17 @@
 package argon.graphs
 
-import argon.core.CompilerException
+import argon.core.Exceptions
 import argon.core.Reporting
 
 import scala.collection.mutable
 
-trait AbstractHDAG extends Reporting {
+trait AbstractHDAG extends Exceptions {
   type EdgeId = Int
   type NodeId = Int
   type Triple = (Iterable[Edge], Node, Iterable[Edge]) // outputs, node, inputs
 
   var curEdgeId : EdgeId = 0
   var curNodeId : NodeId = 0
-
-  class RecursiveScheduleException(result: Any, xs: List[String]) extends
-    CompilerException(c"Recursive schedule while scheduling result $result", {
-      error(c"Recursive schedule while scheduling result $result:")
-      xs.foreach{x => error(s"  $x") }
-    })
 
 
   /** Recursive (cyclic) graphs are unsupported **/

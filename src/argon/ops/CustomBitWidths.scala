@@ -1,7 +1,8 @@
 package argon.ops
+import argon.core.Reporting
 
 /** Hack for working with customized bit widths, since Scala doesn't support integers as template parameters **/
-trait CustomBitWidths {
+trait CustomBitWidths extends Reporting {
   def BOOL[T:BOOL] = implicitly[BOOL[T]]
   def INT[T:INT] = implicitly[INT[T]]
 
@@ -75,5 +76,12 @@ trait CustomBitWidths {
   trait _62; implicit object INT62 extends INT[_62] { val v = 62 }
   trait _63; implicit object INT63 extends INT[_63] { val v = 63 }
   trait _64; implicit object INT64 extends INT[_64] { val v = 64 }
+
+  override def userReadable(x: Any): String = x match {
+    case x:INT[_] => s"_${x.v}"
+    case x:BOOL[_] => if (x.v) "TRUE" else "FALSE"
+    case _ => super.userReadable(x)
+  }
+
 }
 

@@ -27,14 +27,14 @@ trait Base extends EmbeddedControls with Reporting {
   @implicitNotFound(msg = "Cannot find way to lift type ${A}. Try adding explicit lift(_) calls to return value(s).")
   trait Lift[A,B] {
     def staged: Staged[B]
-    def lift(x: A): B = __lift(x)(this)
+    def lift(x: A)(implicit ctx: SrcCtx): B = __lift(x)(ctx, this)
   }
 
-  private[argon] def __lift[A,B](x: A)(implicit l: Lift[A,B]): B
-  final def lift[A,B](x: A)(implicit l: Lift[A,B]): B = l.lift(x)
+  def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B
+  final def lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.lift(x)
 
   implicit def selfLift[T:Staged]: Lift[T,T] = new Lift[T,T] {
     def staged = implicitly[Staged[T]]
-    override def lift(x: T): T = x
+    override def lift(x: T)(implicit ctx: SrcCtx): T = x
   }
 }

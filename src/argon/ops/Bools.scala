@@ -12,7 +12,7 @@ trait Bools extends Base with BitsOps {
   }
 
   implicit class BooleanBoolOps(x: Boolean) {
-    private def lift = boolean2bool(x)
+    private def lift(implicit ctx: SrcCtx) = boolean2bool(x)
     def &&(y: Bool)(implicit ctx: SrcCtx): Bool = lift && y
     def ||(y: Bool)(implicit ctx: SrcCtx): Bool = lift || y
     def ^ (y: Bool)(implicit ctx: SrcCtx): Bool = lift ^ y
@@ -20,7 +20,7 @@ trait Bools extends Base with BitsOps {
 
   /** Internal **/
   implicit object Boolean2Bool extends Lift[Boolean,Bool] { val staged = BoolType }
-  implicit def boolean2bool(x: Boolean): Bool = lift(x)
+  implicit def boolean2bool(x: Boolean)(implicit ctx: SrcCtx): Bool = lift(x)
   implicit val BoolType: Bits[Bool]
 }
 
@@ -47,13 +47,13 @@ trait BoolExp extends Bools with BitsExp {
     override def stagedClass = classOf[Bool]
     override def isPrimitive = true
 
-    lazy val zero: Bool = boolean2bool(false)
-    lazy val one: Bool = boolean2bool(true)
-    def random(implicit ctx: SrcCtx): Bool = Bool(bool_random())
+    override def zero(implicit ctx: SrcCtx): Bool = boolean2bool(false)
+    override def one(implicit ctx: SrcCtx): Bool = boolean2bool(true)
+    override def random(implicit ctx: SrcCtx): Bool = Bool(bool_random())
   }
 
   /** Constant Lifting **/
-  def bool(x: Boolean): Sym[Bool] = const[Bool](x)
+  def bool(x: Boolean)(implicit ctx: SrcCtx): Sym[Bool] = const[Bool](x)
 
 
   /** IR Nodes **/

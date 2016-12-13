@@ -1,7 +1,7 @@
 package argon.traversal
 
 import argon.core.Staging
-import argon.utils.{escapeChar, escapeString}
+import argon.utils.escapeConst
 
 // Print IR + metadata for each encountered symbol
 trait IRPrinter extends Traversal {
@@ -17,14 +17,8 @@ trait IRPrinter extends Traversal {
 
   override def visit(lhs: Sym[_], rhs: Op[_]) = {
     rhs.inputs.foreach{
-      case sym@Const(c: String) =>
-        msgs(c"$sym = ${escapeString(c)}")
-        strMeta(sym)
-      case sym@Const(c: Char) =>
-        msgs(c"$sym = ${escapeChar(c)}")
-        strMeta(sym)
       case sym@Const(c) =>
-        msgs(c"$sym = $c")
+        msgs(c"$sym = ${escapeConst(c)} : ${c.getClass}")
         strMeta(sym)
       case _ =>
     }

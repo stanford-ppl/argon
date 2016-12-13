@@ -90,4 +90,13 @@ trait Symbols extends Base with StagedTypes with Metadata { self: Staging =>
 
     case _ => super.readable(x)
   }
+
+  override def userReadable(x: Any): String = x match {
+    case t: Staged[_] =>
+      val tArgs = if (t.typeArguments.nonEmpty)
+        t.typeArguments.map(userReadable).mkString("[",",","]")
+      else ""
+      userReadable(t.stagedClass) + tArgs
+    case _ => super.userReadable(x)
+  }
 }

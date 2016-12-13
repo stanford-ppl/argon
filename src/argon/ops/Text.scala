@@ -6,10 +6,13 @@ trait Texts extends Base with BoolApi {
   type Text <: TextOps
   protected trait TextOps {
     def +(that: Text)(implicit ctx: SrcCtx): Text
+    def +[T:Staged](that: T)(implicit ctx: SrcCtx): Text
+    def +(that: String)(implicit ctx: SrcCtx): Text = this + string2text(that)
     def !=(that: Text)(implicit ctx: SrcCtx): Bool
     def ==(that: Text)(implicit ctx: SrcCtx): Bool
     def equals(that: Text)(implicit ctx: SrcCtx): Bool
   }
+  def infix_+[R:Staged](x1: String, x2: R)(implicit ctx: SrcCtx): Text
 
   implicit object String2Text extends Lift[String,Text] { val staged = TextType }
   implicit def string2text(x: String): Text = lift(x)
@@ -25,6 +28,7 @@ trait TextExp extends Texts with BoolExp {
   /** API **/
   case class Text(s: Sym[Text]) extends TextOps {
     def +(that: Text)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, that.s))
+    def +[T:Staged](that: T)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, textify(that).s))
     def !=(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_differ(this.s, that.s))
     def ==(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
     def equals(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
@@ -35,8 +39,11 @@ trait TextExp extends Texts with BoolExp {
   /** Virtualized methods **/
   def infix_toString[S:Staged](x: S)(implicit ctx: SrcCtx): Text = textify(x)
   def infix_+[R:Staged](x1: String, x2: R)(implicit ctx: SrcCtx): Text = string2text(x1) + textify(x2)
-  def infix_+[L:Staged](x1: L, x2: String)(implicit ctx: SrcCtx): Text = textify(x1) + string2text(x2)
-  def infix_+[L:Staged,R:Staged](x1: L, x2: R)(implicit ctx: SrcCtx): Text = textify(x1) + textify(x2)
+
+  // These are currently never created...
+  // def infix_+[L:Staged](x1: L, x2: String)(implicit ctx: SrcCtx): Text = textify(x1) + string2text(x2)
+  // def infix_+[L:Staged,R:Staged](x1: L, x2: R)(implicit ctx: SrcCtx): Text = textify(x1) + textify(x2)
+
   def infix_==(x: Text, a: Any)(implicit ctx: SrcCtx): Bool = a match {
     case y: Text   => x == y
     case s: String => x == string2text(s)

@@ -15,33 +15,35 @@ trait Effects extends Symbols { this: Staging =>
   }
 
   case class Effects(
+    cold:    Boolean = false,
     simple:  Boolean = false,
     global:  Boolean = false,
     mutable: Boolean = false,
     reads:   Set[Sym[_]] = Set.empty,
     writes:  Set[Sym[_]] = Set.empty
   ) extends Metadata[Effects] {
-    def mirror(f:Tx) = this.copy(reads = f.tx(reads), writes = f.tx(writes))
-
-    private def combine(that: Effects, m1: Boolean, m2:Boolean) = Effects(
-      simple  = this.simple || that.simple,
-      global  = this.global || that.global,
+    def mirror(f: Tx) = this.copy(reads = f.tx(reads), writes = f.tx(writes))
+    private def combine(that: Effects, m1: Boolean, m2: Boolean) = Effects(
+      cold = this.cold || that.cold,
+      simple = this.simple || that.simple,
+      global = this.global || that.global,
       mutable = (m1 && this.mutable) || (m2 && that.mutable),
-      reads   = this.reads union that.reads,
-      writes  = this.writes union that.writes
+      reads = this.reads union that.reads,
+      writes = this.writes union that.writes
     )
-    def orElse(that: Effects) = this.combine(that, m1=false,m2=false)
-    def andAlso(that: Effects) = this.combine(that, m1=true,m2=true)
-    def andThen(that: Effects) = this.combine(that, m1=false,m2=true)
+    def orElse(that: Effects) = this.combine(that, m1 = false, m2 = false)
+    def andAlso(that: Effects) = this.combine(that, m1 = true, m2 = true)
+    def andThen(that: Effects) = this.combine(that, m1 = false, m2 = true)
     def star = this.copy(mutable = false) // Pure orElse this
 
     def isPure = !simple && !global && !mutable && reads.isEmpty && writes.isEmpty
     def isMutable = mutable
     def isIdempotent = !simple && !global && !mutable && writes.isEmpty
-    def mayWrite(ss: Set[Sym[_]]) = global || ss.exists{s => writes contains s}
-    def mayRead(ss: Set[Sym[_]]) = global || ss.exists{s => reads contains s}
+    def mayWrite(ss: Set[Sym[_]]) = global || ss.exists { s => writes contains s }
+    def mayRead(ss: Set[Sym[_]]) = global || ss.exists { s => reads contains s }
   }
   val Pure    = Effects()
+  val Cold    = Effects(cold = true)
   val Simple  = Effects(simple = true)
   val Global  = Effects(global = true)
   val Mutable = Effects(mutable = true)
@@ -92,20 +94,22 @@ trait Effects extends Symbols { this: Staging =>
   }
 
   /** Compiler debugging **/
-  override def readable(a: Any) = a match {
+  override def readable(a: Any): String = a match {
     case d: Dependencies => c"${d.deps}"
     case e: Effects =>
       if (e == Pure) "Pure"
+      else if (e == Cold) "Cold"
       else if (e == Mutable) "Mutable"
       else if (e == Simple)  "Simple"
       else if (e == Global)  "Global"
       else {
         "(" +
-           ((if (e.simple) List(c"simple=${e.simple}") else Nil) ++
+           ((if (e.cold) List(c"cold=${e.cold}") else Nil) ++
+            (if (e.simple) List(c"simple=${e.simple}") else Nil) ++
             (if (e.global) List(c"global=${e.global}") else Nil) ++
             (if (e.mutable)  List("mutable") else Nil) ++
-            (if (e.reads.nonEmpty) List(c"reads=${e.reads}") else Nil) ++
-            (if (e.writes.nonEmpty) List(c"writes=${e.writes}") else Nil)).mkString(", ") + ")"
+            (if (e.reads.nonEmpty) List(c"""reads={${e.reads.map(readable).mkString(",")}}""") else Nil) ++
+            (if (e.writes.nonEmpty) List(c"""writes={${e.writes.map(readable).mkString(",")}}""") else Nil)).mkString(", ") + ")"
       }
     case _ => super.readable(a)
   }

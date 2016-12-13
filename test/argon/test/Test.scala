@@ -1,14 +1,21 @@
 package argon.test
 
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Matchers, ShouldMatchers}
+
 import scala.virtualized.{SourceContext, virtualize}
 import argon.{AppCore, CompilerCore, Config}
 import argon.ops._
 import argon.utils.deleteExts
 import argon.traversal.IRPrinter
 
-trait App extends AppCore with BoolApi with IfThenElseApi with PrintApi with TextApi with VoidApi with FixPtApi
-trait Compiler extends CompilerCore with BoolExp with IfThenElseExp with PrintExp with TextExp with FixPtExp { self =>
+trait App extends AppCore
+  with BoolApi with IfThenElseApi with PrintApi with TextApi with MixedNumericApi
+
+trait Compiler extends CompilerCore
+  with BoolExp with IfThenElseExp with PrintExp with TextExp with MixedNumericExp { self =>
+
+  override val testbench = true
+
   lazy val printer = new IRPrinter { override val IR: Compiler.this.type = Compiler.this }
   printer.verbosity = 3
 
@@ -91,9 +98,11 @@ object Test8 extends Test {
   def main(): Void = {
     val x = random[Int]
     val y = random[Int]
+    val z = if (x == y) 32 else 0
     println(x + 0)
     println(0 + x)
     println(-(-x))
+    println(z)
   }
 }
 
@@ -106,9 +115,33 @@ object Test9 extends Test {
   }
 }
 
+object OverMaxLiftTest extends Test {
+  @virtualize
+  def main(): Void = {
+    val c = 2147483648L
+    val x = random[Int] + c
+    println(x)
+  }
+}
+
+object SimpleCastTest extends Test {
+  @virtualize
+  def main(): Void = {
+
+    val x = random[Int]
+    val y = x.to[Float]
+
+    val m = random[Float]
+    val n = m.to[Int]
+    println(x)
+    println(y)
+    println(m)
+    println(n)
+  }
+}
 
 
-class Testbench extends FlatSpec {
+class Testbench extends FlatSpec with Matchers with argon.core.Exceptions {
   val noargs = Array[String]()
   deleteExts(Config.logDir, ".log")
 
@@ -121,5 +154,6 @@ class Testbench extends FlatSpec {
   "Test7" should "compile" in { Test7.main(noargs) }
   "Test8" should "compile" in { Test8.main(noargs) }
   "Test9" should "compile" in { Test9.main(noargs) }
-
+  "SimpleCaseTest" should "compile" in { SimpleCastTest.main(noargs) }
+  a [TestBenchFailed] should be thrownBy { OverMaxLiftTest.main(noargs) }
 }

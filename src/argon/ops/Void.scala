@@ -4,7 +4,7 @@ import argon.core.{Base,Staging}
 trait Voids extends Base {
   type Void
   implicit object Unit2Void extends Lift[Unit,Void] { val staged = VoidType }
-  implicit def unit2void(x: Unit): Void = lift(x)
+  implicit def unit2void(x: Unit)(implicit ctx: SrcCtx): Void = lift(x)
   implicit val VoidType: Staged[Void]
 }
 trait VoidApi extends Voids {
@@ -22,7 +22,7 @@ trait VoidExp extends Voids with Staging {
     override def isPrimitive = true
   }
 
-  def void(x: Unit): Sym[Void] = const[Void](x)
+  def void(x: Unit)(implicit ctx: SrcCtx): Sym[Void] = const[Void](x)
 }
 
 

@@ -1,10 +1,14 @@
 package argon.core
+import argon.utils.escapeConst
 
 trait Staging extends Statements {
   def fresh[T:Staged]: Sym[T] = single[T](registerDef(NoOp[T](), Nil)(here))
-  def const[T:Staged](c: Any): Sym[T] = single[T](registerDef(NoOp[T](), Nil, __const(c))(here))
-  def param[T:Staged](c: Any): Sym[T] = single[T](registerDef(NoOp[T](), Nil, __param(c))(here))
-  private[argon] def __lift[A,B](x: A)(implicit l: Lift[A,B]): B = l.staged.wrap(const[B](x)(l.staged))
+  def const[T:Staged](c: Any)(implicit ctx: SrcCtx): Const[T] = {
+    log(c"Making constant ${stg[T]} from ${escapeConst(c)} : ${c.getClass}")
+    single[T](registerDef(NoOp[T](), Nil, __const(c))(here)).asInstanceOf[Const[T]]
+  }
+  def param[T:Staged](c: Any)(implicit ctx: SrcCtx): Param[T] = single[T](registerDef(NoOp[T](), Nil, __param(c))(ctx)).asInstanceOf[Param[T]]
+  def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.staged.wrap(const[B](x)(l.staged,ctx))
 
   def stageDef(d: Def)(ctx: SrcCtx): List[Sym[_]]                   = stageDefPure(d)(ctx)
   def stageDefPure(d: Def)(ctx: SrcCtx): List[Sym[_]]               = stageDefEffectful(d, Pure)(ctx)
@@ -83,8 +87,8 @@ trait Staging extends Statements {
         val aliases = mutableAliases(d) diff effects.writes
         val immutables = effects.writes.filterNot(isMutable)
 
-        if (aliases.nonEmpty) throw IllegalMutableSharingError(z.head, aliases)(ctx)
-        if (immutables.nonEmpty) throw IllegalMutationError(z.head, immutables)(ctx)
+        if (aliases.nonEmpty) new IllegalMutableSharingError(z.head, aliases)(ctx)
+        if (immutables.nonEmpty) new IllegalMutationError(z.head, immutables)(ctx)
         z
       }
     }
