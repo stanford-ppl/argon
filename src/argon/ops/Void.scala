@@ -1,28 +1,28 @@
 package argon.ops
 import argon.core.{Base,Staging}
 
-trait Voids extends Base {
+trait VoidOps extends Base {
   type Void
   implicit object Unit2Void extends Lift[Unit,Void] { val staged = VoidType }
   implicit def unit2void(x: Unit)(implicit ctx: SrcCtx): Void = lift(x)
   implicit val VoidType: Staged[Void]
 }
-trait VoidApi extends Voids {
+trait VoidApi extends VoidOps {
   type Unit = Void
 }
 
-trait VoidExp extends Voids with Staging {
+trait VoidExp extends VoidOps with Staging {
   case class Void(s: Sym[Void])
 
   implicit object VoidType extends Staged[Void] {
-    override def unwrap(x: Void) = x.s
-    override def wrap(x: Sym[Void]) = Void(x)
+    override def unwrapped(x: Void) = x.s
+    override def wrapped(x: Sym[Void]) = Void(x)
     override def typeArguments = Nil
     override def stagedClass = classOf[Void]
     override def isPrimitive = true
   }
 
-  def void(x: Unit)(implicit ctx: SrcCtx): Sym[Void] = const[Void](x)
+  def void(x: Unit)(implicit ctx: SrcCtx): Sym[Void] = constant[Void](x)
 }
 
 

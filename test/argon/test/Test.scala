@@ -115,11 +115,31 @@ object Test9 extends Test {
   }
 }
 
-object OverMaxLiftTest extends Test {
+object OverflowLiftTest extends Test {
+  @virtualize
+  def main(): Void = {
+    type Nibble = FixPt[TRUE,_4,_0]
+
+    val c = 100
+    val x = random[Nibble] + c
+    println(x)
+  }
+}
+object UnderflowLiftTest extends Test {
+  @virtualize
+  def main(): Void = {
+    type Nibble = FixPt[TRUE,_4,_0]
+    val c = -100
+    val x = random[Nibble] + c
+    println(x)
+  }
+}
+
+object IgnoreOverflowTest extends Test {
   @virtualize
   def main(): Void = {
     val c = 2147483648L
-    val x = random[Int] + c
+    val x = random[Int] + c.as[Int]
     println(x)
   }
 }
@@ -155,5 +175,7 @@ class Testbench extends FlatSpec with Matchers with argon.core.Exceptions {
   "Test8" should "compile" in { Test8.main(noargs) }
   "Test9" should "compile" in { Test9.main(noargs) }
   "SimpleCaseTest" should "compile" in { SimpleCastTest.main(noargs) }
-  a [TestBenchFailed] should be thrownBy { OverMaxLiftTest.main(noargs) }
+  a [TestBenchFailed] should be thrownBy { OverflowLiftTest.main(noargs) }
+  a [TestBenchFailed] should be thrownBy { UnderflowLiftTest.main(noargs) }
+  "IgnoreOverflowTest" should "compile" in { IgnoreOverflowTest.main(noargs) }
 }

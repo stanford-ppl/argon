@@ -11,16 +11,16 @@ trait CustomBitWidths extends Reporting {
 
   trait TRUE;  implicit object BOOL_TRUE extends BOOL[TRUE] { val v = true }
   trait FALSE; implicit object BOOL_FALSE extends BOOL[FALSE] { val v = false }
-  trait _0; implicit object INT0 extends INT[_0] { val v = 0 }
-  trait _1; implicit object INT1 extends INT[_1] { val v = 1 }
-  trait _2; implicit object INT2 extends INT[_2] { val v = 2 }
-  trait _3; implicit object INT3 extends INT[_3] { val v = 3 }
-  trait _4; implicit object INT4 extends INT[_4] { val v = 4 }
-  trait _5; implicit object INT5 extends INT[_5] { val v = 5 }
-  trait _6; implicit object INT6 extends INT[_6] { val v = 6 }
-  trait _7; implicit object INT7 extends INT[_7] { val v = 7 }
-  trait _8; implicit object INT8 extends INT[_8] { val v = 8 }
-  trait _9; implicit object INT9 extends INT[_9] { val v = 9 }
+  trait _0;  implicit object INT0  extends INT[_0]  { val v = 0  }
+  trait _1;  implicit object INT1  extends INT[_1]  { val v = 1  }
+  trait _2;  implicit object INT2  extends INT[_2]  { val v = 2  }
+  trait _3;  implicit object INT3  extends INT[_3]  { val v = 3  }
+  trait _4;  implicit object INT4  extends INT[_4]  { val v = 4  }
+  trait _5;  implicit object INT5  extends INT[_5]  { val v = 5  }
+  trait _6;  implicit object INT6  extends INT[_6]  { val v = 6  }
+  trait _7;  implicit object INT7  extends INT[_7]  { val v = 7  }
+  trait _8;  implicit object INT8  extends INT[_8]  { val v = 8  }
+  trait _9;  implicit object INT9  extends INT[_9]  { val v = 9  }
   trait _10; implicit object INT10 extends INT[_10] { val v = 10 }
   trait _11; implicit object INT11 extends INT[_11] { val v = 11 }
   trait _12; implicit object INT12 extends INT[_12] { val v = 12 }
@@ -78,6 +78,7 @@ trait CustomBitWidths extends Reporting {
   trait _64; implicit object INT64 extends INT[_64] { val v = 64 }
 
   override def userReadable(x: Any): String = x match {
+    // scalac warning here: "The outer reference in this type test cannot be checked at run time" seems to be incorrect
     case x:INT[_] => s"_${x.v}"
     case x:BOOL[_] => if (x.v) "TRUE" else "FALSE"
     case _ => super.userReadable(x)

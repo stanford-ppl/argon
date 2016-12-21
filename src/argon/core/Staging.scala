@@ -3,12 +3,12 @@ import argon.utils.escapeConst
 
 trait Staging extends Statements {
   def fresh[T:Staged]: Sym[T] = single[T](registerDef(NoOp[T](), Nil)(here))
-  def const[T:Staged](c: Any)(implicit ctx: SrcCtx): Const[T] = {
+  def constant[T:Staged](c: Any)(implicit ctx: SrcCtx): Const[T] = {
     log(c"Making constant ${stg[T]} from ${escapeConst(c)} : ${c.getClass}")
     single[T](registerDef(NoOp[T](), Nil, __const(c))(here)).asInstanceOf[Const[T]]
   }
-  def param[T:Staged](c: Any)(implicit ctx: SrcCtx): Param[T] = single[T](registerDef(NoOp[T](), Nil, __param(c))(ctx)).asInstanceOf[Param[T]]
-  def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.staged.wrap(const[B](x)(l.staged,ctx))
+  def parameter[T:Staged](c: Any)(implicit ctx: SrcCtx): Param[T] = single[T](registerDef(NoOp[T](), Nil, __param(c))(ctx)).asInstanceOf[Param[T]]
+  def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.staged.wrapped(constant[B](x)(l.staged,ctx))
 
   def stageDef(d: Def)(ctx: SrcCtx): List[Sym[_]]                   = stageDefPure(d)(ctx)
   def stageDefPure(d: Def)(ctx: SrcCtx): List[Sym[_]]               = stageDefEffectful(d, Pure)(ctx)

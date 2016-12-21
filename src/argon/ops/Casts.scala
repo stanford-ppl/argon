@@ -1,6 +1,6 @@
 package argon.ops
 
-trait Casts extends Nums {
+trait CastOps extends NumOps {
   implicit class CastOps[T:Num](x: T) {
     def to[R:Num](implicit ctx: SrcCtx): R = cast[T,R](x)
   }
@@ -12,10 +12,10 @@ trait Casts extends Nums {
   protected def castLift[R:Num](x: Any)(implicit ctx: SrcCtx): R
 }
 
-trait CastApi extends Casts with NumApi
+trait CastApi extends CastOps with NumApi
 
 
-trait CastExp extends Casts with NumExp {
+trait CastExp extends CastOps with NumExp {
 
   protected def cast[T:Num,R:Num](x: T)(implicit ctx: SrcCtx): R = (num[T],num[R]) match {
     case (a,b) if a == b => x.asInstanceOf[R]

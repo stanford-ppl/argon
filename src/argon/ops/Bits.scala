@@ -19,6 +19,7 @@ trait BitsExp extends BitsOps with Staging {
     def one(implicit ctx: SrcCtx): T
     def random(implicit ctx: SrcCtx): T
     //def ones: T
+    def length: Int
   }
 
   def zero[T:Bits](implicit ctx: SrcCtx): T = implicitly[Bits[T]].zero

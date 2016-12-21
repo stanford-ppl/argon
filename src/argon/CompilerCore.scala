@@ -4,7 +4,6 @@ import argon.ops.VoidExp
 import argon.utils.deleteExts
 
 import scala.collection.mutable.ArrayBuffer
-import scala.util.control.NoStackTrace
 
 trait CompilerCore extends Staging with VoidExp { self =>
   val passes: ArrayBuffer[CompilerPass] = ArrayBuffer.empty[CompilerPass]

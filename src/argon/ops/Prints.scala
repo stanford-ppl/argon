@@ -1,7 +1,7 @@
 package argon.ops
 import argon.core.Base
 
-trait Prints extends Base with Texts with Voids {
+trait PrintOps extends Base with TextOps with VoidOps {
   def print[S:Staged](x: S)(implicit ctx: SrcCtx): Void = println(textify(x))
   def println[S:Staged](x: S)(implicit ctx: SrcCtx): Void = println(textify(x))
   def println()(implicit ctx: SrcCtx): Void = println("")
@@ -12,10 +12,10 @@ trait Prints extends Base with Texts with Voids {
   def print(x: Text)(implicit ctx: SrcCtx): Void
   def println(x: Text)(implicit ctx: SrcCtx): Void
 }
-trait PrintApi extends Prints with TextApi with VoidApi
+trait PrintApi extends PrintOps with TextApi with VoidApi
 
 
-trait PrintExp extends Prints with TextExp with VoidExp {
+trait PrintExp extends PrintOps with TextExp with VoidExp {
   /** API **/
   def print(x: Text)(implicit ctx: SrcCtx): Void = Void(misc_print(x.s))
   def println(x: Text)(implicit ctx: SrcCtx): Void = Void(misc_println(x.s))

@@ -19,6 +19,9 @@ trait Exceptions extends Reporting {
 
 trait ArgonExceptions extends Exceptions { this: Statements =>
 
+  class GenerationFailedException(node: Def) extends Exception(s"Don't know how to generate node $node") with NoStackTrace
+  class ConstantGenFailedException(c: Const[_]) extends Exception(s"Don't know how to generate constant $c") with NoStackTrace
+
   final def str(lhs: Sym[_]): String = lhs match {
     case Def(rhs) => c"$lhs = $rhs"
     case Const(c) => c"$lhs = $c"
@@ -92,17 +95,17 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
   class IllegalMutableSharingError(s: Sym[_], aliases: Set[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, c"Illegal sharing of mutable objects: ")
     aliases.foreach{alias =>
-      error(c"${mpos(alias)}:  ${str(alias)}")
+      val pos = mpos(alias)
+      error(c"${pos.fileName}:${pos.line}:  symbol ${str(alias)} defined here")
     }
-    //error(c"  Caused in this definition ${str(s)}")
   })
 
   class IllegalMutationError(s: Sym[_], mutated: Set[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, c"Illegal mutation of immutable symbols")
     mutated.foreach { mut =>
-      error(c"${mpos(mut)}  ${str(mut)}")
+      val pos = mpos(mut)
+      error(c"${pos.fileName}:${pos.line}:  symbol ${str(mut)} defined here")
     }
-    //error(c"  Caused in this definition: ${str(s)}")
   })
 
   class UnsupportedCastError(x: Staged[_], y: Staged[_])(ctx: SrcCtx) extends UserError(ctx, {

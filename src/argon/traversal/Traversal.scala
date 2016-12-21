@@ -23,8 +23,8 @@ trait Traversal extends BlockTraversal { self =>
 
   protected val MAX_ITERS: Int = 10     // maximum number of iterations to run
   protected val MAX_RETRIES: Int = 1    // maximum number of retries to allow
-  protected def hasConverged: Boolean = runs > 0
-  protected def hasCompleted: Boolean = true
+  protected def hasConverged: Boolean = runs > 0  // Condition for stopping
+  protected def hasCompleted: Boolean = true      // Condition for being considered "complete"
 
   // --- State
   private var runs = 0                  // Current analysis iteration

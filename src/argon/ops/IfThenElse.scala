@@ -1,7 +1,7 @@
 package argon.ops
 import argon.core.Base
 
-trait IfThenElseOps extends Base with Bools
+trait IfThenElseOps extends Base with BoolOps
 trait IfThenElseApi extends IfThenElseOps with BoolApi
 
 trait IfThenElseExp extends IfThenElseOps with BoolExp {

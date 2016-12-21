@@ -45,7 +45,7 @@ trait Reporting {
 
   final def warn(ctx: SourceContext, x: => Any): Unit = warn(ctx.toString() + ": " + x)
   final def error(ctx: SourceContext, x: => Any): Unit = {
-    error(ctx.toString() + ": " + x)
+    error(ctx.fileName + ":" + ctx.line + ": " + x)
     _errors += 1
   }
 

@@ -2,7 +2,7 @@ package argon.ops
 import argon.core.Base
 import scala.virtualized.SourceContext
 
-trait Texts extends Base with BoolApi {
+trait TextOps extends Base with BoolOps {
   type Text <: TextOps
   protected trait TextOps {
     def +(that: Text)(implicit ctx: SrcCtx): Text
@@ -19,12 +19,12 @@ trait Texts extends Base with BoolApi {
   implicit val TextType: Staged[Text]
   def textify[T:Staged](x: T)(implicit ctx: SrcCtx): Text
 }
-trait TextApi extends Texts {
+trait TextApi extends TextOps with BoolApi {
   type String = Text
 }
 
 
-trait TextExp extends Texts with BoolExp {
+trait TextExp extends TextOps with BoolExp {
   /** API **/
   case class Text(s: Sym[Text]) extends TextOps {
     def +(that: Text)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, that.s))
@@ -60,8 +60,8 @@ trait TextExp extends Texts with BoolExp {
 
   /** Staged Type **/
   implicit object TextType extends Staged[Text] {
-    override def wrap(x: Sym[Text]) = Text(x)
-    override def unwrap(x: Text) = x.s
+    override def wrapped(x: Sym[Text]) = Text(x)
+    override def unwrapped(x: Text) = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[Text]
     override def isPrimitive = true
@@ -69,7 +69,7 @@ trait TextExp extends Texts with BoolExp {
 
 
   /** Constant Lifting **/
-  def text(x: String): Sym[Text] = const[Text](x)
+  def text(x: String): Sym[Text] = constant[Text](x)
 
   /** IR Nodes **/
   case class ToString[S:Staged](x: Sym[S]) extends Op[Text] { def mirror(f:Tx) = sym_tostring(f(x)) }

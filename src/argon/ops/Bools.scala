@@ -1,7 +1,7 @@
 package argon.ops
 import argon.core.Base
 
-trait Bools extends Base with BitsOps {
+trait BoolOps extends Base with BitsOps {
   type Bool <: BoolOps
   /** Infix operations **/
   protected trait BoolOps {
@@ -24,11 +24,11 @@ trait Bools extends Base with BitsOps {
   implicit val BoolType: Bits[Bool]
 }
 
-trait BoolApi extends Bools with BitsApi {
+trait BoolApi extends BoolOps with BitsApi {
   type Boolean = Bool
 }
 
-trait BoolExp extends Bools with BitsExp {
+trait BoolExp extends BoolOps with BitsExp {
   /** API **/
   case class Bool(s: Sym[Bool]) extends BoolOps {
     def unary_!(implicit ctx: SrcCtx): Bool = Bool(bool_not(this.s)(ctx))
@@ -36,13 +36,13 @@ trait BoolExp extends Bools with BitsExp {
     def ||(that: Bool)(implicit ctx: SrcCtx): Bool = Bool( bool_or(this.s,that.s)(ctx))
     def ^ (that: Bool)(implicit ctx: SrcCtx): Bool = infix_!=(this, that)(ctx)
   }
-  def infix_==(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(x.s,y.s)(ctx))
-  def infix_!=(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xnor(x.s,y.s)(ctx))
+  def infix_==(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xnor(x.s,y.s)(ctx))
+  def infix_!=(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(x.s,y.s)(ctx))
 
   /** Staged Types **/
   implicit object BoolType extends Bits[Bool] {
-    override def wrap(x: Sym[Bool]): Bool = Bool(x)
-    override def unwrap(x: Bool): Sym[Bool] = x.s
+    override def wrapped(x: Sym[Bool]): Bool = Bool(x)
+    override def unwrapped(x: Bool): Sym[Bool] = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[Bool]
     override def isPrimitive = true
@@ -50,10 +50,11 @@ trait BoolExp extends Bools with BitsExp {
     override def zero(implicit ctx: SrcCtx): Bool = boolean2bool(false)
     override def one(implicit ctx: SrcCtx): Bool = boolean2bool(true)
     override def random(implicit ctx: SrcCtx): Bool = Bool(bool_random())
+    override def length = 1
   }
 
   /** Constant Lifting **/
-  def bool(x: Boolean)(implicit ctx: SrcCtx): Sym[Bool] = const[Bool](x)
+  def bool(x: Boolean)(implicit ctx: SrcCtx): Sym[Bool] = constant[Bool](x)
 
 
   /** IR Nodes **/

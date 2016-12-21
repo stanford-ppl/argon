@@ -2,7 +2,7 @@ package argon.ops
 
 import argon.core.ArgonExceptions
 
-trait FltPts extends Nums with CustomBitWidths with Casts {
+trait FltPtOps extends NumOps with CustomBitWidths with CastOps {
   type FltPt[G,E] <: FltPtOps[G,E]
   // Significand bits includes sign bit
   // ASSUMPTION: floating point representation is always signed (for now)
@@ -76,14 +76,14 @@ trait FltPts extends Nums with CustomBitWidths with Casts {
   implicit def float2fltpt[G:INT,E:INT](x: Float)(implicit ctx: SrcCtx): FltPt[G,E]
   implicit def double2fltpt[G:INT,E:INT](x: Double)(implicit ctx: SrcCtx): FltPt[G,E]
 }
-trait FltPtApi extends FltPts with NumApi with CastApi {
+trait FltPtApi extends FltPtOps with NumApi with CastApi {
   type Double = Float64
   type Float = Float32
   type Half = Float16
 }
 
 
-trait FltPtExp extends FltPts with NumExp with CastExp with ArgonExceptions {
+trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
   /** API **/
   case class FltPt[G:INT,E:INT](s: Sym[FltPt[G,E]]) extends FltPtOps[G,E] {
     def unary_-(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_neg(this.s))
@@ -102,8 +102,8 @@ trait FltPtExp extends FltPts with NumExp with CastExp with ArgonExceptions {
 
   /** Staged type **/
   class FltPtType[G:INT,E:INT]() extends Num[FltPt[G,E]] {
-    override def wrap(s: Sym[FltPt[G,E]]): FltPt[G,E] = FltPt[G,E](s)
-    override def unwrap(x: FltPt[G,E]) = x.s
+    override def wrapped(s: Sym[FltPt[G,E]]): FltPt[G,E] = FltPt[G,E](s)
+    override def unwrapped(x: FltPt[G,E]) = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[FltPt[G,E]]
     override def isPrimitive = true
@@ -111,6 +111,7 @@ trait FltPtExp extends FltPts with NumExp with CastExp with ArgonExceptions {
     override def zero(implicit ctx: SrcCtx) = int2fltpt[G,E](0)
     override def one(implicit ctx: SrcCtx) = int2fltpt[G,E](1)
     override def random(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_random[G,E]())
+    override def length: Int = sigBits + expBits
 
     override def negate(x: FltPt[G,E])(implicit ctx: SrcCtx) = -x
     override def plus(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x + y
@@ -150,7 +151,7 @@ trait FltPtExp extends FltPts with NumExp with CastExp with ArgonExceptions {
 
     def makeFloat(v: BigDecimal): Sym[FltPt[G,E]] = {
       // TODO: Precision checking
-      const[FltPt[G,E]](v)
+      constant[FltPt[G,E]](v)
     }
 
     x match {
@@ -188,7 +189,7 @@ trait FltPtExp extends FltPts with NumExp with CastExp with ArgonExceptions {
       implicit val mG2: INT[g2] = b.mG.asInstanceOf[INT[g2]]
       implicit val mE2: INT[e2] = b.mE.asInstanceOf[INT[e2]]
 
-      b.wrap( flt_convert[g,e,g2,e2](x.asInstanceOf[FltPt[g,e]].s) ).asInstanceOf[R]
+      b.wrapped( flt_convert[g,e,g2,e2](x.asInstanceOf[FltPt[g,e]].s) ).asInstanceOf[R]
 
     case _ => super.cast[T,R](x)
   }

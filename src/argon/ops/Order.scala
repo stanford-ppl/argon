@@ -1,13 +1,13 @@
 package argon.ops
 
 /** Staged numeric types **/
-trait Orders extends BitsOps with Bools {
+trait OrderOps extends BitsOps with BoolOps {
   type Order[T] <: Bits[T]
 }
-trait OrderApi extends Orders with BitsApi with BoolApi
+trait OrderApi extends OrderOps with BitsApi with BoolApi
 
 
-trait OrderExp extends Orders with BitsExp with BoolExp {
+trait OrderExp extends OrderOps with BitsExp with BoolExp {
   trait Order[T] extends Bits[T] {
     def lessThan(a: T, b: T)(implicit ctx: SrcCtx): Bool
     def equal(a: T, b: T)(implicit ctx: SrcCtx): Bool
