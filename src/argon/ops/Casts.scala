@@ -24,7 +24,7 @@ trait CastExp extends CastOps with NumExp {
 
   protected def castLift[R:Num](x: Any)(implicit ctx: SrcCtx): R = {
     // Ideally we would want to search lift methods here so we can avoid code duplication?
-    new UnsupportedLiftError(x, stg[R])(ctx)
+    new UnsupportedLiftError(x, typ[R])(ctx)
     num[R].zero
   }
 }

@@ -34,12 +34,14 @@ trait AbstractHDAG extends Exceptions {
     val outputs = mutable.ArrayBuffer[EdgeId](0)            // nodeId :: nodeId+1 ==> edges for this node
     val inputs  = mutable.ArrayBuffer[List[EdgeId]]()       // Dataflow edges (reverse) -- per node
     val bounds  = mutable.ArrayBuffer[List[EdgeId]]()       // Edges bound by this node
+    val tunnels = mutable.ArrayBuffer[List[EdgeId]]()       // Edges bound by this node, defined elsewhere
     val freqs   = mutable.ArrayBuffer[List[Float]]()        // Frequency hints for code motion
   }
 
   def nodeOutputs(node: NodeId) = NodeData.outputs(node) until NodeData.outputs(node+1)
   def nodeInputs(node: NodeId): List[EdgeId] = NodeData.inputs(node)
   def nodeBounds(node: NodeId): List[EdgeId] = NodeData.bounds(node)
+  def nodeTunnels(node: NodeId): List[EdgeId] = NodeData.tunnels(node)
   def nodeFreqs(node: NodeId): List[Float] = NodeData.freqs(node)
   def nodeOf(node: NodeId): Node = NodeData.value(node)
   def edgeOf(edge: EdgeId): Edge = EdgeData.value(edge)
@@ -47,7 +49,7 @@ trait AbstractHDAG extends Exceptions {
   def producerOf(edge: EdgeId): NodeId = EdgeData.producer(edge)
   def triple(id: NodeId): Triple = (nodeOutputs(id).map(edgeOf), nodeOf(id), nodeInputs(id).map(edgeOf))
 
-  final def addNode(ins: List[Edge], outs: List[Edge], binds: List[Edge], freqs: List[Float], node: Node) = {
+  final def addNode(ins: List[Edge], outs: List[Edge], binds: List[Edge], tunnel: List[Edge], freqs: List[Float], node: Node) = {
     outs.foreach { out =>
       out.id = curEdgeId
 
@@ -65,6 +67,7 @@ trait AbstractHDAG extends Exceptions {
     NodeData.outputs += curEdgeId
     NodeData.inputs += ins.map(_.id)
     NodeData.bounds += binds.map(_.id)
+    NodeData.tunnels += tunnel.map(_.id)
     NodeData.freqs += freqs
 
     curNodeId += 1
@@ -108,17 +111,39 @@ trait AbstractHDAG extends Exceptions {
     }
   }
   /**
-    * Get all nodes which depend on the given bound nodes, stopping DFS when reaching nodes which bind them
+    * Get all nodes which must be bound by the given node
+    *   - ALL dependents of bound symbols, and any dependents of tunnel symbols which are also dependencies of the binder
     * Note that while it would be nice to only do one DFS, we need to track which nodes are bound where.
     */
-  def getBoundDependents(roots: Iterable[NodeId], scope: Set[NodeId]): Set[NodeId] = {
+  def getBoundDependents(scope: Set[NodeId]): Set[NodeId] = {
     // Get all dependencies of root, stopping at nodes which bound it
     def getDependents(root: NodeId) = {
       dfs(List(root)){node => forward(node, scope) filterNot (nodeBounds(_) contains root)}
     }
-    roots.flatMap(getDependents).toSet
-  }
 
+    val boundDependents = scope.flatMap{node =>
+      val bounds = nodeBounds(node).map(producerOf)
+      bounds.flatMap(getDependents)
+    }
+    val tunnelDependents = scope.flatMap{node =>
+      val tunnels = nodeTunnels(node).map(producerOf)
+      val schedule = dfs(List(node)){node => reverse(node, scope) } filterNot(_ == node)
+      val tunnelForward = tunnels.flatMap(getDependents) diff tunnels
+//      if (tunnels.nonEmpty) {
+//        log(c"  Computing tunnel dependencies: ")
+//        log(c"  ${triple(node)}: ")
+//        log(c"  tunnels: ")
+//        tunnels.foreach{stm => log(c"    ${triple(stm)}")}
+//        log(c"  schedule: ")
+//        schedule.foreach{stm => log(c"    ${triple(stm)}")}
+//        log(c"  tunnel dependents: ")
+//        tunnelForward.foreach{stm => log(c"    ${triple(stm)}")}
+//      }
+
+      tunnelForward intersect schedule
+    }
+    boundDependents ++ tunnelDependents
+  }
 
   def getLocalScope(currentScope: Seq[NodeId], result: List[EdgeId]): Seq[NodeId] = {
     val scope = currentScope.toSet
@@ -126,8 +151,7 @@ trait AbstractHDAG extends Exceptions {
     val localCache = buildScopeIndex(scope)
     val roots = scheduleDepsWithIndex(result, localCache)
 
-    val bounds = scope.flatMap{node => nodeBounds(node) }.map(producerOf)
-    val mustInside = getBoundDependents(bounds, scope)
+    val mustInside = getBoundDependents(scope)
 
     val mayOutside = scope diff mustInside
     val fringe = mustInside.flatMap(reverse) intersect mayOutside

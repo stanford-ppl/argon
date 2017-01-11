@@ -1,15 +1,19 @@
 package argon
 import argon.core.Staging
-import argon.ops.VoidExp
+import argon.ops.ArrayExp
 import argon.utils.deleteExts
 
 import scala.collection.mutable.ArrayBuffer
+import scala.virtualized.SourceContext
 
-trait CompilerCore extends Staging with VoidExp { self =>
+trait CompilerCore extends Staging with ArrayExp { self =>
   val passes: ArrayBuffer[CompilerPass] = ArrayBuffer.empty[CompilerPass]
   val testbench: Boolean = false
 
-  def main(): Void
+  var args: MArray[Text] = _
+  var stagingArgs: scala.Array[java.lang.String] = _
+
+  def main(): scala.Unit
   def settings(): Unit = {}
 
   def checkErrors(start: Long, stageName: String): Unit = if (hadErrors) {
@@ -20,15 +24,16 @@ trait CompilerCore extends Staging with VoidExp { self =>
     System.exit(nErrors)
   }
 
-  def main(args: Array[String]): Unit = {
+  def main(sargs: Array[String]): Unit = {
     reset() // Reset global state
     settings()
+    stagingArgs = sargs
 
     msg("--------------------------")
     msg(c"Staging ${self.getClass}")
     Config.name = c"${self.getClass}".replace('.','-')
     val start = System.currentTimeMillis()
-    var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageScope { main().s } }
+    var block: Scope[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(main()).s } }
 
     // Exit now if errors were found during staging
     checkErrors(start, "staging")

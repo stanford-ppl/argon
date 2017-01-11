@@ -198,6 +198,7 @@ trait FixPtExp extends FixPtOps with NumExp with CastExp {
   }
   implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
   implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
+  def string2fixpt[S:BOOL,I:INT,F:INT](x: String)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
   override def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l match {
     case Int2FixPt => FixPt(createConstant[TRUE,_32,_0](x)).asInstanceOf[B]
     case Long2FixPt => FixPt(createConstant[TRUE,_32,_0](x)).asInstanceOf[B]
@@ -371,8 +372,8 @@ trait FixPtExp extends FixPtOps with NumExp with CastExp {
   }
 
   override def userReadable(x: Any): String = x match {
-    case FixPtType(true,32,0) => "Int"
-    case FixPtType(true,64,0) => "Long"
+    case IntType()  => "Int"
+    case LongType() => "Long"
     case tp:FixPtType[_,_,_] => u"FixPt[${tp.mS},${tp.mI},${tp.mF}]"
     case _ => super.userReadable(x)
   }

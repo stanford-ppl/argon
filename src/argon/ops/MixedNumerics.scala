@@ -1,14 +1,11 @@
 package argon.ops
 
 /** Casting between FixPt and FltPt **/
-trait MixedNumerics extends Casts with FixPts with FltPts {
+trait MixedNumericOps extends CastOps with FixPtOps with FltPtOps
 
-}
+trait MixedNumericApi extends MixedNumericOps with CastOps with FixPtApi with FltPtApi
 
-trait MixedNumericApi extends Casts with FixPtApi with FltPtApi
-
-
-trait MixedNumericExp extends Casts with FixPtExp with FltPtExp {
+trait MixedNumericExp extends MixedNumericOps with CastOps with FixPtExp with FltPtExp {
 
   override protected def cast[T:Num,R:Num](x: T)(implicit ctx: SrcCtx): R = (num[T],num[R]) match {
     case (a: FixPtType[s,i,f], b: FltPtType[g,e]) =>

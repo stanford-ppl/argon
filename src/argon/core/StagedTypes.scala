@@ -2,6 +2,7 @@ package argon.core
 
 trait StagedTypes { this: Staging =>
 
+  /** Base type class for all staged types **/
   abstract class Staged[T] {
     def wrapped(x: Sym[T]): T
     def unwrapped(x: T): Sym[T]
@@ -10,8 +11,8 @@ trait StagedTypes { this: Staging =>
     def isPrimitive: Boolean
   }
 
-  def stg[T:Staged] = implicitly[Staged[T]]
-  def mstg[A,B](x: Staged[A]): Staged[B] = x.asInstanceOf[Staged[B]]
+  def typ[T:Staged] = implicitly[Staged[T]]
+  def mtyp[A,B](x: Staged[A]): Staged[B] = x.asInstanceOf[Staged[B]]
 
   def wrap[T:Staged](s: Sym[T]): T = implicitly[Staged[T]].wrapped(s)
   def unwrap[T:Staged](x: T): Sym[T] = implicitly[Staged[T]].unwrapped(x)

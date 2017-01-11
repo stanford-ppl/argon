@@ -1,7 +1,5 @@
 package argon.core
 
-import scala.collection.mutable
-
 trait Effects extends Symbols { this: Staging =>
   var context: List[Sym[_]] = _
   final def checkContext(): Unit = if (context == null) throw new UninitializedEffectContextException()
@@ -66,31 +64,37 @@ trait Effects extends Symbols { this: Staging =>
 
   final def isMutable(s: Sym[_]): Boolean = metadata[Effects](s).exists(_.mutable)
 
+  /**
+    * Find scheduling dependencies in context
+    * WAR - always include reads as scheduling dependencies of writes
+    * "AAA" - always include allocation as scheduling dependencies of an access (read or write)
+    * RAW/WAW - include the *most recent* write as scheduling dependency of an access ("AAW" - access after write)
+    * simple - include the *most recent* previous simple effect as a scheduling dependency of a simple effect
+    * global - include ALL global effects as scheduling dependencies of a global effect
+    */
   final def effectDependencies(effects: Effects): List[Sym[_]] = if (effects.global) context else {
     val read = effects.reads
     val write = effects.writes
     val accesses = read ++ write  // Cannot read/write prior to allocation
 
-    var unwrittenAccesses = accesses
-    // Find most recent write to each accessed memory
-    var hazards = mutable.ListBuffer[Sym[_]]()
+    def isWARHazard(u: Effects) = u.mayRead(write)
 
-    val iter = context.iterator
-    while (iter.hasNext) {
-      iter.next match { case e@Effectful(u,_) =>
-        if (u.mayRead(write)) hazards += e    // WAR hazards
-        if (unwrittenAccesses.isEmpty) {
-          val (written, unwritten) = unwrittenAccesses.partition(u.writes.contains)
-          unwrittenAccesses = unwritten
-          hazards ++= written                 // *AW hazards
-        }
-        if (accesses contains e) hazards += e // "AAA" hazards (access after allocate)
+    // RAW / WAW
+    var unwrittenAccesses = accesses // Reads/writes for which we have not yet found a previous writer
+    def isAAWHazard(u: Effects) = {
+      if (unwrittenAccesses.nonEmpty) {
+        val (written, unwritten) = unwrittenAccesses.partition(u.writes.contains)
+        unwrittenAccesses = unwritten
+        written.nonEmpty
       }
+      else false
     }
-    val simpleDep  = if (effects.simple) context.find{case Effectful(u,_) => u.simple } else None
-    val globalDep  = context.find{case Effectful(u,_) => u.global }
 
-    hazards.result ++ simpleDep ++ globalDep
+    val hazards = context.filter{case e@Effectful(u,_) => isWARHazard(u) || isAAWHazard(u) || (accesses contains e) }
+    val simpleDep = if (effects.simple) context.find{case Effectful(u,_) => u.simple } else None // simple
+    val globalDep = context.find{case Effectful(u,_) => u.global } // global
+
+    hazards ++ simpleDep ++ globalDep
   }
 
   /** Compiler debugging **/

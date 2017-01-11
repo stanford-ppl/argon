@@ -9,7 +9,7 @@ import scala.collection.immutable.Queue
 import scala.collection.mutable
 import scala.util.control.NoStackTrace
 
-trait Definitions extends Blocks { self: Staging =>
+trait Definitions extends Scopes { self: Staging =>
   type Tx = Transformer{val IR: self.type }
 
   protected val here = implicitly[SourceContext]
@@ -20,50 +20,53 @@ trait Definitions extends Blocks { self: Staging =>
 
     /** Scheduling dependencies -- used to calculate schedule for IR based on dependencies **/
     // Inputs: symbol dataflow dependencies for this Def.
-    // Default: All symbols in the Def's constructor AND block results
-    var inputs: List[Sym[_]] = recursive.collectLists(__syms)(productIterator)
+    // Default: All symbols in the Def's case class constructor AND scope (block/lambda) results
+    def inputs: List[Sym[_]] = recursive.collectLists(__syms)(productIterator)
 
     // Reads: symbols *dereferenced* by this Def.
     // Default: All symbol inputs
-    var reads: List[Sym[_]] = inputs
+    def reads: List[Sym[_]] = inputs
 
     // Freqs: symbol frequency hints used in code motion - less than 0.75f is "cold", while greater than 100f is "hot"
     // Code motion makes an attempt to schedule unbound "hot" symbols early (move out of blocks)
     // Default: All symbol inputs have a frequency of 1.0f ("normal")
-    var freqs: List[(Sym[_],Float)] = Nil
+    def freqs: List[(Sym[_],Float)] = Nil
 
-    // Blocks: scopes associated with this Def
-    // Default: All blocks in the Def's constructor
-    var blocks: List[Block[_]] = recursive.collectList{case b: Block[_] => b}(productIterator)
+    // Scopes: scopes associated with this Def
+    // Default: All blocks and lambdas in the Def's case class constructor
+    def scopes: List[Scope[_]] = recursive.collectList{case b: Scope[_] => b}(productIterator)
 
     // Binds: symbols "bound" by this Def
     // Bound symbols define the start of scopes. Effectful symbols in a scope typically must be bound.
     // Dataflow dependents of bound syms up until but not including the binding Def make up the majority of a scope
     // Default: All effects included in all scopes associated with this Def
-    var binds: List[Sym[_]] = blocks.flatMap(_.effects)
+    def binds: List[Sym[_]] = scopes.flatMap(_.effectful)
 
 
+    // Tunnels: symbols "bound" in scopes of this Def, but defined elsewhere
+    // Tunnel symbols define the start of scopes.
+    def tunnels: List[Sym[_]] = Nil
 
     /** Alias hints -- used to check/disallow unsafe mutable aliasing **/
     // Aliases: inputs to this Def which *may* equal to the output of this Def
     // Default: all inputs to this symbol
     // TODO: Is this really the most sensible default rule for aliasing?
-    var aliases: List[Sym[_]] = recursive.collectLists(__syms)(productIterator)
+    def aliases: List[Sym[_]] = recursive.collectLists(__syms)(productIterator)
 
     // Contains: inputs which may be returned when dereferencing the output of this Def
     // E.g. y = Array(x): contains should return x
     // Default: no symbols
-    var contains: List[Sym[_]] = Nil
+    def contains: List[Sym[_]] = Nil
 
     // Extracts: inputs which, when dereferenced, may return the output of this Def
     // E.g. y = ArrayApply(x): extracts should return x
     // Default: no symbols
-    var extracts: List[Sym[_]] = Nil
+    def extracts: List[Sym[_]] = Nil
 
     // Copies: inputs which, when dereferenced, may return the same pointer as dereferencing the output of this Def
     // E.g. y = ArrayCopy(x): copies should return x
     // Default: no symbols
-    var copies: List[Sym[_]] = Nil
+    def copies: List[Sym[_]] = Nil
 
 
     /** Mirroring and Mutating **/
@@ -91,16 +94,16 @@ trait Definitions extends Blocks { self: Staging =>
 
     final override def outputTypes = List(implicitly[Staged[R]])
     final override def fatMirror(f:Tx): List[Sym[_]] = List(this.mirror(f))
-    def mR = stg[R]
+    def mR = typ[R]
   }
-  abstract class Op2[A:Staged,R:Staged] extends Op[R] { def mA = stg[A] }
-  abstract class Op3[A:Staged,B:Staged,R:Staged] extends Op2[A,R] { def mB = stg[B] }
-  abstract class Op4[A:Staged,B:Staged,C:Staged,R:Staged] extends Op3[A,B,R] { def mC = stg[C] }
-  abstract class Op5[A:Staged,B:Staged,C:Staged,D:Staged,R:Staged] extends Op4[A,B,C,R] { def mD = stg[D] }
+  abstract class Op2[A:Staged,R:Staged] extends Op[R] { def mA = typ[A] }
+  abstract class Op3[A:Staged,B:Staged,R:Staged] extends Op2[A,R] { def mB = typ[B] }
+  abstract class Op4[A:Staged,B:Staged,C:Staged,R:Staged] extends Op3[A,B,R] { def mC = typ[C] }
+  abstract class Op5[A:Staged,B:Staged,C:Staged,D:Staged,R:Staged] extends Op4[A,B,C,R] { def mD = typ[D] }
 
   /** Specialized "No-op" Defs **/
   case class NoOp[T:Staged]() extends Def {
-    val outputTypes = List(stg[T])
+    val outputTypes = List(typ[T])
     def fatMirror(f:Tx): List[Sym[_]] = throw new Exception("Cannot mirror NoDefs")
     override def mirrorNode(orig: List[Sym[_]], f:Tx): List[Sym[_]] = orig
   }

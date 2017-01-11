@@ -4,25 +4,25 @@ import argon.traversal.Traversal
 
 import scala.collection.mutable
 
-trait Blocks extends Effects { self: Staging =>
-  type CompilerPass = Traversal{val IR: Blocks.this.type }
+trait Scopes extends Effects { self: Staging =>
+  type CompilerPass = Traversal{val IR: Scopes.this.type }
 
   // --- State
-  private[argon] var eX: Option[CompilerPass] = None
+  //private[argon] var eX: Option[CompilerPass] = None
 
-  /**
-    * Class representing the result of a staged scope.
-    * @param __result: symbolic result of the scope
-    * @param summary: effects summary for the entire scope
-    * @param effects: list of all symbols with effectful nodes in the scope
-    */
-  case class Block[T:Staged](private[Blocks] val __result: Sym[T], summary: Effects, effects: List[Sym[_]]) {
-    def tp: Staged[_] = stg[T]
-    def result: T = if (eX.isDefined) wrap(eX.get.run(this).__result) else wrap(__result)
+  /** Class representing the result of a staged scope. */
+  sealed abstract class Scope[T:Staged] {
+    def tp: Staged[_] = typ[T]
+    def result: Sym[T]            // Symbolic result of the scope
+    def summary: Effects          // Effects summary for the entire scope
+    def effectful: List[Sym[_]]   // List of all symbols with effectful nodes in this scope
+  }
 
-    def inline: Sym[T] = if (eX.isDefined) eX.get.run(this).__result else throw new Exception("TODO")
-
-    def getResult: Sym[T] = __result
+  case class Block[T:Staged](result: Sym[T], summary: Effects, effectful: List[Sym[_]]) extends Scope[T]
+  case class Lambda[T:Staged](block: Block[T], inputs: Seq[Sym[_]]) extends Scope[T] {
+    def result: Sym[T] = block.result
+    def summary: Effects = block.summary
+    def effectful: List[Sym[_]] = block.effectful
   }
 
   /**
@@ -44,7 +44,7 @@ trait Blocks extends Effects { self: Staging =>
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
     */
-  def stageScope[T:Staged](block: => Sym[T]): Block[T] = {
+  def stageBlock[T:Staged](block: => Sym[T]): Block[T] = {
     val saveContext = context
     context = Nil
 
@@ -59,7 +59,7 @@ trait Blocks extends Effects { self: Staging =>
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
     * All assumptions about the current context carry over unchanged.
     */
-  def stageScopeInline[T:Staged](block: => Sym[T]): Block[T] = {
+  def stageBlockInline[T:Staged](block: => Sym[T]): Block[T] = {
     val saveContext = context
     if (saveContext eq null) context = Nil
 
@@ -77,9 +77,14 @@ trait Blocks extends Effects { self: Staging =>
     Block[T](result, effects, deps)
   }
 
+  def stageLambda[T:Staged](inputs: Sym[_]*)(block: => Sym[T]): Lambda[T] = {
+    Lambda(stageBlock{ block }, inputs)
+  }
+
   /** Compiler debugging **/
   override def readable(x: Any) = x match {
-    case b: Block[_] => c"Block(${b.getResult})"
+    case b: Block[_] => c"Block(${b.result})"
+    case b: Lambda[_] => c"""Lambda(${b.inputs.mkString("(",",",")")} => ${b.result})"""
     case _ => super.readable(x)
   }
 }

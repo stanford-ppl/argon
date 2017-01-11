@@ -45,8 +45,9 @@ trait Codegen extends Traversal {
   }
 
   def emitBlock(b: Block[_]): Unit = traverseBlock(b)
-  def emitNode(lhs: Sym[_], rhs: Op[_]) = throw new GenerationFailedException(rhs)
-  def emitFat(lhs: List[Sym[_]], rhs: Def) = throw new GenerationFailedException(rhs)
+  def emitLambda(b: Lambda[_]): Unit = traverseLambda(b)
+  def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = throw new GenerationFailedException(rhs)
+  def emitFat(lhs: List[Sym[_]], rhs: Def): Unit = throw new GenerationFailedException(rhs)
 
   override def visit(lhs: Sym[_], rhs: Op[_]) = emitNode(lhs, rhs)
   override def visitFat(lhs: List[Sym[_]], rhs: Def) = emitFat(lhs, rhs)

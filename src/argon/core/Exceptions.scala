@@ -6,7 +6,7 @@ import scala.util.control.NoStackTrace
 
 trait Exceptions extends Reporting {
   abstract class CompilerException(id: Int, msg: String, console: => Unit) extends
-    Exception(s"Internal exception #$id: $msg") { console }
+    Exception(s"Internal exception #$id: $msg") with NoStackTrace { console }
 
   class RecursiveScheduleException(result: Any, xs: List[String]) extends
     CompilerException(0, c"Recursive schedule while scheduling result $result", {

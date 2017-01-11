@@ -6,7 +6,7 @@ import argon.{Config, State}
 /**
   * Single or iterative traversal of the IR with pre- and post- processing
   */
-trait Traversal extends BlockTraversal { self =>
+trait Traversal extends ScopeTraversal { self =>
   val IR: Statements
   import IR._
 
@@ -35,7 +35,7 @@ trait Traversal extends BlockTraversal { self =>
   def debugs(x: => Any) = debug("  "*tab + x)
   def msgs(x: => Any) = msg("  "*tab + x)
 
-  final def pass[T:Staged](b: Block[T]): Block[T] = if (shouldRun) {
+  final def pass[T:Staged](b: Scope[T]): Scope[T] = if (shouldRun) {
     val outfile = State.paddedPass + " " + name + ".log"
     State.pass += 1
     if (verbosity >= 1) {
@@ -57,11 +57,11 @@ trait Traversal extends BlockTraversal { self =>
   def retry() { _retry = true }
   def silence() { verbosity = -1 }
 
-  def preprocess[S:Staged](b: Block[S]): Block[S] = { b }
-  def postprocess[S:Staged](b: Block[S]): Block[S] = { b }
-  def visitBlock[S:Staged](b: Block[S]): Block[S] = {
+  def preprocess[S:Staged](b: Scope[S]): Scope[S] = { b }
+  def postprocess[S:Staged](b: Scope[S]): Scope[S] = { b }
+  def visitScope[S:Staged](b: Scope[S]): Scope[S] = {
     tab += 1
-    traverseBlock(b)
+    traverseScope(b)
     tab -= 1
     b
   }
@@ -69,7 +69,7 @@ trait Traversal extends BlockTraversal { self =>
   /**
     * Run traversal/analysis on a given block until convergence or maximum # of iterations reached
     */
-  def run[S:Staged](b: Block[S]): Block[S] = if (shouldRun) {
+  def run[S:Staged](b: Scope[S]): Scope[S] = if (shouldRun) {
     val saveVerbosity = Config.verbosity
     Config.verbosity = this.verbosity
 
@@ -82,7 +82,7 @@ trait Traversal extends BlockTraversal { self =>
       _retry = false
       while (!hasConverged && runs < MAX_ITERS) { // convergence condition
         runs += 1
-        curBlock = visitBlock(curBlock)
+        curBlock = visitScope(curBlock)
       }
       curBlock = postprocess(curBlock)
       retries += 1

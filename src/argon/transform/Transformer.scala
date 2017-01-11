@@ -8,6 +8,7 @@ abstract class Transformer {
   protected def f = this.asInstanceOf[Tx]
   def apply[T:Staged](s: Sym[T]): Sym[T] = transformSym(s)
   def apply[T:Staged](b: Block[T]): Sym[T]
+  def apply[T:Staged](b: Lambda[T]): Sym[T]
   def apply[T:Staged](xs: List[Sym[T]]): List[Sym[T]] = xs.map{x => this.apply(x)}
   def apply[T:Staged](xs: Seq[Sym[T]]): Seq[Sym[T]] = xs.map{x => this.apply(x)}
   def apply[T:Staged](x: Option[Sym[T]]): Option[Sym[T]] = x.map{z => this.apply(z) }
@@ -19,7 +20,7 @@ abstract class Transformer {
 
   def tx[T](t: T): T = (t match {
     case s: Sym[_]    => transformSym(s)(s.tp)
-    case b: Block[_]  => transformBlock(b)(mstg(b.tp))
+    case b: Block[_]  => transformBlock(b)(mtyp(b.tp))
     case xs: List[_]  => xs.map{z => tx(z) }
     case xs: Set[_]   => xs.map{z => tx(z) }
     case xs: Seq[_]   => xs.map{z => tx(z) }
@@ -28,6 +29,6 @@ abstract class Transformer {
   }).asInstanceOf[T]
 
   def transformSym[T:Staged](s: Sym[T]): Sym[T]
-
   def transformBlock[T:Staged](b: Block[T]): Block[T]
+  def transformLambda[T:Staged](b: Lambda[T]): Lambda[T]
 }

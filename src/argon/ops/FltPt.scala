@@ -141,6 +141,20 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
     }
   }
 
+  object FloatType {
+    def unapply(x: Staged[_]): Boolean = x match {
+      case FltPtType(24, 8) => true
+      case _ => false
+    }
+  }
+  object DoubleType {
+    def unapply(x: Staged[_]): Boolean = x match {
+      case FltPtType(53, 11) => true
+      case _ => false
+    }
+  }
+
+
 
   /** Constant lifting **/
   private def createConstant[G:INT,E:INT](x: Any, enWarn: Boolean = true)(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = {
@@ -171,6 +185,7 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
   implicit def long2fltpt[G:INT,E:INT](x: Long)(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(createConstant[G,E](x))
   implicit def float2fltpt[G:INT,E:INT](x: Float)(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(createConstant[G,E](x))
   implicit def double2fltpt[G:INT,E:INT](x: Double)(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(createConstant[G,E](x))
+  def string2fltpt[G:INT,E:INT](x: String)(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(createConstant[G,E](x))
 
   override def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l match {
     case Float2FltPt => FltPt(createConstant[_24,_8](x)).asInstanceOf[B]
@@ -226,7 +241,7 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
   case class FltNeq[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_neq(f(x), f(y)) }
   case class FltEql[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_eql(f(x), f(y)) }
 
-  case class RandomFltPt[G:INT,E:INT]() extends FltPtOp[G,E] { def mirror(f:Tx) = flt_random[G,E]() }
+  case class FltRandom[G:INT,E:INT]() extends FltPtOp[G,E] { def mirror(f:Tx) = flt_random[G,E]() }
 
   case class FltConvert[G:INT,E:INT,G2:INT,E2:INT](x: Sym[FltPt[G,E]]) extends FltPtOp[G2,E2] {
     def mirror(f:Tx) = flt_convert[G,E,G2,E2](x)
@@ -270,7 +285,7 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
     case (Const(a:BigDecimal), Const(b:BigDecimal)) => bool(a == b)
     case _ => stage(FltEql(x,y))(ctx)
   }
-  def flt_random[G:INT,E:INT]()(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = stageSimple(RandomFltPt[G,E]())(ctx)
+  def flt_random[G:INT,E:INT]()(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = stageSimple(FltRandom[G,E]())(ctx)
 
   def flt_convert[G:INT,E:INT,G2:INT,E2:INT](x: Sym[FltPt[_,_]])(implicit ctx: SrcCtx): Sym[FltPt[G2,E2]] = {
     stage(FltConvert[G,E,G2,E2](x.asInstanceOf[Sym[FltPt[G,E]]]))(ctx)
@@ -293,8 +308,8 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
     case _ => super.readable(x)
   }
   override def userReadable(x: Any): String = x match {
-    case FltPtType(53,11) => "Double"
-    case FltPtType(24,8) => "Float"
+    case DoubleType() => "Double"
+    case FloatType()  => "Float"
     case tp:FltPtType[_,_] => u"FltPt[${tp.mG},${tp.mE}]"
     case _ => super.userReadable(x)
   }

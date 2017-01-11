@@ -8,11 +8,12 @@ import argon.ops._
 import argon.utils.deleteExts
 import argon.traversal.IRPrinter
 
-trait App extends AppCore
-  with BoolApi with IfThenElseApi with PrintApi with TextApi with MixedNumericApi
+trait TestOps extends BoolOps with IfThenElseOps with PrintOps with TextOps with MixedNumericOps
+trait TestApi extends TestOps with BoolApi with IfThenElseApi with PrintApi with TextApi with MixedNumericApi
+trait TestExp extends TestOps with BoolExp with IfThenElseExp with PrintExp with TextExp with MixedNumericExp
 
-trait Compiler extends CompilerCore
-  with BoolExp with IfThenElseExp with PrintExp with TextExp with MixedNumericExp { self =>
+trait App extends AppCore with TestApi
+trait Compiler extends CompilerCore with TestExp { self =>
 
   override val testbench = true
 
@@ -30,7 +31,7 @@ trait Test extends Compiler with App
 
 
 object Test1 extends Test {
-  def main(): Void = {
+  def main() {
     val x = random[Boolean]
     val y = random[Boolean]
     println(x && y)
@@ -39,7 +40,7 @@ object Test1 extends Test {
 
 object Test2 extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
     val x = random[Boolean]
     val y = if (x) false else true
     println(y)
@@ -48,7 +49,7 @@ object Test2 extends Test {
 
 object Test3 extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
     val x = !random[Boolean]
     val y = if (x) false else true
     println(y)
@@ -57,7 +58,7 @@ object Test3 extends Test {
 
 object Test4 extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
     val x = random[Boolean] && random[Boolean]
     val y = if (x) false else true
     println(y)
@@ -66,7 +67,7 @@ object Test4 extends Test {
 
 object Test5 extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
     val x = random[Boolean] && random[Boolean]
     val y = if (x) random[Boolean] else random[Boolean]
     println(y)
@@ -75,7 +76,7 @@ object Test5 extends Test {
 
 object Test6 extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
     val x = random[Boolean]
     val y = random[Boolean]
     val z = if (x) x && y else x || y
@@ -85,7 +86,7 @@ object Test6 extends Test {
 
 object Test7 extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
     val x = random[Boolean]
     val y = random[Boolean]
     val z = if (x) { if (x && y) random[Boolean] else if (x || y) random[Boolean] else random[Boolean] } else lift(true)
@@ -95,7 +96,7 @@ object Test7 extends Test {
 
 object Test8 extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
     val x = random[Int]
     val y = random[Int]
     val z = if (x == y) 32 else 0
@@ -108,7 +109,7 @@ object Test8 extends Test {
 
 object Test9 extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
     val x = random[Int]
     val y = random[Int]
     println(!(x != y))
@@ -117,7 +118,7 @@ object Test9 extends Test {
 
 object OverflowLiftTest extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
     type Nibble = FixPt[TRUE,_4,_0]
 
     val c = 100
@@ -127,7 +128,7 @@ object OverflowLiftTest extends Test {
 }
 object UnderflowLiftTest extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
     type Nibble = FixPt[TRUE,_4,_0]
     val c = -100
     val x = random[Nibble] + c
@@ -137,7 +138,7 @@ object UnderflowLiftTest extends Test {
 
 object IgnoreOverflowTest extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
     val c = 2147483648L
     val x = random[Int] + c.as[Int]
     println(x)
@@ -146,7 +147,7 @@ object IgnoreOverflowTest extends Test {
 
 object SimpleCastTest extends Test {
   @virtualize
-  def main(): Void = {
+  def main() {
 
     val x = random[Int]
     val y = x.to[Float]

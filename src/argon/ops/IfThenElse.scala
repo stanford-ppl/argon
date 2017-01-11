@@ -17,8 +17,8 @@ trait IfThenElseExp extends IfThenElseOps with BoolExp {
   case class IfThenElse[T:Staged](cond: Sym[Bool], thenp: Block[T], elsep: Block[T]) extends Op[T] {
     def mirror(f:Tx) = ifThenElse[T](f(cond), f(thenp), f(elsep))
 
-    freqs   = normal(cond) ++ cold(thenp) ++ cold(elsep)
-    aliases = List(thenp.getResult, elsep.getResult)
+    override def freqs   = normal(cond) ++ cold(thenp) ++ cold(elsep)
+    override def aliases = List(thenp.result, elsep.result)
   }
 
   /** Smart Constructor **/
@@ -27,8 +27,8 @@ trait IfThenElseExp extends IfThenElseOps with BoolExp {
     case Const(false) if context != null => elsep
     case Op(Not(x)) => ifThenElse(x, elsep, thenp)
     case _ =>
-      val thenBlk = stageScope(thenp)
-      val elseBlk = stageScope(elsep)
+      val thenBlk = stageBlock(thenp)
+      val elseBlk = stageBlock(elsep)
       val effects = thenBlk.summary orElse elseBlk.summary
       stageEffectful(IfThenElse(cond, thenBlk, elseBlk), effects)(ctx)
   }

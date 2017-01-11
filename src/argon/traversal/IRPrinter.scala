@@ -23,29 +23,29 @@ trait IRPrinter extends Traversal {
       case _ =>
     }
 
-    if (rhs.blocks.nonEmpty)
+    if (rhs.scopes.nonEmpty)
       msgs(c"$lhs = $rhs {")
     else
       msgs(c"$lhs = $rhs")
     strMeta(lhs)
 
-    rhs.blocks.zipWithIndex.foreach{case (blk,i) =>
+    rhs.scopes.zipWithIndex.foreach{case (blk,i) =>
       tab += 1
       msgs(c"block $i: $blk {")
       tab += 1
-      traverseBlock(blk)
+      traverseScope(blk)
       tab -= 1
       msgs(c"} // End of $lhs block #$i")
       tab -= 1
     }
-    if (rhs.blocks.nonEmpty) msgs(c"} // End of $lhs")
+    if (rhs.scopes.nonEmpty) msgs(c"} // End of $lhs")
   }
 
-  override def visitBlock[S:Staged](b: Block[S]) = {
+  override def visitScope[S:Staged](b: Scope[S]) = {
     msgs(c"Scheduling $b")
-    super.visitBlock(b)
+    super.visitScope(b)
   }
 
   // Only run traversal if debugging/verbose mode is enabled
-  override def run[S:Staged](b: Block[S]) = if (verbosity > 0) super.run(b) else b
+  override def run[S:Staged](b: Scope[S]) = if (verbosity > 0) super.run(b) else b
 }

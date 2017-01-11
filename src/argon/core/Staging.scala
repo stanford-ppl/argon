@@ -4,7 +4,7 @@ import argon.utils.escapeConst
 trait Staging extends Statements {
   def fresh[T:Staged]: Sym[T] = single[T](registerDef(NoOp[T](), Nil)(here))
   def constant[T:Staged](c: Any)(implicit ctx: SrcCtx): Const[T] = {
-    log(c"Making constant ${stg[T]} from ${escapeConst(c)} : ${c.getClass}")
+    log(c"Making constant ${typ[T]} from ${escapeConst(c)} : ${c.getClass}")
     single[T](registerDef(NoOp[T](), Nil, __const(c))(here)).asInstanceOf[Const[T]]
   }
   def parameter[T:Staged](c: Any)(implicit ctx: SrcCtx): Param[T] = single[T](registerDef(NoOp[T](), Nil, __param(c))(ctx)).asInstanceOf[Param[T]]
@@ -36,18 +36,21 @@ trait Staging extends Statements {
 
   private def registerDef(d: Def, extraDeps: List[Sym[_]], symbol: Staged[_] => Sym[Any] = __sym)(ctx: SrcCtx): List[Sym[Any]] = {
     val bounds = d.binds
+    val tunnels = d.tunnels
     val dfreqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).sum)
     val freqs = d.inputs.map { in => dfreqs.getOrElse(in, 1.0f) } ++ extraDeps.distinct.map { d => 1.0f }
 
     val inputs = d.inputs
     val outputs = d.outputTypes.map{tp => symbol(tp) }
 
-    addNode(inputs, outputs, bounds, freqs, d)
+    addNode(inputs, outputs, bounds, tunnels, freqs, d)
 
     log(c"Staging node $d")
+    log(c"  inputs = $inputs")
+    log(c"  schedule deps = $extraDeps")
     log(c"  outputs = $outputs")
     log(c"  binds = $bounds")
-    log(c"  freqs = ${d.inputs}")
+    log(c"  freqs = $freqs")
 
     outputs.map(_.setCtx(ctx))
   }
@@ -56,6 +59,7 @@ trait Staging extends Statements {
 
   def stageDefEffectful(d: Def, u: Effects)(ctx: SrcCtx): List[Sym[_]] = {
     log(c"Staging $d, effects = $u")
+    log(c"  mutable inputs = ${mutableInputs(d)}")
 
     val effects = u andAlso Read(mutableInputs(d))
 
@@ -64,8 +68,8 @@ trait Staging extends Statements {
       checkContext()
       val deps = effectDependencies(effects)
 
-      def stageEffects(canCSE: Boolean): List[Sym[_]] = {
-        val ss = if (canCSE) registerDefWithCSE(d)(ctx) else registerDef(d, deps)(ctx)
+      def stageEffects(): List[Sym[_]] = {
+        val ss = registerDef(d, deps)(ctx)
         ss.foreach { s =>
           effectsOf(s) = effectsOf(s) andAlso effects
           depsOf(s) = depsOf(s) ++ deps
@@ -78,11 +82,11 @@ trait Staging extends Statements {
         val symsWithSameDef = defCache.getOrElse(d, Nil) intersect context
         val symsWithSameEffects = symsWithSameDef.filter { case Effectful(u2, es) => u2 == effects && es == deps }
 
-        if (symsWithSameEffects.isEmpty) stageEffects(canCSE = true)
+        if (symsWithSameEffects.isEmpty) stageEffects()
         else symsWithSameEffects.map(_.withCtx(ctx))
       }
       else {
-        val z = stageEffects(canCSE = false)
+        val z = stageEffects()
         // Correctness checks -- cannot have mutable aliases, cannot mutate immutable symbols
         val aliases = mutableAliases(d) diff effects.writes
         val immutables = effects.writes.filterNot(isMutable)
