@@ -40,7 +40,7 @@ trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
   /** IR Nodes **/
   case class InputArguments() extends Op[MArray[Text]] { def mirror(f:Tx) = stage(InputArguments())(here) }
 
-  case class ArrayNew[T:Staged](size: Sym[Int32]) extends Op[MArray[T]] {
+  case class ArrayNew[T:Staged](size: Sym[Int32]) extends Op2[T,MArray[T]] {
     def mirror(f:Tx) = array_new[T](f(size))
   }
 

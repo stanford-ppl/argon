@@ -2,23 +2,23 @@ package argon.codegen.scalagen
 
 import argon.ops.FixPtExp
 
-trait ScalaGenFixPt extends ScalaCodegen{
+trait ScalaGenFixPt extends ScalaCodegen {
   val IR: FixPtExp
   import IR._
 
-  override def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: Staged[_]): String = tp match {
     case IntType() => "Int"
     case LongType() => "Long"
     case _ => super.remap(tp)
   }
 
-  override def quoteConst(c: Const[_]): String = (c.tp, c) match {
+  override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     case (IntType(), Const(c: BigInt)) => c.toInt.toString
     case (LongType(), Const(c: BigInt)) => c.toLong.toString + "L"
     case _ => super.quoteConst(c)
   }
 
-  override def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
+  override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case FixInv(x)   => emit(src"val $lhs = ~$x")
     case FixNeg(x)   => emit(src"val $lhs = -$x")
     case FixAdd(x,y) => emit(src"val $lhs = $x + $y")

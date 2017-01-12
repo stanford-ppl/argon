@@ -9,6 +9,7 @@ dist/*
 out/*
 target/
 logs/*
+gen/*
 lib_managed/
 src_managed/
 project/boot/

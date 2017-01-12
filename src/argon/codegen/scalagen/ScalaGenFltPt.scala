@@ -6,19 +6,19 @@ trait ScalaGenFltPt extends ScalaCodegen {
   val IR: FltPtExp
   import IR._
 
-  override def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: Staged[_]): String = tp match {
     case FloatType()  => "Float"
     case DoubleType() => "Double"
     case _ => super.remap(tp)
   }
 
-  override def quoteConst(c: Const[_]): String = (c.tp, c) match {
+  override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     case (FloatType(), Const(c: BigDecimal)) => c.toString + "f"
     case (DoubleType(), Const(c: BigDecimal)) => c.toString
     case _ => super.quoteConst(c)
   }
 
-  override def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
+  override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case FltNeg(x)   => emit(src"val $lhs = -$x")
     case FltAdd(x,y) => emit(src"val $lhs = $x + $y")
     case FltSub(x,y) => emit(src"val $lhs = $x - $y")

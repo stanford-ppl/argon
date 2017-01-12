@@ -1,8 +1,9 @@
 package argon.core
 
 import argon.Config
-import java.io.{File, PrintStream}
+import java.io.PrintStream
 import scala.virtualized.SourceContext
+import java.nio.file.{Files, Paths}
 
 trait Reporting {
   private var logstream: PrintStream = System.out
@@ -14,8 +15,8 @@ trait Reporting {
 
   final def withLog[T](dir: String, filename: String)(blk: => T): T = {
     val save = logstream
-    new File(dir).mkdirs()
-    logstream = new PrintStream(new File(s"$dir" + java.io.File.separator + s"${Config.name} $filename"))
+    Files.createDirectories(Paths.get(dir))
+    logstream = new PrintStream(s"$dir" + java.io.File.separator + s"${Config.name} $filename")
     try {
       blk
     }

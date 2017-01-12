@@ -6,7 +6,7 @@ trait ScalaGenIfThenElse extends ScalaCodegen {
   val IR: IfThenElseExp
   import IR._
 
-  override def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
+  override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case IfThenElse(cond, thenp, elsep) =>
       open(src"val $lhs = {")
       open(src"if ($cond) { ")

@@ -126,4 +126,7 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
     error(u"""Use the explicit annotation "${escapeConst(c)}.as[${tp}]" to ignore this error.""")
   })
 
+  class UnsupportedTextCastError(tp: Staged[_])(implicit ctx: SrcCtx) extends UserError(ctx, {
+    error(ctx, c"Casting from String to $tp is unsupported.")
+  })
 }

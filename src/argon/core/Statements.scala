@@ -14,16 +14,18 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
 
 
   // --- Helper functions
-  def stmOf(sym: Sym[_]): Option[Stm] = stmFromSymId(sym.id) match {
-    case Stm(_, _:NoOp[_]) => None
-    case stm => Some(stm)
-  }
+  def stmOf(sym: Sym[_]): Option[Stm] = stmFromSymId(sym.id)
 
-  private[argon] def stmFromNodeId(id: Int): Stm = {
+  private[argon] def stmFromNodeId(id: Int): Option[Stm] = {
     val x = triple(id)
-    Stm(x._1.toList.map(_.asInstanceOf[Sym[_]]), x._2.asInstanceOf[Def])
+    val rhs = x._2.asInstanceOf[Def]
+    val lhs = x._1.toList.map(_.asInstanceOf[Sym[_]])
+    rhs match {
+      case _:NoOp[_] => None
+      case _ => Some(Stm(x._1.toList.map(_.asInstanceOf[Sym[_]]), x._2.asInstanceOf[Def]))
+    }
   }
-  private[argon] def stmFromSymId(id: Int): Stm  = {
+  private[argon] def stmFromSymId(id: Int): Option[Stm]  = {
     val node = producerOf(id)
     stmFromNodeId(node)
   }

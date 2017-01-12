@@ -21,7 +21,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     error(s"""$nErrors ${plural(nErrors,"error","errors")} found during $stageName""")
     error(s"Completed in " + "%.4f".format(time/1000) + " seconds")
     if (testbench) throw new TestBenchFailed(nErrors)
-    System.exit(nErrors)
+    else System.exit(nErrors)
   }
 
   def main(sargs: Array[String]): Unit = {
@@ -43,7 +43,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     if (Config.clearLogs) deleteExts(Config.logDir, ".log")
 
     for (t <- passes) {
-      block = t.pass(block)
+      block = t.traverse(block)
       // After each traversal, check whether there were any reported errors
       checkErrors(start, t.name)
     }

@@ -7,17 +7,25 @@ import argon.{AppCore, CompilerCore, Config}
 import argon.ops._
 import argon.utils.deleteExts
 import argon.traversal.IRPrinter
+import argon.codegen.scalagen._
 
 trait TestOps extends BoolOps with IfThenElseOps with PrintOps with TextOps with MixedNumericOps
 trait TestApi extends TestOps with BoolApi with IfThenElseApi with PrintApi with TextApi with MixedNumericApi
 trait TestExp extends TestOps with BoolExp with IfThenElseExp with PrintExp with TextExp with MixedNumericExp
 
+trait ScalaGen extends ScalaCodegen with ScalaSingleFileGen
+      with ScalaGenBool with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenText with ScalaGenMixedNumeric
+      with ScalaGenVoid {
+  override val IR: TestExp
+}
+
 trait App extends AppCore with TestApi
-trait Compiler extends CompilerCore with TestExp { self =>
+trait CompilerBase extends CompilerCore with TestExp { self =>
 
   override val testbench = true
 
-  lazy val printer = new IRPrinter { override val IR: Compiler.this.type = Compiler.this }
+  lazy val printer = new IRPrinter { override val IR: CompilerBase.this.type = CompilerBase.this }
+
   printer.verbosity = 3
 
   passes += printer
@@ -27,7 +35,10 @@ trait Compiler extends CompilerCore with TestExp { self =>
     super.settings()
   }
 }
-trait Test extends Compiler with App
+trait Test extends CompilerBase with App {
+  lazy val scalagen = new ScalaGen { override val IR: Test.this.type = Test.this }
+  passes += scalagen
+}
 
 
 object Test1 extends Test {
