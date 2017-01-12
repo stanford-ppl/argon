@@ -18,7 +18,7 @@ trait FileDependencies extends Codegen {
 
   var dependencies: List[CodegenDep] = Nil
 
-  // TODO: Fix this. Should be OS-independent
+  // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
   def copyDependencies(out: String): Unit = {
     dependencies.foreach{dep => if (dep.needsCopy) {
       log(s"Copying ${dep.input} to $out")

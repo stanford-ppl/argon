@@ -9,10 +9,9 @@ trait SingleFileGen extends Codegen {
   protected def emitMain[S:Staged](b: Scope[S]): Unit
 
   override protected def run[S:Staged](b: Scope[S]): Scope[S] = {
-    val path = s"$out${java.io.File.separator}$lang${java.io.File.separator}"
-    Files.createDirectories(Paths.get(path))
+    Files.createDirectories(Paths.get(out))
 
-    val file = new PrintWriter(s"${path}main.$ext")
+    val file = new PrintWriter(s"${out}main.$ext")
     withStream(file) {
       preprocess(b)
       emitMain(b)
