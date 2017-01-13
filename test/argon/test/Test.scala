@@ -2,8 +2,8 @@ package argon.test
 
 import org.scalatest.{FlatSpec, Matchers, ShouldMatchers}
 
-import scala.virtualized.{SourceContext, virtualize}
-import argon.{AppCore, CompilerCore, Config}
+import org.virtualized.{SourceContext, virtualize}
+import argon.{AppCore, RunnerCore, Config}
 import argon.ops._
 import argon.utils.deleteExts
 import argon.traversal.IRPrinter
@@ -20,7 +20,7 @@ trait ScalaGen extends ScalaCodegen with ScalaSingleFileGen
 }
 
 trait App extends AppCore with TestApi
-trait CompilerBase extends CompilerCore with TestExp { self =>
+trait CompilerBase extends RunnerCore with TestExp { self =>
 
   override val testbench = true
 

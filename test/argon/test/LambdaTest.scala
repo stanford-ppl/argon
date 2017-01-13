@@ -6,7 +6,7 @@ import argon.codegen.scalagen.ScalaCodegen
 import argon.utils.deleteExts
 import org.scalatest.{FlatSpec, Matchers, ShouldMatchers}
 
-import scala.virtualized.{SourceContext, virtualize}
+import org.virtualized.{SourceContext, virtualize}
 
 trait SimpleLambdaOps extends NumOps with FixPtOps {
   // Contrived example - unfused map which only returns the first value
