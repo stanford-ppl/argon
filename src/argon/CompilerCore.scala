@@ -4,7 +4,7 @@ import argon.ops.ArrayExp
 import argon.utils.deleteExts
 
 import scala.collection.mutable.ArrayBuffer
-import scala.virtualized.SourceContext
+import org.virtualized.SourceContext
 
 trait CompilerCore extends Staging with ArrayExp { self =>
   val passes: ArrayBuffer[CompilerPass] = ArrayBuffer.empty[CompilerPass]

@@ -3,7 +3,7 @@ package argon.core
 import argon.State
 
 import scala.annotation.implicitNotFound
-import scala.virtualized.{EmbeddedControls, SourceContext}
+import org.virtualized.{EmbeddedControls, SourceContext}
 
 trait Base extends EmbeddedControls with Reporting {
   type SrcCtx = SourceContext

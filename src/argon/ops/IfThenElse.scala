@@ -5,7 +5,7 @@ trait IfThenElseOps extends Base with BoolOps
 trait IfThenElseApi extends IfThenElseOps with BoolApi
 
 trait IfThenElseExp extends IfThenElseOps with BoolExp {
-  /** Virtualized methods **/
+  /** org.virtualized methods **/
   def __ifThenElse[A,B](cond: Bool, thenp: => A, elsep: => A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = {
     implicit val staged: Staged[B] = l.staged
     val unwrapThen = () => unwrap(lift(thenp) ) // directly calling unwrap(thenp) forces thenp to be evaluated here

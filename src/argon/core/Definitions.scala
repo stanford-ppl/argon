@@ -3,7 +3,7 @@ package argon.core
 import argon.graphs._
 import argon.utils.recursive
 import argon.transform.Transformer
-import scala.virtualized.SourceContext
+import org.virtualized.SourceContext
 
 import scala.collection.immutable.Queue
 import scala.collection.mutable

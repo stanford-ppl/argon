@@ -1,6 +1,6 @@
 package argon.ops
 import argon.core.Base
-import scala.virtualized.SourceContext
+import org.virtualized.SourceContext
 
 trait TextOps extends Base with BoolOps {
   type Text <: TextOps
@@ -36,7 +36,7 @@ trait TextExp extends TextOps with BoolExp {
 
   def textify[T:Staged](x: T)(implicit ctx: SrcCtx): Text = Text(sym_tostring(x.s))
 
-  /** Virtualized methods **/
+  /** org.virtualized methods **/
   def infix_toString[S:Staged](x: S)(implicit ctx: SrcCtx): Text = textify(x)
   def infix_+[R:Staged](x1: String, x2: R)(implicit ctx: SrcCtx): Text = string2text(x1) + textify(x2)
 

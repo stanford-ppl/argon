@@ -15,6 +15,7 @@ trait Exceptions extends Reporting {
     })
 
   class TestBenchFailed(errs: Int) extends Exception(c"""Compilation failed with $errs ${plural(errs,"error","errors")}""") with NoStackTrace
+  class RunningFailed(exit: Int) extends Exception(c"Running compiled testbench failed with exit code $exit") with NoStackTrace
 }
 
 trait ArgonExceptions extends Exceptions { this: Statements =>

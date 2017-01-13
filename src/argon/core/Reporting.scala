@@ -2,7 +2,7 @@ package argon.core
 
 import argon.Config
 import java.io.PrintStream
-import scala.virtualized.SourceContext
+import org.virtualized.SourceContext
 import java.nio.file.{Files, Paths}
 
 trait Reporting {
