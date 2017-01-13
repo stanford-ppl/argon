@@ -1,7 +1,7 @@
 name := "argon"
 version := "1.0"
 isSnapshot := true
-organization := "PPL"
+organization := "stanford-ppl"
 scalaVersion := "2.11.2"
 scalaSource in Compile <<= baseDirectory(_/ "src")
 scalaSource in Test <<= baseDirectory(_/"test")
