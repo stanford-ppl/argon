@@ -13,14 +13,14 @@ trait Scopes extends Effects { self: Staging =>
   /** Class representing the result of a staged scope. */
   sealed abstract class Scope[T:Staged] {
     def tp: Staged[_] = typ[T]
-    def result: Sym[T]            // Symbolic result of the scope
+    def result: Exp[T]            // Symbolic result of the scope
     def summary: Effects          // Effects summary for the entire scope
     def effectful: List[Sym[_]]   // List of all symbols with effectful nodes in this scope
   }
 
-  case class Block[T:Staged](result: Sym[T], summary: Effects, effectful: List[Sym[_]]) extends Scope[T]
+  case class Block[T:Staged](result: Exp[T], summary: Effects, effectful: List[Sym[_]]) extends Scope[T]
   case class Lambda[T:Staged](block: Block[T], inputs: Seq[Sym[_]]) extends Scope[T] {
-    def result: Sym[T] = block.result
+    def result: Exp[T] = block.result
     def summary: Effects = block.summary
     def effectful: List[Sym[_]] = block.effectful
   }
@@ -44,7 +44,7 @@ trait Scopes extends Effects { self: Staging =>
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
     */
-  def stageBlock[T:Staged](block: => Sym[T]): Block[T] = {
+  def stageBlock[T:Staged](block: => Exp[T]): Block[T] = {
     val saveContext = context
     context = Nil
 
@@ -59,7 +59,7 @@ trait Scopes extends Effects { self: Staging =>
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
     * All assumptions about the current context carry over unchanged.
     */
-  def stageBlockInline[T:Staged](block: => Sym[T]): Block[T] = {
+  def stageBlockInline[T:Staged](block: => Exp[T]): Block[T] = {
     val saveContext = context
     if (saveContext eq null) context = Nil
 
@@ -77,8 +77,8 @@ trait Scopes extends Effects { self: Staging =>
     Block[T](result, effects, deps)
   }
 
-  def stageLambda[T:Staged](inputs: Sym[_]*)(block: => Sym[T]): Lambda[T] = {
-    Lambda(stageBlock{ block }, inputs)
+  def stageLambda[T:Staged](inputs: Exp[_]*)(block: => Exp[T]): Lambda[T] = {
+    Lambda(stageBlock{ block }, onlySyms(inputs))
   }
 
   /** Compiler debugging **/

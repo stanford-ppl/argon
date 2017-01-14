@@ -66,12 +66,14 @@ trait Reporting {
     case p:Iterable[_] => if (p.isEmpty) "Nil" else p.map(readable).mkString("Seq(", ",", ")")
     case p:Product     => if (p.productIterator.isEmpty) c"${p.productPrefix}"
                           else c"""${p.productPrefix}(${p.productIterator.map(readable).mkString(", ")})"""
-    case _ => x.toString
+    case _ =>
+      if (x == null) "null" else x.toString
   }
 
   def userReadable(x: Any): String = x match {
     case c:Class[_]    => c.getName.split('$').last.replace("class ", "")
-    case _ => x.toString
+    case _ =>
+      if (x == null) "null" else x.toString
   }
 
   implicit class CompileReportHelper(sc: StringContext) {

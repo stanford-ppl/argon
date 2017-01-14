@@ -34,13 +34,14 @@ trait Codegen extends Traversal {
 
   protected def remap(tp: Staged[_]): String = tp.toString
   protected def quoteConst(c: Const[_]): String = throw new ConstantGenFailedException(c)
-  protected def quote(s: Sym[_]): String = s match {
+  protected def quote(s: Exp[_]): String = s match {
     case c: Const[_] => quoteConst(c)
+    case b: Bound[_] => s"b${b.id}"
     case s: Sym[_] => s"x${s.id}"
   }
 
   protected def quoteOrRemap(arg: Any): String = arg match {
-    case e: Sym[_] => quote(e)
+    case e: Exp[_] => quote(e)
     case m: Staged[_] => remap(m)
     case s: String => s
     case c: Int => c.toString

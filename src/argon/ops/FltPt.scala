@@ -85,7 +85,7 @@ trait FltPtApi extends FltPtOps with NumApi with CastApi {
 
 trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
   /** API **/
-  case class FltPt[G:INT,E:INT](s: Sym[FltPt[G,E]]) extends FltPtOps[G,E] {
+  case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) extends FltPtOps[G,E] {
     def unary_-(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_neg(this.s))
     def + (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_add(this.s,that.s))
     def - (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_sub(this.s,that.s))
@@ -102,7 +102,7 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
 
   /** Staged type **/
   class FltPtType[G:INT,E:INT]() extends Num[FltPt[G,E]] {
-    override def wrapped(s: Sym[FltPt[G,E]]): FltPt[G,E] = FltPt[G,E](s)
+    override def wrapped(s: Exp[FltPt[G,E]]): FltPt[G,E] = FltPt[G,E](s)
     override def unwrapped(x: FltPt[G,E]) = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[FltPt[G,E]]
@@ -157,13 +157,13 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
 
 
   /** Constant lifting **/
-  private def createConstant[G:INT,E:INT](x: Any, enWarn: Boolean = true)(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = {
+  private def createConstant[G:INT,E:INT](x: Any, enWarn: Boolean = true)(implicit ctx: SrcCtx): Const[FltPt[G,E]] = {
     val gbits = INT[G].v
     val ebits = INT[E].v
     val tp = s"$gbits.$ebits floating point"
     val FLP = readable(fltPtType[G,E])
 
-    def makeFloat(v: BigDecimal): Sym[FltPt[G,E]] = {
+    def makeFloat(v: BigDecimal): Const[FltPt[G,E]] = {
       // TODO: Precision checking
       constant[FltPt[G,E]](v)
     }
@@ -193,7 +193,7 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
     case _ => super.__lift(x)
   }
 
-  def fltpt[G:INT,E:INT](x: BigDecimal)(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = createConstant[G,E](x, enWarn=false)
+  def fltpt[G:INT,E:INT](x: BigDecimal)(implicit ctx: SrcCtx): Const[FltPt[G,E]] = createConstant[G,E](x, enWarn=false)
 
 
   override protected def cast[T:Num,R:Num](x: T)(implicit ctx: SrcCtx): R = (num[T],num[R]) match {
@@ -230,70 +230,70 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
     def tp = fltPtType[G,E]
   }
 
-  case class FltNeg[G:INT,E:INT](x: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_neg(f(x)) }
+  case class FltNeg[G:INT,E:INT](x: Exp[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_neg(f(x)) }
 
-  case class FltAdd[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_add(f(x), f(y)) }
-  case class FltSub[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_sub(f(x), f(y)) }
-  case class FltMul[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_mul(f(x), f(y)) }
-  case class FltDiv[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_div(f(x), f(y)) }
-  case class FltLt [G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_lt(f(x), f(y)) }
-  case class FltLeq[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_leq(f(x), f(y)) }
-  case class FltNeq[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_neq(f(x), f(y)) }
-  case class FltEql[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_eql(f(x), f(y)) }
+  case class FltAdd[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_add(f(x), f(y)) }
+  case class FltSub[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_sub(f(x), f(y)) }
+  case class FltMul[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_mul(f(x), f(y)) }
+  case class FltDiv[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_div(f(x), f(y)) }
+  case class FltLt [G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_lt(f(x), f(y)) }
+  case class FltLeq[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_leq(f(x), f(y)) }
+  case class FltNeq[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_neq(f(x), f(y)) }
+  case class FltEql[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_eql(f(x), f(y)) }
 
   case class FltRandom[G:INT,E:INT]() extends FltPtOp[G,E] { def mirror(f:Tx) = flt_random[G,E]() }
 
-  case class FltConvert[G:INT,E:INT,G2:INT,E2:INT](x: Sym[FltPt[G,E]]) extends FltPtOp[G2,E2] {
+  case class FltConvert[G:INT,E:INT,G2:INT,E2:INT](x: Exp[FltPt[G,E]]) extends FltPtOp[G2,E2] {
     def mirror(f:Tx) = flt_convert[G,E,G2,E2](x)
   }
 
   /** Smart constructors **/
-  def flt_neg[G:INT,E:INT](x: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = x match {
+  def flt_neg[G:INT,E:INT](x: Exp[FltPt[G,E]])(implicit ctx: SrcCtx): Exp[FltPt[G,E]] = x match {
     case Const(c:BigDecimal) => fltpt[G,E](-c)
     case Op(FltNeg(x)) => x
     case _ => stage(FltNeg(x))(ctx)
   }
-  def flt_add[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = (x,y) match {
+  def flt_add[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]])(implicit ctx: SrcCtx): Exp[FltPt[G,E]] = (x,y) match {
     case (Const(a:BigDecimal), Const(b:BigDecimal)) => fltpt[G,E](a + b)
     case _ => stage(FltAdd(x,y))(ctx)
   }
-  def flt_sub[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = (x,y) match {
+  def flt_sub[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]])(implicit ctx: SrcCtx): Exp[FltPt[G,E]] = (x,y) match {
     case (Const(a:BigDecimal), Const(b:BigDecimal)) => fltpt[G,E](a - b)
     case _ => stage(FltSub(x,y))(ctx)
   }
-  def flt_mul[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = (x,y) match {
+  def flt_mul[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]])(implicit ctx: SrcCtx): Exp[FltPt[G,E]] = (x,y) match {
     case (Const(a:BigDecimal), Const(b:BigDecimal)) => fltpt[G,E](a * b)
     case _ => stage(FltMul(x,y))(ctx)
   }
-  def flt_div[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = (x,y) match {
+  def flt_div[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]])(implicit ctx: SrcCtx): Exp[FltPt[G,E]] = (x,y) match {
     case (Const(a:BigDecimal), Const(b:BigDecimal)) => fltpt[G,E](a / b)
     case _ => stage(FltDiv(x,y))(ctx)
   }
-  def flt_lt[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+  def flt_lt[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]])(implicit ctx: SrcCtx): Exp[Bool] = (x,y) match {
     case (Const(a:BigDecimal), Const(b:BigDecimal)) => bool(a < b)
     case _ => stage(FltLt(x,y))(ctx)
   }
-  def flt_leq[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+  def flt_leq[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]])(implicit ctx: SrcCtx): Exp[Bool] = (x,y) match {
     case (Const(a:BigDecimal), Const(b:BigDecimal)) => bool(a <= b)
     case _ => stage(FltLeq(x,y))(ctx)
   }
-  def flt_neq[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+  def flt_neq[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]])(implicit ctx: SrcCtx): Exp[Bool] = (x,y) match {
     case (Const(a:BigDecimal), Const(b:BigDecimal)) => bool(a != b)
     case _ => stage(FltNeq(x,y))(ctx)
   }
-  def flt_eql[G:INT,E:INT](x: Sym[FltPt[G,E]], y: Sym[FltPt[G,E]])(implicit ctx: SrcCtx): Sym[Bool] = (x,y) match {
+  def flt_eql[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]])(implicit ctx: SrcCtx): Exp[Bool] = (x,y) match {
     case (Const(a:BigDecimal), Const(b:BigDecimal)) => bool(a == b)
     case _ => stage(FltEql(x,y))(ctx)
   }
-  def flt_random[G:INT,E:INT]()(implicit ctx: SrcCtx): Sym[FltPt[G,E]] = stageSimple(FltRandom[G,E]())(ctx)
+  def flt_random[G:INT,E:INT]()(implicit ctx: SrcCtx): Exp[FltPt[G,E]] = stageSimple(FltRandom[G,E]())(ctx)
 
-  def flt_convert[G:INT,E:INT,G2:INT,E2:INT](x: Sym[FltPt[_,_]])(implicit ctx: SrcCtx): Sym[FltPt[G2,E2]] = {
-    stage(FltConvert[G,E,G2,E2](x.asInstanceOf[Sym[FltPt[G,E]]]))(ctx)
+  def flt_convert[G:INT,E:INT,G2:INT,E2:INT](x: Exp[FltPt[_,_]])(implicit ctx: SrcCtx): Exp[FltPt[G2,E2]] = {
+    stage(FltConvert[G,E,G2,E2](x.asInstanceOf[Exp[FltPt[G,E]]]))(ctx)
   }
 
 
   /** Other rewrite rules **/
-  override def bool_not(x: Sym[Bool])(implicit ctx: SrcCtx): Sym[Bool] = x match {
+  override def bool_not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
     case Op(node@FltNeq(a,b)) => stage( FltEql(a,b)(node.mG,node.mE) )(ctx)
     case Op(node@FltEql(a,b)) => stage( FltNeq(a,b)(node.mG,node.mE) )(ctx)
     case Op( node@FltLt(a,b)) => stage( FltLeq(a,b)(node.mG,node.mE) )(ctx)

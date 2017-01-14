@@ -23,12 +23,12 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
   class GenerationFailedException(node: Def) extends Exception(s"Don't know how to generate node $node") with NoStackTrace
   class ConstantGenFailedException(c: Const[_]) extends Exception(s"Don't know how to generate constant $c") with NoStackTrace
 
-  final def str(lhs: Sym[_]): String = lhs match {
+  final def str(lhs: Exp[_]): String = lhs match {
     case Def(rhs) => c"$lhs = $rhs"
     case Const(c) => c"$lhs = $c"
-    case _ => c"$lhs [bound]"
+    case b: Bound[_] => c"$lhs [bound]"
   }
-  final def str(lhs: List[Sym[_]]): String = lhs.head match {
+  final def str(lhs: List[Exp[_]]): String = lhs.head match {
     case Def(rhs) => c"$lhs = $rhs"
     case syms => c"$syms"
   }
@@ -58,7 +58,7 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
       error(c"[$codegen] Don't know how to generate code for $lhs = $rhs")
     })
 
-  class EffectsOrderException(res: Sym[_], expected: Seq[Stm], actual: Seq[Stm], missing: Seq[Stm]) extends
+  class EffectsOrderException(res: Exp[_], expected: Seq[Stm], actual: Seq[Stm], missing: Seq[Stm]) extends
     CompilerException(5, c"Violated ordering of effects", {
       error(c"Violated ordering of effects while traversing block result: ")
       error(str(res))

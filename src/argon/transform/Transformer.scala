@@ -6,12 +6,19 @@ abstract class Transformer {
   val IR: Definitions
   import IR._
   protected def f = this.asInstanceOf[Tx]
+  def apply[T:Staged](e: Exp[T]): Exp[T] = e match {
+    case s: Sym[_] => this.apply[T](s)
+    case b: Bound[_] => b
+    case c: Const[_] => c
+  }
   def apply[T:Staged](s: Sym[T]): Sym[T] = transformSym(s)
   def apply[T:Staged](b: Block[T]): Sym[T]
   def apply[T:Staged](b: Lambda[T]): Sym[T]
-  def apply[T:Staged](xs: List[Sym[T]]): List[Sym[T]] = xs.map{x => this.apply(x)}
-  def apply[T:Staged](xs: Seq[Sym[T]]): Seq[Sym[T]] = xs.map{x => this.apply(x)}
-  def apply[T:Staged](x: Option[Sym[T]]): Option[Sym[T]] = x.map{z => this.apply(z) }
+
+  def apply[T:Staged](xs: List[Exp[T]]): List[Exp[T]] = xs.map{x => this.apply(x)}
+  def apply[T:Staged](xs: Seq[Exp[T]]): Seq[Exp[T]] = xs.map{x => this.apply(x)}
+  def apply[T:Staged](x: Option[Exp[T]]): Option[Exp[T]] = x.map{z => this.apply(z) }
+
   /*def apply(x: List[Sym[_]]): List[Sym[_]] = x.map{z => tx(z)}
   def apply(x: Seq[Sym[_]]): Seq[Sym[_]] = x.map{z => tx(z)}
   def apply(x: Set[Sym[_]]): Set[Sym[_]] = x.map{z => tx(z)}

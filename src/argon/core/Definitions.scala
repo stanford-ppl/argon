@@ -21,16 +21,16 @@ trait Definitions extends Scopes { self: Staging =>
     /** Scheduling dependencies -- used to calculate schedule for IR based on dependencies **/
     // Inputs: symbol dataflow dependencies for this Def.
     // Default: All symbols in the Def's case class constructor AND scope (block/lambda) results
-    def inputs: List[Sym[_]] = recursive.collectLists(__syms)(productIterator)
+    def inputs: List[Symbol[_]] = recursive.collectLists(__syms)(productIterator)
 
     // Reads: symbols *dereferenced* by this Def.
     // Default: All symbol inputs
-    def reads: List[Sym[_]] = inputs
+    def reads: List[Symbol[_]] = inputs
 
     // Freqs: symbol frequency hints used in code motion - less than 0.75f is "cold", while greater than 100f is "hot"
     // Code motion makes an attempt to schedule unbound "hot" symbols early (move out of blocks)
     // Default: All symbol inputs have a frequency of 1.0f ("normal")
-    def freqs: List[(Sym[_],Float)] = Nil
+    def freqs: List[(Symbol[_],Float)] = Nil
 
     // Scopes: scopes associated with this Def
     // Default: All blocks and lambdas in the Def's case class constructor
@@ -40,41 +40,40 @@ trait Definitions extends Scopes { self: Staging =>
     // Bound symbols define the start of scopes. Effectful symbols in a scope typically must be bound.
     // Dataflow dependents of bound syms up until but not including the binding Def make up the majority of a scope
     // Default: All effects included in all scopes associated with this Def
-    def binds: List[Sym[_]] = scopes.flatMap(_.effectful)
-
+    def binds: List[Symbol[_]] = scopes.flatMap(_.effectful)
 
     // Tunnels: symbols "bound" in scopes of this Def, but defined elsewhere
     // Tunnel symbols define the start of scopes.
-    def tunnels: List[Sym[_]] = Nil
+    def tunnels: List[Symbol[_]] = Nil
 
     /** Alias hints -- used to check/disallow unsafe mutable aliasing **/
     // Aliases: inputs to this Def which *may* equal to the output of this Def
     // Default: all inputs to this symbol
     // TODO: Is this really the most sensible default rule for aliasing?
-    def aliases: List[Sym[_]] = recursive.collectLists(__syms)(productIterator)
+    def aliases: List[Symbol[_]] = recursive.collectLists(__syms)(productIterator)
 
     // Contains: inputs which may be returned when dereferencing the output of this Def
     // E.g. y = Array(x): contains should return x
     // Default: no symbols
-    def contains: List[Sym[_]] = Nil
+    def contains: List[Symbol[_]] = Nil
 
     // Extracts: inputs which, when dereferenced, may return the output of this Def
     // E.g. y = ArrayApply(x): extracts should return x
     // Default: no symbols
-    def extracts: List[Sym[_]] = Nil
+    def extracts: List[Symbol[_]] = Nil
 
     // Copies: inputs which, when dereferenced, may return the same pointer as dereferencing the output of this Def
     // E.g. y = ArrayCopy(x): copies should return x
     // Default: no symbols
-    def copies: List[Sym[_]] = Nil
+    def copies: List[Symbol[_]] = Nil
 
 
     /** Mirroring and Mutating **/
-    def mutate(f:Tx): Unit = throw new Exception("Cannot mutate immutable node") with NoStackTrace
-    def fatMirror(f:Tx): List[Sym[_]]
+    def mutate(f:Tx): Unit = throw new Exception("Cannot mutate immutable node")
+    def fatMirror(f:Tx): List[Exp[_]]
 
 
-    def updateNode(orig:List[Sym[_]],f:Tx): List[Sym[_]] = {
+    def updateNode(orig:List[Sym[_]],f:Tx): List[Exp[_]] = {
       try {
         mutate(f)
         orig
@@ -83,17 +82,17 @@ trait Definitions extends Scopes { self: Staging =>
         fatMirror(f)
       }
     }
-    def mirrorNode(orig: List[Sym[_]], f:Tx): List[Sym[_]] = fatMirror(f)
+    def mirrorNode(orig: List[Sym[_]], f:Tx): List[Exp[_]] = fatMirror(f)
 
     implicit val src: SrcCtx = here
   }
 
   /** Most common variant of Def - returns only one symbol of one type **/
   abstract class Op[R:Staged] extends Def {
-    def mirror(f:Tx): Sym[R]
+    def mirror(f:Tx): Exp[R]
 
     final override def outputTypes = List(implicitly[Staged[R]])
-    final override def fatMirror(f:Tx): List[Sym[_]] = List(this.mirror(f))
+    final override def fatMirror(f:Tx): List[Exp[_]] = List(this.mirror(f))
     def mR = typ[R]
   }
   abstract class Op2[A:Staged,R:Staged] extends Op[R] { def mA = typ[A] }
@@ -101,47 +100,37 @@ trait Definitions extends Scopes { self: Staging =>
   abstract class Op4[A:Staged,B:Staged,C:Staged,R:Staged] extends Op3[A,B,R] { def mC = typ[C] }
   abstract class Op5[A:Staged,B:Staged,C:Staged,D:Staged,R:Staged] extends Op4[A,B,C,R] { def mD = typ[D] }
 
-  /** Specialized "No-op" Defs **/
-  case class NoOp[T:Staged]() extends Def {
-    val outputTypes = List(typ[T])
-    def fatMirror(f:Tx): List[Sym[_]] = throw new Exception("Cannot mirror NoDefs")
-    override def mirrorNode(orig: List[Sym[_]], f:Tx): List[Sym[_]] = orig
-  }
-
-  // case class BoundSymbol[T:Staged]() extends NoOp[T]
-  // case class Constant[T](staged: Staged[T], c: Any) extends NoOp[T]()(staged)
-  // case class Parameter[T](staged: Staged[T], c: Any) extends NoOp[T]()(staged)
-
-
   /** Api **/
   object Def {
-    def unapply(s: Sym[_]): Option[Def] = defOf(s) match {
-      case _:NoOp[_] => None
-      case d => Some(d)
+    def unapply(e: Exp[_]): Option[Def] = e match {
+      case s: Sym[_] => Some(defOf(s))
+      case _ => None
     }
   }
   object Op {
-    def unapply[T](s: Sym[T]): Option[Op[T]] = defOf(s) match {
-      case _:NoOp[_] => None
-      case d:Op[_] => Some(d.asInstanceOf[Op[T]])
+    def unapply[T](e: Exp[T]): Option[Op[T]] = e match {
+      case s: Sym[_] => Some(defOf(s).asInstanceOf[Op[T]])
       case _ => None
     }
   }
 
   // --- Helper functions
   def defOf(s:Sym[_]): Def = defFromSymId(s.id)
-  def hasDef(x:Sym[_]): Boolean = Def.unapply(x).isDefined
 
-  private val __syms: PartialFunction[Any,List[Sym[_]]] = {
-    case s: Sym[_] => List(s)
-    case Block(res: Sym[_],_,_) => List(res)
+  private val __syms: PartialFunction[Any,List[Symbol[_]]] = {
+    case s: Symbol[_] => List(s)
+    case Block(res: Symbol[_],_,_) => List(res)
     case d: Def => d.inputs
+    case l: Iterable[_] => recursive.collectList{case b: Symbol[_] => b}(l.iterator)
   }
-  def syms(a: Any): List[Sym[_]] = if (__syms.isDefinedAt(a)) __syms(a) else Nil
+  def syms(a: Any*): List[Symbol[_]] = if (__syms.isDefinedAt(a)) __syms(a) else Nil
 
 
-  private def symsFreq(a: Any): List[(Sym[_],Float)] = recursive.collectLists {
-    case s:Sym[_] => Iterable((s, 1.0f))
+  def onlySyms(a: Any*): List[Sym[_]] = syms(a).collect{case s: Sym[_] => s}
+
+
+  private def symsFreq(a: Any): List[(Symbol[_],Float)] = recursive.collectLists {
+    case s:Symbol[_] => Iterable((s, 1.0f))
     case d:Def => d.freqs
   }(a)
 
@@ -149,8 +138,8 @@ trait Definitions extends Scopes { self: Staging =>
   final def hot(e: Any) = symsFreq(e).map{case (s,f) => (s,f*1000.0f) }
   final def cold(e: Any) = symsFreq(e).map{case (s,f) => (s, f*0.5f) }
 
-  final def aliasSyms(a: Any): Set[Sym[_]]   = recursive.collectSets{case s: Sym[_] => Set(s) case d: Def => d.aliases }(a)
-  final def containSyms(a: Any): Set[Sym[_]] = recursive.collectSets{case d: Def => d.contains}(a)
-  final def extractSyms(a: Any): Set[Sym[_]] = recursive.collectSets{case d: Def => d.extracts}(a)
-  final def copySyms(a: Any): Set[Sym[_]]    = recursive.collectSets{case d: Def => d.copies}(a)
+  final def aliasSyms(a: Any): Set[Symbol[_]]   = recursive.collectSets{case s: Symbol[_] => Set(s) case d: Def => d.aliases }(a)
+  final def containSyms(a: Any): Set[Symbol[_]] = recursive.collectSets{case d: Def => d.contains}(a)
+  final def extractSyms(a: Any): Set[Symbol[_]] = recursive.collectSets{case d: Def => d.extracts}(a)
+  final def copySyms(a: Any): Set[Symbol[_]]    = recursive.collectSets{case d: Def => d.copies}(a)
 }

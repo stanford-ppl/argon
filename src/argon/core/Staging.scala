@@ -2,23 +2,37 @@ package argon.core
 import argon.utils.escapeConst
 
 trait Staging extends Statements {
-  def fresh[T:Staged]: Sym[T] = single[T](registerDef(NoOp[T](), Nil)(here))
-  def constant[T:Staged](c: Any)(implicit ctx: SrcCtx): Const[T] = {
-    log(c"Making constant ${typ[T]} from ${escapeConst(c)} : ${c.getClass}")
-    single[T](registerDef(NoOp[T](), Nil, __const(c))(here)).asInstanceOf[Const[T]]
+  def fresh[T:Staged]: Bound[T] = {
+    val bnd = __bound[T]
+    addBound(bnd)
+    bnd
   }
-  def parameter[T:Staged](c: Any)(implicit ctx: SrcCtx): Param[T] = single[T](registerDef(NoOp[T](), Nil, __param(c))(ctx)).asInstanceOf[Param[T]]
+  def constant[T:Staged](c: Any)(implicit ctx: SrcCtx): Const[T] = {
+    val cc = __const[T](c)
+    log(c"Making constant ${typ[T]} from ${escapeConst(c)} : ${c.getClass}")
+    registerInput(cc)
+    cc.setCtx(ctx)
+    cc
+  }
+  def parameter[T:Staged](c: Any)(implicit ctx: SrcCtx): Param[T] = {
+    val p = __param[T](c)
+    log(c"Making parameter ${typ[T]} from ${escapeConst(p)} : ${c.getClass}")
+    registerInput(p)
+    p.setCtx(ctx)
+    p
+  }
+
   def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.staged.wrapped(constant[B](x)(l.staged,ctx))
 
   def stageDef(d: Def)(ctx: SrcCtx): List[Sym[_]]                   = stageDefPure(d)(ctx)
   def stageDefPure(d: Def)(ctx: SrcCtx): List[Sym[_]]               = stageDefEffectful(d, Pure)(ctx)
-  def stageDefWrite(ss: Sym[_]*)(d: Def)(ctx: SrcCtx): List[Sym[_]] = stageDefEffectful(d, Write(ss.toSet))(ctx)
+  def stageDefWrite(ss: Exp[_]*)(d: Def)(ctx: SrcCtx): List[Sym[_]] = stageDefEffectful(d, Write(onlySyms(ss).toSet))(ctx)
   def stageDefSimple(d: Def)(ctx: SrcCtx): List[Sym[_]]             = stageDefEffectful(d, Simple)(ctx)
   def stageDefMutable(d: Def)(ctx: SrcCtx): List[Sym[_]]            = stageDefEffectful(d, Mutable)(ctx)
 
   def stage[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]                      = single[T](stageDef(op)(ctx))
   def stagePure[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stageDefPure(op)(ctx))
-  def stageWrite[T:Staged](ss: Sym[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T]    = single[T](stageDefWrite(ss:_*)(op)(ctx))
+  def stageWrite[T:Staged](ss: Exp[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T]    = single[T](stageDefWrite(ss:_*)(op)(ctx))
   def stageSimple[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefSimple(op)(ctx))
   def stageMutable[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]               = single[T](stageDefMutable(op)(ctx))
   def stageEffectful[T:Staged](op: Op[T], u: Effects)(ctx: SrcCtx): Sym[T] = single[T](stageDefEffectful(op, u)(ctx))
@@ -27,21 +41,21 @@ trait Staging extends Statements {
     // log(c"Checking defCache for $d")
     // log(c"Def cache: " + defCache.map{case (d,ss) => c"$d -> $ss"}.mkString("\n"))
     val syms = defCache.get(d) match {
-      case Some(ss) => ss.map(_.withCtx(ctx))
+      case Some(ss) => ss.foreach(_.addCtx(ctx)); ss
       case None => registerDef(d, Nil)(ctx)
     }
     defCache(d) = syms
     syms
   }
 
-  private def registerDef(d: Def, extraDeps: List[Sym[_]], symbol: Staged[_] => Sym[Any] = __sym)(ctx: SrcCtx): List[Sym[Any]] = {
+  private def registerDef(d: Def, extraDeps: List[Sym[_]])(ctx: SrcCtx): List[Sym[Any]] = {
     val bounds = d.binds
     val tunnels = d.tunnels
     val dfreqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).sum)
     val freqs = d.inputs.map { in => dfreqs.getOrElse(in, 1.0f) } ++ extraDeps.distinct.map { d => 1.0f }
 
     val inputs = d.inputs
-    val outputs = d.outputTypes.map{tp => symbol(tp) }
+    val outputs = d.outputTypes.map{tp => __sym(tp) }
 
     addNode(inputs, outputs, bounds, tunnels, freqs, d)
 
@@ -52,7 +66,8 @@ trait Staging extends Statements {
     log(c"  binds = $bounds")
     log(c"  freqs = $freqs")
 
-    outputs.map(_.setCtx(ctx))
+    outputs.foreach(_.setCtx(ctx))
+    outputs
   }
 
 
@@ -83,7 +98,10 @@ trait Staging extends Statements {
         val symsWithSameEffects = symsWithSameDef.filter { case Effectful(u2, es) => u2 == effects && es == deps }
 
         if (symsWithSameEffects.isEmpty) stageEffects()
-        else symsWithSameEffects.map(_.withCtx(ctx))
+        else {
+          symsWithSameEffects.foreach(_.addCtx(ctx))
+          symsWithSameEffects
+        }
       }
       else {
         val z = stageEffects()

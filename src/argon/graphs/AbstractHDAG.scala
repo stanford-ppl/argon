@@ -13,6 +13,7 @@ trait AbstractHDAG extends Exceptions {
   var curEdgeId : EdgeId = 0
   var curNodeId : NodeId = 0
 
+  var curInputId: EdgeId = 0
 
   /** Recursive (cyclic) graphs are unsupported **/
   def checkIfAcyclic(root: Any, components: List[List[NodeId]]) = components.foreach{x =>
@@ -49,6 +50,16 @@ trait AbstractHDAG extends Exceptions {
   def producerOf(edge: EdgeId): NodeId = EdgeData.producer(edge)
   def triple(id: NodeId): Triple = (nodeOutputs(id).map(edgeOf), nodeOf(id), nodeInputs(id).map(edgeOf))
 
+  /** Add an edge with no node or scheduling dependencies **/
+  final def registerInput(in: EdgeLike): Unit = {
+    in.id_=(curInputId)
+    curInputId += 1
+  }
+
+  /** Add an edge with no node but which may be required for scheduling **/
+  final def addBound(out: Edge) = addNode(Nil, List(out), Nil, Nil, Nil, null).head
+
+  /** Add output edge(s) with corresponding node **/
   final def addNode(ins: List[Edge], outs: List[Edge], binds: List[Edge], tunnel: List[Edge], freqs: List[Float], node: Node) = {
     outs.foreach { out =>
       out.id = curEdgeId
@@ -62,14 +73,13 @@ trait AbstractHDAG extends Exceptions {
     }
     ins.foreach { in => EdgeData.dependents(in.id) ::= curNodeId }
 
-    node.id = curNodeId
+    if (node != null) node.id = curNodeId
     NodeData.value += node
     NodeData.outputs += curEdgeId
     NodeData.inputs += ins.map(_.id)
     NodeData.bounds += binds.map(_.id)
     NodeData.tunnels += tunnel.map(_.id)
     NodeData.freqs += freqs
-
     curNodeId += 1
 
     outs
@@ -111,8 +121,9 @@ trait AbstractHDAG extends Exceptions {
     }
   }
   /**
-    * Get all nodes which must be bound by the given node
-    *   - ALL dependents of bound symbols, and any dependents of tunnel symbols which are also dependencies of the binder
+    * Get all nodes which must be bound in the given scope
+    *   - bound symbols: ALL dependents, stopping at binders,
+    *   - tunnel symbols: ANY dependents of tunnel symbols which are also dependencies of the binder
     * Note that while it would be nice to only do one DFS, we need to track which nodes are bound where.
     */
   def getBoundDependents(scope: Set[NodeId]): Set[NodeId] = {
@@ -123,22 +134,31 @@ trait AbstractHDAG extends Exceptions {
 
     val boundDependents = scope.flatMap{node =>
       val bounds = nodeBounds(node).map(producerOf)
-      bounds.flatMap(getDependents)
+      val sched = bounds.flatMap(getDependents)
+
+      if (sched.nonEmpty) {
+        log(c"  node: ${triple(node)}")
+        log(c"  bounds:")
+        bounds.foreach{bnd => log(c"    ${triple(bnd)}")}
+        log(c"  binded: ")
+        sched.foreach{s => log(c"    ${triple(s)}") }
+      }
+      sched
     }
     val tunnelDependents = scope.flatMap{node =>
       val tunnels = nodeTunnels(node).map(producerOf)
       val schedule = dfs(List(node)){node => reverse(node, scope) } filterNot(_ == node)
       val tunnelForward = tunnels.flatMap(getDependents) diff tunnels
-//      if (tunnels.nonEmpty) {
-//        log(c"  Computing tunnel dependencies: ")
-//        log(c"  ${triple(node)}: ")
-//        log(c"  tunnels: ")
-//        tunnels.foreach{stm => log(c"    ${triple(stm)}")}
-//        log(c"  schedule: ")
-//        schedule.foreach{stm => log(c"    ${triple(stm)}")}
-//        log(c"  tunnel dependents: ")
-//        tunnelForward.foreach{stm => log(c"    ${triple(stm)}")}
-//      }
+      if (tunnels.nonEmpty) {
+        log(c"  Computing tunnel dependencies: ")
+        log(c"  ${triple(node)}: ")
+        log(c"  tunnels: ")
+        tunnels.foreach{stm => log(c"    ${triple(stm)}")}
+        log(c"  schedule: ")
+        schedule.foreach{stm => log(c"    ${triple(stm)}")}
+        log(c"  tunnel dependents: ")
+        tunnelForward.foreach{stm => log(c"    ${triple(stm)}")}
+      }
 
       tunnelForward intersect schedule
     }
@@ -184,30 +204,30 @@ trait AbstractHDAG extends Exceptions {
 
     val levelScope = currentScope.filter(canOutside)
 
-//    log("Getting scope level within scope: ")
-//    scope.foreach{stm => log(c"  ${triple(stm)}") }
-//    log("For result: ")
-//    result.foreach{s => log(c"  ${triple(producerOf(s))}") }
-//    log("Must inside: ")
-//    mustInside.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("May outside: ")
-//    mayOutside.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("Fringe: ")
-//    fringe.foreach{stm => log(c"  ${triple(stm)}") }
-//    log("Reachable [Warm]: ")
-//    reachableWarm.foreach{stm => log(c"  ${triple(stm)}") }
-//    log("Reachable [Cold]: ")
-//    reachableCold.foreach{stm => log(c"  ${triple(stm)}")}
-//    log(s"Hot paths: ")
-//    hotPathsOnly.foreach{stm => log(c"  ${triple(stm)}")}
-//    log(s"Hot dependencies: ")
-//    hotDeps.foreach{stm => log(c"  ${triple(stm)}")}
-//    log(s"Hot fringe: ")
-//    hotFringe.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("Hot fringe dependencies: ")
-//    hotFringeDeps.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("levelScope: ")
-//    levelScope.foreach{stm => log(c"  ${triple(stm)}")}
+    log("Getting scope level within scope: ")
+    scope.foreach{stm => log(c"  ${triple(stm)}") }
+    log("For result: ")
+    result.foreach{s => log(c"  ${triple(producerOf(s))}") }
+    log("Must inside: ")
+    mustInside.foreach{stm => log(c"  ${triple(stm)}")}
+    log("May outside: ")
+    mayOutside.foreach{stm => log(c"  ${triple(stm)}")}
+    log("Fringe: ")
+    fringe.foreach{stm => log(c"  ${triple(stm)}") }
+    log("Reachable [Warm]: ")
+    reachableWarm.foreach{stm => log(c"  ${triple(stm)}") }
+    log("Reachable [Cold]: ")
+    reachableCold.foreach{stm => log(c"  ${triple(stm)}")}
+    log(s"Hot paths: ")
+    hotPathsOnly.foreach{stm => log(c"  ${triple(stm)}")}
+    log(s"Hot dependencies: ")
+    hotDeps.foreach{stm => log(c"  ${triple(stm)}")}
+    log(s"Hot fringe: ")
+    hotFringe.foreach{stm => log(c"  ${triple(stm)}")}
+    log("Hot fringe dependencies: ")
+    hotFringeDeps.foreach{stm => log(c"  ${triple(stm)}")}
+    log("levelScope: ")
+    levelScope.foreach{stm => log(c"  ${triple(stm)}")}
 
     levelScope
   }

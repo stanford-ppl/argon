@@ -81,11 +81,13 @@ trait Traversal extends ScopeTraversal { self =>
       case Stm(List(lhs),rhs: Op[_]) => visit(lhs, rhs)
       case _ => visitFat(stm.lhs, stm.rhs)
     }
-    if (recurse == Always) super.visitStm(stm)
+    if (recurse == Always)
+      stm.rhs.scopes.foreach {blk => traverseScope(blk) }
   }
 
   protected def visit(lhs: Sym[_], rhs: Op[_]): Unit = {
-    if (recurse == Default) stmOf(lhs).foreach(super.visitStm)
+    if (recurse == Default)
+      rhs.scopes.foreach {blk => traverseScope(blk) }
   }
 
   protected def visitFat(lhs: List[Sym[_]], rhs: Def): Unit = {}

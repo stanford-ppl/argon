@@ -45,7 +45,7 @@ trait ScopeTraversal {
 
   final protected def traverseBlock(block: Block[_]): Unit = __traverseBlock(block)(mtyp(block.tp))
   private def __traverseBlock[T:Staged](block: Block[T]): Unit = {
-    val allDependencies = block.result +: block.effectful // Result and scheduling dependencies
+    val allDependencies = syms(block.result +: block.effectful) // Result and scheduling dependencies
     val schedule = IR.getLocalSchedule(availableNodes = availableStms, result = allDependencies.map(_.id))
 
     scopeSanityCheck(block, schedule)

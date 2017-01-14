@@ -29,12 +29,12 @@ trait SimpleLambdaExp extends SimpleLambdaOps with NumExp {
     wrap(stageEffectful(Map2(n.s, m1Blk, m2Blk, i), effects.star)(ctx))
   }
 
-  case class Map2[T: Staged](n: Sym[Int32], map1: Block[T], map2: Lambda[T], i: Sym[Int32]) extends Op[T] {
+  case class Map2[T: Staged](n: Exp[Int32], map1: Block[T], map2: Lambda[T], i: Bound[Int32]) extends Op[T] {
     def mirror(f: Tx) = op_map2(f(n), f(map1), f(map2), i)
     override def binds = super.binds :+ i
   }
 
-  def op_map2[T: Staged](n: Sym[Int32], map1: => Sym[T], map2: => Sym[T], i: Sym[Int32])(implicit ctx: SrcCtx): Sym[T] = {
+  def op_map2[T: Staged](n: Exp[Int32], map1: => Exp[T], map2: => Exp[T], i: Bound[Int32])(implicit ctx: SrcCtx): Sym[T] = {
     val m1Blk = stageBlock {
       map1
     }
@@ -73,11 +73,4 @@ object SimpleMap2 extends LambdaTest {
     val x = map(32){i => 5*i + 1}{x => x * 2}
     println(x)
   }
-}
-
-class LambdaTestbench extends FlatSpec with Matchers with argon.core.Exceptions {
-  val noargs = Array[String]()
-  deleteExts(Config.logDir, ".log")
-
-  "SimpleMap2" should "compile" in { SimpleMap2.main(noargs) }
 }

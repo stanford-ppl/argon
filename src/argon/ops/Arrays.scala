@@ -20,7 +20,7 @@ trait ArrayApi extends ArrayOps with FixPtApi with VoidApi with TextApi {
 
 trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
   /** API **/
-  case class StagedArray[T:Staged](s: Sym[StagedArray[T]]) extends StagedArrayOps[T] {
+  case class StagedArray[T:Staged](s: Exp[StagedArray[T]]) extends StagedArrayOps[T] {
     def apply(i: Int32)(implicit ctx: SrcCtx): T = wrap(array_apply(s, i.s))
     def update(i: Int32, e: T)(implicit ctx: SrcCtx): Void = Void(array_update(s, i.s, e.s))
   }
@@ -29,7 +29,7 @@ trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
 
   /** Staged Types **/
   class ArrayType[T:Staged] extends Staged[StagedArray[T]] {
-    override def wrapped(s: Sym[StagedArray[T]]): StagedArray[T] = StagedArray(s)
+    override def wrapped(s: Exp[StagedArray[T]]): StagedArray[T] = StagedArray(s)
     override def unwrapped(x: StagedArray[T]) = x.s
     override def typeArguments = List(typ[T])
     override def stagedClass = classOf[StagedArray[T]]
@@ -40,25 +40,25 @@ trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
   /** IR Nodes **/
   case class InputArguments() extends Op[MArray[Text]] { def mirror(f:Tx) = stage(InputArguments())(here) }
 
-  case class ArrayNew[T:Staged](size: Sym[Int32]) extends Op2[T,MArray[T]] {
+  case class ArrayNew[T:Staged](size: Exp[Int32]) extends Op2[T,MArray[T]] {
     def mirror(f:Tx) = array_new[T](f(size))
   }
 
-  case class ArrayApply[T:Staged](array: Sym[MArray[T]], i: Sym[Int32]) extends Op[T] {
+  case class ArrayApply[T:Staged](array: Exp[MArray[T]], i: Exp[Int32]) extends Op[T] {
     def mirror(f:Tx) = array_apply(f(array),f(i))
   }
-  case class ArrayUpdate[T:Staged](array: Sym[MArray[T]], i: Sym[Int32], e: Sym[T]) extends Op[Void] {
+  case class ArrayUpdate[T:Staged](array: Exp[MArray[T]], i: Exp[Int32], e: Exp[T]) extends Op[Void] {
     def mirror(f:Tx) = array_update(f(array),f(i),f(e))
   }
 
   /** Smart Constructors **/
-  def array_new[T:Staged](size: Sym[Int32])(implicit ctx: SrcCtx): Sym[MArray[T]] = {
+  def array_new[T:Staged](size: Exp[Int32])(implicit ctx: SrcCtx): Exp[MArray[T]] = {
     stageMutable(ArrayNew[T](size))(ctx)
   }
-  def array_apply[T:Staged](array: Sym[MArray[T]], i: Sym[Int32])(implicit ctx: SrcCtx): Sym[T] = {
+  def array_apply[T:Staged](array: Exp[MArray[T]], i: Exp[Int32])(implicit ctx: SrcCtx): Exp[T] = {
     stage(ArrayApply(array,i))(ctx)
   }
-  def array_update[T:Staged](array: Sym[MArray[T]], i: Sym[Int32], e: Sym[T])(implicit ctx: SrcCtx): Sym[Void] = {
+  def array_update[T:Staged](array: Exp[MArray[T]], i: Exp[Int32], e: Exp[T])(implicit ctx: SrcCtx): Exp[Void] = {
     stageWrite(array)(ArrayUpdate(array,i,e))(ctx)
   }
 }

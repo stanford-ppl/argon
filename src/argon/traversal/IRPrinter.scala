@@ -11,19 +11,12 @@ trait IRPrinter extends Traversal {
   override val name = "PrinterPlus"
   override def shouldRun = verbosity > 0
 
-  def strMeta(lhs: Sym[_]) {
+  def strMeta(lhs: Exp[_]) {
     debugs(c" - Type: ${lhs.tp}")
     metadata.get(lhs).foreach{m => if (null == m) c" - ${m._1}: NULL" else debugs(c" - ${m._1}: ${m._2}") }
   }
 
   override protected def visit(lhs: Sym[_], rhs: Op[_]) = {
-    rhs.inputs.foreach{
-      case sym@Const(c) =>
-        msgs(c"$sym = ${escapeConst(c)} : ${c.getClass}")
-        strMeta(sym)
-      case _ =>
-    }
-
     if (rhs.scopes.nonEmpty)
       msgs(c"$lhs = $rhs {")
     else

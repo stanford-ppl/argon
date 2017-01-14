@@ -190,4 +190,6 @@ class Testbench extends FlatSpec with Matchers with argon.core.Exceptions {
   a [TestBenchFailed] should be thrownBy { OverflowLiftTest.main(noargs) }
   a [TestBenchFailed] should be thrownBy { UnderflowLiftTest.main(noargs) }
   "IgnoreOverflowTest" should "compile" in { IgnoreOverflowTest.main(noargs) }
+
+  "SimpleMap2" should "compile" in { SimpleMap2.main(noargs) }
 }

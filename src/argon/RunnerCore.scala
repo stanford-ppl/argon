@@ -10,7 +10,7 @@ trait RunnerCore extends CompilerCore {
     val start = System.currentTimeMillis()
     msg("--------------------------")
     msg(c"Running ${self.getClass}")
-    msg(c"in output directory $out")
+    //msg(c"in output directory $out")
 
     val proc = scala.sys.process.Process(Seq("sbt", "run"), new java.io.File(out))
     val output = proc.run()

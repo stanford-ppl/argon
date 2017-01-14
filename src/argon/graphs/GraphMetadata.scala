@@ -11,18 +11,31 @@ trait GraphMetadata {
     * Maintained as an Array of Maps. An Array of Sets nearly works, but requires either making the equals method
     * on metadata instances otherwise useless, or spending linear time searching for existing entries with the same key
     */
-  val globalMetadata = mutable.ArrayBuffer[Map[Class[_],MetaData]]()
+  val edgeMetadata = mutable.ArrayBuffer[Map[Class[_],MetaData]]()
+  val otherMetadata = mutable.ArrayBuffer[Map[Class[_],MetaData]]()
 
-  def getMetadata(edge: EdgeId): Map[Class[_],MetaData] = {
-    if (edge < globalMetadata.length) globalMetadata(edge) else Map.empty
+  final def getMetadata(edge: EdgeLike): Map[Class[_],MetaData] = edge match {
+    case e: Edge => if (e.id < edgeMetadata.length) edgeMetadata(e.id) else Map.empty
+    case e: EdgeLike => if (e._id < otherMetadata.length) otherMetadata(e._id) else Map.empty
   }
-  def addMetadata(edge: EdgeId, m: MetaData): Unit = {
-    while (edge >= globalMetadata.length)
-      globalMetadata += Map.empty[Class[_],MetaData]
 
-    globalMetadata(edge) += (m.getClass -> m)
+  private def add(id: Int, m: MetaData, metadata: mutable.ArrayBuffer[Map[Class[_],MetaData]]): Unit = {
+    while (id >= metadata.length)
+      metadata += Map.empty[Class[_],MetaData]
+
+    metadata(id) += (m.getClass -> m)
   }
-  def setMetadata(edge: EdgeId, m: Map[Class[_],MetaData]): Unit = globalMetadata(edge) = m
-  def removeMetadata(edge: EdgeId, m: MetaData): Unit = globalMetadata(edge) -= m.getClass
 
+  final def addMetadata(edge: EdgeLike, m: MetaData): Unit = edge match {
+    case e: Edge => add(e.id, m, edgeMetadata)
+    case e: EdgeLike => add(e._id, m, otherMetadata)
+  }
+  final def setMetadata(edge: EdgeLike, m: Map[Class[_],MetaData]): Unit = edge match {
+    case e: Edge => edgeMetadata(e.id) = m
+    case e: EdgeLike => otherMetadata(e._id) = m
+  }
+  final def removeMetadata(edge: EdgeLike, m: MetaData): Unit = edge match {
+    case e: Edge => edgeMetadata(e.id) -= m.getClass
+    case e: EdgeLike => otherMetadata(e._id) -= m.getClass
+  }
 }

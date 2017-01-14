@@ -22,11 +22,11 @@ trait PrintExp extends PrintOps with TextExp with VoidExp {
 
 
   /** IR Nodes **/
-  case class Print(x: Sym[Text]) extends Op[Void] { def mirror(f:Tx) = misc_print(f(x)) }
-  case class Println(x: Sym[Text]) extends Op[Void] { def mirror(f:Tx) = misc_println(f(x)) }
+  case class Print(x: Exp[Text]) extends Op[Void] { def mirror(f:Tx) = misc_print(f(x)) }
+  case class Println(x: Exp[Text]) extends Op[Void] { def mirror(f:Tx) = misc_println(f(x)) }
 
 
   /** Smart Constructors **/
-  def misc_print(x: Sym[Text])(implicit ctx: SrcCtx): Sym[Void] = stageSimple(Print(x))(ctx)
-  def misc_println(x: Sym[Text])(implicit ctx: SrcCtx): Sym[Void] = stageSimple(Println(x))(ctx)
+  def misc_print(x: Exp[Text])(implicit ctx: SrcCtx): Exp[Void] = stageSimple(Print(x))(ctx)
+  def misc_println(x: Exp[Text])(implicit ctx: SrcCtx): Exp[Void] = stageSimple(Println(x))(ctx)
 }

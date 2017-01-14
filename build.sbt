@@ -11,6 +11,8 @@ parallelExecution in Test := false
 publishArtifact in (Compile, packageDoc) := false
 publishArtifact in (Test, packageBin) := true
 
+testOptions in Test += Tests.Argument("-oDF")
+
 val paradiseVersion = "2.0.1"
 
 libraryDependencies += "org.virtualized" %% "virtualized" % "0.1"

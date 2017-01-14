@@ -18,14 +18,16 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
 
   private[argon] def stmFromNodeId(id: Int): Option[Stm] = {
     val x = triple(id)
-    val rhs = x._2.asInstanceOf[Def]
-    val lhs = x._1.toList.map(_.asInstanceOf[Sym[_]])
-    rhs match {
-      case _:NoOp[_] => None
-      case _ => Some(Stm(x._1.toList.map(_.asInstanceOf[Sym[_]]), x._2.asInstanceOf[Def]))
+    x._1.head match {
+      case _:Sym[_] =>
+        val lhs = x._1.toList.map(_.asInstanceOf[Sym[_]])
+        val rhs = x._2.asInstanceOf[Def]
+        Some(Stm(lhs, rhs))
+
+      case _:Bound[_] => None
     }
   }
-  private[argon] def stmFromSymId(id: Int): Option[Stm]  = {
+  private[argon] def stmFromSymId(id: Int): Option[Stm] = {
     val node = producerOf(id)
     stmFromNodeId(node)
   }
@@ -34,7 +36,7 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   private[argon] def defFromSymId(id: Int): Def  = defFromNodeId(producerOf(id))
 
   // --- Symbol aliasing
-  private def noPrims(x:Set[Sym[_]]) = x.filterNot { s => s.tp.isPrimitive || !hasDef(s) }
+  private def noPrims(x:Set[Symbol[_]]): Set[Sym[_]] = x.collect{case s: Sym[_] if !s.tp.isPrimitive => s}
 
   def shallowAliases(x: Any): Set[Sym[_]] = {
     noPrims(aliasSyms(x)).flatMap { case s@Def(d) => shallowAliasCache.getOrElseUpdate(s, shallowAliases(d)) + s } ++
