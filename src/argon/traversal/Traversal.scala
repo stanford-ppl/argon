@@ -78,8 +78,8 @@ trait Traversal extends ScopeTraversal { self =>
 
   override protected def visitStm(stm: Stm): Unit = {
     stm match {
-      case Stm(List(lhs),rhs: Op[_]) => visit(lhs, rhs)
-      case _ => visitFat(stm.lhs, stm.rhs)
+      case TP(lhs, rhs)  => visit(lhs, rhs)
+      case TTP(lhs, rhs) => visitFat(lhs, rhs)
     }
     if (recurse == Always)
       stm.rhs.scopes.foreach {blk => traverseScope(blk) }

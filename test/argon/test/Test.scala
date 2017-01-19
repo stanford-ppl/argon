@@ -1,13 +1,13 @@
 package argon.test
 
 import org.scalatest.{FlatSpec, Matchers, ShouldMatchers}
-
 import org.virtualized.{SourceContext, virtualize}
-import argon.{AppCore, RunnerCore, Config}
+import argon.{AppCore, Config, RunnerCore}
 import argon.ops._
 import argon.utils.deleteExts
 import argon.traversal.IRPrinter
 import argon.codegen.scalagen._
+import argon.transform.ForwardTransformer
 
 trait TestOps extends BoolOps with IfThenElseOps with PrintOps with TextOps with MixedNumericOps
 trait TestApi extends TestOps with BoolApi with IfThenElseApi with PrintApi with TextApi with MixedNumericApi
@@ -19,15 +19,23 @@ trait ScalaGen extends ScalaCodegen with ScalaSingleFileGen
   override val IR: TestExp
 }
 
+trait IdentityTransformer extends ForwardTransformer {
+  override val name = "Identity Transformer"
+}
+
+
 trait App extends AppCore with TestApi
 trait CompilerBase extends RunnerCore with TestExp { self =>
 
   override val testbench = true
 
-  lazy val printer = new IRPrinter { override val IR: CompilerBase.this.type = CompilerBase.this }
+  lazy val printer  = new IRPrinter { override val IR: CompilerBase.this.type = CompilerBase.this }
+  lazy val identity = new IdentityTransformer { override val IR: CompilerBase.this.type = CompilerBase.this }
 
   printer.verbosity = 3
 
+  passes += printer
+  passes += identity
   passes += printer
 
   override def settings() {

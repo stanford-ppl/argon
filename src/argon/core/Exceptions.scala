@@ -82,9 +82,25 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
   class TraversalFailedToCompleteException(msg: String) extends
     CompilerException(10, msg, {error(msg)})
 
-  class NoFieldException(s: Sym[_], index: String) extends
+  class NoFieldException(s: Exp[_], index: String) extends
     CompilerException(11, c"Attempted to unwrap undefined field $index from record $s", {
       error(c"Attempted to unwrap undefined field $index from record ${str(s)}")
+    })
+
+  class IllegalSubstException(name: String, s: Exp[_], prev: Exp[_], attempted: Exp[_]) extends
+    CompilerException(12, c"Transformer $name encountered illegal substitution: $s already had substitution $prev when attempting to add rule $s -> $attempted", {
+      error(c"Transformer $name encountered illegal substitution: $s already had substitution $prev when attempting to add rule $s -> $attempted")
+    })
+
+  class IllegalMirrorExpException(name: String, s: Exp[_]) extends
+    CompilerException(13, c"Transformer $name could not directly mirror single symbol $s - has fat definition", {
+      error(c"Transformer $name could not directly mirror single symbol $s - has fat definition")
+    })
+
+  class PretransformException(name: String, s: Exp[_], s2: Exp[_]) extends
+    CompilerException(14, c"Transformer $name encounted symbol $s with existing rule $s -> $s2.", {
+      error(c"Transformer $name encounted symbol $s with existing rule $s -> $s2.")
+      error(c"If this is expected, allow pre-transformation using allowPretransform = true.")
     })
 
   // --- User errors
@@ -124,7 +140,7 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
 
   class LiftUnderflowError(tp: Staged[_], c: Any)(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, u"Loss of precision detected in implicit lift: $tp cannot represent value ${escapeConst(c)}.")
-    error(u"""Use the explicit annotation "${escapeConst(c)}.as[${tp}]" to ignore this error.""")
+    error(u"""Use the explicit annotation "${escapeConst(c)}.as[$tp]" to ignore this error.""")
   })
 
   class UnsupportedTextCastError(tp: Staged[_])(implicit ctx: SrcCtx) extends UserError(ctx, {

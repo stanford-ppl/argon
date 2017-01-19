@@ -70,8 +70,6 @@ trait Staging extends Statements {
     outputs
   }
 
-
-
   def stageDefEffectful(d: Def, u: Effects)(ctx: SrcCtx): List[Sym[_]] = {
     log(c"Staging $d, effects = $u")
     log(c"  mutable inputs = ${mutableInputs(d)}")
@@ -118,4 +116,14 @@ trait Staging extends Statements {
 
 
   private def single[T:Staged](xx: List[Sym[_]]): Sym[T] = xx.head.asInstanceOf[Sym[T]]
+
+  /**
+    * DANGER ZONE
+    * Use these methods only if you know what you're doing! (i.e. your name is David and you're not drunk)
+    */
+  def scrubSymbol(x: Sym[_]): Unit = {
+    log(c"Scrubbing symbol $x from IR graph!")
+    removeEdge(x, remNode = true)
+    context = context.filterNot(_ == x)
+  }
 }

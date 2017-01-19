@@ -50,6 +50,19 @@ trait AbstractHDAG extends Exceptions {
   def producerOf(edge: EdgeId): NodeId = EdgeData.producer(edge)
   def triple(id: NodeId): Triple = (nodeOutputs(id).map(edgeOf), nodeOf(id), nodeInputs(id).map(edgeOf))
 
+  def removeEdge(in: EdgeLike, remNode: Boolean): Unit = {
+    EdgeData.dependents(in._id) = Nil
+    if (remNode) removeNode(producerOf(in._id))
+  }
+  def removeNode(id: NodeId): Unit = {
+    NodeData.value(id) = null
+    NodeData.outputs(id) = NodeData.outputs(id - 1)
+    NodeData.inputs(id) = Nil
+    NodeData.bounds(id) = Nil
+    NodeData.tunnels(id) = Nil
+    NodeData.freqs(id) = Nil
+  }
+
   /** Add an edge with no node or scheduling dependencies **/
   final def registerInput(in: EdgeLike): Unit = {
     in.id_=(curInputId)
@@ -136,29 +149,29 @@ trait AbstractHDAG extends Exceptions {
       val bounds = nodeBounds(node).map(producerOf)
       val sched = bounds.flatMap(getDependents)
 
-      if (sched.nonEmpty) {
-        log(c"  node: ${triple(node)}")
-        log(c"  bounds:")
-        bounds.foreach{bnd => log(c"    ${triple(bnd)}")}
-        log(c"  binded: ")
-        sched.foreach{s => log(c"    ${triple(s)}") }
-      }
+//      if (sched.nonEmpty) {
+//        log(c"  node: ${triple(node)}")
+//        log(c"  bounds:")
+//        bounds.foreach{bnd => log(c"    ${triple(bnd)}")}
+//        log(c"  binded: ")
+//        sched.foreach{s => log(c"    ${triple(s)}") }
+//      }
       sched
     }
     val tunnelDependents = scope.flatMap{node =>
       val tunnels = nodeTunnels(node).map(producerOf)
       val schedule = dfs(List(node)){node => reverse(node, scope) } filterNot(_ == node)
       val tunnelForward = tunnels.flatMap(getDependents) diff tunnels
-      if (tunnels.nonEmpty) {
-        log(c"  Computing tunnel dependencies: ")
-        log(c"  ${triple(node)}: ")
-        log(c"  tunnels: ")
-        tunnels.foreach{stm => log(c"    ${triple(stm)}")}
-        log(c"  schedule: ")
-        schedule.foreach{stm => log(c"    ${triple(stm)}")}
-        log(c"  tunnel dependents: ")
-        tunnelForward.foreach{stm => log(c"    ${triple(stm)}")}
-      }
+//      if (tunnels.nonEmpty) {
+//        log(c"  Computing tunnel dependencies: ")
+//        log(c"  ${triple(node)}: ")
+//        log(c"  tunnels: ")
+//        tunnels.foreach{stm => log(c"    ${triple(stm)}")}
+//        log(c"  schedule: ")
+//        schedule.foreach{stm => log(c"    ${triple(stm)}")}
+//        log(c"  tunnel dependents: ")
+//        tunnelForward.foreach{stm => log(c"    ${triple(stm)}")}
+//      }
 
       tunnelForward intersect schedule
     }
@@ -204,30 +217,30 @@ trait AbstractHDAG extends Exceptions {
 
     val levelScope = currentScope.filter(canOutside)
 
-    log("Getting scope level within scope: ")
-    scope.foreach{stm => log(c"  ${triple(stm)}") }
-    log("For result: ")
-    result.foreach{s => log(c"  ${triple(producerOf(s))}") }
-    log("Must inside: ")
-    mustInside.foreach{stm => log(c"  ${triple(stm)}")}
-    log("May outside: ")
-    mayOutside.foreach{stm => log(c"  ${triple(stm)}")}
-    log("Fringe: ")
-    fringe.foreach{stm => log(c"  ${triple(stm)}") }
-    log("Reachable [Warm]: ")
-    reachableWarm.foreach{stm => log(c"  ${triple(stm)}") }
-    log("Reachable [Cold]: ")
-    reachableCold.foreach{stm => log(c"  ${triple(stm)}")}
-    log(s"Hot paths: ")
-    hotPathsOnly.foreach{stm => log(c"  ${triple(stm)}")}
-    log(s"Hot dependencies: ")
-    hotDeps.foreach{stm => log(c"  ${triple(stm)}")}
-    log(s"Hot fringe: ")
-    hotFringe.foreach{stm => log(c"  ${triple(stm)}")}
-    log("Hot fringe dependencies: ")
-    hotFringeDeps.foreach{stm => log(c"  ${triple(stm)}")}
-    log("levelScope: ")
-    levelScope.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("Getting scope level within scope: ")
+//    scope.foreach{stm => log(c"  ${triple(stm)}") }
+//    log("For result: ")
+//    result.foreach{s => log(c"  ${triple(producerOf(s))}") }
+//    log("Must inside: ")
+//    mustInside.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("May outside: ")
+//    mayOutside.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("Fringe: ")
+//    fringe.foreach{stm => log(c"  ${triple(stm)}") }
+//    log("Reachable [Warm]: ")
+//    reachableWarm.foreach{stm => log(c"  ${triple(stm)}") }
+//    log("Reachable [Cold]: ")
+//    reachableCold.foreach{stm => log(c"  ${triple(stm)}")}
+//    log(s"Hot paths: ")
+//    hotPathsOnly.foreach{stm => log(c"  ${triple(stm)}")}
+//    log(s"Hot dependencies: ")
+//    hotDeps.foreach{stm => log(c"  ${triple(stm)}")}
+//    log(s"Hot fringe: ")
+//    hotFringe.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("Hot fringe dependencies: ")
+//    hotFringeDeps.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("levelScope: ")
+//    levelScope.foreach{stm => log(c"  ${triple(stm)}")}
 
     levelScope
   }

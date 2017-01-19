@@ -14,6 +14,8 @@ trait Symbols extends Base with StagedTypes with Metadata { self: Staging =>
   def mpos(pos: List[SrcCtx]) = pos.head
   def mpos(s: Exp[_]) = ctxsOf(s).head
 
+  def ctxOrHere(x: Exp[_])(implicit ctx: SrcCtx): SrcCtx = ctxsOf(x).headOption.getOrElse(ctx)
+
   /** Any staged symbol **/
   sealed abstract class Exp[+T] private[core](staged: Staged[T]) extends EdgeLike {
     def tp: Staged[T @uncheckedVariance] = staged
@@ -74,8 +76,12 @@ trait Symbols extends Base with StagedTypes with Metadata { self: Staging =>
 
     private var _p: Any = x
     override def c: Any = _p
-    def c_=(rhs: Any) { _p = c }
+    def c_=(rhs: Any) { if (!isFinal) _p = c }
     override def toString = escapeConst(c)
+
+    private var _isFinal: Boolean = false
+    def isFinal: Boolean = _isFinal
+    def makeFinal(): Unit = { _isFinal = true }
 
     override def hashCode() = pid
     override def equals(x: Any) = x match {
@@ -91,11 +97,12 @@ trait Symbols extends Base with StagedTypes with Metadata { self: Staging =>
 
 
   def constUnapply(s: Exp[_]): Option[Any] = s match {
+    case param:Param[_] if param.isFinal => Some(param.c)
     case const:Const[_] => Some(const.c)
     case _ => None
   }
   def paramUnapply(s: Exp[_]): Option[Any] = s match {
-    case param:Param[_] => Some(param.c)
+    case param:Param[_] => Some(param.c) // TODO: Should this only return if isFinal is false?
     case _ => None
   }
 

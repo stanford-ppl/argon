@@ -9,6 +9,8 @@ trait StagedTypes { this: Staging =>
     def typeArguments: List[Staged[_]] = Nil
     def stagedClass: Class[T]
     def isPrimitive: Boolean
+
+    def <:<(that: Staged[_]) = isSubtype(this.stagedClass, that.stagedClass)
   }
 
   def typ[T:Staged] = implicitly[Staged[T]]
@@ -24,5 +26,15 @@ trait StagedTypes { this: Staging =>
 
   implicit class StagedTypeOps[T:Staged](x: T) {
     def s: Exp[T] = implicitly[Staged[T]].unwrapped(x)
+  }
+
+  /** Stolen from Delite utils **/
+  private def isSubtype(x: java.lang.Class[_], cls: java.lang.Class[_]): Boolean = {
+    if ((x == cls) || x.getInterfaces.contains(cls)) true
+    else if (x.getSuperclass == null && x.getInterfaces.length == 0) false
+    else {
+      val superIsSub = if (x.getSuperclass != null) isSubtype(x.getSuperclass, cls) else false
+      superIsSub || x.getInterfaces.exists(s=>isSubtype(s,cls))
+    }
   }
 }

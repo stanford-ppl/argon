@@ -4,12 +4,12 @@ trait Effects extends Symbols { this: Staging =>
   var context: List[Sym[_]] = _
   final def checkContext(): Unit = if (context == null) throw new UninitializedEffectContextException()
 
-  case class Dependencies(deps: List[Sym[_]]) extends Metadata[Dependencies] {
+  case class Dependencies(deps: List[Exp[_]]) extends Metadata[Dependencies] {
     def mirror(f:Tx) = Dependencies(f.tx(deps))
   }
   object depsOf {
-    def apply(x: Sym[_]) = metadata[Dependencies](x).map(_.deps).getOrElse(Nil)
-    def update(x: Sym[_], deps: List[Sym[_]]) = metadata.add(x, Dependencies(deps))
+    def apply(x: Exp[_]) = metadata[Dependencies](x).map(_.deps).getOrElse(Nil)
+    def update(x: Exp[_], deps: List[Exp[_]]) = metadata.add(x, Dependencies(deps))
   }
 
   case class Effects(
@@ -20,7 +20,8 @@ trait Effects extends Symbols { this: Staging =>
     reads:   Set[Sym[_]] = Set.empty,
     writes:  Set[Sym[_]] = Set.empty
   ) extends Metadata[Effects] {
-    def mirror(f: Tx) = this.copy(reads = f.tx(reads), writes = f.tx(writes))
+    def mirror(f: Tx) = this.copy(reads = onlySyms(f.tx(reads)).toSet, writes = onlySyms(f.tx(writes)).toSet)
+
     private def combine(that: Effects, m1: Boolean, m2: Boolean) = Effects(
       cold = this.cold || that.cold,
       simple = this.simple || that.simple,
@@ -55,7 +56,7 @@ trait Effects extends Symbols { this: Staging =>
     def update(s: Sym[_], e: Effects) = metadata.add(s, e)
   }
   object Effectful {
-    def unapply(x: Sym[_]): Option[(Effects,List[Sym[_]])] = {
+    def unapply(x: Sym[_]): Option[(Effects,List[Exp[_]])] = {
       val deps = depsOf(x)
       val effects = effectsOf(x)
       if (effects.isPure && deps.isEmpty) None else Some((effects,deps))

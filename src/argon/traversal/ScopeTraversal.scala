@@ -8,9 +8,9 @@ trait ScopeTraversal {
 
   protected var innerScope: Seq[Int] = _
 
-  private def availableStms = if (innerScope ne null) innerScope else 0 until IR.curNodeId
+  protected def availableStms = if (innerScope ne null) innerScope else 0 until IR.curNodeId
 
-  private def withInnerScope[A](scope: Seq[Int])(body: => A): A = {
+  protected def withInnerScope[A](scope: Seq[Int])(body: => A): A = {
     val saveInner = innerScope
     innerScope = scope
     val result = body
@@ -18,7 +18,7 @@ trait ScopeTraversal {
     result
   }
 
-  private def scopeSanityCheck[T:Staged](block: Block[T], scope: Seq[Int]): Unit = {
+  private def scopeSanityCheck(block: Block[_], scope: Seq[Int]): Unit = {
     val observable = block.effectful.map(defOf).map(_.id).distinct // node ids for effect producers
     val actual = observable intersect scope
     val missing = observable diff actual
@@ -57,6 +57,25 @@ trait ScopeTraversal {
       }
     }
   }
+
+  /** Get, but do not focus on, the contents of a given scope **/
+  final def scopeContents(scope: Scope[_]): List[Stm] = scope match {
+    case block: Block[_] => blockContents(block)
+    case lambda: Lambda[_] => lambdaContents(lambda)
+  }
+  final def lambdaContents(lambda: Lambda[_]): List[Stm] = {
+    val inputs = lambda.inputs.map(defOf).map(_.id)
+    withInnerScope(availableStms diff inputs) {
+      blockContents(lambda.block)
+    }
+  }
+  final def blockContents(block: Block[_]): List[Stm] = {
+    val allDependencies = syms(block.result +: block.effectful) // Result and scheduling dependencies
+    val schedule = IR.getLocalSchedule(availableNodes = availableStms, result = allDependencies.map(_.id))
+    scopeSanityCheck(block, schedule)
+    schedule.flatMap{nodeId => stmFromNodeId(nodeId) }
+  }
+
 
   protected def visitStm(stm: Stm): Unit = stm.rhs.scopes.foreach {blk => traverseScope(blk) }
 }

@@ -116,6 +116,7 @@ trait Definitions extends Scopes { self: Staging =>
 
   // --- Helper functions
   def defOf(s:Sym[_]): Def = defFromSymId(s.id)
+  def getDef(s: Exp[_]): Option[Def] = s match { case s: Sym[_] => Some(defOf(s)); case _ => None }
 
   private val __syms: PartialFunction[Any,List[Symbol[_]]] = {
     case s: Symbol[_] => List(s)
