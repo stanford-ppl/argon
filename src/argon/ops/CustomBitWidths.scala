@@ -6,8 +6,8 @@ trait CustomBitWidths extends Reporting {
   def BOOL[T:BOOL] = implicitly[BOOL[T]]
   def INT[T:INT] = implicitly[INT[T]]
 
-  trait BOOL[T] { val v: Boolean }
-  trait INT[T] { val v: Int }
+  sealed abstract class BOOL[T] { val v: Boolean }
+  sealed abstract class INT[T] { val v: Int }
 
   trait TRUE;  implicit object BOOL_TRUE extends BOOL[TRUE] { val v = true }
   trait FALSE; implicit object BOOL_FALSE extends BOOL[FALSE] { val v = false }
@@ -78,7 +78,6 @@ trait CustomBitWidths extends Reporting {
   trait _64; implicit object INT64 extends INT[_64] { val v = 64 }
 
   override def userReadable(x: Any): String = x match {
-    // scalac warning here: "The outer reference in this type test cannot be checked at run time" seems to be incorrect
     case x:INT[_] => s"_${x.v}"
     case x:BOOL[_] => if (x.v) "TRUE" else "FALSE"
     case _ => super.userReadable(x)

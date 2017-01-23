@@ -21,3 +21,11 @@ libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value %
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.3.2"
 
 addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
+
+
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
+
+// It would be very annoying to have to import these everywhere in this project
+scalacOptions ++= Seq("-language:higherKinds", "-language:implicitConversions")
+
+

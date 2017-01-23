@@ -39,7 +39,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   final protected def inlineBlock[T:Staged](b: Block[T], func: Seq[Stm] => Unit): Exp[T] = {
     tab += 1
     val inputs2 = onlySyms(f.tx(b.inputs))
-    val result = withInnerScope(availableStms diff inputs2) {
+    val result: Exp[T] = withInnerScope(availableStms diff inputs2) {
       traverseStmsInBlock(b, func)
       f(b.result)
     }
@@ -82,7 +82,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
       // the IR def and context lists so it doesn't appear in any effects lists.
       if (!allowPretransform) throw new PretransformException(name, lhs, f(lhs))
 
-      val lhs2 = f(lhs)
+      val lhs2: Exp[T] = f(lhs)
       val lhs3 = mirrorExp(lhs2)
       if (lhs3 != lhs2 && lhs != lhs2 && lhs2.isInstanceOf[Sym[_]]) scrubSym(lhs2.asInstanceOf[Sym[_]])
       lhs3
