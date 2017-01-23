@@ -33,36 +33,45 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     lhs.zip(lhs2).foreach{case (s, s2) => register(s -> s2) }
   }
 
-  override protected def inlineBlock[T:Staged](b: Block[T]): Exp[T] = { traverseBlock(b); f(b.result) }
-  override protected def inlineLambda[T:Staged](b: Lambda[T]): Exp[T] = {
+  final override protected def inlineBlock[T:Staged](b: Block[T]): Exp[T] = inlineBlock(b, visitStms)
+  final override protected def transformBlock[T:Staged](b: Block[T]): Block[T] = transformBlock(b, visitStms)
+
+  final protected def inlineBlock[T:Staged](b: Block[T], func: Seq[Stm] => Unit): Exp[T] = {
+    tab += 1
     val inputs2 = onlySyms(f.tx(b.inputs))
-    withInnerScope(availableStms diff inputs2) {
-      traverseLambda(b)
+    val result = withInnerScope(availableStms diff inputs2) {
+      traverseStmsInBlock(b, func)
       f(b.result)
     }
+    tab -= 1
+    result
   }
 
-  override protected def transformBlock[T:Staged](b: Block[T]): Block[T] = stageBlock{ inlineBlock(b) }
-  override protected def transformLambda[T:Staged](b: Lambda[T]): Lambda[T] = {
+  final protected def transformBlock[T:Staged](b: Block[T], func: Seq[Stm] => Unit): Block[T] = {
     val inputs = onlySyms(f.tx(b.inputs))
-    stageLambda(inputs:_*){ inlineLambda(b) }
+    stageLambda(inputs:_*){ inlineBlock(b, func) }
   }
 
 
   /** Traversal functions **/
-  final override protected def visitScope[S:Staged](b: Scope[S]): Scope[S] = {
+  final override protected def visitBlock[S](b: Block[S]): Block[S] = {
     tab += 1
-    val b2 = transformScope(b)
+    val b2 = transformBlock(b)(mtyp(b.tp))
+    assert(b2.tp == b.tp)
     tab -= 1
     b2
   }
 
   final override protected def visit(lhs: Sym[_], rhs: Op[_]) = {
+    createSubstRule(lhs, rhs.asInstanceOf[Op[Any]])(mtyp(lhs.tp), ctxOrHere(lhs))
+  }
+
+  private def createSubstRule[T:Staged](lhs: Sym[T], rhs: Op[T])(implicit ctx: SrcCtx): Unit = {
     val lhs2 = if (f(lhs) == lhs) {
-      val lhs2 = transform(lhs, rhs.asInstanceOf[Op[Any]])(mtyp(lhs.tp), ctxOrHere(lhs))
+      val lhs2 = transform(lhs, rhs)
 
       // Substitution must not have any rule for lhs besides (optionally) lhs -> lhs2
-      if (subst.contains(lhs) && subst(lhs) != lhs2) throw new IllegalSubstException(name, lhs, subst(lhs), lhs2)
+      if (f(lhs) != lhs && f(lhs) != lhs2) throw new IllegalSubstException(name, lhs, f(lhs), lhs2)
       lhs2
     }
     else {

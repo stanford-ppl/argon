@@ -48,9 +48,7 @@ trait Codegen extends Traversal {
     case _ => throw new RuntimeException(s"Could not quote or remap $arg")
   }
 
-  protected def emitBlock(b: Block[_]): Unit = traverseBlock(b)
-  protected def emitLambda(b: Lambda[_]): Unit = traverseLambda(b)
-  protected def emitScope(b: Scope[_]): Unit = traverseScope(b)
+  protected def emitBlock(b: Block[_]): Unit = visitBlock(b)
   protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = throw new GenerationFailedException(rhs)
   protected def emitFat(lhs: List[Sym[_]], rhs: Def): Unit = throw new GenerationFailedException(rhs)
 

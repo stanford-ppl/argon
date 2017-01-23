@@ -6,7 +6,7 @@ import argon.{Config, State}
 /**
   * Single or iterative traversal of the IR with pre- and post- processing
   */
-trait Traversal extends ScopeTraversal { self =>
+trait Traversal extends BlockTraversal { self =>
   val IR: Statements
   import IR._
 
@@ -28,7 +28,7 @@ trait Traversal extends ScopeTraversal { self =>
   final protected def debugs(x: => Any) = debug("  "*tab + x)
   final protected def msgs(x: => Any) = msg("  "*tab + x)
 
-  final def traverse[T:Staged](b: Scope[T]): Scope[T] = if (shouldRun) {
+  final def traverse[T:Staged](b: Block[T]): Block[T] = if (shouldRun) {
     val outfile = State.paddedPass + " " + name + ".log"
     State.pass += 1
     if (verbosity >= 1) {
@@ -39,7 +39,7 @@ trait Traversal extends ScopeTraversal { self =>
     }
   } else b
 
-  final protected def runTraversal[S:Staged](b: Scope[S]): Scope[S] = {
+  final protected def runTraversal[S:Staged](b: Block[S]): Block[S] = {
     val saveVerbosity = Config.verbosity
     Config.verbosity = this.verbosity
 
@@ -55,9 +55,9 @@ trait Traversal extends ScopeTraversal { self =>
     result
   }
 
-  final protected def runSingle[S:Staged](b: Scope[S]): Scope[S] = {
+  final protected def runSingle[S:Staged](b: Block[S]): Block[S] = {
     val b2 = preprocess(b)
-    val b3 = visitScope(b2)
+    val b3 = visitBlock(b2)
     postprocess(b3)
   }
 
@@ -65,14 +65,14 @@ trait Traversal extends ScopeTraversal { self =>
     * Called to execute this traversal, including optional pre- and post- processing.
     * Default is to run pre-processing, then a single traversal, then post-processing
     */
-  protected def run[S:Staged](b: Scope[S]): Scope[S] = runSingle(b)
-  protected def preprocess[S:Staged](b: Scope[S]): Scope[S] = { b }
-  protected def postprocess[S:Staged](b: Scope[S]): Scope[S] = { b }
-  protected def visitScope[S:Staged](b: Scope[S]): Scope[S] = {
+  protected def run[S:Staged](block: Block[S]): Block[S] = runSingle(block)
+  protected def preprocess[S:Staged](block: Block[S]): Block[S] = { block }
+  protected def postprocess[S:Staged](block: Block[S]): Block[S] = { block }
+  override protected def visitBlock[S](block: Block[S]): Block[S] = {
     tab += 1
-    traverseScope(b)
+    super.visitBlock(block)
     tab -= 1
-    b
+    block
   }
 
 
@@ -82,12 +82,12 @@ trait Traversal extends ScopeTraversal { self =>
       case TTP(lhs, rhs) => visitFat(lhs, rhs)
     }
     if (recurse == Always)
-      stm.rhs.scopes.foreach {blk => traverseScope(blk) }
+      stm.rhs.blocks.foreach {blk => visitBlock(blk) }
   }
 
   protected def visit(lhs: Sym[_], rhs: Op[_]): Unit = {
     if (recurse == Default)
-      rhs.scopes.foreach {blk => traverseScope(blk) }
+      rhs.blocks.foreach {blk => visitBlock(blk) }
   }
 
   protected def visitFat(lhs: List[Sym[_]], rhs: Def): Unit = {}
@@ -115,14 +115,14 @@ trait IterativeTraversal extends Traversal {
   protected def retry() { _retry = true }
   protected def failedToConverge() = throw new TraversalFailedToConvergeException(c"$name did not converge.")
   protected def failedToComplete() = throw new TraversalFailedToCompleteException(c"$name did not complete.")
-  final protected def runIterative[S:Staged](b: Scope[S]): Scope[S] = {
+  final protected def runIterative[S:Staged](b: Block[S]): Block[S] = {
     var curBlock = preprocess(b)
     do {
       runs = 0
       _retry = false
       while (!hasConverged && runs < MAX_ITERS) { // convergence condition
         runs += 1
-        curBlock = visitScope(curBlock)
+        curBlock = visitBlock(curBlock)
       }
       curBlock = postprocess(curBlock)
       retries += 1
@@ -135,5 +135,5 @@ trait IterativeTraversal extends Traversal {
   }
 
 
-  override protected def run[S:Staged](b: Scope[S]): Scope[S] = runIterative(b)
+  override protected def run[S:Staged](b: Block[S]): Block[S] = runIterative(b)
 }

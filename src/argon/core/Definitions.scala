@@ -9,7 +9,7 @@ import scala.collection.immutable.Queue
 import scala.collection.mutable
 import scala.util.control.NoStackTrace
 
-trait Definitions extends Scopes { self: Staging =>
+trait Definitions extends Blocks { self: Staging =>
   type Tx = Transformer{val IR: self.type }
 
   protected val here = implicitly[SourceContext]
@@ -34,13 +34,13 @@ trait Definitions extends Scopes { self: Staging =>
 
     // Scopes: scopes associated with this Def
     // Default: All blocks and lambdas in the Def's case class constructor
-    def scopes: List[Scope[_]] = recursive.collectList{case b: Scope[_] => b}(productIterator)
+    def blocks: List[Block[_]] = recursive.collectList{case b: Block[_] => b}(productIterator)
 
     // Binds: symbols "bound" by this Def
     // Bound symbols define the start of scopes. Effectful symbols in a scope typically must be bound.
     // Dataflow dependents of bound syms up until but not including the binding Def make up the majority of a scope
     // Default: All effects included in all scopes associated with this Def
-    def binds: List[Symbol[_]] = scopes.flatMap(_.effectful)
+    def binds: List[Symbol[_]] = blocks.flatMap(_.effectful)
 
     // Tunnels: symbols "bound" in scopes of this Def, but defined elsewhere
     // Tunnel symbols define the start of scopes.
@@ -120,7 +120,7 @@ trait Definitions extends Scopes { self: Staging =>
 
   private val __syms: PartialFunction[Any,List[Symbol[_]]] = {
     case s: Symbol[_] => List(s)
-    case Block(res: Symbol[_],_,_) => List(res)
+    case Block(res: Symbol[_],_,_,_) => List(res)
     case d: Def => d.inputs
     case l: Iterable[_] => recursive.collectList{case b: Symbol[_] => b}(l.iterator)
   }

@@ -9,15 +9,7 @@ trait ScalaCodegen extends Codegen {
   override val ext: String = "scala"
 
   override protected def emitBlock(b: Block[_]): Unit = {
-    traverseBlock(b)
-    emit(src"${b.result}")
-  }
-  override protected def emitLambda(b: Lambda[_]): Unit = {
-    traverseLambda(b)
-    emit(src"${b.result}")
-  }
-  override protected def emitScope(b: Scope[_]): Unit = {
-    traverseScope(b)
+    visitBlock(b)
     emit(src"${b.result}")
   }
 }

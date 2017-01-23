@@ -6,9 +6,9 @@ import java.nio.file.{Files, Paths}
 trait SingleFileGen extends Codegen {
   import IR._
 
-  protected def emitMain[S:Staged](b: Scope[S]): Unit
+  protected def emitMain[S:Staged](b: Block[S]): Unit
 
-  override protected def run[S:Staged](b: Scope[S]): Scope[S] = {
+  override protected def run[S:Staged](b: Block[S]): Block[S] = {
     Files.createDirectories(Paths.get(out))
 
     val file = new PrintWriter(s"${out}main.$ext")
@@ -18,11 +18,11 @@ trait SingleFileGen extends Codegen {
       postprocess(b)
     }
   }
-  override protected def preprocess[S:Staged](b: Scope[S]) = {
+  override protected def preprocess[S:Staged](b: Block[S]) = {
     emitFileHeader()
     super.preprocess(b)
   }
-  override protected def postprocess[S:Staged](b: Scope[S]) = {
+  override protected def postprocess[S:Staged](b: Block[S]) = {
     emitFileFooter()
     super.postprocess(b)
   }

@@ -12,7 +12,6 @@ abstract class Transformer { self =>
     case c: Const[_] => c
   }
   def apply[T:Staged](b: Block[T]): Exp[T] = inlineBlock(b)
-  def apply[T:Staged](b: Lambda[T]): Exp[T] = inlineLambda(b)
 
   def apply[T:Staged](xs: List[Exp[T]]): List[Exp[T]] = xs.map{x => this.apply(x)}
   def apply[T:Staged](xs: Seq[Exp[T]]): Seq[Exp[T]] = xs.map{x => this.apply(x)}
@@ -23,15 +22,8 @@ abstract class Transformer { self =>
   def tx(xs: Seq[Sym[_]]): Seq[Exp[_]] = xs.map{x => f(x) }
 
   protected def inlineBlock[T:Staged](b: Block[T]): Exp[T]
-  protected def inlineLambda[T:Staged](b: Lambda[T]): Exp[T]
-
-  protected def transformSym[T:Staged](s: Sym[T]): Exp[T]
   protected def transformBlock[T:Staged](b: Block[T]): Block[T]
-  protected def transformLambda[T:Staged](b: Lambda[T]): Lambda[T]
-  final protected def transformScope[T:Staged](b: Scope[T]): Scope[T] = b match {
-    case b: Block[_] => transformBlock(b.asInstanceOf[Block[T]])(typ[T])
-    case b: Lambda[_] => transformLambda(b.asInstanceOf[Lambda[T]])(typ[T])
-  }
+  protected def transformSym[T:Staged](s: Sym[T]): Exp[T]
 
   /** Helper functions for mirroring **/
   final protected def mirror(lhs: List[Sym[_]], rhs: Def): List[Exp[_]] = {

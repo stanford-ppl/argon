@@ -33,7 +33,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     msg(c"Staging ${self.getClass}")
     Config.name = c"${self.getClass}".replace('.','-')
     val start = System.currentTimeMillis()
-    var block: Scope[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(main()).s } }
+    var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(main()).s } }
 
     // Exit now if errors were found during staging
     checkErrors(start, "staging")

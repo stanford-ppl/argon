@@ -1,4 +1,4 @@
-package argon.metadata
+package argon.analysis
 
 import argon.core._
 

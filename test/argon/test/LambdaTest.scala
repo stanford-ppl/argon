@@ -29,7 +29,7 @@ trait SimpleLambdaExp extends SimpleLambdaOps with NumExp {
     wrap(stageEffectful(Map2(n.s, m1Blk, m2Blk, i), effects.star)(ctx))
   }
 
-  case class Map2[T: Staged](n: Exp[Int32], map1: Block[T], map2: Lambda[T], i: Bound[Int32]) extends Op[T] {
+  case class Map2[T: Staged](n: Exp[Int32], map1: Block[T], map2: Block[T], i: Bound[Int32]) extends Op[T] {
     def mirror(f: Tx) = op_map2(f(n), f(map1), f(map2), i)
     override def binds = super.binds :+ i
   }
@@ -54,8 +54,8 @@ trait ScalaGenLambda extends ScalaCodegen {
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case Map2(n, map1, map2, i) =>
       open(src"val $lhs = List.tabulate($n){$i => ")
-      traverseBlock(map1)
-      emitLambda(map2)
+      visitBlock(map1)
+      emitBlock(map2)
       close("}.head")
     case _ => super.emitNode(lhs, rhs)
   }

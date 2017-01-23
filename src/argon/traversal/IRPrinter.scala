@@ -17,21 +17,21 @@ trait IRPrinter extends Traversal {
   }
 
   override protected def visit(lhs: Sym[_], rhs: Op[_]) = {
-    if (rhs.scopes.nonEmpty)
+    if (rhs.blocks.nonEmpty)
       msgs(c"$lhs = $rhs {")
     else
       msgs(c"$lhs = $rhs")
     strMeta(lhs)
 
-    rhs.scopes.zipWithIndex.foreach{case (blk,i) =>
+    rhs.blocks.zipWithIndex.foreach{case (blk,i) =>
       tab += 1
       msgs(c"block $i: $blk {")
       tab += 1
-      traverseScope(blk)
+      visitBlock(blk)
       tab -= 1
       msgs(c"} // End of $lhs block #$i")
       tab -= 1
     }
-    if (rhs.scopes.nonEmpty) msgs(c"} // End of $lhs")
+    if (rhs.blocks.nonEmpty) msgs(c"} // End of $lhs")
   }
 }
