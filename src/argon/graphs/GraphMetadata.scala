@@ -38,4 +38,9 @@ trait GraphMetadata {
     case e: Edge => edgeMetadata(e.id) -= m.getClass
     case e: EdgeLike => otherMetadata(e._id) -= m.getClass
   }
+
+  final def clearMetadata(m: Class[_]): Unit = {
+    edgeMetadata.indices.foreach{id => edgeMetadata(id) -= m }
+    otherMetadata.indices.foreach{id => otherMetadata(id) -= m }
+  }
 }

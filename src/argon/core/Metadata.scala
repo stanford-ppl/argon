@@ -40,5 +40,7 @@ trait Metadata extends HDAG with Lattices { self: Statements =>
     }
     def get(edge:Exp[_]):Map[Class[_],Metadata[_]] = getMetadata(edge)
     def set(edge:Exp[_], m:Map[Class[_],Metadata[_]]):Unit = setMetadata(edge, m)
+
+    def clearAll[M<:Metadata[M]:Manifest] = clearMetadata(keyOf[M])
   }
 }
