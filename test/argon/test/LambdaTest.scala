@@ -1,11 +1,10 @@
 package argon.test
 
 import argon.ops._
-import argon.Config
+import argon.{AppCore, Config, LibCore}
 import argon.codegen.scalagen.ScalaCodegen
 import argon.utils.deleteExts
 import org.scalatest.{FlatSpec, Matchers, ShouldMatchers}
-
 import org.virtualized.{SourceContext, virtualize}
 
 trait SimpleLambdaOps extends NumOps with FixPtOps {
@@ -61,14 +60,22 @@ trait ScalaGenLambda extends ScalaCodegen {
   }
 }
 
-trait ScalaGenLambdaTest extends ScalaGen with ScalaGenLambda { override val IR: LambdaTest }
+trait ScalaGenLambdaTest extends ScalaGen with ScalaGenLambda { override val IR: LambdaTestIR }
 
-trait LambdaTest extends CompilerBase with App with SimpleLambdaExp {
-  val scalagen = new ScalaGenLambdaTest{val IR: LambdaTest.this.type = LambdaTest.this }
+trait LambdaTestIR extends CompilerBase with SimpleLambdaExp { self =>
+  val scalagen = new ScalaGenLambdaTest{val IR: self.type = self }
   passes += scalagen
 }
 
+trait LambdaTestLib extends LibCore
+
+trait LambdaTest extends AppCore {
+  val IR: LambdaTestIR = new LambdaTestIR { }
+  val Lib: LambdaTestLib = new LambdaTestLib { }
+}
+
 object SimpleMap2 extends LambdaTest {
+  import IR._
   def main() {
     val x = map(32){i => 5*i + 1}{x => x * 2}
     println(x)

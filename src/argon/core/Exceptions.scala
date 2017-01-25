@@ -116,7 +116,7 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
 
   class IllegalMutableSharingError(s: Sym[_], aliases: Set[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, c"Illegal sharing of mutable objects: ")
-    aliases.foreach{alias =>
+    (aliases + s).foreach{alias =>
       val pos = mpos(alias)
       error(c"${pos.fileName}:${pos.line}:  symbol ${str(alias)} defined here")
     }

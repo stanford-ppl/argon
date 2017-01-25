@@ -13,6 +13,7 @@ trait VoidApi extends VoidOps {
 
 trait VoidExp extends VoidOps with Staging {
   case class Void(s: Exp[Void])
+  def void()(implicit ctx: SrcCtx): Exp[Void] = constant[Void](())
 
   implicit object VoidType extends Staged[Void] {
     override def unwrapped(x: Void) = x.s
@@ -21,8 +22,6 @@ trait VoidExp extends VoidOps with Staging {
     override def stagedClass = classOf[Void]
     override def isPrimitive = true
   }
-
-  //def void(x: Unit)(implicit ctx: SrcCtx): Const[Void] = constant[Void](x)
 }
 
 

@@ -22,8 +22,8 @@ trait RunnerCore extends CompilerCore {
     exitCode
   }
 
-  override def main(sargs: Array[String]): Unit = {
-    super.main(sargs)
+  override def compileOrRun(blk: => Unit): Unit = {
+    super.compileOrRun(blk)
     passes.foreach {
       // TODO: More generic compilation / running
       case pass: SingleFileGen if pass.lang == "scala" =>
@@ -32,7 +32,5 @@ trait RunnerCore extends CompilerCore {
 
       case _ => // Do nothing
     }
-
-
   }
 }

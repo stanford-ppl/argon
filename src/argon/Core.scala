@@ -1,19 +1,37 @@
 package argon
 import argon.core.Staging
-import argon.ops.ArrayExp
+import argon.ops.{ArrayApi, ArrayExp}
 import argon.utils.deleteExts
 
 import scala.collection.mutable.ArrayBuffer
 import org.virtualized.SourceContext
 
+trait AppCore { self =>
+  val IR: CompilerCore
+  val Lib: LibCore // Should include "def args: Array[String] = self.stagingArgs"
+
+  private var __stagingArgs: scala.Array[java.lang.String] = _
+  def stagingArgs: Array[String] = __stagingArgs
+
+  def main(): scala.Unit
+
+  final def main(sargs: scala.Array[java.lang.String]): Unit = {
+    __stagingArgs = sargs
+    IR.compileOrRun( main() )
+  }
+}
+
+trait LibCore {
+  // Nothing here for now
+}
+
 trait CompilerCore extends Staging with ArrayExp { self =>
   val passes: ArrayBuffer[CompilerPass] = ArrayBuffer.empty[CompilerPass]
   val testbench: Boolean = false
 
-  var args: MArray[Text] = _
+  lazy val args: MArray[Text] = StagedArray[Text](stage(InputArguments())(implicitly[SourceContext]))
   var stagingArgs: scala.Array[java.lang.String] = _
 
-  def main(): scala.Unit
   def settings(): Unit = {}
 
   def checkErrors(start: Long, stageName: String): Unit = if (hadErrors) {
@@ -24,16 +42,17 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     else System.exit(nErrors)
   }
 
-  def main(sargs: Array[String]): Unit = {
+  def compileOrRun(blk: => Unit): Unit = {
     reset() // Reset global state
     settings()
-    stagingArgs = sargs
 
     msg("--------------------------")
     msg(c"Staging ${self.getClass}")
     Config.name = c"${self.getClass}".replace('.','-')
     val start = System.currentTimeMillis()
-    var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(main()).s } }
+    var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(blk).s } }
+
+    if (curEdgeId == 0) return  // Nothing was staged -- likely running in library mode (or empty program)
 
     // Exit now if errors were found during staging
     checkErrors(start, "staging")
@@ -52,10 +71,12 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     msg(s"Completed in " + "%.4f".format(time/1000) + " seconds")
   }
 
+
   override def readable(x: Any): String = x match {
     case x: Tuple3[_,_,_] => c"${x._1} = ${x._2} [inputs = ${x._3}]"
     case _ => super.readable(x)
   }
 }
+
 
 

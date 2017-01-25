@@ -55,12 +55,12 @@ trait AbstractHDAG extends Exceptions {
     if (remNode) removeNode(producerOf(in._id))
   }
   def removeNode(id: NodeId): Unit = {
-    NodeData.value(id) = null
-    NodeData.outputs(id) = NodeData.outputs(id - 1)
-    NodeData.inputs(id) = Nil
-    NodeData.bounds(id) = Nil
-    NodeData.tunnels(id) = Nil
-    NodeData.freqs(id) = Nil
+    //NodeData.value(id) = null
+    //NodeData.outputs(id) = NodeData.outputs(id - 1)
+    //NodeData.inputs(id) = Nil
+    //NodeData.bounds(id) = Nil
+    //NodeData.tunnels(id) = Nil
+    //NodeData.freqs(id) = Nil
   }
 
   /** Add an edge with no node or scheduling dependencies **/

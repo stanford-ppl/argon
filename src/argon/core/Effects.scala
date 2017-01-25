@@ -35,9 +35,9 @@ trait Effects extends Symbols { this: Staging =>
     def andThen(that: Effects) = this.combine(that, m1 = false, m2 = true)
     def star = this.copy(mutable = false) // Pure orElse this
 
-    def isPure = !simple && !global && !mutable && reads.isEmpty && writes.isEmpty
+    def isPure = !cold && !simple && !global && !mutable && reads.isEmpty && writes.isEmpty
     def isMutable = mutable
-    def isIdempotent = !simple && !global && !mutable && writes.isEmpty
+    def isIdempotent = !cold && !simple && !global && !mutable && writes.isEmpty
     def mayWrite(ss: Set[Sym[_]]) = global || ss.exists { s => writes contains s }
     def mayRead(ss: Set[Sym[_]]) = global || ss.exists { s => reads contains s }
   }

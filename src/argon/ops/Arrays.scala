@@ -6,7 +6,7 @@ trait ArrayOps extends FixPtOps with VoidOps with TextOps {
 
   protected trait StagedArrayOps[T] {
     def apply(i: Int32)(implicit ctx: SrcCtx): T
-    def update(i: Int32, e: T)(implicit ctx: SrcCtx): Void
+    def length(implicit ctx: SrcCtx): Int32
   }
 
   def createArray[T:Staged](size: Int32)(implicit ctx: SrcCtx): MArray[T]
@@ -24,7 +24,7 @@ trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
   /** API **/
   case class StagedArray[T:Staged](s: Exp[StagedArray[T]]) extends StagedArrayOps[T] {
     def apply(i: Int32)(implicit ctx: SrcCtx): T = wrap(array_apply(s, i.s))
-    def update(i: Int32, e: T)(implicit ctx: SrcCtx): Void = Void(array_update(s, i.s, e.s))
+    def length(implicit ctx: SrcCtx): Int32 = wrap(array_length(s))
   }
 
   def createArray[T:Staged](size: Int32)(implicit ctx: SrcCtx): MArray[T] = StagedArray(array_new[T](size.s))
@@ -52,6 +52,9 @@ trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
   case class ArrayUpdate[T:Staged](array: Exp[MArray[T]], i: Exp[Int32], e: Exp[T]) extends Op[Void] {
     def mirror(f:Tx) = array_update(f(array),f(i),f(e))
   }
+  case class ArrayLength[T:Staged](array: Exp[MArray[T]]) extends Op[Int32] {
+    def mirror(f:Tx) = array_length(f(array))
+  }
 
   /** Smart Constructors **/
   def array_new[T:Staged](size: Exp[Int32])(implicit ctx: SrcCtx): Exp[MArray[T]] = {
@@ -62,5 +65,8 @@ trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
   }
   def array_update[T:Staged](array: Exp[MArray[T]], i: Exp[Int32], e: Exp[T])(implicit ctx: SrcCtx): Exp[Void] = {
     stageWrite(array)(ArrayUpdate(array,i,e))(ctx)
+  }
+  def array_length[T:Staged](array: Exp[MArray[T]])(implicit ctx: SrcCtx): Exp[Int32] = {
+    stage(ArrayLength(array))(ctx)
   }
 }

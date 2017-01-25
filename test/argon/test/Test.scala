@@ -2,7 +2,7 @@ package argon.test
 
 import org.scalatest.{FlatSpec, Matchers, ShouldMatchers}
 import org.virtualized.{SourceContext, virtualize}
-import argon.{AppCore, Config, RunnerCore}
+import argon.{AppCore, Config, LibCore, RunnerCore}
 import argon.ops._
 import argon.utils.deleteExts
 import argon.traversal.IRPrinter
@@ -23,14 +23,12 @@ trait IdentityTransformer extends ForwardTransformer {
   override val name = "Identity Transformer"
 }
 
-
-trait App extends AppCore with TestApi
 trait CompilerBase extends RunnerCore with TestExp { self =>
 
   override val testbench = true
 
-  lazy val printer  = new IRPrinter { override val IR: CompilerBase.this.type = CompilerBase.this }
-  lazy val identity = new IdentityTransformer { override val IR: CompilerBase.this.type = CompilerBase.this }
+  lazy val printer  = new IRPrinter { override val IR: self.type = self }
+  lazy val identity = new IdentityTransformer { override val IR: self.type = self }
 
   printer.verbosity = 3
 
@@ -43,13 +41,20 @@ trait CompilerBase extends RunnerCore with TestExp { self =>
     super.settings()
   }
 }
-trait Test extends CompilerBase with App {
-  lazy val scalagen = new ScalaGen { override val IR: Test.this.type = Test.this }
+trait TestIR extends CompilerBase with TestApi { self =>
+  lazy val scalagen = new ScalaGen { override val IR: self.type = self }
   passes += scalagen
+}
+trait TestLib extends LibCore
+
+trait Test extends AppCore {
+  val IR: TestIR = new TestIR { }
+  val Lib: TestLib = new TestLib { def args: Array[String] = stagingArgs }
 }
 
 
 object Test1 extends Test {
+  import IR._
   def main() {
     val x = random[Boolean]
     val y = random[Boolean]
@@ -58,6 +63,7 @@ object Test1 extends Test {
 }
 
 object Test2 extends Test {
+  import IR._
   @virtualize
   def main() {
     val x = random[Boolean]
@@ -67,6 +73,7 @@ object Test2 extends Test {
 }
 
 object Test3 extends Test {
+  import IR._
   @virtualize
   def main() {
     val x = !random[Boolean]
@@ -76,6 +83,7 @@ object Test3 extends Test {
 }
 
 object Test4 extends Test {
+  import IR._
   @virtualize
   def main() {
     val x = random[Boolean] && random[Boolean]
@@ -85,6 +93,7 @@ object Test4 extends Test {
 }
 
 object Test5 extends Test {
+  import IR._
   @virtualize
   def main() {
     val x = random[Boolean] && random[Boolean]
@@ -94,6 +103,7 @@ object Test5 extends Test {
 }
 
 object Test6 extends Test {
+  import IR._
   @virtualize
   def main() {
     val x = random[Boolean]
@@ -104,6 +114,7 @@ object Test6 extends Test {
 }
 
 object Test7 extends Test {
+  import IR._
   @virtualize
   def main() {
     val x = random[Boolean]
@@ -114,6 +125,7 @@ object Test7 extends Test {
 }
 
 object Test8 extends Test {
+  import IR._
   @virtualize
   def main() {
     val x = random[Int]
@@ -127,6 +139,7 @@ object Test8 extends Test {
 }
 
 object Test9 extends Test {
+  import IR._
   @virtualize
   def main() {
     val x = random[Int]
@@ -136,6 +149,7 @@ object Test9 extends Test {
 }
 
 object OverflowLiftTest extends Test {
+  import IR._
   @virtualize
   def main() {
     type Nibble = FixPt[TRUE,_4,_0]
@@ -146,6 +160,7 @@ object OverflowLiftTest extends Test {
   }
 }
 object UnderflowLiftTest extends Test {
+  import IR._
   @virtualize
   def main() {
     type Nibble = FixPt[TRUE,_4,_0]
@@ -156,6 +171,7 @@ object UnderflowLiftTest extends Test {
 }
 
 object IgnoreOverflowTest extends Test {
+  import IR._
   @virtualize
   def main() {
     val c = 2147483648L
@@ -165,6 +181,7 @@ object IgnoreOverflowTest extends Test {
 }
 
 object SimpleCastTest extends Test {
+  import IR._
   @virtualize
   def main() {
 

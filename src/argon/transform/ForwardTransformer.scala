@@ -33,21 +33,24 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     lhs.zip(lhs2).foreach{case (s, s2) => register(s -> s2) }
   }
 
-  final override protected def inlineBlock[T:Staged](b: Block[T]): Exp[T] = inlineBlock(b, visitStms)
-  final override protected def transformBlock[T:Staged](b: Block[T]): Block[T] = transformBlock(b, visitStms)
+  final override protected def inlineBlock[T:Staged](b: Block[T]): Exp[T] = {
+    inlineBlock(b, {stms => visitStms(stms); f(b.result) })
+  }
+  final override protected def transformBlock[T:Staged](b: Block[T]): Block[T] = {
+    transformBlock(b, {stms => visitStms(stms); f(b.result) })
+  }
 
-  final protected def inlineBlock[T:Staged](b: Block[T], func: Seq[Stm] => Unit): Exp[T] = {
+  final protected def inlineBlock[T:Staged](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T] = {
     tab += 1
     val inputs2 = onlySyms(f.tx(b.inputs))
     val result: Exp[T] = withInnerScope(availableStms diff inputs2) {
       traverseStmsInBlock(b, func)
-      f(b.result)
     }
     tab -= 1
     result
   }
 
-  final protected def transformBlock[T:Staged](b: Block[T], func: Seq[Stm] => Unit): Block[T] = {
+  final protected def transformBlock[T:Staged](b: Block[T], func: Seq[Stm] => Exp[T]): Block[T] = {
     val inputs = onlySyms(f.tx(b.inputs))
     stageLambda(inputs:_*){ inlineBlock(b, func) }
   }

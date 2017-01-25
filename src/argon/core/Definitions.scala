@@ -115,12 +115,12 @@ trait Definitions extends Blocks { self: Staging =>
   }
 
   // --- Helper functions
-  def defOf(s:Sym[_]): Def = defFromSymId(s.id)
+  def defOf(s:Sym[_]): Def = defFromSymId(s.id).get
   def getDef(s: Exp[_]): Option[Def] = s match { case s: Sym[_] => Some(defOf(s)); case _ => None }
 
   private val __syms: PartialFunction[Any,List[Symbol[_]]] = {
     case s: Symbol[_] => List(s)
-    case Block(res: Symbol[_],_,_,_) => List(res)
+    case b: Block[_] => syms(b.result)
     case d: Def => d.inputs
     case l: Iterable[_] => recursive.collectList{case b: Symbol[_] => b}(l.iterator)
   }

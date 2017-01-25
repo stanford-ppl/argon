@@ -29,7 +29,8 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
 
 
   // --- Helper functions
-  def stmOf(sym: Sym[_]): Option[Stm] = stmFromSymId(sym.id)
+  // Getting statement returns Option to account for Bounds, but this is known to be a Sym
+  def stmOf(sym: Sym[_]): Stm = stmFromSymId(sym.id).get
 
   def allInputs(d: Def): List[Exp[_]] = nodeInputs(d.id).map{id => symFromSymId(id) }
 
@@ -50,7 +51,7 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   }
   private[argon] def symFromSymId(id: Int): Symbol[_] = edgeOf(id).asInstanceOf[Symbol[_]]
   private[argon] def defFromNodeId(id: Int): Def = nodeOf(id).asInstanceOf[Def]
-  private[argon] def defFromSymId(id: Int): Def  = defFromNodeId(producerOf(id))
+  private[argon] def defFromSymId(id: Int): Option[Def] = stmFromSymId(id).map(_.rhs)
 
   // --- Symbol aliasing
   private def noPrims(x:Set[Symbol[_]]): Set[Sym[_]] = x.collect{case s: Sym[_] if !s.tp.isPrimitive => s}
