@@ -31,6 +31,8 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   // --- Helper functions
   def stmOf(sym: Sym[_]): Option[Stm] = stmFromSymId(sym.id)
 
+  def allInputs(d: Def): List[Exp[_]] = nodeInputs(d.id).map{id => symFromSymId(id) }
+
   private[argon] def stmFromNodeId(id: Int): Option[Stm] = {
     val x = triple(id)
     x._1.head match {
@@ -46,7 +48,7 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
     val node = producerOf(id)
     stmFromNodeId(node)
   }
-  private[argon] def symFromSymId(id: Int): Sym[_] = edgeOf(id).asInstanceOf[Sym[_]]
+  private[argon] def symFromSymId(id: Int): Symbol[_] = edgeOf(id).asInstanceOf[Symbol[_]]
   private[argon] def defFromNodeId(id: Int): Def = nodeOf(id).asInstanceOf[Def]
   private[argon] def defFromSymId(id: Int): Def  = defFromNodeId(producerOf(id))
 

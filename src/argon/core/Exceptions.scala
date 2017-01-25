@@ -109,6 +109,11 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
     error(ctx)
   }
 
+  abstract class ProgramError(console: => Unit) {
+    logError()
+    console
+  }
+
   class IllegalMutableSharingError(s: Sym[_], aliases: Set[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, c"Illegal sharing of mutable objects: ")
     aliases.foreach{alias =>

@@ -20,7 +20,7 @@ trait Effects extends Symbols { this: Staging =>
     reads:   Set[Sym[_]] = Set.empty,
     writes:  Set[Sym[_]] = Set.empty
   ) extends Metadata[Effects] {
-    def mirror(f: Tx) = this.copy(reads = onlySyms(f.tx(reads)).toSet, writes = onlySyms(f.tx(writes)).toSet)
+    def mirror(f: Tx) = this.copy(reads = f.txSyms(reads), writes = f.txSyms(writes))
 
     private def combine(that: Effects, m1: Boolean, m2: Boolean) = Effects(
       cold = this.cold || that.cold,

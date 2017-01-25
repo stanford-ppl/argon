@@ -9,13 +9,15 @@ trait ArrayOps extends FixPtOps with VoidOps with TextOps {
     def update(i: Int32, e: T)(implicit ctx: SrcCtx): Void
   }
 
-  def Array[T:Staged](size: Int32)(implicit ctx: SrcCtx): MArray[T]
+  def createArray[T:Staged](size: Int32)(implicit ctx: SrcCtx): MArray[T]
 
   implicit def arrayType[T:Staged]: Staged[StagedArray[T]]
 }
 
 trait ArrayApi extends ArrayOps with FixPtApi with VoidApi with TextApi {
   type Array[T] = StagedArray[T]
+
+  def Array[T:Staged](size: Int32)(implicit ctx: SrcCtx): MArray[T] = createArray[T](size)
 }
 
 trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
@@ -25,7 +27,7 @@ trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
     def update(i: Int32, e: T)(implicit ctx: SrcCtx): Void = Void(array_update(s, i.s, e.s))
   }
 
-  def Array[T:Staged](size: Int32)(implicit ctx: SrcCtx): MArray[T] = StagedArray(array_new[T](size.s))
+  def createArray[T:Staged](size: Int32)(implicit ctx: SrcCtx): MArray[T] = StagedArray(array_new[T](size.s))
 
   /** Staged Types **/
   class ArrayType[T:Staged] extends Staged[StagedArray[T]] {

@@ -2,7 +2,9 @@ package argon.core
 
 import argon.graphs.{Edge, EdgeLike}
 import argon.utils.escapeConst
+
 import scala.annotation.unchecked.uncheckedVariance
+
 
 trait Symbols extends Base with StagedTypes with Metadata { self: Staging =>
 

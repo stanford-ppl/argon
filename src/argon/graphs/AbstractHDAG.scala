@@ -205,7 +205,7 @@ trait AbstractHDAG extends Exceptions {
     // 5. Dependencies of the hot fringe
     val hotFringeDeps = dfs(hotFringe)(node => noCold(node, scope)).toSet
 
-    // ISSUE #2: Investigate reverted version of LMS code motion
+    // ISSUE #1: Investigate reverted version of LMS code motion
     // use (shallow|hot)* hot any* instead
     // then/else branches were being unsafely hoisted out of a conditional
     //val f2 = fringe diff reachableCold

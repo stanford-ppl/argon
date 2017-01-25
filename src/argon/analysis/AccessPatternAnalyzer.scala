@@ -39,7 +39,7 @@ trait IndexPatternExp extends IndexPatternOps with Staging {
   }
 }
 
-trait AffineAnalysis extends Traversal {
+trait AccessPatternAnalyzer extends Traversal {
   val IR: IndexPatternExp
   import IR._
 
@@ -56,7 +56,7 @@ trait AffineAnalysis extends Traversal {
   var loopScope: Seq[Stm] = Nil
 
   private def inLoop[T](indices: Seq[Bound[Index]])(blk: => T): T = {
-    val inner = innerScope.flatMap(stmFromNodeId)
+    val inner = innerStms
     indices.foreach{i => innerScopes += i -> inner}
 
     val prevIndices = loopIndices

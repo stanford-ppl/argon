@@ -28,6 +28,7 @@ trait Traversal extends BlockTraversal { self =>
   final protected def debugs(x: => Any) = debug("  "*tab + x)
   final protected def msgs(x: => Any) = msg("  "*tab + x)
 
+  /** External method called by compiler **/
   final def traverse[T:Staged](b: Block[T]): Block[T] = if (shouldRun) {
     val outfile = State.paddedPass + " " + name + ".log"
     State.pass += 1

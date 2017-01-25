@@ -8,6 +8,8 @@ trait BlockTraversal {
 
   final protected var innerScope: Seq[Int] = _
 
+  def innerStms: Seq[Stm] = innerScope.flatMap(stmFromNodeId)
+
   final protected def availableStms = if (innerScope ne null) innerScope else 0 until IR.curNodeId
 
   final protected def withInnerScope[A](scope: Seq[Int])(body: => A): A = {

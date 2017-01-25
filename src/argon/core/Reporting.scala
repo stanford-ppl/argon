@@ -11,6 +11,8 @@ trait Reporting {
   def hadErrors = _errors > 0
   def nErrors = _errors
 
+  def logError() { _errors += 1}
+
   def plural(x: Int, sing: String, plur: String): String = if (x == 1) sing else plur
 
   final def withLog[T](dir: String, filename: String)(blk: => T): T = {
