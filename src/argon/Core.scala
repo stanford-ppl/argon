@@ -17,6 +17,7 @@ trait AppCore { self =>
 
   final def main(sargs: scala.Array[java.lang.String]): Unit = {
     __stagingArgs = sargs
+    Config.name = self.getClass.getName.split('$').last.replace("class ", "").replace('.','-')
     IR.compileOrRun( main() )
   }
 }
@@ -32,7 +33,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
   lazy val args: MArray[Text] = StagedArray[Text](stage(InputArguments())(implicitly[SourceContext]))
   var stagingArgs: scala.Array[java.lang.String] = _
 
-  def settings(): Unit = {}
+  def settings(): Unit = { }
 
   def checkErrors(start: Long, stageName: String): Unit = if (hadErrors) {
     val time = (System.currentTimeMillis - start).toFloat
@@ -48,7 +49,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
 
     msg("--------------------------")
     msg(c"Staging ${self.getClass}")
-    Config.name = c"${self.getClass}".replace('.','-')
+
     val start = System.currentTimeMillis()
     var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(blk).s } }
 
