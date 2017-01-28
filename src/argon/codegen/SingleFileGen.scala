@@ -8,7 +8,7 @@ trait SingleFileGen extends Codegen {
 
   protected def emitMain[S:Staged](b: Block[S]): Unit
 
-  override protected def run[S:Staged](b: Block[S]): Block[S] = {
+  override protected def process[S:Staged](b: Block[S]): Block[S] = {
     Files.createDirectories(Paths.get(out))
 
     val file = new PrintWriter(s"${out}main.$ext")

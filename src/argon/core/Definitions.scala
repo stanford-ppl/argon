@@ -109,7 +109,10 @@ trait Definitions extends Blocks { self: Staging =>
   }
   object Op {
     def unapply[T](e: Exp[T]): Option[Op[T]] = e match {
-      case s: Sym[_] => Some(defOf(s).asInstanceOf[Op[T]])
+      case s: Sym[_] => defOf(s) match {
+        case op: Op[_] => Some(op.asInstanceOf[Op[T]])
+        case _ => None
+      }
       case _ => None
     }
   }

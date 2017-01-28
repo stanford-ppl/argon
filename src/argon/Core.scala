@@ -8,7 +8,7 @@ import org.virtualized.SourceContext
 
 trait AppCore { self =>
   val IR: CompilerCore
-  val Lib: LibCore // Should include "def args: Array[String] = self.stagingArgs"
+  val Lib: LibCore // Should define "def args: Array[String] = self.stagingArgs"
 
   private var __stagingArgs: scala.Array[java.lang.String] = _
   def stagingArgs: Array[String] = __stagingArgs
@@ -27,7 +27,7 @@ trait LibCore {
 }
 
 trait CompilerCore extends Staging with ArrayExp { self =>
-  val passes: ArrayBuffer[CompilerPass] = ArrayBuffer.empty[CompilerPass]
+  val passes: ArrayBuffer[Pass] = ArrayBuffer.empty[Pass]
   val testbench: Boolean = false
 
   lazy val args: MArray[Text] = StagedArray[Text](stage(InputArguments())(implicitly[SourceContext]))
@@ -47,9 +47,6 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     reset() // Reset global state
     settings()
 
-    msg("--------------------------")
-    msg(c"Staging ${self.getClass}")
-
     val start = System.currentTimeMillis()
     var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(blk).s } }
 
@@ -58,18 +55,20 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     // Exit now if errors were found during staging
     checkErrors(start, "staging")
 
-    msg("--------------------------")
-    msg(c"Compiling ${self.getClass}")
+    report("--------------------------------")
+    report(c"Compiling ${Config.name}")
+    report("--------------------------------")
+
     if (Config.clearLogs) deleteExts(Config.logDir, ".log")
 
     for (t <- passes) {
-      block = t.traverse(block)
+      block = t.run(block)
       // After each traversal, check whether there were any reported errors
       checkErrors(start, t.name)
     }
 
     val time = (System.currentTimeMillis - start).toFloat
-    msg(s"Completed in " + "%.4f".format(time/1000) + " seconds")
+    report(s"Completed in " + "%.4f".format(time/1000) + " seconds")
   }
 
 

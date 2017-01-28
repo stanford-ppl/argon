@@ -1,11 +1,10 @@
 package argon.core
 
-import argon.traversal.Traversal
-
+import argon.traversal.CompilerPass
 import scala.collection.mutable
 
 trait Blocks extends Effects { self: Staging =>
-  type CompilerPass = Traversal{val IR: Blocks.this.type }
+  type Pass = CompilerPass{ val IR: self.type }
 
   // --- State
   //private[argon] var eX: Option[CompilerPass] = None

@@ -3,7 +3,7 @@ package argon.transform
 trait SubstTransformer extends Transformer {
   import IR._
 
-  private var subst: Map[Exp[_],Exp[_]] = Map.empty
+  var subst: Map[Exp[_],Exp[_]] = Map.empty
 
   // Syntax is, e.g.: register(x -> y)
   // Technically original and replacement should have the same type, but this type currently can be "Any"
@@ -29,5 +29,13 @@ trait SubstTransformer extends Transformer {
     val r = block
     subst = save
     r
+  }
+
+  def withSubstRules[A](rules: Map[Exp[_],Exp[_]])(block: => A): A = {
+    val save = subst
+    subst ++= rules
+    val result = block
+    subst = save
+    result
   }
 }

@@ -8,8 +8,8 @@ trait RunnerCore extends CompilerCore {
 
   def run(out: String): Int = {
     val start = System.currentTimeMillis()
-    msg("--------------------------")
-    msg(c"Running ${self.getClass}")
+    // msg("--------------------------")
+    msg(c"Running ${Config.name}")
     //msg(c"in output directory $out")
 
     val proc = scala.sys.process.Process(Seq("sbt", "run"), new java.io.File(out))

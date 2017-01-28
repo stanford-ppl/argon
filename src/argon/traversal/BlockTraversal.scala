@@ -1,23 +1,35 @@
 package argon.traversal
 
-import argon.core.Statements
+import argon.core.Staging
 
 trait BlockTraversal {
-  val IR: Statements
+  val IR: Staging
   import IR._
 
-  final protected var innerScope: Seq[Int] = _
+  private var innerScope: Seq[Int] = _
 
-  def innerStms: Seq[Stm] = innerScope.flatMap(stmFromNodeId)
+  final protected def scrubSym(s: Sym[_]): Unit = {
+    IR.scrubSymbol(s)
+    innerScope = innerScope.filterNot(_ == s.id)
+  }
 
-  final protected def availableStms = if (innerScope ne null) innerScope else 0 until IR.curNodeId
+  private def availableStms = if (innerScope ne null) innerScope else 0 until IR.curNodeId
 
-  final protected def withInnerScope[A](scope: Seq[Int])(body: => A): A = {
+  // Statement versions of the above
+  protected def innerStms: Seq[Stm] = innerScope.flatMap(stmFromNodeId)
+  protected def availStms: Seq[Stm] = availableStms.flatMap(stmFromNodeId)
+
+  private def withInnerScope[A](scope: Seq[Int])(body: => A): A = {
     val saveInner = innerScope
     innerScope = scope
     val result = body
     innerScope = saveInner
     result
+  }
+
+  protected def withInnerStms[A](scope: Seq[Stm])(body: => A): A = {
+    val ids = scope.map(_.rhs.id)
+    withInnerScope(ids){ body }
   }
 
   private def scopeSanityCheck(block: Block[_], scope: Seq[Int]): Unit = {
@@ -55,4 +67,8 @@ trait BlockTraversal {
 
   protected def visitStm(stm: Stm): Unit = stm.rhs.blocks.foreach {blk => visitBlock(blk) }
   protected def visitBlock[S](block: Block[S]): Block[S] = { traverseStmsInBlock(block); block }
+
+  protected def getCustomSchedule(scope: Seq[Stm], result: Seq[Exp[_]]): Seq[Stm] = {
+    IR.getLocalSchedule(scope.map(_.rhs.id), syms(result).map(_.id)).flatMap(stmFromNodeId)
+  }
 }

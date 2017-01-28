@@ -27,5 +27,6 @@ trait BitsExp extends BitsOps with Staging {
   def random[T:Bits](implicit ctx: SrcCtx): T = implicitly[Bits[T]].random
 
   def bits[T:Bits] = implicitly[Bits[T]]
+  def mbits[T,R](s: Staged[T]): Bits[R] = s.asInstanceOf[Bits[R]]
 }
 

@@ -1,13 +1,13 @@
 package argon.traversal
 
-import argon.core.Statements
+import argon.core.Staging
 import argon.{Config, State}
 
 /**
   * Single or iterative traversal of the IR with pre- and post- processing
   */
-trait Traversal extends BlockTraversal { self =>
-  val IR: Statements
+trait Traversal extends CompilerPass with BlockTraversal { self =>
+  val IR: Staging
   import IR._
 
   sealed abstract class RecurseOpt
@@ -16,46 +16,10 @@ trait Traversal extends BlockTraversal { self =>
   case object Never extends RecurseOpt
 
   // --- Options
-  def name: String = readable(self.getClass)
-  var verbosity: Int = Config.verbosity
   val recurse: RecurseOpt = Default   // Recursive traversal of IR hierarchy
-  def shouldRun: Boolean = true
-  def silence() { verbosity = -1 }
 
-  // --- State
-  protected var tab = 0
-
-  final protected def debugs(x: => Any) = debug("  "*tab + x)
-  final protected def msgs(x: => Any) = msg("  "*tab + x)
-
-  /** External method called by compiler **/
-  final def traverse[T:Staged](b: Block[T]): Block[T] = if (shouldRun) {
-    val outfile = State.paddedPass + " " + name + ".log"
-    State.pass += 1
-    if (verbosity >= 1) {
-      withLog(Config.logDir, outfile){ runTraversal(b) }
-    }
-    else {
-      withConsole{ runTraversal(b) }
-    }
-  } else b
-
-  final protected def runTraversal[S:Staged](b: Block[S]): Block[S] = {
-    val saveVerbosity = Config.verbosity
-    Config.verbosity = this.verbosity
-
-    msg("Starting traversal " + name)
-    val start = System.currentTimeMillis
-
-    val result = run(b)
-
-    val time = (System.currentTimeMillis - start).toFloat
-    msg(s"Completed traversal $name in " + "%.4f".format(time/1000) + " seconds")
-
-    Config.verbosity = saveVerbosity
-    result
-  }
-
+  // --- Methods
+  /** Run a single traversal, including pre- and post- processing **/
   final protected def runSingle[S:Staged](b: Block[S]): Block[S] = {
     val b2 = preprocess(b)
     val b3 = visitBlock(b2)
@@ -66,7 +30,7 @@ trait Traversal extends BlockTraversal { self =>
     * Called to execute this traversal, including optional pre- and post- processing.
     * Default is to run pre-processing, then a single traversal, then post-processing
     */
-  protected def run[S:Staged](block: Block[S]): Block[S] = runSingle(block)
+  protected def process[S:Staged](block: Block[S]): Block[S] = runSingle(block)
   protected def preprocess[S:Staged](block: Block[S]): Block[S] = { block }
   protected def postprocess[S:Staged](block: Block[S]): Block[S] = { block }
   override protected def visitBlock[S](block: Block[S]): Block[S] = {
@@ -136,5 +100,5 @@ trait IterativeTraversal extends Traversal {
   }
 
 
-  override protected def run[S:Staged](b: Block[S]): Block[S] = runIterative(b)
+  override protected def process[S:Staged](b: Block[S]): Block[S] = runIterative(b)
 }

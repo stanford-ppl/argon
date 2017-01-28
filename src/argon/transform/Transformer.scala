@@ -28,6 +28,17 @@ abstract class Transformer { self =>
   protected def transformSym[T:Staged](s: Sym[T]): Exp[T]
 
   /** Helper functions for mirroring **/
+
+  // Assumes an Op is never mirrored to a Def with multiple lhs...
+  final protected def mirror[T:Staged](lhs: Sym[T], rhs: Op[T]): Exp[T] = {
+    mirror(List(lhs), rhs).head.asInstanceOf[Exp[T]]
+  }
+
+  def transferMetadata(a: Exp[_], b: Exp[_]): Unit = {
+    val m2 = mirror(metadata.get(a))
+    metadata.set(b, m2)
+  }
+
   final protected def mirror(lhs: List[Sym[_]], rhs: Def): List[Exp[_]] = {
     val id = IR.curEdgeId
     log(c"Mirror: $lhs = $rhs")
@@ -41,11 +52,7 @@ abstract class Transformer { self =>
     // FIXME: Hack: only mirror metadata if the symbol is new (did not exist before starting mirroring)
     log(c"Result: ${str(lhs2)}")
     lhs.zip(lhs2).foreach{
-      case (sym: Sym[_], sym2: Sym[_]) =>
-        if (sym2.id >= id) {  // Note: Deliberately NOT comparing to sym.id
-          val m2 = mirror(metadata.get(sym))
-          metadata.set(sym2, m2)
-        }
+      case (sym: Sym[_], sym2: Sym[_]) if sym2.id >= id => transferMetadata(sym, sym2)
       case _ =>
     }
     lhs2.foreach{s2 =>

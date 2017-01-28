@@ -137,11 +137,11 @@ trait AccessPatternAnalyzer extends Traversal {
 
   override protected def visit(lhs: Sym[_], rhs: Op[_]): Unit = lhs match {
     case LoopLevels(levels) =>
-      debugs(s"[Loop] $lhs = $rhs")
-      debugs(s"  Levels: ${levels.length} ")
-      debugs(s"  Current indices: $loopIndices")
+      dbgs(s"[Loop] $lhs = $rhs")
+      dbgs(s"  Levels: ${levels.length} ")
+      dbgs(s"  Current indices: $loopIndices")
       levels.foreach { case (indices, blocks) =>
-        debugs(s"  Traversing loop level with $indices")
+        dbgs(s"  Traversing loop level with $indices")
         inLoop(indices) {
           blocks.foreach { blk => visitBlock(blk) }
         }
@@ -149,19 +149,19 @@ trait AccessPatternAnalyzer extends Traversal {
 
     case MemRead(mem, addresses) =>
       accessPatternOf(lhs) = extractAccessPatterns(addresses)
-      debugs(s"[Read] $lhs = $rhs")
-      debugs(s"  Memory: $mem")
-      debugs(s"  ND Address: $addresses")
-      debugs(s"  Current indices: $loopIndices")
-      debugs(s"  Access pattern: ${accessPatternOf(lhs)}")
+      dbgs(s"[Read] $lhs = $rhs")
+      dbgs(s"  Memory: $mem")
+      dbgs(s"  ND Address: $addresses")
+      dbgs(s"  Current indices: $loopIndices")
+      dbgs(s"  Access pattern: ${accessPatternOf(lhs)}")
 
     case MemWrite(mem, addresses) =>
       accessPatternOf(lhs) = extractAccessPatterns(addresses)
-      debugs(s"[Write] $lhs = $rhs")
-      debugs(s"  Memory: $mem")
-      debugs(s"  ND Address: $addresses")
-      debugs(s"  Current indices: $loopIndices")
-      debugs(s"  Access pattern: ${accessPatternOf(lhs)}")
+      dbgs(s"[Write] $lhs = $rhs")
+      dbgs(s"  Memory: $mem")
+      dbgs(s"  ND Address: $addresses")
+      dbgs(s"  Current indices: $loopIndices")
+      dbgs(s"  Access pattern: ${accessPatternOf(lhs)}")
 
     case _ => super.visit(lhs, rhs)
   }

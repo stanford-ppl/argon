@@ -1,19 +1,15 @@
 package argon.traversal
 
-import argon.core.Staging
-import argon.utils.escapeConst
-
 // Print IR + metadata for each encountered symbol
 trait IRPrinter extends Traversal {
-  val IR: Staging
   import IR._
 
   override val name = "PrinterPlus"
   override def shouldRun = verbosity > 0
 
   def strMeta(lhs: Exp[_]) {
-    debugs(c" - Type: ${lhs.tp}")
-    metadata.get(lhs).foreach{m => if (null == m) c" - ${m._1}: NULL" else debugs(c" - ${m._1}: ${m._2}") }
+    dbgs(c" - Type: ${lhs.tp}")
+    metadata.get(lhs).foreach{m => if (null == m) c" - ${m._1}: NULL" else dbgs(c" - ${m._1}: ${m._2}") }
   }
 
   override protected def visit(lhs: Sym[_], rhs: Op[_]) = {
@@ -27,6 +23,8 @@ trait IRPrinter extends Traversal {
       tab += 1
       msgs(c"block $i: $blk {")
       tab += 1
+      msgs(c"effects: ${blk.summary}")
+      msgs(c"anti-deps: ${blk.effectful}")
       visitBlock(blk)
       tab -= 1
       msgs(c"} // End of $lhs block #$i")

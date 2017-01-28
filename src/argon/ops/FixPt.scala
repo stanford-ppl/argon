@@ -159,6 +159,9 @@ trait FixPtExp extends FixPtOps with NumExp with CastExp {
     }
   }
 
+  def isFixPtType(x: Staged[_]) = FixPtType.unapply(x).isDefined
+  def isInt32Type(x: Staged[_]) = IntType.unapply(x)
+
   /** Constant Lifting **/
   private def literalToBigInt[S:BOOL,I:INT,F:INT](x: Any, enWarn: Boolean = true)(implicit ctx: SrcCtx): BigInt = {
     val sign = BOOL[S].v

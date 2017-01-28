@@ -1,13 +1,13 @@
 package argon.codegen
 
 import argon.traversal.Traversal
-import argon.core.Statements
+import argon.core.Staging
 import argon.Config
 
 import java.io.PrintWriter
 
 trait Codegen extends Traversal {
-  val IR: Statements
+  val IR: Staging
   import IR._
 
   override val recurse: RecurseOpt = Never
