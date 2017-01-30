@@ -27,7 +27,7 @@ trait Staging extends Statements {
   def stageDef(d: Def)(ctx: SrcCtx): List[Sym[_]]                   = stageDefPure(d)(ctx)
   def stageDefPure(d: Def)(ctx: SrcCtx): List[Sym[_]]               = stageDefEffectful(d, Pure)(ctx)
   def stageDefCold(d: Def)(ctx: SrcCtx): List[Sym[_]]               = stageDefEffectful(d, Cold)(ctx)
-  def stageDefWrite(ss: Exp[_]*)(d: Def)(ctx: SrcCtx): List[Sym[_]] = stageDefEffectful(d, Write(onlySyms(ss).toSet))(ctx)
+  def stageDefWrite(ss: Exp[_]*)(d: Def)(ctx: SrcCtx): List[Sym[_]] = stageDefEffectful(d, Write(onlySyms(ss)))(ctx)
   def stageDefSimple(d: Def)(ctx: SrcCtx): List[Sym[_]]             = stageDefEffectful(d, Simple)(ctx)
   def stageDefMutable(d: Def)(ctx: SrcCtx): List[Sym[_]]            = stageDefEffectful(d, Mutable)(ctx)
 

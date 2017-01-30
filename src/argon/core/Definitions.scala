@@ -130,7 +130,7 @@ trait Definitions extends Blocks { self: Staging =>
   def syms(a: Any*): List[Symbol[_]] = if (__syms.isDefinedAt(a)) __syms(a) else Nil
 
 
-  def onlySyms(a: Any*): List[Sym[_]] = syms(a).collect{case s: Sym[_] => s}
+  def onlySyms(a: Any*): Seq[Sym[_]] = syms(a).collect{case s: Sym[_] => s}
 
 
   private def symsFreq(a: Any): List[(Symbol[_],Float)] = recursive.collectLists {
@@ -142,8 +142,8 @@ trait Definitions extends Blocks { self: Staging =>
   final def hot(e: Any) = symsFreq(e).map{case (s,f) => (s,f*1000.0f) }
   final def cold(e: Any) = symsFreq(e).map{case (s,f) => (s, f*0.5f) }
 
-  final def aliasSyms(a: Any): Set[Symbol[_]]   = recursive.collectSets{case s: Symbol[_] => Set(s) case d: Def => d.aliases }(a)
-  final def containSyms(a: Any): Set[Symbol[_]] = recursive.collectSets{case d: Def => d.contains}(a)
-  final def extractSyms(a: Any): Set[Symbol[_]] = recursive.collectSets{case d: Def => d.extracts}(a)
-  final def copySyms(a: Any): Set[Symbol[_]]    = recursive.collectSets{case d: Def => d.copies}(a)
+  final def aliasSyms(a: Any): Seq[Symbol[_]]   = recursive.collectLists{case s: Symbol[_] => Seq(s) case d: Def => d.aliases }(a)
+  final def containSyms(a: Any): Seq[Symbol[_]] = recursive.collectLists{case d: Def => d.contains}(a)
+  final def extractSyms(a: Any): Seq[Symbol[_]] = recursive.collectLists{case d: Def => d.extracts}(a)
+  final def copySyms(a: Any): Seq[Symbol[_]]    = recursive.collectLists{case d: Def => d.copies}(a)
 }

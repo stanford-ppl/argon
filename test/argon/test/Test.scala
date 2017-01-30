@@ -9,9 +9,9 @@ import argon.traversal.IRPrinter
 import argon.codegen.scalagen._
 import argon.transform.ForwardTransformer
 
-trait TestOps extends BoolOps with IfThenElseOps with PrintOps with TextOps with MixedNumericOps
-trait TestApi extends TestOps with BoolApi with IfThenElseApi with PrintApi with TextApi with MixedNumericApi
-trait TestExp extends TestOps with BoolExp with IfThenElseExp with PrintExp with TextExp with MixedNumericExp
+trait TestOps extends BoolOps with IfThenElseOps with PrintOps with TextOps with ArrayOps with MixedNumericOps
+trait TestApi extends TestOps with BoolApi with IfThenElseApi with PrintApi with TextApi with ArrayApi with MixedNumericApi
+trait TestExp extends TestOps with BoolExp with IfThenElseExp with PrintExp with TextExp with ArrayExp with MixedNumericExp
 
 trait ScalaGen extends ScalaCodegen with ScalaSingleFileGen
       with ScalaGenBool with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenText with ScalaGenMixedNumeric
@@ -200,8 +200,6 @@ object SimpleCastTest extends Test {
 
 class Testbench extends FlatSpec with Matchers with argon.core.Exceptions {
   val noargs = Array[String]()
-  deleteExts(Config.logDir, ".log")
-
   "Test1" should "compile" in { Test1.main(noargs) }
   "Test2" should "compile" in { Test2.main(noargs) }
   "Test3" should "rewrite ifThenElse" in { Test3.main(noargs) }

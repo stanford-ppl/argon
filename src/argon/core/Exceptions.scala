@@ -6,7 +6,7 @@ import scala.util.control.NoStackTrace
 
 trait Exceptions extends Reporting {
   abstract class CompilerException(id: Int, msg: String, console: => Unit) extends
-    Exception(s"Internal exception #$id: $msg") with NoStackTrace { console }
+    Exception(s"Internal exception #$id: $msg") { console }
 
   class RecursiveScheduleException(result: Any, xs: List[String]) extends
     CompilerException(0, c"Recursive schedule while scheduling result $result", {
@@ -114,15 +114,15 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
     console
   }
 
-  class IllegalMutableSharingError(s: Sym[_], aliases: Set[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
+  class IllegalMutableSharingError(s: Sym[_], aliases: Seq[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, c"Illegal sharing of mutable objects: ")
-    (aliases + s).foreach{alias =>
+    (aliases :+ s).foreach{alias =>
       val pos = mpos(alias)
       error(c"${pos.fileName}:${pos.line}:  symbol ${str(alias)} defined here")
     }
   })
 
-  class IllegalMutationError(s: Sym[_], mutated: Set[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
+  class IllegalMutationError(s: Sym[_], mutated: Seq[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, c"Illegal mutation of immutable symbols")
     mutated.foreach { mut =>
       val pos = mpos(mut)

@@ -15,9 +15,11 @@ trait AppCore { self =>
 
   def main(): scala.Unit
 
-  final def main(sargs: scala.Array[java.lang.String]): Unit = {
+  def main(sargs: Array[String]): Unit = {
     __stagingArgs = sargs
     Config.name = self.getClass.getName.split('$').last.replace("class ", "").replace('.','-')
+    Config.logDir =  Config.cwd + Config.sep + "logs" + Config.sep + Config.name
+    Config.genDir = Config.cwd + Config.sep + "gen" + Config.sep + Config.name
     IR.compileOrRun( main() )
   }
 }

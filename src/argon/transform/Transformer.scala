@@ -5,12 +5,9 @@ import argon.core.{ArgonExceptions, Definitions}
 abstract class Transformer { self =>
   val IR: Definitions with ArgonExceptions
   import IR._
-  protected def f = this.asInstanceOf[Tx]
-  def apply[T](e: Exp[T]): Exp[T] = e match {
-    case s: Sym[_] => transformSym(s)(mtyp(s.tp)).asInstanceOf[Exp[T]]
-    case b: Bound[_] => b
-    case c: Const[_] => c
-  }
+  protected val f = this.asInstanceOf[Tx]
+  def apply[T](e: Exp[T]): Exp[T] = transformExp(e)(mtyp(e.tp))
+
   def apply[T:Staged](b: Block[T]): Exp[T] = inlineBlock(b)
 
   def apply[T:Staged](xs: List[Exp[T]]): List[Exp[T]] = xs.map{x => this.apply(x)}
@@ -21,16 +18,16 @@ abstract class Transformer { self =>
   def tx(xs: Set[Exp[_]]): Set[Exp[_]] = xs.map{x => f(x) }
   def tx(xs: Seq[Exp[_]]): Seq[Exp[_]] = xs.map{x => f(x) }
 
-  def txSyms(xs: Set[Sym[_]]): Set[Sym[_]] = onlySyms(xs.map{x => f(x)}).toSet
+  def txSyms(xs: Seq[Sym[_]]): Seq[Sym[_]] = onlySyms(xs.map{x => f(x)})
 
   protected def inlineBlock[T:Staged](b: Block[T]): Exp[T]
   protected def transformBlock[T:Staged](b: Block[T]): Block[T]
-  protected def transformSym[T:Staged](s: Sym[T]): Exp[T]
+  protected def transformExp[T:Staged](s: Exp[T]): Exp[T]
 
   /** Helper functions for mirroring **/
 
   // Assumes an Op is never mirrored to a Def with multiple lhs...
-  final protected def mirror[T:Staged](lhs: Sym[T], rhs: Op[T]): Exp[T] = {
+  final def mirror[T:Staged](lhs: Sym[T], rhs: Op[T]): Exp[T] = {
     mirror(List(lhs), rhs).head.asInstanceOf[Exp[T]]
   }
 
@@ -39,22 +36,46 @@ abstract class Transformer { self =>
     metadata.set(b, m2)
   }
 
-  final protected def mirror(lhs: List[Sym[_]], rhs: Def): List[Exp[_]] = {
+  // FIXME: Hack: only mirror metadata if the symbol is new (did not exist before starting mirroring)
+  // Assumption: If the symbol we get back from cloning/mirroring had already been created by this
+  // point, the mirrored symbol underwent a rewrite rule or CSE. The correct thing to do here is
+  // to keep the previously created symbol's metadata, not the mirrored version of lhs's.
+  final protected def transferMetadataIfNew(lhs: List[Exp[_]])(tx: => List[Exp[_]]): (List[Exp[_]], List[Boolean]) = {
     val id = IR.curEdgeId
+    val lhs2 = tx
+    val out = lhs.zip(lhs2).map{
+      case (sym: Exp[_], sym2: Sym[_]) if sym2.id >= id =>
+        transferMetadata(sym, sym2)
+        (sym2, true)
+      case (sym, sym2) =>
+        (sym2, false)
+    }
+    (out.map(_._1), out.map(_._2))
+  }
+  final protected def transferMetadataIfNew[T](lhs: Exp[T])(tx: => Exp[T]): (Exp[T], Boolean) = {
+    val id = IR.curEdgeId
+    val lhs2 = tx
+    (lhs, lhs2) match {
+      case (sym: Exp[_], sym2: Sym[_]) if sym2.id >= id =>
+        transferMetadata(sym, sym2)
+        (lhs2, true)
+      case _ =>
+        (lhs2, false)
+    }
+  }
+
+
+  final def mirror(lhs: List[Sym[_]], rhs: Def): List[Exp[_]] = {
     log(c"Mirror: $lhs = $rhs")
     lhs.foreach{s =>
       if (lhs.length > 1) log(c"$s")
       metadata.get(s).foreach{m => log(c" - ${m._1}: ${m._2}") }
     }
 
-    val lhs2 = rhs.mirrorNode(lhs, self.asInstanceOf[Tx])
+    val (lhs2, _) = transferMetadataIfNew(lhs){ rhs.mirrorNode(lhs, self.asInstanceOf[Tx]) }
 
-    // FIXME: Hack: only mirror metadata if the symbol is new (did not exist before starting mirroring)
+
     log(c"Result: ${str(lhs2)}")
-    lhs.zip(lhs2).foreach{
-      case (sym: Sym[_], sym2: Sym[_]) if sym2.id >= id => transferMetadata(sym, sym2)
-      case _ =>
-    }
     lhs2.foreach{s2 =>
       if (lhs2.length > 1) log(c"$s2")
       metadata.get(s2).foreach{m => log(c" - ${m._1}: ${m._2}") }
@@ -63,7 +84,12 @@ abstract class Transformer { self =>
     lhs2
   }
 
-  final protected def mirror(props: Map[Class[_],Metadata[_]]): Map[Class[_],Metadata[_]] = props.mapValues{m => mirror(m) }
-  final protected def mirror[M<:Metadata[_]](m: M): M = m.mirror(self.asInstanceOf[Tx]).asInstanceOf[M]
+  final def mirror(props: Map[Class[_],Metadata[_]]): Map[Class[_],Metadata[_]] = {
+    // Somehow, using mapValues here causes the metadata to be call by name, causing it to re-mirror on every fetch...
+    props.map{case (key,meta) =>
+      key -> mirror(meta)
+    }.toMap
+  }
+  final def mirror[M<:Metadata[_]](m: M): M = m.mirror(self.asInstanceOf[Tx]).asInstanceOf[M]
 
 }

@@ -17,9 +17,8 @@ trait Reporting {
 
   final def withLog[T](dir: String, filename: String)(blk: => T): T = {
     val save = logstream
-    val logDir = dir + java.io.File.separator + Config.name
-    Files.createDirectories(Paths.get(logDir))
-    logstream = new PrintStream(s"$logDir" + java.io.File.separator + filename)
+    Files.createDirectories(Paths.get(dir))
+    logstream = new PrintStream(dir + Config.sep + filename)
     try {
       blk
     }
@@ -71,8 +70,7 @@ trait Reporting {
 
   def userReadable(x: Any): String = x match {
     case c:Class[_]    => c.getName.split('$').last.replace("class ", "")
-    case _ =>
-      if (x == null) "null" else x.toString
+    case _ => readable(x)
   }
 
   implicit class CompileReportHelper(sc: StringContext) {

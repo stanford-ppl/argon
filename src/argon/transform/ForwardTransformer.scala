@@ -33,13 +33,25 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     lhs.zip(lhs2).foreach{case (s, s2) => register(s -> s2) }
   }
 
+  /**
+    * Visit and transform each statement in the given block WITHOUT creating a staging scope
+    */
   final override protected def inlineBlock[T:Staged](b: Block[T]): Exp[T] = {
     inlineBlock(b, {stms => visitStms(stms); f(b.result) })
   }
+
+  /**
+    * Visit and transform each statement in the given block, creating a new staged block
+    * with the transformed statements
+    */
   final override protected def transformBlock[T:Staged](b: Block[T]): Block[T] = {
     transformBlock(b, {stms => visitStms(stms); f(b.result) })
   }
 
+  /**
+    * Visit and perform some transformation `func` over all statements in the block, returning a result symbol
+    * WITHOUT creating a staging scope.
+    */
   final protected def inlineBlock[T:Staged](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T] = {
     tab += 1
     val inputs2 = onlySyms(f.tx(b.inputs)).map(stmOf)
@@ -50,10 +62,32 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     result
   }
 
+  /**
+    * Visit and perform some transformation `func` over all statements in the block, returning a new staged
+    * block with the resulting transformed statements. The return Exp[T] of func will be the result symbol of the
+    * new block.
+    */
   final protected def transformBlock[T:Staged](b: Block[T], func: Seq[Stm] => Exp[T]): Block[T] = {
     val inputs = onlySyms(f.tx(b.inputs))
     stageLambda(inputs:_*){ inlineBlock(b, func) }
   }
+
+  /**
+    * Perform inlining while "mangling" the given block using the given statement transformation function.
+    * No new block is created, and the return type does not have to be an Exp[T]
+    * Note that this means the return types may be entirely different - use with caution.
+    */
+  final protected def mangleBlock[T:Staged, R](b: Block[T], func: Seq[Stm] => R): R = {
+    tab += 1
+    val inputs2 = onlySyms(f.tx(b.inputs)).map(stmOf)
+    val result = withInnerStms(availStms diff inputs2) {
+      traverseStmsInBlock(b, func)
+    }
+    tab -= 1
+    result
+  }
+
+
 
 
   /** Traversal functions **/

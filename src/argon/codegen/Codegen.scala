@@ -14,7 +14,7 @@ trait Codegen extends Traversal {
 
   val lang: String
   val ext: String
-  def out: String = s"${Config.genDir}${java.io.File.separator}${Config.name}${java.io.File.separator}$lang${java.io.File.separator}"
+  def out: String = s"${Config.genDir}${Config.sep}$lang${Config.sep}"
 
   protected var stream: PrintWriter = _
   protected var streamTab: Int = 0

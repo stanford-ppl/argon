@@ -25,8 +25,8 @@ trait Metadata extends HDAG with Lattices { self: Statements =>
   object metadata {
     private def keyOf[M<:Metadata[M]:Manifest] = manifest[M].runtimeClass.asInstanceOf[Class[M]]
 
-    def add[M<:Metadata[M]:Manifest](edge:Exp[_], m:M):Unit = this.add(edge, Some(m))
-    def add[M<:Metadata[M]:Manifest](edge:Exp[_], m:Option[M]):Unit = {
+    def add[M<:Metadata[M]:Manifest](edge: Exp[_], m: M): Unit = this.add(edge, Some(m))
+    def add[M<:Metadata[M]:Manifest](edge: Exp[_], m: Option[M]): Unit = {
       val meta = getMetadata(edge)
       val k = keyOf[M]
       val prev = meta.get(k).map(_.asInstanceOf[M])
@@ -34,12 +34,12 @@ trait Metadata extends HDAG with Lattices { self: Statements =>
       if (entry.isDefined) addMetadata(edge, entry.get)
       else if (prev.isDefined) removeMetadata(edge, prev.get)
     }
-    def apply[M<:Metadata[M]:Manifest](edge: Exp[_]):Option[M] = {
+    def apply[M<:Metadata[M]:Manifest](edge: Exp[_]): Option[M] = {
       val k = keyOf[M]
       getMetadata(edge).get(k).map(_.asInstanceOf[M])
     }
-    def get(edge:Exp[_]):Map[Class[_],Metadata[_]] = getMetadata(edge)
-    def set(edge:Exp[_], m:Map[Class[_],Metadata[_]]):Unit = setMetadata(edge, m)
+    def get(edge:Exp[_]): Map[Class[_],Metadata[_]] = getMetadata(edge)
+    def set(edge:Exp[_], m: Map[Class[_],Metadata[_]]): Unit = setMetadata(edge, m)
 
     def clearAll[M<:Metadata[M]:Manifest] = clearMetadata(keyOf[M])
   }

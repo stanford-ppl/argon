@@ -9,7 +9,7 @@ trait IRPrinter extends Traversal {
 
   def strMeta(lhs: Exp[_]) {
     dbgs(c" - Type: ${lhs.tp}")
-    metadata.get(lhs).foreach{m => if (null == m) c" - ${m._1}: NULL" else dbgs(c" - ${m._1}: ${m._2}") }
+    metadata.get(lhs).foreach{m => dbgs(c" - ${m._1}: ${m._2}") }
   }
 
   override protected def visit(lhs: Sym[_], rhs: Op[_]) = {

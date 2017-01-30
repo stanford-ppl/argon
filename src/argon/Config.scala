@@ -12,13 +12,14 @@ object Config {
   }
 
   val cwd = System.getProperty("user.dir")
+  def sep = java.io.File.separator
 
   var verbosity: Int = getProperty("argon.verbosity", "2").toInt
-  var genDir: String = getProperty("argon.out", s"$cwd/gen")
-  var logDir: String = getProperty("argon.logs", s"$cwd/logs")
   var unsafe: Boolean = getProperty("argon.unsafe", "false").toBoolean
   var lib:  Boolean = getProperty("argon.lib", "false").toBoolean
   var name: String = getProperty("argon.name", "app")
-  var clearLogs: Boolean = getProperty("argon.clearLogs", "false").toBoolean
+  var logDir: String = getProperty("argon.logs", s"$cwd${sep}logs${sep}$name")
+  var genDir: String = getProperty("argon.out", s"$cwd${sep}gen${sep}$name")
+  var clearLogs: Boolean = getProperty("argon.clearLogs", "true").toBoolean
   var unwrapStructs: Boolean = getProperty("argon.unwrap", "true").toBoolean
 }

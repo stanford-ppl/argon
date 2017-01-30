@@ -8,23 +8,23 @@ trait SubstTransformer extends Transformer {
   // Syntax is, e.g.: register(x -> y)
   // Technically original and replacement should have the same type, but this type currently can be "Any"
   def register[T](rule: (Exp[T], Exp[T])) = {
-    assert(rule._1.tp == rule._2.tp)
+    assert(rule._1.tp == rule._2.tp, c"When creating substitution ${rule._1} -> ${rule._2}, type ${rule._1.tp} does not match ${rule._2.tp}")
     subst += rule
   }
   def remove[T](key: Exp[T]) = subst -= key
 
-  protected def transformSym[T:Staged](s: Sym[T]): Exp[T] = subst.get(s) match {
+  override protected def transformExp[T:Staged](s: Exp[T]): Exp[T] = subst.get(s) match {
     case Some(y) => y.asInstanceOf[Exp[T]]
     case None => s
   }
 
   def withSubstScope[A](extend: (Exp[Any],Exp[Any])*)(block: => A): A =
-    withSubstScope {
-      extend.foreach{case (x,y) => register(x -> y) }
+    isolateSubstScope {
+      extend.foreach{rule => register(rule) }
       block
     }
 
-  def withSubstScope[A](block: => A): A = {
+  def isolateSubstScope[A](block: => A): A = {
     val save = subst
     val r = block
     subst = save
