@@ -49,9 +49,7 @@ trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
   case class ArrayApply[T:Staged](array: Exp[MArray[T]], i: Exp[Int32]) extends Op[T] {
     def mirror(f:Tx) = array_apply(f(array),f(i))
   }
-  case class ArrayUpdate[T:Staged](array: Exp[MArray[T]], i: Exp[Int32], e: Exp[T]) extends Op[Void] {
-    def mirror(f:Tx) = array_update(f(array),f(i),f(e))
-  }
+
   case class ArrayLength[T:Staged](array: Exp[MArray[T]]) extends Op[Int32] {
     def mirror(f:Tx) = array_length(f(array))
   }
@@ -63,9 +61,7 @@ trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
   def array_apply[T:Staged](array: Exp[MArray[T]], i: Exp[Int32])(implicit ctx: SrcCtx): Sym[T] = {
     stage(ArrayApply(array,i))(ctx)
   }
-  def array_update[T:Staged](array: Exp[MArray[T]], i: Exp[Int32], e: Exp[T])(implicit ctx: SrcCtx): Sym[Void] = {
-    stageWrite(array)(ArrayUpdate(array,i,e))(ctx)
-  }
+
   def array_length[T:Staged](array: Exp[MArray[T]])(implicit ctx: SrcCtx): Sym[Int32] = {
     stage(ArrayLength(array))(ctx)
   }

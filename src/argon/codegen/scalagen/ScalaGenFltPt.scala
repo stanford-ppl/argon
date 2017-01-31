@@ -28,7 +28,11 @@ trait ScalaGenFltPt extends ScalaCodegen {
     case FltLeq(x,y) => emit(src"val $lhs = $x <= $y")
     case FltNeq(x,y) => emit(src"val $lhs = $x != $y")
     case FltEql(x,y) => emit(src"val $lhs = $x == $y")
-    case FltRandom() => lhs.tp match {
+    case FltRandom(Some(max)) => lhs.tp match {
+      case FloatType()  => emit(src"val $lhs = scala.util.Random.nextFloat() * $max")
+      case DoubleType() => emit(src"val $lhs = scala.util.Random.nextDouble() * $max")
+    }
+    case FltRandom(None) => lhs.tp match {
       case FloatType()  => emit(src"val $lhs = scala.util.Random.nextFloat()")
       case DoubleType() => emit(src"val $lhs = scala.util.Random.nextDouble()")
     }

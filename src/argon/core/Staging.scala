@@ -29,6 +29,7 @@ trait Staging extends Statements {
   def stageDefCold(d: Def)(ctx: SrcCtx): List[Sym[_]]               = stageDefEffectful(d, Cold)(ctx)
   def stageDefWrite(ss: Exp[_]*)(d: Def)(ctx: SrcCtx): List[Sym[_]] = stageDefEffectful(d, Write(onlySyms(ss)))(ctx)
   def stageDefSimple(d: Def)(ctx: SrcCtx): List[Sym[_]]             = stageDefEffectful(d, Simple)(ctx)
+  def stageDefGlobal(d: Def)(ctx: SrcCtx): List[Sym[_]]             = stageDefEffectful(d, Global)(ctx)
   def stageDefMutable(d: Def)(ctx: SrcCtx): List[Sym[_]]            = stageDefEffectful(d, Mutable)(ctx)
 
   def stage[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]                      = single[T](stageDef(op)(ctx))
@@ -36,6 +37,7 @@ trait Staging extends Statements {
   def stageCold[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stageDefCold(op)(ctx))
   def stageWrite[T:Staged](ss: Exp[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T]    = single[T](stageDefWrite(ss:_*)(op)(ctx))
   def stageSimple[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefSimple(op)(ctx))
+  def stageGlobal[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefGlobal(op)(ctx))
   def stageMutable[T:Staged](op: Op[T])(ctx: SrcCtx): Sym[T]               = single[T](stageDefMutable(op)(ctx))
   def stageEffectful[T:Staged](op: Op[T], u: Effects)(ctx: SrcCtx): Sym[T] = single[T](stageDefEffectful(op, u)(ctx))
 

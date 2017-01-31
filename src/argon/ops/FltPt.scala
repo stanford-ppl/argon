@@ -110,7 +110,7 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
 
     override def zero(implicit ctx: SrcCtx) = int2fltpt[G,E](0)
     override def one(implicit ctx: SrcCtx) = int2fltpt[G,E](1)
-    override def random(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_random[G,E]())
+    override def random(max: Option[FltPt[G,E]])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_random[G,E](max.map(_.s)))
     override def length: Int = sigBits + expBits
 
     override def negate(x: FltPt[G,E])(implicit ctx: SrcCtx) = -x
@@ -241,7 +241,7 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
   case class FltNeq[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_neq(f(x), f(y)) }
   case class FltEql[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]) extends FltPtOp2[G,E,Bool] { def mirror(f:Tx) = flt_eql(f(x), f(y)) }
 
-  case class FltRandom[G:INT,E:INT]() extends FltPtOp[G,E] { def mirror(f:Tx) = flt_random[G,E]() }
+  case class FltRandom[G:INT,E:INT](max: Option[Exp[FltPt[G,E]]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_random[G,E](f(max)) }
 
   case class FltConvert[G:INT,E:INT,G2:INT,E2:INT](x: Exp[FltPt[G,E]]) extends FltPtOp[G2,E2] {
     def mirror(f:Tx) = flt_convert[G,E,G2,E2](x)
@@ -285,7 +285,9 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
     case (Const(a:BigDecimal), Const(b:BigDecimal)) => bool(a == b)
     case _ => stage(FltEql(x,y))(ctx)
   }
-  def flt_random[G:INT,E:INT]()(implicit ctx: SrcCtx): Exp[FltPt[G,E]] = stageSimple(FltRandom[G,E]())(ctx)
+  def flt_random[G:INT,E:INT](max: Option[Exp[FltPt[G,E]]])(implicit ctx: SrcCtx): Exp[FltPt[G,E]] = {
+    stageSimple(FltRandom[G,E](max))(ctx)
+  }
 
   def flt_convert[G:INT,E:INT,G2:INT,E2:INT](x: Exp[FltPt[_,_]])(implicit ctx: SrcCtx): Exp[FltPt[G2,E2]] = {
     stage(FltConvert[G,E,G2,E2](x.asInstanceOf[Exp[FltPt[G,E]]]))(ctx)

@@ -49,7 +49,7 @@ trait BoolExp extends BoolOps with BitsExp {
 
     override def zero(implicit ctx: SrcCtx): Bool = boolean2bool(false)
     override def one(implicit ctx: SrcCtx): Bool = boolean2bool(true)
-    override def random(implicit ctx: SrcCtx): Bool = Bool(bool_random())
+    override def random(max: Option[Bool])(implicit ctx: SrcCtx): Bool = Bool(bool_random(max.map(_.s)))
     override def length = 1
   }
 
@@ -63,7 +63,7 @@ trait BoolExp extends BoolOps with BitsExp {
   case class Or(a: Exp[Bool], b: Exp[Bool]) extends Op[Bool]   { def mirror(f:Tx) = bool_or(f(a), f(b)) }
   case class XOr(a: Exp[Bool], b: Exp[Bool]) extends Op[Bool]  { def mirror(f:Tx) = bool_xor(f(a), f(b)) }
   case class XNor(a: Exp[Bool], b: Exp[Bool]) extends Op[Bool] { def mirror(f:Tx) = bool_xnor(f(a), f(b)) }
-  case class RandomBool() extends Op[Bool] { def mirror(f:Tx) = bool_random() }
+  case class RandomBool(max: Option[Exp[Bool]]) extends Op[Bool] { def mirror(f:Tx) = bool_random(f(max)) }
 
 
   /** Smart Constructors **/
@@ -104,6 +104,9 @@ trait BoolExp extends BoolOps with BitsExp {
     case (a, Const(true))                    => a                      // Boolean simplification: a == true => a
     case _ => stage( XNor(x,y) )(ctx)                                  // Default constructor
   }
-  def bool_random()(implicit ctx: SrcCtx): Sym[Bool] = stageSimple(RandomBool())(ctx)
+  def bool_random(max: Option[Exp[Bool]])(implicit ctx: SrcCtx): Exp[Bool] = max match {
+    case Some(Const(false)) => bool(false)
+    case _ => stageSimple(RandomBool(max))(ctx)
+  }
 
 }

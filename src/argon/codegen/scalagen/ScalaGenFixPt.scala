@@ -32,10 +32,15 @@ trait ScalaGenFixPt extends ScalaCodegen {
     case FixNeq(x,y) => emit(src"val $lhs = $x != $y")
     case FixEql(x,y) => emit(src"val $lhs = $x == $y")
     case FixMod(x,y) => emit(src"val $lhs = $x % $y")
-    case FixRandom() => lhs.tp match {
+    case FixRandom(Some(max)) => lhs.tp match {
+      case IntType()  => emit(src"val $lhs = scala.util.Random.nextInt($max)")
+      case LongType() => emit(src"val $lhs = scala.util.Random.nextLong() % $max")
+    }
+    case FixRandom(None) => lhs.tp match {
       case IntType()  => emit(src"val $lhs = scala.util.Random.nextInt()")
       case LongType() => emit(src"val $lhs = scala.util.Random.nextLong()")
     }
+
     case FixConvert(x) => lhs.tp match {
       case IntType()  => emit(src"val $lhs = $x.toInt")
       case LongType() => emit(src"val $lhs = $x.toLong")

@@ -7,6 +7,8 @@ trait FixPtOps extends NumOps with CustomBitWidths with CastOps {
   type Int16 = FixPt[TRUE,_16,_0]
   type Int8  = FixPt[TRUE,_8,_0]
 
+  type Index = Int32  // Addressing, sizes, etc.
+
   protected trait FixPtOps[S,I,F] {
     def unary_-(implicit ctx: SrcCtx): FixPt[S,I,F]
     def unary_~(implicit ctx: SrcCtx): FixPt[S,I,F]
@@ -112,7 +114,7 @@ trait FixPtExp extends FixPtOps with NumExp with CastExp {
 
     override def zero(implicit ctx: SrcCtx) = int2fixpt[S,I,F](0)
     override def one(implicit ctx: SrcCtx) = int2fixpt[S,I,F](1)
-    override def random(implicit ctx: SrcCtx): FixPt[S, I, F] = FixPt[S,I,F](fix_random[S,I,F]())
+    override def random(max: Option[FixPt[S,I,F]])(implicit ctx: SrcCtx): FixPt[S, I, F] = FixPt[S,I,F](fix_random[S,I,F](max.map(_.s)))
     override def length: Int = intBits + fracBits
 
     override def negate(x: FixPt[S,I,F])(implicit ctx: SrcCtx) = -x
@@ -266,7 +268,7 @@ trait FixPtExp extends FixPtOps with NumExp with CastExp {
   case class FixEql[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = fix_eql(f(x), f(y)) }
   case class FixMod[S:BOOL,I:INT](x: Exp[FixPt[S,I,_0]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp[S,I,_0] { def mirror(f:Tx) = fix_mod(f(x), f(y)) }
 
-  case class FixRandom[S:BOOL,I:INT,F:INT]() extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_random[S,I,F]() }
+  case class FixRandom[S:BOOL,I:INT,F:INT](max: Option[Exp[FixPt[S,I,F]]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_random[S,I,F](f(max)) }
 
   case class FixConvert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp[S2,I2,F2] {
     def mirror(f:Tx) = fix_convert[S,I,F,S2,I2,F2](x)
@@ -352,7 +354,9 @@ trait FixPtExp extends FixPtOps with NumExp with CastExp {
     case (a, Const(1)) => fixpt[S,I,_0](0)
     case _ => stage(FixMod(x,y))(ctx)
   }
-  def fix_random[S:BOOL,I:INT,F:INT]()(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = stageSimple(FixRandom[S,I,F]())(ctx)
+  def fix_random[S:BOOL,I:INT,F:INT](max: Option[Exp[FixPt[S,I,F]]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = {
+    stageSimple(FixRandom[S,I,F](max))(ctx)
+  }
 
   def fix_convert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[_,_,_]])(implicit ctx: SrcCtx): Exp[FixPt[S2,I2,F2]] = {
     stage(FixConvert[S,I,F,S2,I2,F2](x.asInstanceOf[Exp[FixPt[S,I,F]]]))(ctx)

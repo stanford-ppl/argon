@@ -9,13 +9,16 @@ import argon.traversal.IRPrinter
 import argon.codegen.scalagen._
 import argon.transform.ForwardTransformer
 
-trait TestOps extends BoolOps with IfThenElseOps with PrintOps with TextOps with ArrayOps with MixedNumericOps
-trait TestApi extends TestOps with BoolApi with IfThenElseApi with PrintApi with TextApi with ArrayApi with MixedNumericApi
-trait TestExp extends TestOps with BoolExp with IfThenElseExp with PrintExp with TextExp with ArrayExp with MixedNumericExp
+trait TestOps extends BoolOps
+  with IfThenElseOps with PrintOps with TextOps with ArrayExtOps with MixedNumericOps with AssertOps
+trait TestApi extends TestOps with BoolApi
+  with IfThenElseApi with PrintApi with TextApi with ArrayExtApi with MixedNumericApi with AssertApi
+trait TestExp extends TestOps with BoolExp
+  with IfThenElseExp with PrintExp with TextExp with ArrayExtExp with MixedNumericExp with AssertExp
 
 trait ScalaGen extends ScalaCodegen with ScalaSingleFileGen
       with ScalaGenBool with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenText with ScalaGenMixedNumeric
-      with ScalaGenVoid {
+      with ScalaGenVoid with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert {
   override val IR: TestExp
 }
 
