@@ -19,7 +19,6 @@ trait AppCore { self =>
     __stagingArgs = sargs
     Config.name = self.getClass.getName.split('$').last.replace("class ", "").replace('.','-')
     Config.logDir =  Config.cwd + Config.sep + "logs" + Config.sep + Config.name
-    Config.genDir = Config.cwd + Config.sep + "gen" + Config.sep + Config.name
     IR.compileOrRun( main() )
   }
 }
