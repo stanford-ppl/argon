@@ -15,6 +15,10 @@ trait ArrayExtOps extends ArrayOps {
     def flatMap[R:Staged](func: T => MArray[R])(implicit ctx: SrcCtx): MArray[R] = array_infix_flatMap(a, func)
   }
 
+  implicit class NestedArrayInfixOps[T:Staged](a: MArray[MArray[T]]) {
+    def flatten(implicit ctx: SrcCtx): MArray[T] = a.flatMap{x => x}
+  }
+
   private[argon] def array_infix_update[T:Staged](array: MArray[T], i: Index, data: T)(implicit ctx: SrcCtx): Void
   private[argon] def array_from_function[T:Staged](size: Index, func: Index => T)(implicit ctx: SrcCtx): MArray[T]
   private[argon] def array_infix_foreach[T:Staged](array: MArray[T], func: T => Void)(implicit ctx: SrcCtx): Void

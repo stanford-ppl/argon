@@ -4,9 +4,9 @@ import argon.core.Base
 trait IfThenElseOps extends Base with BoolOps {this: TextOps => }
 trait IfThenElseApi extends IfThenElseOps with BoolApi { this: TextApi => }
 
-trait IfThenElseExp extends IfThenElseOps with BoolExp { this: TextExp =>
+trait IfThenElseExp extends IfThenElseOps with BoolExp with OverloadHack { this: TextExp =>
   /** Virtualized Methods **/
-  def __ifThenElse[A,B](cond: Bool, thenp: => A, elsep: => A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = {
+  def __ifThenElse[A,B](cond: Bool, thenp: => A, elsep: => A)(implicit ctx: SrcCtx, l: Lift[A,B], o1: Overload1): B = {
     implicit val staged: Staged[B] = l.staged
     val unwrapThen = () => unwrap(lift(thenp) ) // directly calling unwrap(thenp) forces thenp to be evaluated here
     val unwrapElse = () => unwrap(lift(elsep) ) // wrapping it as a Function0 allows it to be delayed
