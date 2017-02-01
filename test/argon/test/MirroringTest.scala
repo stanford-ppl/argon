@@ -13,6 +13,7 @@ object MirroringTest extends Test { self =>
 
   override def main() = {}
 
+  // Note: All of this internal stuff shouldn't necessarily be visible to the user, just need it for debugging for now
   override def main(args: scala.Array[java.lang.String]) = {
     context = Nil
     argon.Config.verbosity = 3

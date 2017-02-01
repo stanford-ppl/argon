@@ -1,7 +1,7 @@
 package argon.ops
 import argon.core.Base
 
-trait BoolOps extends Base with BitsOps {
+trait BoolOps extends Base with BitsOps { this: TextOps =>
   type Bool <: BoolOps
   /** Infix operations **/
   protected trait BoolOps {
@@ -9,6 +9,8 @@ trait BoolOps extends Base with BitsOps {
     def &&(that: Bool)(implicit ctx: SrcCtx): Bool
     def ||(that: Bool)(implicit ctx: SrcCtx): Bool
     def ^ (that: Bool)(implicit ctx: SrcCtx): Bool
+
+    def +[A](rhs: A)(implicit ctx: SrcCtx, lft: Lift[A,Text]): Text
   }
 
   implicit class BooleanBoolOps(x: Boolean) {
@@ -24,17 +26,19 @@ trait BoolOps extends Base with BitsOps {
   implicit val BoolType: Bits[Bool]
 }
 
-trait BoolApi extends BoolOps with BitsApi {
+trait BoolApi extends BoolOps with BitsApi { this: TextApi =>
   type Boolean = Bool
 }
 
-trait BoolExp extends BoolOps with BitsExp {
+trait BoolExp extends BoolOps with BitsExp { this: TextExp =>
   /** API **/
   case class Bool(s: Exp[Bool]) extends BoolOps {
     def unary_!(implicit ctx: SrcCtx): Bool = Bool(bool_not(this.s)(ctx))
     def &&(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_and(this.s,that.s)(ctx))
     def ||(that: Bool)(implicit ctx: SrcCtx): Bool = Bool( bool_or(this.s,that.s)(ctx))
     def ^ (that: Bool)(implicit ctx: SrcCtx): Bool = infix_!=(this, that)(ctx)
+
+    def +[A](rhs: A)(implicit ctx: SrcCtx, lft: Lift[A,Text]): Text = textify(this) + lft.lift(rhs)
   }
   def infix_==(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xnor(x.s,y.s)(ctx))
   def infix_!=(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(x.s,y.s)(ctx))

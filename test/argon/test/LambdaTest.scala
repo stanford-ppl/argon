@@ -7,15 +7,15 @@ import argon.utils.deleteExts
 import org.scalatest.{FlatSpec, Matchers, ShouldMatchers}
 import org.virtualized.{SourceContext, virtualize}
 
-trait SimpleLambdaOps extends NumOps with FixPtOps {
+trait SimpleLambdaOps extends NumOps with FixPtOps { this: TextOps =>
   // Contrived example - unfused map which only returns the first value
   // Keep both blocks without having to introduce extra bound variable
   def map[T:Staged](n: Int32)(map: Int32 => T)(map2: T => T)(implicit ctx: SrcCtx): T
 }
 
-trait SimpleLambdaApi extends SimpleLambdaOps with NumApi
+trait SimpleLambdaApi extends SimpleLambdaOps with NumApi { this: TextApi => }
 
-trait SimpleLambdaExp extends SimpleLambdaOps with NumExp {
+trait SimpleLambdaExp extends SimpleLambdaOps with NumExp { this: TextExp =>
   def map[T: Staged](n: Int32)(map: Int32 => T)(map2: T => T)(implicit ctx: SrcCtx): T = {
     val i = fresh[Int32]
     val m1Blk = stageBlock {

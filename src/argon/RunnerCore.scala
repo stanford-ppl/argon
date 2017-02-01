@@ -6,13 +6,15 @@ import scala.sys.process._
 trait RunnerCore extends CompilerCore {
   self =>
 
+  var testArgs = List[String]()
+
   def run(out: String): Int = {
     val start = System.currentTimeMillis()
     // msg("--------------------------")
     msg(c"Running ${Config.name}")
     //msg(c"in output directory $out")
 
-    val proc = scala.sys.process.Process(Seq("sbt", "run"), new java.io.File(out))
+    val proc = scala.sys.process.Process(Seq("sbt", s"""run ${testArgs.mkString(" ")}"""), new java.io.File(out))
     val output = proc.run()
     val exitCode = output.exitValue()
 

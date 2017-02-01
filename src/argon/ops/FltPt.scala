@@ -2,7 +2,7 @@ package argon.ops
 
 import argon.core.ArgonExceptions
 
-trait FltPtOps extends NumOps with CustomBitWidths with CastOps {
+trait FltPtOps extends NumOps with CustomBitWidths with CastOps { this: TextOps =>
   type FltPt[G,E] <: FltPtOps[G,E]
   // Significand bits includes sign bit
   // ASSUMPTION: floating point representation is always signed (for now)
@@ -20,6 +20,9 @@ trait FltPtOps extends NumOps with CustomBitWidths with CastOps {
     def <=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool
     def > (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool
     def >=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool
+
+    def +(rhs: String)(implicit ctx: SrcCtx): Text = this + lift(rhs)
+    def +(rhs: Text)(implicit ctx: SrcCtx): Text
   }
 
   implicit class IntFltPtOps(x: Int) {
@@ -76,14 +79,14 @@ trait FltPtOps extends NumOps with CustomBitWidths with CastOps {
   implicit def float2fltpt[G:INT,E:INT](x: Float)(implicit ctx: SrcCtx): FltPt[G,E]
   implicit def double2fltpt[G:INT,E:INT](x: Double)(implicit ctx: SrcCtx): FltPt[G,E]
 }
-trait FltPtApi extends FltPtOps with NumApi with CastApi {
+trait FltPtApi extends FltPtOps with NumApi with CastApi { this: TextApi =>
   type Double = Float64
   type Float = Float32
   type Half = Float16
 }
 
 
-trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
+trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions { this: TextExp =>
   /** API **/
   case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) extends FltPtOps[G,E] {
     def unary_-(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_neg(this.s))
@@ -95,6 +98,8 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions {
     def <=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(this.s,that.s))
     def > (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool( flt_lt(that.s,that.s))
     def >=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(that.s,that.s))
+
+    def +(rhs: Text)(implicit ctx: SrcCtx): Text = textify(this) + lift(rhs)
   }
   def infix_!=[G:INT,E:INT](x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = Bool(flt_neq(x.s,y.s))
   def infix_==[G:INT,E:INT](x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = Bool(flt_eql(x.s,y.s))

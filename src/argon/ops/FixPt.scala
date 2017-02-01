@@ -1,6 +1,6 @@
 package argon.ops
 
-trait FixPtOps extends NumOps with CustomBitWidths with CastOps {
+trait FixPtOps extends NumOps with CustomBitWidths with CastOps { this: TextOps =>
   type FixPt[S,I,F] <: FixPtOps[S,I,F]
   type Int64 = FixPt[TRUE,_64,_0]
   type Int32 = FixPt[TRUE,_32,_0]
@@ -22,6 +22,9 @@ trait FixPtOps extends NumOps with CustomBitWidths with CastOps {
     def <=(that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool
     def > (that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool
     def >=(that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool
+
+    def +(rhs: Text)(implicit ctx: SrcCtx): Text
+    def +(rhs: String)(implicit ctx: SrcCtx): Text = this + lift(rhs)
   }
   implicit class FixPtIntLikeOps[S:BOOL,I:INT](x: FixPt[S,I,_0]) {
     def %(y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = mod(x, y)
@@ -65,7 +68,7 @@ trait FixPtOps extends NumOps with CustomBitWidths with CastOps {
 
   def mod[S:BOOL,I:INT](x: FixPt[S,I,_0], y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0]
 }
-trait FixPtApi extends FixPtOps with NumApi with CastApi {
+trait FixPtApi extends FixPtOps with NumApi with CastApi { this: TextApi =>
   type Long  = Int64
   type Int   = Int32
   type Short = Int16
@@ -73,7 +76,7 @@ trait FixPtApi extends FixPtOps with NumApi with CastApi {
 }
 
 
-trait FixPtExp extends FixPtOps with NumExp with CastExp {
+trait FixPtExp extends FixPtOps with NumExp with CastExp { this: TextExp =>
   /** API **/
   case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends FixPtOps[S,I,F] {
     def unary_-(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_neg(this.s))
@@ -88,6 +91,8 @@ trait FixPtExp extends FixPtOps with NumExp with CastExp {
     def <=(that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool(fix_leq(this.s,that.s))
     def > (that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool( fix_lt(that.s,this.s))
     def >=(that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool(fix_leq(that.s,this.s))
+
+    def +(rhs: Text)(implicit ctx: SrcCtx): Text = textify(this) + lift(rhs)
   }
   def infix_!=[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = Bool(fix_neq(x.s,y.s))
   def infix_==[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = Bool(fix_eql(x.s,y.s))
