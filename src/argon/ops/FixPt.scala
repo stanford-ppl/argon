@@ -218,7 +218,7 @@ trait FixPtExp extends FixPtOps with NumExp with CastExp { this: TextExp =>
   def fixpt[S:BOOL,I:INT,F:INT](x: BigInt)(implicit ctx: SrcCtx): Const[FixPt[S,I,F]] = createConstant[S,I,F](x, enWarn=false)
   def int32(x: BigInt)(implicit ctx: SrcCtx): Const[Int32] = createConstant[TRUE,_32,_0](x, enWarn = true)
 
-  def param(c: Int)(implicit ctx: SrcCtx): Param[Int32] = parameter[Int32](literalToBigInt[TRUE,_32,_0](c))
+  def intParam(c: Int)(implicit ctx: SrcCtx): Param[Int32] = parameter[Int32](literalToBigInt[TRUE,_32,_0](c))
 
   override protected def cast[T:Num,R:Num](x: T)(implicit ctx: SrcCtx): R = (num[T],num[R]) match {
     case (a:FixPtType[s,i,f],b:FixPtType[s2,i2,f2]) =>

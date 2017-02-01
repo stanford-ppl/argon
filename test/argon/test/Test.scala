@@ -122,7 +122,15 @@ object Test7 extends Test {
   def main() {
     val x = random[Boolean]
     val y = random[Boolean]
-    val z = if (x) { if (x && y) random[Boolean] else if (x || y) random[Boolean] else random[Boolean] } else lift(true)
+    val z = {
+      if (x) {
+        if (x && y) random[Boolean]
+        else if (x || y) random[Boolean]
+        else random[Boolean]
+      }
+      else lift(true)
+    }
+
     println(z)
   }
 }
