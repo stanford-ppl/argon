@@ -1,8 +1,8 @@
 package argon.codegen.scalagen
 
-import argon.codegen.SingleFileGen
+import argon.codegen.FileGen
 
-trait ScalaSingleFileGen extends SingleFileGen {
+trait ScalaFileGen extends FileGen {
   import IR._
 
   override protected def emitMain[S:Staged](b: Block[S]): Unit = {

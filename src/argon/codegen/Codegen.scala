@@ -4,6 +4,7 @@ import argon.traversal.Traversal
 import argon.core.Staging
 import argon.Config
 
+import java.nio.file.{Files, Paths}
 import java.io.PrintWriter
 
 trait Codegen extends Traversal {
@@ -17,19 +18,43 @@ trait Codegen extends Traversal {
   def out: String = s"${Config.genDir}${Config.sep}$lang${Config.sep}"
 
   protected var stream: PrintWriter = _
-  protected var streamTab: Int = 0
+  protected var streamName = ""
+  protected var streamTab = collection.mutable.Map[String, Int]() // Map from filename to its tab level
+  protected var streamMap = collection.mutable.Map[PrintWriter, String]() // Map from PrintWriter to its string name
+  protected var streamMapReverse = collection.mutable.Map[String, PrintWriter]() // Map from PrintWriter to its string name
   protected val tabWidth: Int = 2
 
-  private def tabbed: String = " "*(tabWidth*streamTab)
+  private def tabbed: String = " "*(tabWidth*(streamTab getOrElse (streamName, 0)))
 
   final protected def emit(x: String): Unit = { stream.println(tabbed + x) }
-  final protected def open(x: String): Unit = { stream.println(tabbed + x); streamTab += 1 }
-  final protected def close(x: String): Unit = { streamTab -= 1; stream.println(tabbed + x)  }
+  final protected def open(x: String): Unit = { stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 }
+  final protected def close(x: String): Unit = { if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)  }
 
   final protected def withStream[A](out: PrintWriter)(body: => A): A = {
     val save = stream
+    val saveName = streamMap getOrElse (stream,"")
     stream = out
-    try { body } finally { stream.flush(); stream = save }
+    streamName = streamMap(out)
+    try { body } finally { stream.flush(); stream = save; streamName = saveName }
+  }
+
+  final protected def newStream(name: String): PrintWriter = {
+    // TODO: Assert streamMap does not contain this guy already
+    streamTab += (name -> 0)
+    Files.createDirectories(Paths.get(out))
+    val file = new PrintWriter(s"${out}${name}.$ext")
+    streamMap += (file -> name)
+    streamMapReverse += (name -> file)
+    file      
+  }
+
+  final protected def getStream(name: String): PrintWriter = { // Use stream if it exists, otherwise maek it exist
+    // TODO: Assert streamMap does not contain this guy already
+    if (streamMapReverse.contains(name)) {
+      streamMapReverse(name)
+    } else {
+      newStream(name)
+    }
   }
 
   protected def remap(tp: Staged[_]): String = tp.toString

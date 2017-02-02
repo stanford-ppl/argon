@@ -1,6 +1,6 @@
 package argon
 
-import argon.codegen.SingleFileGen
+import argon.codegen.FileGen
 import scala.sys.process._
 
 trait RunnerCore extends CompilerCore {
@@ -28,7 +28,7 @@ trait RunnerCore extends CompilerCore {
     super.compileOrRun(blk)
     passes.foreach {
       // TODO: More generic compilation / running
-      case pass: SingleFileGen if pass.lang == "scala" =>
+      case pass: FileGen if pass.lang == "scala" =>
         val exitCode = run(pass.out)
         if (exitCode != 0 && testbench) throw new RunningFailed(exitCode)
 
