@@ -39,7 +39,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
   def checkErrors(start: Long, stageName: String): Unit = if (hadErrors) {
     val time = (System.currentTimeMillis - start).toFloat
     error(s"""$nErrors ${plural(nErrors,"error","errors")} found during $stageName""")
-    error(s"Completed in " + "%.4f".format(time/1000) + " seconds")
+    error(s"Total time: " + "%.4f".format(time/1000) + " seconds")
     if (testbench) throw new TestBenchFailed(nErrors)
     else System.exit(nErrors)
   }
@@ -56,9 +56,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     // Exit now if errors were found during staging
     checkErrors(start, "staging")
 
-    report("--------------------------------")
-    report(c"Compiling ${Config.name}")
-    report("--------------------------------")
+    report(c"Compiling ${Config.name} to ${Config.genDir}")
 
     if (Config.clearLogs) deleteExts(Config.logDir, ".log")
 
@@ -69,7 +67,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     }
 
     val time = (System.currentTimeMillis - start).toFloat
-    report(s"Completed in " + "%.4f".format(time/1000) + " seconds")
+    report(s"[\u001B[32mcompleted\u001B[0m] Total time: " + "%.4f".format(time/1000) + " seconds")
   }
 
 

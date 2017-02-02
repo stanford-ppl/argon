@@ -18,7 +18,7 @@ abstract class Transformer { self =>
   def tx(xs: Set[Exp[_]]): Set[Exp[_]] = xs.map{x => f(x) }
   def tx(xs: Seq[Exp[_]]): Seq[Exp[_]] = xs.map{x => f(x) }
 
-  def txSyms(xs: Seq[Sym[_]]): Seq[Sym[_]] = onlySyms(xs.map{x => f(x)})
+  def txSyms(xs: Set[Sym[_]]): Set[Sym[_]] = onlySyms(xs.map{x => f(x)}).toSet
 
   protected def inlineBlock[T:Staged](b: Block[T]): Exp[T]
   protected def transformBlock[T:Staged](b: Block[T]): Block[T]

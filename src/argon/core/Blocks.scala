@@ -21,7 +21,7 @@ trait Blocks extends Effects { self: Staging =>
   def summarizeScope(context: List[Sym[_]]): Effects = {
     var effects = Pure
     val allocs = new mutable.HashSet[Sym[_]]
-    def clean(xs: Seq[Sym[_]]) = xs.filterNot(allocs contains _)
+    def clean(xs: Set[Sym[_]]) = xs diff allocs
     for (s@Effectful(u2, _) <- context) {
       if (u2.isMutable) allocs += s
       effects = effects andThen u2.copy(reads = clean(u2.reads), writes = clean(u2.writes))

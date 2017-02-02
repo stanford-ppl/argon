@@ -5,9 +5,9 @@ import scala.collection.mutable
 trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   // -- State
   protected val defCache = new mutable.HashMap[Def, List[Sym[_]]]
-  protected val shallowAliasCache = new mutable.HashMap[Sym[_], Seq[Sym[_]]]
-  protected val deepAliasCache = new mutable.HashMap[Sym[_], Seq[Sym[_]]]
-  protected val aliasCache = new mutable.HashMap[Sym[_], Seq[Sym[_]]]
+  protected val shallowAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
+  protected val deepAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
+  protected val aliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
 
   // --- Statements
   case class Stm(lhs: List[Sym[_]], rhs: Def)
@@ -54,23 +54,23 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   private[argon] def defFromSymId(id: Int): Option[Def] = stmFromSymId(id).map(_.rhs)
 
   // --- Symbol aliasing
-  private def noPrims(x:Seq[Symbol[_]]): Seq[Sym[_]] = x.collect{case s: Sym[_] if !s.tp.isPrimitive => s}
+  private def noPrims(x: Set[Symbol[_]]): Set[Sym[_]] = x.collect{case s: Sym[_] if !s.tp.isPrimitive => s}
 
-  def shallowAliases(x: Any): Seq[Sym[_]] = {
-    noPrims(aliasSyms(x)).flatMap { case s@Def(d) => shallowAliasCache.getOrElseUpdate(s, shallowAliases(d)) :+ s } ++
+  def shallowAliases(x: Any): Set[Sym[_]] = {
+    noPrims(aliasSyms(x)).flatMap { case s@Def(d) => shallowAliasCache.getOrElseUpdate(s, shallowAliases(d)) + s } ++
       noPrims(containSyms(x)).flatMap { case s@Def(d) => deepAliasCache.getOrElseUpdate(s, deepAliases(d)) }
   }
-  def deepAliases(x: Any): Seq[Sym[_]] = {
+  def deepAliases(x: Any): Set[Sym[_]] = {
     noPrims(aliasSyms(x)).flatMap { case s@Def(d) => deepAliasCache.getOrElseUpdate(s, deepAliases(d)) } ++
       noPrims(copySyms(x)).flatMap { case s@Def(d) => deepAliasCache.getOrElseUpdate(s, deepAliases(d)) } ++
-      noPrims(extractSyms(x)).flatMap { case s@Def(d) => aliasCache.getOrElseUpdate(s, allAliases(d)) :+ s } ++
+      noPrims(extractSyms(x)).flatMap { case s@Def(d) => aliasCache.getOrElseUpdate(s, allAliases(d)) + s } ++
       noPrims(containSyms(x)).flatMap { case s@Def(d) => deepAliasCache.getOrElseUpdate(s, deepAliases(d)) }
   }
-  final def allAliases(x: Any): Seq[Sym[_]] = {
+  final def allAliases(x: Any): Set[Sym[_]] = {
     shallowAliases(x) ++ deepAliases(x)
   }
-  final def mutableAliases(x: Any): Seq[Sym[_]] = allAliases(x).filter(isMutable)
-  final def mutableInputs(d: Def): Seq[Sym[_]] = {
+  final def mutableAliases(x: Any): Set[Sym[_]] = allAliases(x).filter(isMutable)
+  final def mutableInputs(d: Def): Set[Sym[_]] = {
     val bounds = d.binds
     val actuallyReadSyms = d.reads diff bounds
     mutableAliases(actuallyReadSyms) filterNot (bounds contains _)
