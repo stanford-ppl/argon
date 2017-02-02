@@ -58,15 +58,15 @@ trait Staging extends Statements {
     val dfreqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).sum)
     val freqs = d.inputs.map { in => dfreqs.getOrElse(in, 1.0f) } ++ extraDeps.distinct.map { d => 1.0f }
 
-    val inputs = d.inputs
+    val inputs = d.inputs diff bounds
     val outputs = d.outputTypes.map{tp => __sym(tp) }
 
     addNode(inputs, outputs, bounds, tunnels, freqs, d)
 
-    log(c"Staging node $d")
-    log(c"  inputs = $inputs")
+    log(c"Staging node $outputs = $d")
     log(c"  schedule deps = $extraDeps")
-    log(c"  outputs = $outputs")
+    log(c"  inputs = $inputs")
+    log(c"  tunnels = $tunnels")
     log(c"  binds = $bounds")
     log(c"  freqs = $freqs")
 
@@ -127,7 +127,7 @@ trait Staging extends Statements {
     */
   def scrubSymbol(x: Sym[_]): Unit = {
     log(c"Scrubbing symbol $x from IR graph!")
-    removeEdge(x, remNode = true)
+    removeEdge(x)
     context = context.filterNot(_ == x)
   }
 }

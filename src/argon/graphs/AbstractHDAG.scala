@@ -50,20 +50,11 @@ trait AbstractHDAG extends Exceptions {
   def producerOf(edge: EdgeId): NodeId = EdgeData.producer(edge)
   def triple(id: NodeId): Triple = (nodeOutputs(id).map(edgeOf), nodeOf(id), nodeInputs(id).map(edgeOf))
 
-  def removeEdge(in: EdgeLike, remNode: Boolean): Unit = {
+  def removeEdge(in: EdgeLike): Unit = {
     EdgeData.dependents(in._id) = Nil
-    if (remNode) removeNode(producerOf(in._id))
-  }
-  def removeNode(id: NodeId): Unit = {
-    //NodeData.value(id) = null
-    //NodeData.outputs(id) = NodeData.outputs(id - 1)
-    //NodeData.inputs(id) = Nil
-    //NodeData.bounds(id) = Nil
-    //NodeData.tunnels(id) = Nil
-    //NodeData.freqs(id) = Nil
   }
 
-  /** Add an edge with no node or scheduling dependencies **/
+    /** Add an edge with no node or scheduling dependencies **/
   final def registerInput(in: EdgeLike): Unit = {
     in.id_=(curInputId)
     curInputId += 1
@@ -217,30 +208,30 @@ trait AbstractHDAG extends Exceptions {
 
     val levelScope = currentScope.filter(canOutside)
 
-//    log("Getting scope level within scope: ")
-//    scope.foreach{stm => log(c"  ${triple(stm)}") }
-//    log("For result: ")
-//    result.foreach{s => log(c"  ${triple(producerOf(s))}") }
-//    log("Must inside: ")
-//    mustInside.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("May outside: ")
-//    mayOutside.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("Fringe: ")
-//    fringe.foreach{stm => log(c"  ${triple(stm)}") }
-//    log("Reachable [Warm]: ")
-//    reachableWarm.foreach{stm => log(c"  ${triple(stm)}") }
-//    log("Reachable [Cold]: ")
-//    reachableCold.foreach{stm => log(c"  ${triple(stm)}")}
-//    log(s"Hot paths: ")
-//    hotPathsOnly.foreach{stm => log(c"  ${triple(stm)}")}
-//    log(s"Hot dependencies: ")
-//    hotDeps.foreach{stm => log(c"  ${triple(stm)}")}
-//    log(s"Hot fringe: ")
-//    hotFringe.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("Hot fringe dependencies: ")
-//    hotFringeDeps.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("levelScope: ")
-//    levelScope.foreach{stm => log(c"  ${triple(stm)}")}
+    log("Getting scope level within scope: ")
+    scope.foreach{stm => log(c"  ${triple(stm)}") }
+    log("For result: ")
+    result.foreach{s => log(c"  ${triple(producerOf(s))}") }
+    log("Must inside: ")
+    mustInside.foreach{stm => log(c"  ${triple(stm)}")}
+    log("May outside: ")
+    mayOutside.foreach{stm => log(c"  ${triple(stm)}")}
+    log("Fringe: ")
+    fringe.foreach{stm => log(c"  ${triple(stm)}") }
+    log("Reachable [Warm]: ")
+    reachableWarm.foreach{stm => log(c"  ${triple(stm)}") }
+    log("Reachable [Cold]: ")
+    reachableCold.foreach{stm => log(c"  ${triple(stm)}")}
+    log(s"Hot paths: ")
+    hotPathsOnly.foreach{stm => log(c"  ${triple(stm)}")}
+    log(s"Hot dependencies: ")
+    hotDeps.foreach{stm => log(c"  ${triple(stm)}")}
+    log(s"Hot fringe: ")
+    hotFringe.foreach{stm => log(c"  ${triple(stm)}")}
+    log("Hot fringe dependencies: ")
+    hotFringeDeps.foreach{stm => log(c"  ${triple(stm)}")}
+    log("levelScope: ")
+    levelScope.foreach{stm => log(c"  ${triple(stm)}")}
 
     levelScope
   }
@@ -256,18 +247,18 @@ trait AbstractHDAG extends Exceptions {
     val localRoots = scheduleDepsWithIndex(result, localCache)
     val localSchedule = getSchedule(localRoots, localCache, checkAcyclic = false)
 
-//    log("avail nodes: ")
-//    availableNodes.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("avail roots:")
-//    availRoots.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("local nodes:")
-//    localNodes.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("local scope: ")
-//    localScope.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("local roots:")
-//    localRoots.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("local schedule:")
-//    localSchedule.foreach{stm => log(c"  ${triple(stm)}")}
+    log("avail nodes: ")
+    availableNodes.foreach{stm => log(c"  ${triple(stm)}")}
+    log("avail roots:")
+    availRoots.foreach{stm => log(c"  ${triple(stm)}")}
+    log("local nodes:")
+    localNodes.foreach{stm => log(c"  ${triple(stm)}")}
+    log("local scope: ")
+    localScope.foreach{stm => log(c"  ${triple(stm)}")}
+    log("local roots:")
+    localRoots.foreach{stm => log(c"  ${triple(stm)}")}
+    log("local schedule:")
+    localSchedule.foreach{stm => log(c"  ${triple(stm)}")}
 
     localSchedule
   }

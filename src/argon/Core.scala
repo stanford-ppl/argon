@@ -48,6 +48,8 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     reset() // Reset global state
     settings()
 
+    if (Config.clearLogs) deleteExts(Config.logDir, ".log")
+
     val start = System.currentTimeMillis()
     var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(blk).s } }
 
@@ -56,9 +58,8 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     // Exit now if errors were found during staging
     checkErrors(start, "staging")
 
+    if (testbench) { Config.genDir = Config.cwd + Config.sep + "gen" + Config.sep + Config.name }
     report(c"Compiling ${Config.name} to ${Config.genDir}")
-
-    if (Config.clearLogs) deleteExts(Config.logDir, ".log")
 
     for (t <- passes) {
       block = t.run(block)

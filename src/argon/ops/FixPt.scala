@@ -276,7 +276,7 @@ trait FixPtExp extends FixPtOps with NumExp with CastExp { this: TextExp =>
   case class FixRandom[S:BOOL,I:INT,F:INT](max: Option[Exp[FixPt[S,I,F]]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_random[S,I,F](f(max)) }
 
   case class FixConvert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp[S2,I2,F2] {
-    def mirror(f:Tx) = fix_convert[S,I,F,S2,I2,F2](x)
+    def mirror(f:Tx) = fix_convert[S,I,F,S2,I2,F2](f(x))
   }
 
 

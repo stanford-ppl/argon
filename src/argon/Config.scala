@@ -14,7 +14,7 @@ object Config {
   val cwd = System.getProperty("user.dir")
   def sep = java.io.File.separator
 
-  var verbosity: Int = getProperty("argon.verbosity", "2").toInt
+  var verbosity: Int = getProperty("argon.verbosity", "3").toInt
   var unsafe: Boolean = getProperty("argon.unsafe", "false").toBoolean
   var lib:  Boolean = getProperty("argon.lib", "false").toBoolean
   var name: String = getProperty("argon.name", "app")
