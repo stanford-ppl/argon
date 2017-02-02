@@ -1,17 +1,15 @@
 package argon.codegen
 
 import java.io.PrintWriter
-import java.nio.file.{Files, Paths}
 
-trait SingleFileGen extends Codegen {
+trait FileGen extends Codegen {
   import IR._
 
   protected def emitMain[S:Staged](b: Block[S]): Unit
 
   override protected def process[S:Staged](b: Block[S]): Block[S] = {
-    Files.createDirectories(Paths.get(out))
 
-    val file = new PrintWriter(s"${out}main.$ext")
+    val file = newStream("main")
     withStream(file) {
       preprocess(b)
       emitMain(b)
