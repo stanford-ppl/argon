@@ -114,15 +114,15 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
     console
   }
 
-  class IllegalMutableSharingError(s: Sym[_], aliases: Seq[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
+  class IllegalMutableSharingError(s: Sym[_], aliases: Set[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, c"Illegal sharing of mutable objects: ")
-    (aliases :+ s).foreach{alias =>
+    (aliases + s).foreach{alias =>
       val pos = mpos(alias)
       error(c"${pos.fileName}:${pos.line}:  symbol ${str(alias)} defined here")
     }
   })
 
-  class IllegalMutationError(s: Sym[_], mutated: Seq[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
+  class IllegalMutationError(s: Sym[_], mutated: Set[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, c"Illegal mutation of immutable symbols")
     mutated.foreach { mut =>
       val pos = mpos(mut)

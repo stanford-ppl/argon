@@ -17,8 +17,8 @@ trait Effects extends Symbols { this: Staging =>
     simple:  Boolean = false,
     global:  Boolean = false,
     mutable: Boolean = false,
-    reads:   Seq[Sym[_]] = Nil,
-    writes:  Seq[Sym[_]] = Nil
+    reads:   Set[Sym[_]] = Set.empty,
+    writes:  Set[Sym[_]] = Set.empty
   ) extends Metadata[Effects] {
     def mirror(f: Tx) = Effects(cold, simple, global, mutable, f.txSyms(reads), f.txSyms(writes))
 
@@ -38,18 +38,18 @@ trait Effects extends Symbols { this: Staging =>
     def isPure = !cold && !simple && !global && !mutable && reads.isEmpty && writes.isEmpty
     def isMutable = mutable
     def isIdempotent = !cold && !simple && !global && !mutable && writes.isEmpty
-    def mayWrite(ss: Seq[Sym[_]]) = global || ss.exists { s => writes contains s }
-    def mayRead(ss: Seq[Sym[_]]) = global || ss.exists { s => reads contains s }
+    def mayWrite(ss: Set[Sym[_]]) = global || ss.exists { s => writes contains s }
+    def mayRead(ss: Set[Sym[_]]) = global || ss.exists { s => reads contains s }
   }
   val Pure    = Effects()
   val Cold    = Effects(cold = true)
   val Simple  = Effects(simple = true)
   val Global  = Effects(global = true)
   val Mutable = Effects(mutable = true)
-  def Read(s: Sym[_]) = Effects(reads = Seq(s))
-  def Read(ss: Seq[Sym[_]]) = Effects(reads = ss)
-  def Write(s: Sym[_]) = Effects(writes = Seq(s))
-  def Write(ss: Seq[Sym[_]]) = Effects(writes = ss)
+  def Read(xs: Exp[_]*)  = Effects(reads =  onlySyms(xs).toSet)
+  def Write(xs: Exp[_]*) = Effects(writes = onlySyms(xs).toSet)
+  def Read(xs: Set[Sym[_]]) = Effects(reads = xs)
+  def Write(xs: Set[Sym[_]]) = Effects(writes = xs)
 
   object effectsOf {
     def apply(s: Sym[_]) = metadata[Effects](s).getOrElse(Pure)
