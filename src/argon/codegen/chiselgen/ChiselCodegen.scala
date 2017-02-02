@@ -9,6 +9,7 @@ trait ChiselCodegen extends Codegen {
   override val name = "Chisel Codegen"
   override val lang: String = "chisel"
   override val ext: String = "scala"
+  var emitEn: Boolean = false // Hack for masking Cpp from FPGA gen
 
   override protected def emitBlock(b: Block[_]): Unit = {
     visitBlock(b)
@@ -31,6 +32,22 @@ trait ChiselCodegen extends Codegen {
       stream.println(x) 
     }
   }
+
+  override def emit(x: String): Unit = { if (emitEn) stream.println(tabbed + x) }
+  override def open(x: String): Unit = { 
+    if (emitEn) {
+      stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 
+    }
+  }
+  override def close(x: String): Unit = { 
+    if (emitEn) {
+      if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)  
+    }
+  }
+  override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = {
+    if (emitEn) {throw new GenerationFailedException(rhs)} else {Console.println(s"[WARN] no backend for $lhs = $rhs in $lang")}
+  }
+
 
   final protected def withSubStream[A](name: String)(body: => A): A = { // Places body inside its own trait file and includes it at the end
     if (Config.multifile) {

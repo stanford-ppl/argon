@@ -17,18 +17,18 @@ trait Codegen extends Traversal {
   val ext: String
   def out: String = s"${Config.genDir}${Config.sep}$lang${Config.sep}"
 
-  protected var stream: PrintWriter = _
-  protected var streamName = ""
-  protected var streamTab = collection.mutable.Map[String, Int]() // Map from filename to its tab level
-  protected var streamMap = collection.mutable.Map[PrintWriter, String]() // Map from PrintWriter to its string name
-  protected var streamMapReverse = collection.mutable.Map[String, PrintWriter]() // Map from PrintWriter to its string name
-  protected val tabWidth: Int = 2
+  var stream: PrintWriter = _
+  var streamName = ""
+  var streamTab = collection.mutable.Map[String, Int]() // Map from filename to its tab level
+  var streamMap = collection.mutable.Map[PrintWriter, String]() // Map from PrintWriter to its string name
+  var streamMapReverse = collection.mutable.Map[String, PrintWriter]() // Map from PrintWriter to its string name
+  val tabWidth: Int = 2
 
-  private def tabbed: String = " "*(tabWidth*(streamTab getOrElse (streamName, 0)))
+  def tabbed: String = " "*(tabWidth*(streamTab getOrElse (streamName, 0)))
 
-  final protected def emit(x: String): Unit = { stream.println(tabbed + x) }
-  final protected def open(x: String): Unit = { stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 }
-  final protected def close(x: String): Unit = { if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)  }
+  protected def emit(x: String): Unit = { stream.println(tabbed + x) }
+  protected def open(x: String): Unit = { stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 }
+  protected def close(x: String): Unit = { if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)  }
 
   final protected def withStream[A](out: PrintWriter)(body: => A): A = {
     val save = stream
