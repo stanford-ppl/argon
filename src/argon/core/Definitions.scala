@@ -125,9 +125,13 @@ trait Definitions extends Blocks { self: Staging =>
     case s: Symbol[_] => List(s)
     case b: Block[_] => syms(b.result)
     case d: Def => d.inputs
-    case l: Iterable[_] => recursive.collectList{case b: Symbol[_] => b}(l.iterator)
+    case l: Iterable[_] => recursive.collectLists(__syms)(l.iterator)
   }
-  def syms(a: Any*): List[Symbol[_]] = if (__syms.isDefinedAt(a)) __syms(a) else Nil
+  def syms(a: Any*): List[Symbol[_]] = {
+    val result = if (__syms.isDefinedAt(a)) __syms(a) else Nil
+    //log(c"syms($a) = $result")
+    result
+  }
 
 
   def onlySyms(a: Any*): Seq[Sym[_]] = syms(a).collect{case s: Sym[_] => s}

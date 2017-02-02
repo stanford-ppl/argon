@@ -6,7 +6,7 @@ trait BlockTraversal {
   val IR: Staging
   import IR._
 
-  private var innerScope: Seq[Int] = _
+  private var innerScope: Seq[NodeId] = _
 
   final protected def scrubSym(s: Sym[_]): Unit = {
     IR.scrubSymbol(s)

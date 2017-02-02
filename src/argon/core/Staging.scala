@@ -58,7 +58,7 @@ trait Staging extends Statements {
     val dfreqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).sum)
     val freqs = d.inputs.map { in => dfreqs.getOrElse(in, 1.0f) } ++ extraDeps.distinct.map { d => 1.0f }
 
-    val inputs = d.inputs diff bounds
+    val inputs = d.inputs
     val outputs = d.outputTypes.map{tp => __sym(tp) }
 
     addNode(inputs, outputs, bounds, tunnels, freqs, d)
