@@ -1,6 +1,7 @@
 package argon.codegen.chiselgen
 
 import argon.codegen.FileGen
+import argon.Config
 
 trait ChiselFileGen extends FileGen {
   import IR._
@@ -20,9 +21,14 @@ trait ChiselFileGen extends FileGen {
     // val topTrait = getStream("TopTrait")
 
     withStream(getStream("TopTrait")) {
+      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Begin!")}
       preprocess(b)
+      toggleEn() // Turn off
       emitMain(b)
+      toggleEn() // Turn on
       postprocess(b)
+      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Complete!")}
+      b
     }
   }
 

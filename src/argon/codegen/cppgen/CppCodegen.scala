@@ -17,7 +17,7 @@ trait CppCodegen extends Codegen {
 
   final protected def emitController(b: Block[_]): Unit = {
     visitBlock(b)
-    emit(src"// results in ${b.result}")
+    emit(src"// ctrl results in ${b.result}")
   }
 
   override def quote(s: Exp[_]): String = s match {

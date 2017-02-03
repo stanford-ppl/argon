@@ -1,15 +1,17 @@
 package argon.codegen.chiselgen
 
+import sys.process._
+import scala.language.postfixOps
 import argon.codegen.Codegen
 import argon.Config
+import argon.codegen.FileDependencies
 
 
-trait ChiselCodegen extends Codegen {
+trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies extends Codegen already
   import IR._
   override val name = "Chisel Codegen"
   override val lang: String = "chisel"
   override val ext: String = "scala"
-  var emitEn: Boolean = false // Hack for masking Cpp from FPGA gen
 
   override protected def emitBlock(b: Block[_]): Unit = {
     visitBlock(b)
@@ -33,19 +35,27 @@ trait ChiselCodegen extends Codegen {
     }
   }
 
-  override def emit(x: String): Unit = { if (emitEn) stream.println(tabbed + x) }
-  override def open(x: String): Unit = { 
-    if (emitEn) {
-      stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 
-    }
-  }
-  override def close(x: String): Unit = { 
-    if (emitEn) {
-      if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)  
-    }
-  }
-  override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = {
-    if (emitEn) {throw new GenerationFailedException(rhs)} else {Console.println(s"[WARN] no backend for $lhs = $rhs in $lang")}
+  final protected def emitModule(lhs: String, x: String, args: String*): Unit = {
+    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates/$x.scala""")
+
+    emit(src"""val $lhs = Module(new ${x}(${args.mkString}))""")
+  } 
+
+  override def copyDependencies(out: String): Unit = {
+    // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
+    // s"mkdir ${out}${java.io.File.separator}templates" !
+    // s"mkdir ${out}${java.io.File.separator}templates".!
+    // dependencies.foreach{dep => if (dep.needsCopy) {
+    //   log(s"Copying ${dep.input} to $out")
+    //   s"cp ${dep.input} ${out}${java.io.File.separator}templates${java.io.File.separator}${dep.outputPath}" !
+    // }}
+    s"""cp -r ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates ${out}""".!
+    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/Makefile ${out}/..""".!
+    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/direct-test.sh ${out}/..""".!
+    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/build.sbt ${out}/..""".!
+    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/run.sh ${out}/..""".!
+    s"""cp -r ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/app-test ${out}""".!
+    super.copyDependencies(out)
   }
 
 
