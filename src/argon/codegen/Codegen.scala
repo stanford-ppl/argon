@@ -73,18 +73,20 @@ trait Codegen extends Traversal {
 
   final protected def newStream(name: String, exten: String = ext): PrintWriter = {
     // TODO: Assert streamMap does not contain this guy already
-    streamTab += (name -> 0)
+    val fullname = name + "." + exten
+    streamTab += (fullname -> 0)
     Files.createDirectories(Paths.get(out))
     val file = new PrintWriter(s"${out}${name}.$exten")
-    streamMap += (file -> name)
-    streamMapReverse += (name -> file)
+    streamMap += (file -> fullname)
+    streamMapReverse += (fullname -> file)
     file      
   }
 
   final protected def getStream(name: String, exten: String = ext): PrintWriter = { // Use stream if it exists, otherwise maek it exist
     // TODO: Assert streamMap does not contain this guy already
-    if (streamMapReverse.contains(name)) {
-      streamMapReverse(name)
+    val fullname = name + "." + exten
+    if (streamMapReverse.contains(fullname)) {
+      streamMapReverse(fullname)
     } else {
       newStream(name, exten)
     }
@@ -127,7 +129,7 @@ trait Codegen extends Traversal {
         Console.println(s"[ WARN ] no backend for $lhs = $rhs in $lang")  
       } 
     } else {
-      Console.println(s"[ ${lang}gen ] Emission of ${lhs} = $rhs does not belong in this backend")
+      if (Config.emitDevel == 2) Console.println(s"[ ${lang}gen ] Emission of ${lhs} = $rhs does not belong in this backend")
     }
   }
 

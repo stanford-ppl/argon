@@ -36,6 +36,14 @@ trait CppFileGen extends FileGen {
 #include <signal.h>
 #include <sys/wait.h>
 #include <pwd.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include "DeliteCpp.h"
+#include "cppDeliteArraystring.h"
+#include "cppDeliteArrays.h"
+#include "cppDeliteArraydouble.h"
 
 void Top_run( Interface_t *args )
 {
@@ -92,7 +100,7 @@ void Top_run( Interface_t *args )
   uid_t uid = geteuid();
   struct passwd *pw = getpwuid (uid);
   std::ostringstream stringStream;
-  stringStream << "/tmp/cpp_test_result_" << pw->pw_name;
+  stringStream << "/tmp/chisel_test_result_" << pw->pw_name;
   std::string fname = stringStream.str();
   std::ifstream result_file;
   result_file.open( fname.c_str() );
@@ -129,9 +137,10 @@ void Top_run( Interface_t *args )
 
 }
 """)
-  open(s"Application(int numThreads, cppDeliteArraystring * x0) {")
+  open(s"void Application(int numThreads, cppDeliteArraystring * x0) {")
+  emit("Interface_t interface;")
 
-    withStream(getStream("interface", ".h")) {
+    withStream(getStream("interface", "h")) {
       emit(s"""// Interface between delite c++ and hardware tester
   // class Interface_t {
 
@@ -145,18 +154,25 @@ void Top_run( Interface_t *args )
   
 #include <vector>
 #include <iostream>
+#include <stdint.h>
 
 class Interface_t""")
       open("{")
-      emit(s"""
-  public:
-    Interface_t()
-    {}
-    ~Interface_t()
-    {}""")
+      open(s"""public:""")
+      emit("Interface_t()")
+      emit("{}")
+      emit("~Interface_t()")
+      emit("{}")
     }
 
-    withStream(getStream("DRAM",".h")){
+    withStream(getStream("cpptypes","h")) {
+      emit("""#ifndef __CPPTYPES_H__
+#define __CPPTYPES_H__
+#include "DRAM.h" 
+#endif""")
+    }
+
+    withStream(getStream("DRAM","h")){
       emit(s"""
 #include <stdint.h>
 #include <vector>
@@ -203,6 +219,17 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 """)
+
+    withStream(getStream("interface", "h")) {
+      emit(s"uint64_t* cycles;")
+      emit(s"void add_mem(long num) { memOut.push_back(num);}")
+      emit(s"long get_mem(int i) { return memOut[i]; }")
+      emit(s"long memOut_length() { return memOut.size(); } // Cannot size in advance because multiple DRAMs will share this header")
+      emit(s"private:")
+      emit(s"std::vector<long> memOut;")
+      close("")
+      close("};")
+    }
 
     super.emitFileFooter()
   }

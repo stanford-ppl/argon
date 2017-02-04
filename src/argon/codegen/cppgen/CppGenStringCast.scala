@@ -13,8 +13,8 @@ trait CppGenStringCast extends CppCodegen {
     }
 
     case StringToFixPt(x) => lhs.tp match {
-      case IntType()  => emit(src"val $lhs = std::stoi($x);")
-      case LongType() => emit(src"val $lhs = std::stol($x);")
+      case IntType()  => emit(src"int32_t $lhs = atoi(${x}.c_str());")
+      case LongType() => emit(src"long $lhs = std::stol($x);")
     }
 
     case StringToBool(x) => emit(src"val $lhs = $x.toBoolean")

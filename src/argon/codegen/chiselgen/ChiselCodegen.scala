@@ -36,7 +36,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   final protected def emitModule(lhs: String, x: String, args: String*): Unit = {
-    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates/$x.scala""")
+    // dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates/$x.scala""")
 
     emit(src"""val $lhs = Module(new ${x}(${args.mkString}))""")
   } 
@@ -65,7 +65,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
           emit("""package app
 import templates._
 import chisel3._""")
-          open(s"""trait ${name} extends BaseModule with TopModuleTrait /*and possibly other subkernels up to this point*/ {""")
+          open(s"""trait ${name} extends GlobalWires with TopTrait /*and possibly other subkernels up to this point*/ {""")
           open(s"""def create_${name}() {""")
           try { body } 
           finally { 
@@ -74,7 +74,7 @@ import chisel3._""")
           }
       }
     } else {
-      open("{ // Multifile disabled, emitting here")
+      open(src";{ // Multifile disabled, emitting $name kernel here")
       try { body } 
       finally { close("}") }
     }

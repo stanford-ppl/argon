@@ -39,16 +39,15 @@ trait ChiselFileGen extends FileGen {
       emit(s"""package interfaces
 import chisel3._
 import templates._
-import types._
-class ArgInBundle() extends Bundle{""")
+import types._""")
     }
 
     withStream(getStream("BufferControlCxns")) {
       emit(s"""package app
 import templates._
 import chisel3._""")
-      open(s"""trait BufferControlSignals extends BaseModule with TopModuleTrait /*and possibly other subkernels up to this point*/ {""")
-      open(s"""def create_BufferControlSignals() {""")
+      open(s"""trait BufferControlCxns extends GlobalWires with TopTrait /*and possibly other subkernels up to this point*/ {""")
+      open(s"""def create_BufferControlCxns() {""")
     }
 
     withStream(getStream("TopTrait")) {
@@ -56,7 +55,7 @@ import chisel3._""")
 import templates._
 import interfaces._
 import chisel3._""")
-      open(s"trait TopModuleTrait extends BaseModule /*and possibly subkernels*/ {")
+      open(s"trait TopTrait extends GlobalWires /*and possibly subkernels*/ {")
       emit(s"// May want to have a main method defined here too")
     }
 
@@ -65,7 +64,7 @@ import chisel3._""")
 import templates._
 import interfaces._
 import chisel3._
-abstract class BaseModule() extends Module{
+abstract class GlobalWires() extends Module{
   val io = IO(new Bundle{
     val top_en = Input(Bool())
     val top_done = Output(Bool())
@@ -76,11 +75,22 @@ abstract class BaseModule() extends Module{
 """)
     }
 
+    withStream(getStream("GeneratedPoker")) {
+      emit(s"""package app
+
+import chisel3.iotesters.{PeekPokeTester, Driver, ChiselFlatSpec}
+import org.scalatest.Assertions._
+import java.io._""")
+      open(s"""class GeneratedPoker(c: TopModule) extends PeekPokeTester(c) {""")
+      emit(s"""var offchipMem = List[BigInt]()""")
+      open(s"def handleLoadStore() {")
+    }
+
     super.emitFileHeader()
   }
 
   override protected def emitFileFooter() {
-    // emitBufferControlSignals()
+    // emitBufferControlCxns()
     withStream(getStream("GlobalWires")) {
       // // Get each all unique reg strings
       // emitted_argins.toList.map{a=>a._2}.distinct.foreach{ a => 
@@ -105,7 +115,9 @@ abstract class BaseModule() extends Module{
     }
 
     // Get traits that need to be mixed in
-    val traits = streamMapReverse.keySet.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait"
+    val traits = streamMapReverse.keySet.toSet.map{
+      f:String => f.split('.').dropRight(1).mkString(".") /*strip extension*/ 
+    }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
     withStream(getStream("TopLevelDesign")) {
       emit(s"""package app
 import templates._
@@ -117,9 +129,11 @@ class TopModule() extends GlobalWires with ${(traits+"TopTrait").mkString("\n wi
   // TopModule class mixes in all the other traits and is instantiated by tester""")
     }
 
-    withStream(getStream("IOModule")) {
-      emit("}")
+    withStream(getStream("GeneratedPoker")) {
+      close("}")
+      close("}")
     }
+
     super.emitFileFooter()
   }
 

@@ -12,7 +12,7 @@ trait ChiselGenBool extends ChiselCodegen {
   }
 
   override protected def quoteConst(c: Const[_]): String = c match {
-    case Const(c: Boolean) => c.toString
+    case Const(c: Boolean) => c.toString + ".B"
     case _ => super.quoteConst(c)
   }
 
