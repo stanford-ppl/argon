@@ -208,6 +208,7 @@ trait AbstractHDAG extends Exceptions {
 
     val levelScope = currentScope.filter(canOutside)
 
+// These log statements are VERY expensive - use only when debugging
 //    log("Getting scope level within scope: ")
 //    scope.foreach{stm => log(c"  ${triple(stm)}") }
 //    log("For result: ")
@@ -242,11 +243,12 @@ trait AbstractHDAG extends Exceptions {
     val availRoots = scheduleDepsWithIndex(result, availCache)
     val localNodes = getSchedule(availRoots, availCache, checkAcyclic = true)
 
+    val localCache = buildScopeIndex(localNodes) // NOTE: Can't use localScope here (as it may not be fully ordered)
     val localScope = getLocalScope(localNodes, result)
-    val localCache = buildScopeIndex(localScope)
     val localRoots = scheduleDepsWithIndex(result, localCache)
-    val localSchedule = getSchedule(localRoots, localCache, checkAcyclic = false)
+    val localSchedule = getSchedule(localRoots, localCache, checkAcyclic = false) filter (localScope contains _)
 
+// These log statements are VERY expensive - use only when debugging
 //    log("avail nodes: ")
 //    availableNodes.foreach{stm => log(c"  ${triple(stm)}")}
 //    log("avail roots:")

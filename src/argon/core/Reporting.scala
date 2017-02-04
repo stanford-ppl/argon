@@ -4,9 +4,17 @@ import argon.Config
 import java.io.PrintStream
 import org.virtualized.SourceContext
 import java.nio.file.{Files, Paths}
+import java.io.OutputStream
 
 trait Reporting {
-  private var logstream: PrintStream = System.out
+  class NullOutputStream() extends OutputStream {
+    override def write(b: Int) { }
+    override def write(b: Array[Byte]) { }
+    override def write(b: Array[Byte], off: Int, len: Int) { }
+  }
+  val nullstream = new PrintStream(new NullOutputStream)
+
+  private var logstream: PrintStream = nullstream
   private var _errors = 0
   def hadErrors = _errors > 0
   def nErrors = _errors
@@ -16,17 +24,20 @@ trait Reporting {
   def plural(x: Int, sing: String, plur: String): String = if (x == 1) sing else plur
 
   final def withLog[T](dir: String, filename: String)(blk: => T): T = {
-    val save = logstream
-    Files.createDirectories(Paths.get(dir))
-    logstream = new PrintStream(dir + Config.sep + filename)
-    try {
-      blk
+    if (Config.verbosity >= 1) {
+      val save = logstream
+      Files.createDirectories(Paths.get(dir))
+      logstream = new PrintStream(dir + Config.sep + filename)
+      try {
+        blk
+      }
+      finally {
+        logstream.flush()
+        logstream.close()
+        logstream = save
+      }
     }
-    finally {
-      logstream.flush()
-      logstream.close()
-      logstream = save
-    }
+    else blk
   }
   final def withConsole[T](blk: => T): T = {
     val save = logstream
@@ -36,13 +47,22 @@ trait Reporting {
     result
   }
 
-  final def log(x: => Any): Unit = if (Config.verbosity >= 3) logstream.println(x)
-  final def dbg(x: => Any): Unit = if (Config.verbosity >= 2) logstream.println(x)
-  final def msg(x: => Any): Unit = if (Config.verbosity >= 1) logstream.println(x)
+  final def log(x: => Any): Unit = if (Config.verbosity >= 1) logstream.println(x)
+  final def dbg(x: => Any): Unit = if (Config.verbosity >= 1) logstream.println(x)
+  final def msg(x: => Any): Unit = {
+    logstream.println(x)
+    if (Config.verbosity >= 2) System.out.println(x)
+  }
 
   final def report(x: => Any): Unit = if (Config.verbosity >= 0) System.out.println(x)
-  final def warn(x: => Any): Unit = System.err.println(s"[\u001B[33mwarn\u001B[0m] $x")
-  final def error(x: => Any): Unit = System.err.println(s"[\u001B[31merror\u001B[0m] $x")
+  final def warn(x: => Any): Unit = {
+    System.err.println(s"[\u001B[33mwarn\u001B[0m] $x")
+    log(s"[warn] $x")
+  }
+  final def error(x: => Any): Unit = {
+    System.err.println(s"[\u001B[31merror\u001B[0m] $x")
+    log(s"[error] $x")
+  }
 
   final def warn(ctx: SourceContext, x: => Any): Unit = warn(ctx.toString() + ": " + x)
   final def error(ctx: SourceContext, x: => Any): Unit = {

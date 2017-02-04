@@ -103,6 +103,11 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
       error(c"If this is expected, allow pre-transformation using allowPretransform = true.")
     })
 
+  class UndefinedAccessPatternException(x: Exp[_]) extends
+    CompilerException(15, c"Symbol $x has no defined access pattern", {
+      error(c"Symbol $x has no defined access pattern")
+    })
+
   // --- User errors
   abstract class UserError(ctx: SrcCtx, console: => Unit) {
     console

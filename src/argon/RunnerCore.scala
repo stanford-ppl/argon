@@ -11,15 +11,18 @@ trait RunnerCore extends CompilerCore {
   def run(out: String): Int = {
     val start = System.currentTimeMillis()
     // msg("--------------------------")
-    msg(c"Running ${Config.name}")
+    report(c"Executing ${Config.name}")
     //msg(c"in output directory $out")
 
     val proc = scala.sys.process.Process(Seq("sbt", s"""run ${testArgs.mkString(" ")}"""), new java.io.File(out))
-    val output = proc.run()
-    val exitCode = output.exitValue()
+    val logger = ProcessLogger{str => log(str)}
+    val exitCode = withLog(Config.logDir, State.paddedPass + " RUN.log") { proc.run(logger).exitValue() }
 
     val time = (System.currentTimeMillis - start).toFloat
-    msg(s"Completed in " + "%.4f".format(time/1000) + " seconds")
+    if (exitCode != 0)
+      error(s"Execution failed with non-zero exit code $exitCode")
+    else
+      report(s"[\u001B[32msuccess\u001B[0m] Execution completed")
 
     exitCode
   }
@@ -30,7 +33,9 @@ trait RunnerCore extends CompilerCore {
       // TODO: More generic compilation / running
       case pass: FileGen if pass.lang == "scala" =>
         val exitCode = run(pass.out)
-        if (exitCode != 0 && testbench) throw new RunningFailed(exitCode)
+        if (exitCode != 0 && testbench) {
+          throw new RunningFailed(exitCode)
+        }
 
       case _ => // Do nothing
     }

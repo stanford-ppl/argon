@@ -1,4 +1,4 @@
-package argon.graphs
+ package argon.graphs
 
 import scala.collection.mutable
 

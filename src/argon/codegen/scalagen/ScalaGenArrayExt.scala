@@ -20,13 +20,13 @@ trait ScalaGenArrayExt extends ScalaGenArray {
       close("}")
 
     case ArrayMap(array,apply,func,i) =>
-      open(src"val $lhs = $array.indices.map{$i => ")
+      open(src"val $lhs = Array.tabulate($array.length){$i => ")
       visitBlock(apply)
       emitBlock(func)
       close("}")
 
     case ArrayZip(a, b, applyA, applyB, func, i) =>
-      open(src"val $lhs = $a.indices.map{$i => ")
+      open(src"val $lhs = Array.tabulate($a.length){$i => ")
       visitBlock(applyA)
       visitBlock(applyB)
       emitBlock(func)
@@ -43,8 +43,7 @@ trait ScalaGenArrayExt extends ScalaGenArray {
       close("}")
 
     case ArrayFlatMap(array, apply, func, i) =>
-      open(src"val $lhs = $array.indices.flatMap{$i => ")
-      visitBlock(apply)
+      open(src"val $lhs = $array.flatMap{${apply.result} => ")
       emitBlock(func)
       close("}")
 

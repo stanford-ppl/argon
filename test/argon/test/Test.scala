@@ -16,7 +16,7 @@ trait TestApi extends TestOps with BoolApi
 trait TestExp extends TestOps with BoolExp
   with IfThenElseExp with PrintExp with TextExp with ArrayExtExp with MixedNumericExp with AssertExp
 
-trait ScalaGen extends ScalaCodegen with ScalaSingleFileGen
+trait ScalaGen extends ScalaCodegen with ScalaFileGen
       with ScalaGenBool with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenText with ScalaGenMixedNumeric
       with ScalaGenVoid with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert {
   override val IR: TestExp

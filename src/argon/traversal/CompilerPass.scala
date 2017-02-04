@@ -32,29 +32,23 @@ trait CompilerPass { self =>
   /** External method called by compiler **/
   final def run[T:Staged](b: Block[T]): Block[T] = if (shouldRun) {
 
-    def runPass[S:Staged](b: Block[S]): Block[S] = {
+    val outfile = State.paddedPass + " " + name + ".log"
+    State.pass += 1
+
+    withLog(Config.logDir, outfile) {
       val saveVerbosity = Config.verbosity
       Config.verbosity = this.verbosity
 
-      msg("Starting traversal " + name)
+      log("Starting traversal " + name)
       val start = System.currentTimeMillis
 
       val result = process(b)
 
-      val time = (System.currentTimeMillis - start).toFloat
-      msg(s"Completed traversal $name in " + "%.4f".format(time/1000) + " seconds")
-
       Config.verbosity = saveVerbosity
-      result
-    }
 
-    val outfile = State.paddedPass + " " + name + ".log"
-    State.pass += 1
-    if (verbosity >= 1) {
-      withLog(Config.logDir, outfile){ runPass(b) }
-    }
-    else {
-      withConsole{ runPass(b) }
+      val time = (System.currentTimeMillis - start).toFloat
+      msg(s"  $name: " + "%.4f".format(time/1000))
+      result
     }
   } else b
 

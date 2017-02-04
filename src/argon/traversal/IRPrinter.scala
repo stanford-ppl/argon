@@ -5,7 +5,7 @@ trait IRPrinter extends Traversal {
   import IR._
 
   override val name = "PrinterPlus"
-  override def shouldRun = verbosity > 0
+  override def shouldRun = verbosity >= 1
 
   def strMeta(lhs: Exp[_]) {
     dbgs(c" - Type: ${lhs.tp}")
@@ -14,22 +14,22 @@ trait IRPrinter extends Traversal {
 
   override protected def visit(lhs: Sym[_], rhs: Op[_]) = {
     if (rhs.blocks.nonEmpty)
-      msgs(c"$lhs = $rhs {")
+      dbgs(c"$lhs = $rhs {")
     else
-      msgs(c"$lhs = $rhs")
+      dbgs(c"$lhs = $rhs")
     strMeta(lhs)
 
     rhs.blocks.zipWithIndex.foreach{case (blk,i) =>
       tab += 1
-      msgs(c"block $i: $blk {")
+      dbgs(c"block $i: $blk {")
       tab += 1
-      msgs(c"effects: ${blk.summary}")
-      msgs(c"anti-deps: ${blk.effectful}")
+      dbgs(c"effects: ${blk.summary}")
+      dbgs(c"anti-deps: ${blk.effectful}")
       visitBlock(blk)
       tab -= 1
-      msgs(c"} // End of $lhs block #$i")
+      dbgs(c"} // End of $lhs block #$i")
       tab -= 1
     }
-    if (rhs.blocks.nonEmpty) msgs(c"} // End of $lhs")
+    if (rhs.blocks.nonEmpty) dbgs(c"} // End of $lhs")
   }
 }
