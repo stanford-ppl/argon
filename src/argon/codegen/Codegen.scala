@@ -16,6 +16,7 @@ trait Codegen extends Traversal {
   val lang: String
   val ext: String
   def out: String = s"${Config.genDir}${Config.sep}$lang${Config.sep}"
+  var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
 
   var stream: PrintWriter = _
   var streamName = ""
@@ -26,9 +27,41 @@ trait Codegen extends Traversal {
 
   def tabbed: String = " "*(tabWidth*(streamTab getOrElse (streamName, 0)))
 
-  protected def emit(x: String): Unit = { stream.println(tabbed + x) }
-  protected def open(x: String): Unit = { stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 }
-  protected def close(x: String): Unit = { if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)  }
+  protected def emit(x: String, forceful: Boolean = false): Unit = { 
+    if (emitEn | forceful) {
+      stream.println(tabbed + x)
+    } else { 
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen ] Emission of ${x} does not belong in this backend")}
+    }
+  } 
+  protected def open(x: String): Unit = {
+    if (emitEn) {
+      stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 
+    } else { 
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen ] Emission of ${x} does not belong in this backend")}
+    }
+  }
+  protected def close(x: String): Unit = { 
+    if (emitEn) {
+      if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)
+    } else { 
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen ] Emission of ${x} does not belong in this backend")}
+    }
+  } 
+
+  final protected def toggleEn(): Unit = {
+    if (emitEn) {
+      if (Config.emitDevel == 2) {
+        Console.println(s"[ ${lang}gen ] Disabling emits")
+      }
+      emitEn = false
+    } else {
+      if (Config.emitDevel == 2) {
+        Console.println(s"[ ${lang}gen ] Enabling emits")
+      }
+      emitEn = true      
+    }
+  }
 
   final protected def withStream[A](out: PrintWriter)(body: => A): A = {
     val save = stream
@@ -38,27 +71,41 @@ trait Codegen extends Traversal {
     try { body } finally { stream.flush(); stream = save; streamName = saveName }
   }
 
-  final protected def newStream(name: String): PrintWriter = {
+  final protected def newStream(name: String, exten: String = ext): PrintWriter = {
     // TODO: Assert streamMap does not contain this guy already
-    streamTab += (name -> 0)
+    val fullname = name + "." + exten
+    streamTab += (fullname -> 0)
     Files.createDirectories(Paths.get(out))
-    val file = new PrintWriter(s"${out}${name}.$ext")
-    streamMap += (file -> name)
-    streamMapReverse += (name -> file)
+    val file = new PrintWriter(s"${out}${name}.$exten")
+    streamMap += (file -> fullname)
+    streamMapReverse += (fullname -> file)
     file      
   }
 
-  final protected def getStream(name: String): PrintWriter = { // Use stream if it exists, otherwise maek it exist
+  final protected def getStream(name: String, exten: String = ext): PrintWriter = { // Use stream if it exists, otherwise maek it exist
     // TODO: Assert streamMap does not contain this guy already
-    if (streamMapReverse.contains(name)) {
-      streamMapReverse(name)
+    val fullname = name + "." + exten
+    if (streamMapReverse.contains(fullname)) {
+      streamMapReverse(fullname)
     } else {
-      newStream(name)
+      newStream(name, exten)
     }
   }
 
   protected def remap(tp: Staged[_]): String = tp.toString
-  protected def quoteConst(c: Const[_]): String = throw new ConstantGenFailedException(c)
+  protected def quoteConst(c: Const[_]): String = {
+    if (Config.emitDevel > 0) {
+      if (emitEn) { // Want to emit but can't
+        Console.println(s"[ ${lang}gen ] No quote for $c")  
+      } else { // No need to emit
+        Console.println(s"[ ${lang}gen ] Quoting of $c does not belong in this backend")
+      }
+      
+      ""
+    } else {
+      throw new ConstantGenFailedException(c)
+    }
+  }
   protected def quote(s: Exp[_]): String = s match {
     case c: Const[_] => quoteConst(c)
     case b: Bound[_] => s"b${b.id}"
@@ -74,7 +121,18 @@ trait Codegen extends Traversal {
   }
 
   protected def emitBlock(b: Block[_]): Unit = visitBlock(b)
-  protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = throw new GenerationFailedException(rhs)
+  protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = {
+    if (emitEn) {
+      if (Config.emitDevel == 0) {
+        throw new GenerationFailedException(rhs)
+      } else {
+        Console.println(s"[ WARN ] no backend for $lhs = $rhs in $lang")  
+      } 
+    } else {
+      if (Config.emitDevel == 2) Console.println(s"[ ${lang}gen ] Emission of ${lhs} = $rhs does not belong in this backend")
+    }
+  }
+
   protected def emitFat(lhs: List[Sym[_]], rhs: Def): Unit = throw new GenerationFailedException(rhs)
 
   protected def emitFileHeader(): Unit = { }

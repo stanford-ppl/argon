@@ -13,8 +13,8 @@ trait ChiselGenFixPt extends ChiselCodegen {
   }
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
-    case (IntType(), Const(c: BigInt)) => c.toInt.toString
-    case (LongType(), Const(c: BigInt)) => c.toLong.toString + "L"
+    case (IntType(), Const(c: BigInt)) => c.toInt.toString + ".U"
+    case (LongType(), Const(c: BigInt)) => c.toLong.toString + ".L"
     case _ => super.quoteConst(c)
   }
 

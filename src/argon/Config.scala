@@ -23,4 +23,6 @@ object Config {
   var clearLogs: Boolean = getProperty("argon.clearLogs", "true").toBoolean
   var multifile: Boolean = getProperty("argon.multifile", "false").toBoolean
   var unwrapStructs: Boolean = getProperty("argon.unwrap", "true").toBoolean
+  var emitDevel: Int = getProperty("argon.emission", "0").toInt // level of conservativeness and debug printing when emitting nodes
+
 }
