@@ -137,7 +137,7 @@ void Top_run( Interface_t *args )
 
 }
 """)
-  open(s"void Application(int numThreads, cppDeliteArraystring * x0) {")
+  open(s"void Application(int numThreads, cppDeliteArraystring * args) {")
   emit("Interface_t interface;")
 
     withStream(getStream("interface", "h")) {

@@ -37,8 +37,8 @@ trait ChiselGenFixPt extends ChiselCodegen {
       case LongType() => emit(src"val $lhs = chisel.util.Random.nextLong()")
     }
     case FixConvert(x) => lhs.tp match {
-      case IntType()  => emit(src"val $lhs = $x.toInt")
-      case LongType() => emit(src"val $lhs = $x.toLong")
+      case IntType()  => emit(src"val $lhs = $x // Fix to Fix")
+      case LongType() => emit(src"val $lhs = $x // Fix to Long")
     }
     case _ => super.emitNode(lhs, rhs)
   }

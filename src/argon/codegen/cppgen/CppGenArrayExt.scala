@@ -9,7 +9,9 @@ trait CppGenArrayExt extends CppGenArray {
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case ArrayUpdate(array, i, data) => emit(src"val $lhs = $array.update($i, $data)")
     case MapIndices(size, func, i)   =>
-      open(src"val $lhs = Array.tabulate($size){$i => ")
+      emit(src"cppDeliteArraydouble* $lhs = new cppDeliteArraydouble($size);")
+      open(src"for (int $i = 0; $i < $size; ${i}++) {")
+      emit(src"$lhs[$i] = $i;")
       emitBlock(func)
       close("}")
 
@@ -20,10 +22,13 @@ trait CppGenArrayExt extends CppGenArray {
       close("}")
 
     case ArrayMap(array,apply,func,i) =>
-      open(src"val $lhs = $array.indices.map{$i => ")
+      emit(src"cppDeliteArraydouble* $lhs = new cppDeliteArraydouble($array);")
+      emit(src"for (int $i = 0; $i < $array; ${i}++) {")
+      open(src"$array.indices.map{$i => ")
+      emit(src"$array[$i] = $apply;")
+      close("}")
       visitBlock(apply)
       emitBlock(func)
-      close("}")
 
     case ArrayZip(a, b, applyA, applyB, func, i) =>
       open(src"val $lhs = $a.indices.map{$i => ")
@@ -33,7 +38,9 @@ trait CppGenArrayExt extends CppGenArray {
       close("}")
 
     case ArrayReduce(array, apply, reduce, i, rV) =>
-      open(src"val $lhs = $array.reduce{(${rV._1},${rV._2}) => ")
+      emit(src"uint32_t $lhs = 0;")
+      open(src"for (int $i = 0; $i < ${array}->length; ${i}++) {")
+      emit(src"$lhs = $lhs + ${array}[i];")
       emitBlock(reduce)
       close("}")
 

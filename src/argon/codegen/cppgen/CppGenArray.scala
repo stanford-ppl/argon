@@ -20,7 +20,7 @@ trait CppGenArray extends CppCodegen {
     case op@ArrayNew(size)      => emit(src"val $lhs = new Array[${op.mA}]($size);")
     case ArrayApply(array, i)   => emit(src"string $lhs = ${array}->apply($i);")
     case ArrayLength(array)     => emit(src"val $lhs = $array.length;")
-    case InputArguments()       => emit(src"cppDeliteArraystring* $lhs = x0;")
+    case InputArguments()       => emit(src"cppDeliteArraystring* $lhs = args;")
     case _ => super.emitNode(lhs, rhs)
   }
 }

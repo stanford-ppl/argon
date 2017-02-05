@@ -21,7 +21,7 @@ object Config {
   var logDir: String = getProperty("argon.logs", s"$cwd${sep}logs${sep}$name")
   var genDir: String = getProperty("argon.out", s"$cwd${sep}gen${sep}$name")
   var clearLogs: Boolean = getProperty("argon.clearLogs", "true").toBoolean
-  var multifile: Boolean = getProperty("argon.multifile", "false").toBoolean
+  var multifile: Int = getProperty("argon.multifile", "0").toInt
   var unwrapStructs: Boolean = getProperty("argon.unwrap", "true").toBoolean
   var emitDevel: Int = getProperty("argon.emission", "0").toInt // level of conservativeness and debug printing when emitting nodes
 

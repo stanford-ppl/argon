@@ -59,8 +59,8 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
 
-  final protected def withSubStream[A](name: String)(body: => A): A = { // Places body inside its own trait file and includes it at the end
-    if (Config.multifile) {
+  final protected def withSubStream[A](name: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
+    if (Config.multifile == 2) {
       withStream(newStream(name)) {
           emit("""package app
 import templates._
@@ -73,6 +73,20 @@ import chisel3._""")
             close("}")
           }
       }
+    } else if (Config.multifile == 1 & inner) {
+        withStream(newStream(name)) {
+            emit("""package app
+  import templates._
+  import chisel3._""")
+            open(s"""trait ${name} extends GlobalWires with TopTrait /*and possibly other subkernels up to this point*/ {""")
+            open(s"""def create_${name}() {""")
+            try { body } 
+            finally { 
+              close("}")
+              close("}")
+            }
+        }
+      
     } else {
       open(src";{ // Multifile disabled, emitting $name kernel here")
       try { body } 
