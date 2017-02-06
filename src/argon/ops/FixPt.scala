@@ -126,8 +126,10 @@ trait FixPtExp extends FixPtOps with NumExp with CastExp { this: TextExp =>
     override def plus(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x + y
     override def minus(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x - y
     override def times(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x * y
+    override def divide(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x / y
 
     override def lessThan(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x < y
+    override def lessEql(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x <= y
     override def equal(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = infix_==(x, y)
 
     def isSigned: Boolean = implicitly[BOOL[S]].v

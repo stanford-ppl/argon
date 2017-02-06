@@ -122,8 +122,10 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions { 
     override def plus(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x + y
     override def minus(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x - y
     override def times(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x * y
+    override def divide(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x / y
 
     override def lessThan(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x < y
+    override def lessEql(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x <= y
     override def equal(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = infix_==(x, y)
 
     def sigBits: Int = implicitly[INT[G]].v

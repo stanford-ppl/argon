@@ -33,6 +33,7 @@ trait ArrayExtApi extends ArrayExtOps with ArrayApi {
   object Array {
     def tabulate[T:Staged](size: Index)(func: Index => T)(implicit ctx: SrcCtx): MArray[T] = array_from_function[T](size, func)
     def fill[T:Staged](size: Index)(func: => T)(implicit ctx: SrcCtx): MArray[T] = Array.tabulate(size){i => func}
+    def empty[T:Staged](size: Index)(implicit ctx: SrcCtx): MArray[T] = createArray[T](size)
   }
 }
 
