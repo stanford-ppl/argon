@@ -70,8 +70,9 @@ trait FltPtOps extends NumOps with CustomBitWidths with CastOps { this: TextOps 
     def >=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] >= y
   }
 
-  implicit object Float2FltPt extends Lift[Float,Float32] { val staged = fltPtType[_24,_8] }
-  implicit object Double2FltPt extends Lift[Double,Float64] { val staged = fltPtType[_53,_11] }
+  // TODO: staged should be vals
+  implicit object Float2FltPt extends Lift[Float,Float32] { def staged = fltPtType[_24,_8] }
+  implicit object Double2FltPt extends Lift[Double,Float64] { def staged = fltPtType[_53,_11] }
 
   implicit def fltPtType[G:INT,E:INT]: Num[FltPt[G,E]]
   implicit def int2fltpt[G:INT,E:INT](x: Int)(implicit ctx: SrcCtx): FltPt[G,E]

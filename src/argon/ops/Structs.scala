@@ -10,11 +10,17 @@ trait StructOps extends VoidOps /*with RecordOps*/ {
 
   /* called whenever a Record field is accessed (r.fieldName) */
   // def record_select[T: Manifest](record: Record, field: String): T
+
+  type StructType[T] <: Staged[T]
 }
 
 trait StructApi extends StructOps with VoidApi
 
 trait StructExp extends StructOps with VoidExp {
+
+  abstract class StructApi[T:StructType] { self =>
+    def field[R:Staged](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](unwrap(self.asInstanceOf[T]), name))
+  }
 
   abstract class StructType[T] extends Staged[T] {
     def fields: Seq[(String,Any)]
@@ -22,7 +28,7 @@ trait StructExp extends StructOps with VoidExp {
 
   // def record_new[T: RefinedManifest](fields: (String, _)*): T
   // def record_select[T: Manifest](record: Record, field: String): T
-
+  def struct[T:StructType](fields: (String, Exp[_])*)(implicit ctx: SrcCtx): T = wrap(struct_new[T](fields.toList))
 
   /** IR Nodes **/
   abstract class StructAlloc[T:StructType] extends Op[T] {
