@@ -60,7 +60,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
 
   final protected def withSubStream[A](name: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
-    if (Config.multifile == 2) {
+    if (Config.multifile == 3) {
       withStream(newStream(name)) {
           emit("""package app
 import templates._
@@ -73,7 +73,7 @@ import chisel3._""")
             close("}")
           }
       }
-    } else if (Config.multifile == 1 & inner) {
+    } else if (Config.multifile == 2 & inner) {
         withStream(newStream(name)) {
             emit("""package app
   import templates._
@@ -87,10 +87,14 @@ import chisel3._""")
             }
         }
       
-    } else {
+    } else if (Config.multifile == 1) {
       open(src";{ // Multifile disabled, emitting $name kernel here")
       try { body } 
       finally { close("}") }
+    } else {
+      open(src"// Multifile disabled, emitting $name kernel here without scoping")
+      try { body } 
+      finally { close("") }      
     }
   }
 
