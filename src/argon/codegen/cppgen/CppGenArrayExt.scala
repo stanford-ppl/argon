@@ -40,8 +40,11 @@ trait CppGenArrayExt extends CppGenArray {
     case ArrayReduce(array, apply, reduce, i, rV) =>
       emit(src"uint32_t $lhs = 0;")
       open(src"for (int $i = 0; $i < ${array}->length; ${i}++) {")
-      emit(src"$lhs = $lhs + ${array}[i];")
-      emitBlock(reduce)
+      // visitBlock(apply)
+      // emit(src"int32_t ${rV._1} = $apply")
+      // emit(src"int32_t ${rV._2} = $array")
+      emit(src"$lhs = $lhs + ${array}->apply($i);")
+      // emitBlock(reduce)
       close("}")
 
     case ArrayFilter(array, apply, cond, i) =>
