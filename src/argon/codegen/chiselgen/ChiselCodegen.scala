@@ -31,7 +31,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final protected def emitGlobal(x: String): Unit = { 
     withStream(getStream("GlobalWires")) {
-      stream.println(x) 
+      emit(x) 
     }
   }
 
