@@ -10,15 +10,15 @@ trait StructCodegen extends Codegen {
   val encounteredStructs = mutable.HashMap[StructType[_], String]()
   var structNumber: Int = 0
 
-  override def remap(tp: Staged[_]) = tp match {
+  override protected def remap(tp: Staged[_]) = tp match {
     case t: StructType[_] =>
       encounteredStructs.getOrElseUpdate(t, { structNumber += 1; structName(t, structNumber) })
 
     case _ => super.remap(tp)
   }
 
-  def structName(tp: StructType[_], idx: Int): String
-  def emitDataStructures(): Unit
+  protected def structName(tp: StructType[_], idx: Int): String
+  protected def emitDataStructures(): Unit
 
   override def postprocess[S: Staged](block: Block[S]) = {
     emitDataStructures()

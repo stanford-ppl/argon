@@ -7,16 +7,16 @@ trait ScalaGenStructs extends ScalaCodegen with StructCodegen {
   val IR: StructExp
   import IR._
 
-  def structName(tp: StructType[_], idx: Int): String = s"Struct$idx"
+  protected def structName(tp: StructType[_], idx: Int): String = s"Struct$idx"
 
-  def emitStructDeclaration(name: String, tp: StructType[_]): Unit = {
+  protected def emitStructDeclaration(name: String, tp: StructType[_]): Unit = {
     open(src"case class $name(")
     val fields = tp.fields.map{case (field: String, t: Staged[_]) => src"var $field: $t"}.mkString(",\n")
     emit(fields)
     close(")")
   }
 
-  def emitDataStructures(): Unit = if (encounteredStructs.nonEmpty) {
+  protected def emitDataStructures(): Unit = if (encounteredStructs.nonEmpty) {
     withStream(newStream("Structs")) {
       for ((tp, name) <- encounteredStructs) {
         emitStructDeclaration(name, tp)
