@@ -59,8 +59,9 @@ trait FixPtOps extends NumOps with CustomBitWidths with CastOps { this: TextOps 
     def % [S:BOOL,I:INT](y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = lift[S,I,_0] % y
   }
 
-  implicit object Int2FixPt extends Lift[Int,Int32] { val staged = fixPtType[TRUE,_32,_0] }
-  implicit object Long2FixPt extends Lift[Long,Int64] { val staged = fixPtType[TRUE,_64,_0] }
+  // TODO: staged should be vals
+  implicit object Int2FixPt extends Lift[Int,Int32] { def staged = fixPtType[TRUE,_32,_0] }
+  implicit object Long2FixPt extends Lift[Long,Int64] { def staged = fixPtType[TRUE,_64,_0] }
 
   implicit def fixPtType[S:BOOL,I:INT,F:INT]: Num[FixPt[S,I,F]]
   implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int)(implicit ctx: SrcCtx): FixPt[S,I,F]
