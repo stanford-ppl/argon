@@ -156,13 +156,13 @@ trait FixPtExp extends FixPtOps with NumExp with CastExp { this: TextExp =>
       case _ => None
     }
   }
-  object IntType {
+  object IntType extends FixPtType[TRUE,_32,_0] {
     def unapply(x: Staged[_]): Boolean = x match {
       case FixPtType(true, 32, 0) => true
       case _ => false
     }
   }
-  object LongType {
+  object LongType extends FixPtType[TRUE,_64,_0] {
     def unapply(x: Staged[_]): Boolean = x match {
       case FixPtType(true, 64, 0) => true
       case _ => false

@@ -11,14 +11,18 @@ import argon.transform.ForwardTransformer
 
 trait TestOps extends BoolOps
   with IfThenElseOps with PrintOps with TextOps with ArrayExtOps with MixedNumericOps with AssertOps
+  with StructOps with HashMapOps
 trait TestApi extends TestOps with BoolApi
   with IfThenElseApi with PrintApi with TextApi with ArrayExtApi with MixedNumericApi with AssertApi
+  with StructApi with HashMapApi
 trait TestExp extends TestOps with BoolExp
   with IfThenElseExp with PrintExp with TextExp with ArrayExtExp with MixedNumericExp with AssertExp
+  with StructExp with HashMapExp
 
 trait ScalaGen extends ScalaCodegen with ScalaFileGen
       with ScalaGenBool with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenText with ScalaGenMixedNumeric
-      with ScalaGenVoid with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert {
+      with ScalaGenVoid with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert
+      with ScalaGenStructs with ScalaGenHashMap {
   override val IR: TestExp
 }
 
