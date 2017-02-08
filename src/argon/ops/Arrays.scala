@@ -17,6 +17,7 @@ trait ArrayOps extends FixPtOps with VoidOps with TextOps {
 trait ArrayApi extends ArrayOps with FixPtApi with VoidApi with TextApi {
   type Array[T] = ArgonArray[T]
 
+  // Same as Array.empty[T](size)
   def Array[T:Staged](size: Int32)(implicit ctx: SrcCtx): MArray[T] = createArray[T](size)
 }
 
@@ -64,5 +65,11 @@ trait ArrayExp extends ArrayOps with FixPtExp with VoidExp with TextExp {
 
   def array_length[T:Staged](array: Exp[MArray[T]])(implicit ctx: SrcCtx): Sym[Int32] = {
     stage(ArrayLength(array))(ctx)
+  }
+
+  /** Internals **/
+  override def recurseAtomicLookup(s: Exp[_]): Exp[_] = s match {
+    case Def(ArrayApply(array,i)) => recurseAtomicLookup(array)
+    case _ => super.recurseAtomicLookup(s)
   }
 }

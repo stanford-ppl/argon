@@ -101,6 +101,9 @@ trait ArrayExtExp extends ArrayExtOps with ArrayExp {
   /** IR Nodes **/
   case class ArrayUpdate[T:Staged](array: Exp[MArray[T]], i: Exp[Int32], e: Exp[T]) extends Op[Void] {
     def mirror(f:Tx) = array_update(f(array),f(i),f(e))
+
+    override def aliases = Nil
+    override def contains = syms(e)
   }
   case class MapIndices[T:Staged](size: Exp[Index], func: Block[T], i: Bound[Index]) extends Op[MArray[T]] {
     def mirror(f:Tx) = array_mapindices(f(size),f(func),i)
@@ -273,5 +276,4 @@ trait ArrayExtExp extends ArrayExtOps with ArrayExp {
     val effects = aBlk.summary andAlso fBlk.summary
     stageEffectful(ArrayFlatMap(array,aBlk,fBlk,i), effects.star)(ctx)
   }
-
 }

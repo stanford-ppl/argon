@@ -1,5 +1,7 @@
 package argon.core
 
+import argon.Config
+
 import scala.collection.mutable
 
 trait Statements extends Definitions with ArgonExceptions { this: Staging =>
@@ -76,4 +78,20 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
     mutableAliases(actuallyReadSyms) filterNot (bounds contains _)
   }
 
+  /** Used to allow nested ("atomic") writes, which are reflected on the top mutable object rather than intermediates
+    * e.g.
+    *   val b = Array(1, 2, 3)
+    *   val a = MutableStruct(b, ...)
+    *   a.b(0) = 1
+    * Should become a write on (the mutable symbol) a instead of the immutable symbol resulting from a.b
+    *
+    * TODO: Any reason for this to be Sym[_] => Seq[Sym[_]] ?
+    */
+  def recurseAtomicLookup(s: Exp[_]): Exp[_] = s
+  final def extractAtomicWrite(s: Sym[_]): Sym[_] = onlySyms(recurseAtomicLookup(s)).headOption.getOrElse(s)
+
+  final def propagateWrites(effects: Effects): Effects = if (!Config.allowAtomicWrites) effects else {
+    val writes = effects.writes.map{s => extractAtomicWrite(s) }
+    effects.copy(writes = writes)
+  }
 }

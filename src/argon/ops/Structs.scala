@@ -66,6 +66,7 @@ trait StructExp extends StructOps with VoidExp {
     stage(SimpleStruct(elems))(ctx)
   }
 
+  // TODO: Should struct unwrapping be disabled for mutable structs?
   def field_apply[S:StructType,T:Staged](struct: Exp[S], index: String)(implicit ctx: SrcCtx): Exp[T] = struct match {
     case Op(s:StructAlloc[_]) if Config.unwrapStructs => unwrapStruct[S,T](struct, index) match {
       case Some(x) => x
@@ -93,4 +94,11 @@ trait StructExp extends StructOps with VoidExp {
     }
     case _ => None
   }
+
+  /** Internals **/
+  override def recurseAtomicLookup(s: Exp[_]): Exp[_] = s match {
+    case Def(FieldApply(struct, index)) => recurseAtomicLookup(struct)
+    case _ => super.recurseAtomicLookup(s)
+  }
+
 }

@@ -75,10 +75,14 @@ trait Staging extends Statements {
   }
 
   def stageDefEffectful(d: Def, u: Effects)(ctx: SrcCtx): List[Sym[_]] = {
+    val atomicEffects = propagateWrites(u)
+
     log(c"Staging $d, effects = $u")
     log(c"  mutable inputs = ${mutableInputs(d)}")
+    log(c"  actual writes = ${atomicEffects.writes}")
 
-    val effects = u andAlso Read(mutableInputs(d))
+    val effects = atomicEffects andAlso Read(mutableInputs(d))
+    log(c"  full effects = $effects")
 
     if (effects == Pure) registerDefWithCSE(d)(ctx)
     else {
