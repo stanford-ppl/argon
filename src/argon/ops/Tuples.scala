@@ -65,6 +65,7 @@ trait TupleExp extends TupleOps with TupleLowPriorityImplicits with StructExp wi
       case that: Tup2Type[_,_] => this.m1 == that.m1 && this.m2 == that.m2
       case _ => false
     }
+    override def hashCode() = m1.## + m2.##
   }
 
   class Tup2Bits[A,B](override val m1: Bits[A], override val m2: Bits[B]) extends Tup2Type[A,B](m1,m2) with Bits[Tup2[A,B]] {

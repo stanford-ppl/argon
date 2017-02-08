@@ -4,14 +4,21 @@ import argon.core.Base
 trait IfThenElseOps extends Base with BoolOps {this: TextOps => }
 trait IfThenElseApi extends IfThenElseOps with BoolApi { this: TextApi => }
 
-trait IfThenElseExp extends IfThenElseOps with BoolExp with OverloadHack { this: TextExp =>
+trait IfThenElseExp extends IfThenElseOps with BoolExp with OverloadHack with VoidExp { this: TextExp =>
   /** Virtualized Methods **/
-  def __ifThenElse[A,B](cond: Bool, thenp: => A, elsep: => A)(implicit ctx: SrcCtx, l: Lift[A,B], o1: Overload1): B = {
+  def __ifThenElse[A,B](cond: Bool, thenp: => A, elsep: => A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = {
     implicit val staged: Staged[B] = l.staged
     val unwrapThen = () => unwrap(lift(thenp) ) // directly calling unwrap(thenp) forces thenp to be evaluated here
     val unwrapElse = () => unwrap(lift(elsep) ) // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
+
+  // special hack for "if (x) { thing }"
+  def __ifThenElse[A,B](cond: Bool, thenp: => Void, elsep: => Unit)(implicit ctx: SrcCtx): Void = {
+    val elseBlk = () => lift[Unit,Void](elsep)
+    __ifThenElse(cond, thenp, elseBlk())(ctx, selfLift[Void])
+  }
+
 
   /** IR Nodes **/
   case class IfThenElse[T:Staged](cond: Exp[Bool], thenp: Block[T], elsep: Block[T]) extends Op[T] {

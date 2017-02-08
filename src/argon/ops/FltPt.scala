@@ -97,8 +97,8 @@ trait FltPtExp extends FltPtOps with NumExp with CastExp with ArgonExceptions { 
     def / (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_div(this.s,that.s))
     def < (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool( flt_lt(this.s,that.s))
     def <=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(this.s,that.s))
-    def > (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool( flt_lt(that.s,that.s))
-    def >=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(that.s,that.s))
+    def > (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool( flt_lt(that.s,this.s))
+    def >=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(that.s,this.s))
 
     def +(rhs: Text)(implicit ctx: SrcCtx): Text = textify(this) + lift(rhs)
   }

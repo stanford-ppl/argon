@@ -11,7 +11,7 @@ trait ScalaGenStructs extends ScalaCodegen with StructCodegen {
 
   protected def emitStructDeclaration(name: String, tp: StructType[_]): Unit = {
     open(src"case class $name(")
-    val fields = tp.fields.map{case (field: String, t: Staged[_]) => src"var $field: $t"}.mkString(",\n")
+    val fields = tp.fields.map{case (field: String, t: Staged[_]) => src"var $field: $t"}.mkString(",\n" + tabbed)
     emit(fields)
     close(")")
   }
