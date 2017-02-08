@@ -25,4 +25,5 @@ object Config {
   var unwrapStructs: Boolean = getProperty("argon.unwrap", "true").toBoolean
   var emitDevel: Int = getProperty("argon.emission", "0").toInt // level of conservativeness and debug printing when emitting nodes
 
+  var allowAtomicWrites: Boolean = getProperty("argon.atomicw", "true").toBoolean
 }

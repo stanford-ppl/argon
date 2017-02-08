@@ -23,16 +23,17 @@ trait StructExp extends StructOps with VoidExp {
   }
 
   abstract class StructType[T] extends Staged[T] {
-    def fields: Seq[(String,Any)]
+    def fields: Seq[(String, Staged[_])]
   }
 
   // def record_new[T: RefinedManifest](fields: (String, _)*): T
   // def record_select[T: Manifest](record: Record, field: String): T
-  def struct[T:StructType](fields: (String, Exp[_])*)(implicit ctx: SrcCtx): T = wrap(struct_new[T](fields.toList))
+  def struct[T:StructType](fields: (String, Exp[_])*)(implicit ctx: SrcCtx): T = wrap(struct_new[T](fields))
+  def field[T:StructType,R:Staged](struct: T, name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](struct.s, name))
 
   /** IR Nodes **/
   abstract class StructAlloc[T:StructType] extends Op[T] {
-    def elems: List[(String, Exp[_])]
+    def elems: Seq[(String, Exp[_])]
 
     override def inputs   = syms(elems.map(_._2))
     override def reads    = Nil
@@ -42,7 +43,7 @@ trait StructExp extends StructOps with VoidExp {
     override def contains = syms(elems.map(_._2))
   }
 
-  case class SimpleStruct[S:StructType](elems: List[(String,Exp[_])]) extends StructAlloc[S] {
+  case class SimpleStruct[S:StructType](elems: Seq[(String,Exp[_])]) extends StructAlloc[S] {
     def mirror(f:Tx) = struct_new[S](elems.map{case (idx,sym) => idx -> f(sym) })
   }
 
@@ -61,10 +62,11 @@ trait StructExp extends StructOps with VoidExp {
 
 
   /** Smart constructors **/
-  def struct_new[S:StructType](elems: List[(String, Exp[_])])(implicit ctx: SrcCtx): Exp[S] = {
+  def struct_new[S:StructType](elems: Seq[(String, Exp[_])])(implicit ctx: SrcCtx): Exp[S] = {
     stage(SimpleStruct(elems))(ctx)
   }
 
+  // TODO: Should struct unwrapping be disabled for mutable structs?
   def field_apply[S:StructType,T:Staged](struct: Exp[S], index: String)(implicit ctx: SrcCtx): Exp[T] = struct match {
     case Op(s:StructAlloc[_]) if Config.unwrapStructs => unwrapStruct[S,T](struct, index) match {
       case Some(x) => x
@@ -92,4 +94,11 @@ trait StructExp extends StructOps with VoidExp {
     }
     case _ => None
   }
+
+  /** Internals **/
+  override def recurseAtomicLookup(s: Exp[_]): Exp[_] = s match {
+    case Def(FieldApply(struct, index)) => recurseAtomicLookup(struct)
+    case _ => super.recurseAtomicLookup(s)
+  }
+
 }

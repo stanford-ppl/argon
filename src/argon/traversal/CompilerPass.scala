@@ -26,6 +26,7 @@ trait CompilerPass { self =>
 
   // --- Debugging methods
   final protected def dbgs(x: => Any) = dbg("  "*tab + x)
+  final protected def logs(x: => Any) = log("  "*tab + x)
   final protected def msgs(x: => Any) = msg("  "*tab + x)
 
   // --- Methods

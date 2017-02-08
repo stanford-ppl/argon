@@ -47,7 +47,7 @@ trait Reporting {
     result
   }
 
-  final def log(x: => Any): Unit = if (Config.verbosity >= 1) logstream.println(x)
+  final def log(x: => Any): Unit = if (Config.verbosity >= 2) logstream.println(x)
   final def dbg(x: => Any): Unit = if (Config.verbosity >= 1) logstream.println(x)
   final def msg(x: => Any): Unit = {
     logstream.println(x)

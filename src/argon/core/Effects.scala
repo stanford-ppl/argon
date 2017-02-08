@@ -63,7 +63,7 @@ trait Effects extends Symbols { this: Staging =>
     }
   }
 
-  final def isMutable(s: Sym[_]): Boolean = metadata[Effects](s).exists(_.mutable)
+  final def isMutable(s: Exp[_]): Boolean = metadata[Effects](s).exists(_.mutable)
 
   /**
     * Find scheduling dependencies in context

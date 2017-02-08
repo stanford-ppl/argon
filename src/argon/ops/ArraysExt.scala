@@ -46,7 +46,7 @@ trait ArrayExtExp extends ArrayExtOps with ArrayExp {
   private[argon] def array_from_function[T:Staged](size: Index, func: Index => T)(implicit ctx: SrcCtx): MArray[T] = {
     val i = fresh[Index]
     val fBlk = () => func(wrap(i)).s
-    StagedArray( array_mapindices(size.s, fBlk(), i) )
+    ArgonArray( array_mapindices(size.s, fBlk(), i) )
   }
   private[argon] def array_infix_foreach[T:Staged](array: MArray[T], func: T => Void)(implicit ctx: SrcCtx): Void = {
     val i = fresh[Index]
@@ -61,7 +61,7 @@ trait ArrayExtExp extends ArrayExtOps with ArrayExp {
     val fBlk = stageLambda(aBlk.result) { func(wrap(aBlk.result)).s }
     val effects = aBlk.summary andAlso fBlk.summary
     val out = stageEffectful(ArrayMap(array.s, aBlk, fBlk, i), effects.star)(ctx)
-    StagedArray(out)
+    ArgonArray(out)
   }
   private[argon] def array_infix_zip[T:Staged,S:Staged,R:Staged](a: MArray[T], b: MArray[S], func: (T,S) => R)(implicit ctx: SrcCtx): MArray[R] = {
     val i = fresh[Index]
@@ -70,7 +70,7 @@ trait ArrayExtExp extends ArrayExtOps with ArrayExp {
     val fBlk = stageLambda(aBlk.result, bBlk.result) { func(wrap(aBlk.result),wrap(bBlk.result)).s }
     val effects = aBlk.summary andAlso bBlk.summary andAlso fBlk.summary
     val out = stageEffectful(ArrayZip(a.s,b.s,aBlk,bBlk,fBlk,i), effects.star)(ctx)
-    StagedArray(out)
+    ArgonArray(out)
   }
   private[argon] def array_infix_reduce[T:Staged](array: MArray[T], reduce: (T,T) => T)(implicit ctx: SrcCtx): T = {
     val i = fresh[Index]
@@ -87,7 +87,7 @@ trait ArrayExtExp extends ArrayExtOps with ArrayExp {
     val cBlk = stageLambda(aBlk.result) { filter(wrap(aBlk.result)).s }
     val effects = aBlk.summary andAlso cBlk.summary
     val out = stageEffectful(ArrayFilter(array.s,aBlk,cBlk,i), effects.star)(ctx)
-    StagedArray(out)
+    ArgonArray(out)
   }
   private[argon] def array_infix_flatMap[T:Staged,R:Staged](array: MArray[T], func: T => MArray[R])(implicit ctx: SrcCtx): MArray[R] = {
     val i = fresh[Index]
@@ -95,12 +95,15 @@ trait ArrayExtExp extends ArrayExtOps with ArrayExp {
     val fBlk = stageLambda(aBlk.result){ func(wrap(aBlk.result)).s }
     val effects = aBlk.summary andAlso fBlk.summary
     val out = stageEffectful(ArrayFlatMap(array.s,aBlk,fBlk,i), effects.star)(ctx)
-    StagedArray(out)
+    ArgonArray(out)
   }
 
   /** IR Nodes **/
   case class ArrayUpdate[T:Staged](array: Exp[MArray[T]], i: Exp[Int32], e: Exp[T]) extends Op[Void] {
     def mirror(f:Tx) = array_update(f(array),f(i),f(e))
+
+    override def aliases = Nil
+    override def contains = syms(e)
   }
   case class MapIndices[T:Staged](size: Exp[Index], func: Block[T], i: Bound[Index]) extends Op[MArray[T]] {
     def mirror(f:Tx) = array_mapindices(f(size),f(func),i)
@@ -273,5 +276,4 @@ trait ArrayExtExp extends ArrayExtOps with ArrayExp {
     val effects = aBlk.summary andAlso fBlk.summary
     stageEffectful(ArrayFlatMap(array,aBlk,fBlk,i), effects.star)(ctx)
   }
-
 }
