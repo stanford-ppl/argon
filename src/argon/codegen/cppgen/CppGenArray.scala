@@ -25,7 +25,7 @@ trait CppGenArray extends CppCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case op@ArrayNew(size)      => emit(src"${lhs.tp}* $lhs = new ${lhs.tp}(*$size);")
+    case op@ArrayNew(size)      => emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($size);")
     case ArrayApply(array, i)   => emit(src"${lhs.tp} $lhs = ${array}->apply($i);")
     case ArrayLength(array)     => emit(src"${lhs.tp} $lhs = $array.length;")
     case InputArguments()       => emit(src"${lhs.tp}* $lhs = args;")
