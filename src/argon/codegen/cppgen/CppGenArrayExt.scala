@@ -11,7 +11,7 @@ trait CppGenArrayExt extends CppGenArray {
     case MapIndices(size, func, i)   =>
       emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($size);")
       open(src"for (int $i = 0; $i < $size; ${i}++) {")
-      emit(src"$lhs[$i] = $i;")
+      emit(src"$lhs->update($i, $i);")
       emitBlock(func)
       close("}")
 
@@ -25,28 +25,26 @@ trait CppGenArrayExt extends CppGenArray {
       emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($array);")
       emit(src"for (int $i = 0; $i < $array; ${i}++) {")
       open(src"$array.indices.map{$i => ")
-      emit(src"$array[$i] = $apply;")
+      emit(src"$array->update($i, $apply);")
       close("}")
       visitBlock(apply)
       emitBlock(func)
 
     case ArrayZip(a, b, applyA, applyB, func, i) =>
-      Console.println(s"generic array $lhs ${lhs.tp}")
       emit(src"${lhs.tp}* $lhs = new ${lhs.tp}(${a}->length);")
       open(src"for (int $i = 0; $i < ${a}->length; ${i}++) { ")
       visitBlock(applyA)
       visitBlock(applyB)
       emitBlock(func)
-      emit(src"${lhs}[$i] = ${func.result};")
+      emit(src"${lhs}->update($i, ${func.result});")
       close("}")
 
       // 
     case ArrayReduce(array, apply, reduce, i, rV) =>
-      emit(src"uint32_t $lhs = 0;")
-      open(src"for (int $i = 0; $i < ${array}->length; ${i}++) {")
-      emit(src"int32_t ${rV._1} = ${array}->apply($i);")
-      emit(src"int32_t ${rV._2} = $lhs;")
-      emit(src"$lhs = $lhs + ${array}->apply($i);")
+      emit(src"${lhs.tp} $lhs = ${array}->apply(0);")
+      open(src"for (int $i = 1; $i < ${array}->length; ${i}++) {")
+      emit(src"${rV._1.tp} ${rV._1} = ${array}->apply($i);")
+      emit(src"${rV._2.tp} ${rV._2} = $lhs;")
       emitBlock(reduce)
       emit(src"$lhs = ${reduce.result};")
       close("}")
