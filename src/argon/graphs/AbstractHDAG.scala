@@ -134,12 +134,12 @@ trait AbstractHDAG extends Exceptions {
     // Get all dependencies of root, stopping at nodes which bound it
     def getDependents(root: NodeId) = {
       val rootEdges = nodeOutputs(root)
-      log(c"    [root = ${triple(root)}]")
+      //log(c"    [root = ${triple(root)}]")
       dfs(List(root)){node =>
 
-        log(c"      ${triple(node)}  => " )
+        //log(c"      ${triple(node)}  => " )
         forward(node, scope).filterNot{next: NodeId =>
-          log(c"      ${triple(next)} [bounds = ${nodeBounds(next)}]")
+          //log(c"      ${triple(next)} [bounds = ${nodeBounds(next)}]")
           nodeBounds(next) exists (rootEdges contains _)
         }
       }
