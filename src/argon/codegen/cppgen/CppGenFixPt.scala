@@ -7,8 +7,8 @@ trait CppGenFixPt extends CppCodegen {
   import IR._
 
   override protected def remap(tp: Staged[_]): String = tp match {
-    case IntType() => "Int"
-    case LongType() => "Long"
+    case IntType() => "int32_t"
+    case LongType() => "int32_t"
     case _ => super.remap(tp)
   }
 
@@ -19,19 +19,19 @@ trait CppGenFixPt extends CppCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case FixInv(x)   => emit(src"int32_t $lhs = ~$x;")
-    case FixNeg(x)   => emit(src"int32_t $lhs = -$x;")
-    case FixAdd(x,y) => emit(src"int32_t $lhs = $x + $y;")
-    case FixSub(x,y) => emit(src"int32_t $lhs = $x - $y;")
-    case FixMul(x,y) => emit(src"int32_t $lhs = $x * $y;")
-    case FixDiv(x,y) => emit(src"int32_t $lhs = $x / $y;")
-    case FixAnd(x,y) => emit(src"int32_t $lhs = $x & $y;")
-    case FixOr(x,y)  => emit(src"int32_t $lhs = $x | $y;")
-    case FixLt(x,y)  => emit(src"int32_t $lhs = $x < $y;")
-    case FixLeq(x,y) => emit(src"int32_t $lhs = $x <= $y;")
-    case FixNeq(x,y) => emit(src"int32_t $lhs = $x != $y;")
-    case FixEql(x,y) => emit(src"int32_t $lhs = $x == $y;")
-    case FixMod(x,y) => emit(src"int32_t $lhs = $x % $y;")
+    case FixInv(x)   => emit(src"${lhs.tp} $lhs = ~$x;")
+    case FixNeg(x)   => emit(src"${lhs.tp} $lhs = -$x;")
+    case FixAdd(x,y) => emit(src"${lhs.tp} $lhs = $x + $y;")
+    case FixSub(x,y) => emit(src"${lhs.tp} $lhs = $x - $y;")
+    case FixMul(x,y) => emit(src"${lhs.tp} $lhs = $x * $y;")
+    case FixDiv(x,y) => emit(src"${lhs.tp} $lhs = $x / $y;")
+    case FixAnd(x,y) => emit(src"${lhs.tp} $lhs = $x & $y;")
+    case FixOr(x,y)  => emit(src"${lhs.tp} $lhs = $x | $y;")
+    case FixLt(x,y)  => emit(src"${lhs.tp} $lhs = $x < $y;")
+    case FixLeq(x,y) => emit(src"${lhs.tp} $lhs = $x <= $y;")
+    case FixNeq(x,y) => emit(src"${lhs.tp} $lhs = $x != $y;")
+    case FixEql(x,y) => emit(src"${lhs.tp} $lhs = $x == $y;")
+    case FixMod(x,y) => emit(src"${lhs.tp} $lhs = $x % $y;")
     case FixRandom(x) => lhs.tp match {
       case IntType()  => emit(src"val $lhs = cpp.util.Random.nextInt()")
       case LongType() => emit(src"val $lhs = cpp.util.Random.nextLong()")

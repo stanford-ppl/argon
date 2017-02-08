@@ -1,15 +1,15 @@
 package argon.codegen.cppgen
 
-import argon.ops.ArrayExtExp
+import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp}
 
 trait CppGenArrayExt extends CppGenArray {
-  val IR: ArrayExtExp
+  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp
   import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case ArrayUpdate(array, i, data) => emit(src"val $lhs = $array.update($i, $data)")
     case MapIndices(size, func, i)   =>
-      emit(src"cppDeliteArraydouble* $lhs = new cppDeliteArraydouble($size);")
+      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($size);")
       open(src"for (int $i = 0; $i < $size; ${i}++) {")
       emit(src"$lhs[$i] = $i;")
       emitBlock(func)
@@ -22,7 +22,7 @@ trait CppGenArrayExt extends CppGenArray {
       close("}")
 
     case ArrayMap(array,apply,func,i) =>
-      emit(src"cppDeliteArraydouble* $lhs = new cppDeliteArraydouble($array);")
+      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($array);")
       emit(src"for (int $i = 0; $i < $array; ${i}++) {")
       open(src"$array.indices.map{$i => ")
       emit(src"$array[$i] = $apply;")
@@ -31,20 +31,24 @@ trait CppGenArrayExt extends CppGenArray {
       emitBlock(func)
 
     case ArrayZip(a, b, applyA, applyB, func, i) =>
-      open(src"val $lhs = $a.indices.map{$i => ")
+      Console.println(s"generic array $lhs ${lhs.tp}")
+      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}(${a}->length);")
+      open(src"for (int $i = 0; $i < ${a}->length; ${i}++) { ")
       visitBlock(applyA)
       visitBlock(applyB)
       emitBlock(func)
+      emit(src"${lhs}[$i] = ${func.result};")
       close("}")
 
+      // 
     case ArrayReduce(array, apply, reduce, i, rV) =>
       emit(src"uint32_t $lhs = 0;")
       open(src"for (int $i = 0; $i < ${array}->length; ${i}++) {")
-      // visitBlock(apply)
-      // emit(src"int32_t ${rV._1} = $apply")
-      // emit(src"int32_t ${rV._2} = $array")
+      emit(src"int32_t ${rV._1} = ${array}->apply($i);")
+      emit(src"int32_t ${rV._2} = $lhs;")
       emit(src"$lhs = $lhs + ${array}->apply($i);")
-      // emitBlock(reduce)
+      emitBlock(reduce)
+      emit(src"$lhs = ${reduce.result};")
       close("}")
 
     case ArrayFilter(array, apply, cond, i) =>

@@ -8,7 +8,7 @@ trait CppGenText extends CppCodegen {
   import IR._
 
   override protected def remap(tp: Staged[_]): String = tp match {
-    case TextType => "String"
+    case TextType => "string"
     case _ => super.remap(tp)
   }
 
@@ -18,8 +18,8 @@ trait CppGenText extends CppCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case ToString(x) => emit(src"string $lhs = convert_to_string< int32_t >($x);")
-    case TextConcat(x,y) => emit(src"string $lhs = string_plus($x, $y);")
+    case ToString(x) => emit(src"${lhs.tp} $lhs = convert_to_string< int32_t >($x);")
+    case TextConcat(x,y) => emit(src"${lhs.tp} $lhs = string_plus($x, $y);")
     case TextEquals(x,y) => emit(src"val $lhs = $x == $y")
     case TextDiffer(x,y) => emit(src"val $lhs = $x != $y")
     case _ => super.emitNode(lhs, rhs)
