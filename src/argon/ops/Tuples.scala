@@ -23,38 +23,20 @@ trait TupleOps extends StructOps with NumOps {
 //  trait Tup7Ops[A,B,C,D,E,F,G]     { def _1: A ; def _2: B ; def _3: C ; def _4: D ; def _5: E ; def _6: F ; def _7: G }
 //  trait Tup8Ops[A,B,C,D,E,F,G,H]   { def _1: A ; def _2: B ; def _3: C ; def _4: D ; def _5: E ; def _6: F ; def _7: G ; def _8: H }
 //  trait Tup9Ops[A,B,C,D,E,F,G,H,I] { def _1: A ; def _2: B ; def _3: C ; def _4: D ; def _5: E ; def _6: F ; def _7: G ; def _8: H ; def _9: I }
-
-  implicit def stagedTup2[A:Staged,B:Staged]: StructType[Tup2[A,B]]
-//  implicit def stagedTup3[A:Staged,B:Staged,C:Staged]: StructType[Tup3[A,B,C]]
-//  implicit def stagedTup4[A:Staged,B:Staged,C:Staged,D:Staged]: StructType[Tup4[A,B,C,D]]
-//  implicit def stagedTup5[A:Staged,B:Staged,C:Staged,D:Staged,E:Staged]: StructType[Tup5[A,B,C,D,E]]
-//  implicit def stagedTup6[A:Staged,B:Staged,C:Staged,D:Staged,E:Staged,F:Staged]: StructType[Tup6[A,B,C,D,E,F]]
-//  implicit def stagedTup7[A:Staged,B:Staged,C:Staged,D:Staged,E:Staged,F:Staged,G:Staged]: StructType[Tup7[A,B,C,D,E,F,G]]
-//  implicit def stagedTup8[A:Staged,B:Staged,C:Staged,D:Staged,E:Staged,F:Staged,G:Staged,H:Staged]: StructType[Tup8[A,B,C,D,E,F,G,H]]
-//  implicit def stagedTup9[A:Staged,B:Staged,C:Staged,D:Staged,E:Staged,F:Staged,G:Staged,H:Staged,I:Staged]: StructType[Tup9[A,B,C,D,E,F,G,H,I]]
-
-  implicit def bitsTup2[A:Bits,B:Bits]: Bits[Tup2[A,B]]
-//  implicit def bitsTup3[A:Bits,B:Bits,C:Bits]: Bits[Tup3[A,B,C]]
-//  implicit def bitsTup4[A:Bits,B:Bits,C:Bits,D:Bits]: Bits[Tup4[A,B,C,D]]
-//  implicit def bitsTup5[A:Bits,B:Bits,C:Bits,D:Bits,E:Bits]: Bits[Tup5[A,B,C,D,E]]
-//  implicit def bitsTup6[A:Bits,B:Bits,C:Bits,D:Bits,E:Bits,F:Bits]: Bits[Tup6[A,B,C,D,E,F]]
-//  implicit def bitsTup7[A:Bits,B:Bits,C:Bits,D:Bits,E:Bits,F:Bits,G:Bits]: Bits[Tup7[A,B,C,D,E,F,G]]
-//  implicit def bitsTup8[A:Bits,B:Bits,C:Bits,D:Bits,E:Bits,F:Bits,G:Bits,H:Bits]: Bits[Tup8[A,B,C,D,E,F,G,H]]
-//  implicit def bitsTup9[A:Bits,B:Bits,C:Bits,D:Bits,E:Bits,F:Bits,G:Bits,H:Bits,I:Bits]: Bits[Tup9[A,B,C,D,E,F,G,H,I]]
-
-  implicit def arithTup2[A:Arith,B:Arith]: Arith[Tup2[A,B]]
-//  implicit def numTup3[A:Num,B:Num,C:Num]: Num[Tup3[A,B,C]]
-//  implicit def numTup4[A:Num,B:Num,C:Num,D:Num]: Num[Tup4[A,B,C,D]]
-//  implicit def numTup5[A:Num,B:Num,C:Num,D:Num,E:Num]: Num[Tup5[A,B,C,D,E]]
-//  implicit def numTup6[A:Num,B:Num,C:Num,D:Num,E:Num,F:Num]: Num[Tup6[A,B,C,D,E,F]]
-//  implicit def numTup7[A:Num,B:Num,C:Num,D:Num,E:Num,F:Num,G:Num]: Num[Tup7[A,B,C,D,E,F,G]]
-//  implicit def numTup8[A:Num,B:Num,C:Num,D:Num,E:Num,F:Num,G:Num,H:Num]: Num[Tup8[A,B,C,D,E,F,G,H]]
-//  implicit def numTup9[A:Num,B:Num,C:Num,D:Num,E:Num,F:Num,G:Num,H:Num,I:Num]: Num[Tup9[A,B,C,D,E,F,G,H,I]]
 }
 
 trait TupleApi extends TupleOps with StructApi with NumApi { this: TextApi => }
 
-trait TupleExp extends TupleOps with StructExp with NumExp {
+
+trait TupleLowestPriorityImplicits { this: TupleExp =>
+  implicit def stagedTup2[A:Staged,B:Staged]: StructType[Tup2[A,B]] = new Tup2Type[A,B](typ[A],typ[B])
+}
+
+trait TupleLowPriorityImplicits extends TupleLowestPriorityImplicits { this: TupleExp =>
+  implicit def bitsTup2[A:Bits,B:Bits]: Bits[Tup2[A,B]] = new Tup2Bits[A,B](bits[A],bits[B])
+}
+
+trait TupleExp extends TupleOps with TupleLowPriorityImplicits with StructExp with NumExp {
   this: TextExp =>
 
   /** API **/
@@ -106,8 +88,6 @@ trait TupleExp extends TupleOps with StructExp with NumExp {
     override def divide(x: Tup2[A, B], y: Tup2[A, B])(implicit ctx: SrcCtx) = pack(m1.divide(x._1,y._1),m2.divide(x._2,y._2))
   }
 
-  implicit def stagedTup2[A:Staged,B:Staged]: StructType[Tup2[A,B]] = new Tup2Type[A,B](typ[A],typ[B])
-  implicit def bitsTup2[A:Bits,B:Bits]: Bits[Tup2[A,B]] = new Tup2Bits[A,B](bits[A],bits[B])
   implicit def arithTup2[A:Arith,B:Arith]: Arith[Tup2[A,B]] = new Tup2Arith[A,B](arith[A],arith[B])
 
 

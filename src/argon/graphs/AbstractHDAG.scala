@@ -149,29 +149,29 @@ trait AbstractHDAG extends Exceptions {
       val bounds = nodeBounds(node).map(producerOf)
       val sched = bounds.flatMap(getDependents)
 
-      if (sched.nonEmpty) {
-        log(c"  node: ${triple(node)}")
-        log(c"  bounds:")
-        bounds.foreach{bnd => log(c"    ${triple(bnd)}")}
-        log(c"  binded symbols [must inside]: ")
-        sched.foreach{s => log(c"    ${triple(s)}") }
-      }
+//      if (sched.nonEmpty) {
+//        log(c"  node: ${triple(node)}")
+//        log(c"  bounds:")
+//        bounds.foreach{bnd => log(c"    ${triple(bnd)}")}
+//        log(c"  binded symbols [must inside]: ")
+//        sched.foreach{s => log(c"    ${triple(s)}") }
+//      }
       sched
     }
     val tunnelDependents = scope.flatMap{node =>
       val tunnels = nodeTunnels(node).map(producerOf)
       val schedule = dfs(List(node)){node => reverse(node, scope) } filterNot(_ == node)
       val tunnelForward = tunnels.flatMap(getDependents) diff tunnels
-      if (tunnels.nonEmpty) {
-        log(c"  Computing tunnel dependencies: ")
-        log(c"  ${triple(node)}: ")
-        log(c"  tunnels: ")
-        tunnels.foreach{stm => log(c"    ${triple(stm)}")}
-        log(c"  schedule: ")
-        schedule.foreach{stm => log(c"    ${triple(stm)}")}
-        log(c"  tunnel dependents: ")
-        tunnelForward.foreach{stm => log(c"    ${triple(stm)}")}
-      }
+//      if (tunnels.nonEmpty) {
+//        log(c"  Computing tunnel dependencies: ")
+//        log(c"  ${triple(node)}: ")
+//        log(c"  tunnels: ")
+//        tunnels.foreach{stm => log(c"    ${triple(stm)}")}
+//        log(c"  schedule: ")
+//        schedule.foreach{stm => log(c"    ${triple(stm)}")}
+//        log(c"  tunnel dependents: ")
+//        tunnelForward.foreach{stm => log(c"    ${triple(stm)}")}
+//      }
 
       tunnelForward intersect schedule
     }
@@ -218,30 +218,30 @@ trait AbstractHDAG extends Exceptions {
     val levelScope = currentScope.filter(canOutside)
 
 // These log statements are VERY expensive - use only when debugging
-    log("Getting scope level within scope: ")
-    scope.foreach{stm => log(c"  ${triple(stm)}") }
-    log("For result: ")
-    result.foreach{s => log(c"  ${triple(producerOf(s))}") }
-    log("Must inside: ")
-    mustInside.foreach{stm => log(c"  ${triple(stm)}")}
-    log("May outside: ")
-    mayOutside.foreach{stm => log(c"  ${triple(stm)}")}
-    log("Fringe: ")
-    fringe.foreach{stm => log(c"  ${triple(stm)}") }
-    log("Reachable [Warm]: ")
-    reachableWarm.foreach{stm => log(c"  ${triple(stm)}") }
-    log("Reachable [Cold]: ")
-    reachableCold.foreach{stm => log(c"  ${triple(stm)}")}
-    log(s"Hot paths: ")
-    hotPathsOnly.foreach{stm => log(c"  ${triple(stm)}")}
-    log(s"Hot dependencies: ")
-    hotDeps.foreach{stm => log(c"  ${triple(stm)}")}
-    log(s"Hot fringe: ")
-    hotFringe.foreach{stm => log(c"  ${triple(stm)}")}
-    log("Hot fringe dependencies: ")
-    hotFringeDeps.foreach{stm => log(c"  ${triple(stm)}")}
-    log("levelScope: ")
-    levelScope.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("Getting scope level within scope: ")
+//    scope.foreach{stm => log(c"  ${triple(stm)}") }
+//    log("For result: ")
+//    result.foreach{s => log(c"  ${triple(producerOf(s))}") }
+//    log("Must inside: ")
+//    mustInside.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("May outside: ")
+//    mayOutside.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("Fringe: ")
+//    fringe.foreach{stm => log(c"  ${triple(stm)}") }
+//    log("Reachable [Warm]: ")
+//    reachableWarm.foreach{stm => log(c"  ${triple(stm)}") }
+//    log("Reachable [Cold]: ")
+//    reachableCold.foreach{stm => log(c"  ${triple(stm)}")}
+//    log(s"Hot paths: ")
+//    hotPathsOnly.foreach{stm => log(c"  ${triple(stm)}")}
+//    log(s"Hot dependencies: ")
+//    hotDeps.foreach{stm => log(c"  ${triple(stm)}")}
+//    log(s"Hot fringe: ")
+//    hotFringe.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("Hot fringe dependencies: ")
+//    hotFringeDeps.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("levelScope: ")
+//    levelScope.foreach{stm => log(c"  ${triple(stm)}")}
 
     levelScope
   }
@@ -258,18 +258,18 @@ trait AbstractHDAG extends Exceptions {
     val localSchedule = getSchedule(localRoots, localCache, checkAcyclic = false) filter (localScope contains _)
 
 // These log statements are VERY expensive - use only when debugging
-    log("avail nodes: ")
-    availableNodes.foreach{stm => log(c"  ${triple(stm)}")}
-    log("avail roots:")
-    availRoots.foreach{stm => log(c"  ${triple(stm)}")}
-    log("local nodes:")
-    localNodes.foreach{stm => log(c"  ${triple(stm)}")}
-    log("local scope: ")
-    localScope.foreach{stm => log(c"  ${triple(stm)}")}
-    log("local roots:")
-    localRoots.foreach{stm => log(c"  ${triple(stm)}")}
-    log("local schedule:")
-    localSchedule.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("avail nodes: ")
+//    availableNodes.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("avail roots:")
+//    availRoots.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("local nodes:")
+//    localNodes.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("local scope: ")
+//    localScope.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("local roots:")
+//    localRoots.foreach{stm => log(c"  ${triple(stm)}")}
+//    log("local schedule:")
+//    localSchedule.foreach{stm => log(c"  ${triple(stm)}")}
 
     localSchedule
   }
