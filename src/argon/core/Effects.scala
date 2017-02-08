@@ -23,7 +23,7 @@ trait Effects extends Symbols { this: Staging =>
     def mirror(f: Tx) = Effects(cold, simple, global, mutable, f.txSyms(reads), f.txSyms(writes))
 
     private def combine(that: Effects, m1: Boolean, m2: Boolean) = Effects(
-      cold = this.cold && that.cold,
+      cold = this.cold || that.cold,
       simple = this.simple || that.simple,
       global = this.global || that.global,
       mutable = (m1 && this.mutable) || (m2 && that.mutable),
