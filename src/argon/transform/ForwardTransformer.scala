@@ -113,12 +113,16 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     }
     else {
       // Pretransformed case: Someone else has already mirrored/transformed us!
-      // Assumed case: Some higher scope has a block which includes us, and they've already gone through and
-      // mirrored some or all of the nodes in that block before traversing the block
-      // The correct thing to do here is mirror the previously transformed node, then scrub the intermediate node from
-      // the IR def and context lists so it doesn't appear in any effects lists.
-      if (!allowPretransform) throw new PretransformException(name, lhs, f(lhs))
-
+      // Case 1: Multiple traversals of the same symbol in different scopes
+      //   This can occur when CSE causes creation of a common node across two cold scopes.
+      //   The correct thing to do in this case is use the existing substitution rule.
+      //   However, the rule for case 2 should also work.
+      //
+      // Case 2: Some higher scope has a block which includes us, and they've already gone through and
+      //   mirrored some or all of the nodes in that block before traversing the block
+      //   The correct thing to do in this case is mirror the previously transformed node, then scrub the
+      //   intermediate node (if it's different) from context lists so it doesn't appear in any effects lists.
+      //if (!allowPretransform) throw new PretransformException(name, lhs, f(lhs))
       val lhs2: Exp[T] = f(lhs)
       val lhs3 = mirrorExp(lhs2)
       if (lhs3 != lhs2 && lhs != lhs2 && lhs2.isInstanceOf[Sym[_]]) scrubSym(lhs2.asInstanceOf[Sym[_]])

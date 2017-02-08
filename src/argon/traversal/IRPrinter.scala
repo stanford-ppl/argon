@@ -23,8 +23,8 @@ trait IRPrinter extends Traversal {
       tab += 1
       dbgs(c"block $i: $blk {")
       tab += 1
-      dbgs(c"effects: ${blk.summary}")
-      dbgs(c"anti-deps: ${blk.effectful}")
+      logs(c"effects: ${blk.summary}")
+      logs(c"anti-deps: ${blk.effectful}")
       visitBlock(blk)
       tab -= 1
       dbgs(c"} // End of $lhs block #$i")

@@ -85,6 +85,7 @@ trait Staging extends Statements {
     log(c"  full effects = $effects")
 
     if (effects == Pure) registerDefWithCSE(d)(ctx)
+    else if (effects == Cold) registerDef(d, Nil)(ctx)    // Don't add "Cold" effects to context list, but don't CSE
     else {
       checkContext()
       val deps = effectDependencies(effects)
