@@ -1,25 +1,25 @@
-package argon.ops
+package argon.typeclasses
 
-import argon.core.{Base, Staging}
+import argon.core.Staging
 
 /** Types which are represented by a static number of bits **/
-trait BitsOps extends Base {
-  type Bits[T] <: Staged[T]
+trait BitsApi extends BitsExp {
 
-  def zero[T:Bits](implicit ctx: SrcCtx): T
-  def one[T:Bits](implicit ctx: SrcCtx): T
-  def random[T:Bits](implicit ctx: SrcCtx): T
 }
-trait BitsApi extends BitsOps
 
+trait BitsExp extends Staging {
 
-trait BitsExp extends BitsOps with Staging {
-  trait Bits[T] extends Staged[T] {
+  trait Bits[T] {
     def zero(implicit ctx: SrcCtx): T
     def one(implicit ctx: SrcCtx): T
     def random(max: Option[T])(implicit ctx: SrcCtx): T
-    //def ones: T
     def length: Int
+  }
+
+  protected def bitsUnapply[T](tp: Staged[T]): Option[Bits[T]] = None
+
+  object Bits {
+    def unapply[T](x: Staged[T]): Option[Bits[T]] = bitsUnapply(x)
   }
 
   def zero[T:Bits](implicit ctx: SrcCtx): T = implicitly[Bits[T]].zero
@@ -28,6 +28,6 @@ trait BitsExp extends BitsOps with Staging {
   def random[T:Bits](max: T)(implicit ctx: SrcCtx): T = implicitly[Bits[T]].random(Some(max))
 
   def bits[T:Bits] = implicitly[Bits[T]]
-  def mbits[T,R](s: Staged[T]): Bits[R] = s.asInstanceOf[Bits[R]]
+  def mbits[T,R](s: Bits[T]): Bits[R] = s.asInstanceOf[Bits[R]]
 }
 

@@ -1,22 +1,12 @@
 package argon.ops
 
-import org.virtualized.{RefinedManifest,RecordOps,Record}
+// import org.virtualized.{RefinedManifest,RecordOps,Record}
 import argon.Config
+import argon.core.Staging
 
-trait StructOps extends VoidOps /*with RecordOps*/ {
-  // TODO: Anonymous Records in Repless frontend
-  /* called whenever a Record is instantiated with Record (...) */
-  // def record_new[T: RefinedManifest](fields: (String, _)*): T
+trait StructApi extends StructExp with VoidApi
 
-  /* called whenever a Record field is accessed (r.fieldName) */
-  // def record_select[T: Manifest](record: Record, field: String): T
-
-  type StructType[T] <: Staged[T]
-}
-
-trait StructApi extends StructOps with VoidApi
-
-trait StructExp extends StructOps with VoidExp {
+trait StructExp extends Staging with VoidExp {
 
   abstract class StructApi[T:StructType] { self =>
     def field[R:Staged](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](unwrap(self.asInstanceOf[T]), name))
@@ -61,7 +51,7 @@ trait StructExp extends StructOps with VoidExp {
   }
 
 
-  /** Smart constructors **/
+  /** Constructors **/
   def struct_new[S:StructType](elems: Seq[(String, Exp[_])])(implicit ctx: SrcCtx): Exp[S] = {
     stage(SimpleStruct(elems))(ctx)
   }

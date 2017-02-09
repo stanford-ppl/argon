@@ -6,7 +6,7 @@ import argon.utils.escapeConst
 import scala.annotation.unchecked.uncheckedVariance
 
 
-trait Symbols extends Base with StagedTypes with Metadata { self: Staging =>
+trait Symbols extends StagedTypes with Metadata { self: Staging =>
 
   case class SrcCtxs(pos: List[SrcCtx]) extends Metadata[SrcCtxs] { def mirror(f:Tx) = this }
   object ctxsOf {

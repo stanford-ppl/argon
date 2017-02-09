@@ -1,63 +1,56 @@
 package argon.ops
-import argon.core.Base
+import argon.core.Staging
+import argon.typeclasses._
 
-trait BoolOps extends Base with BitsOps { this: TextOps =>
-  type Bool <: BoolOps
-  /** Infix operations **/
-  protected trait BoolOps {
-    def unary_!(implicit ctx: SrcCtx): Bool
-    def &&(that: Bool)(implicit ctx: SrcCtx): Bool
-    def ||(that: Bool)(implicit ctx: SrcCtx): Bool
-    def ^ (that: Bool)(implicit ctx: SrcCtx): Bool
-
-    def +[A](rhs: A)(implicit ctx: SrcCtx, lft: Lift[A,Text]): Text
-  }
-
-  implicit class BooleanBoolOps(x: Boolean) {
-    private def lift(implicit ctx: SrcCtx) = boolean2bool(x)
-    def &&(y: Bool)(implicit ctx: SrcCtx): Bool = lift && y
-    def ||(y: Bool)(implicit ctx: SrcCtx): Bool = lift || y
-    def ^ (y: Bool)(implicit ctx: SrcCtx): Bool = lift ^ y
-  }
-
-  /** Internal **/
-  implicit object Boolean2Bool extends Lift[Boolean,Bool] { val staged = BoolType }
-  implicit def boolean2bool(x: Boolean)(implicit ctx: SrcCtx): Bool = lift(x)
-  implicit val BoolType: Bits[Bool]
-}
-
-trait BoolApi extends BoolOps with BitsApi { this: TextApi =>
+trait BoolApi extends BoolExp with BitsApi { this: TextApi =>
   type Boolean = Bool
 }
 
-trait BoolExp extends BoolOps with BitsExp { this: TextExp =>
-  /** API **/
-  case class Bool(s: Exp[Bool]) extends BoolOps {
-    def unary_!(implicit ctx: SrcCtx): Bool = Bool(bool_not(this.s)(ctx))
-    def &&(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_and(this.s,that.s)(ctx))
-    def ||(that: Bool)(implicit ctx: SrcCtx): Bool = Bool( bool_or(this.s,that.s)(ctx))
-    def ^ (that: Bool)(implicit ctx: SrcCtx): Bool = infix_!=(this, that)(ctx)
-
-    def +[A](rhs: A)(implicit ctx: SrcCtx, lft: Lift[A,Text]): Text = textify(this) + lft.lift(rhs)
-  }
-  def infix_==(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xnor(x.s,y.s)(ctx))
-  def infix_!=(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(x.s,y.s)(ctx))
-
-  /** Staged Types **/
-  implicit object BoolType extends Bits[Bool] {
+trait BoolExp extends Staging with BitsExp { this: TextExp =>
+  /** Type classes **/
+  // --- Staged
+  implicit object BoolType extends Staged[Bool] {
     override def wrapped(x: Exp[Bool]): Bool = Bool(x)
     override def unwrapped(x: Bool): Exp[Bool] = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[Bool]
     override def isPrimitive = true
+  }
 
+  /** Infix methods **/
+  case class Bool(s: Exp[Bool]) {
+    def unary_!(implicit ctx: SrcCtx): Bool = Bool(bool_not(this.s)(ctx))
+    def &&(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_and(this.s, that.s)(ctx))
+    def ||(that: Bool)(implicit ctx: SrcCtx): Bool = Bool( bool_or(this.s, that.s)(ctx))
+    def ^ (that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(this.s, that.s)(ctx))
+
+    def +[A](rhs: A)(implicit ctx: SrcCtx, lft: Lift[A,Text]): Text = textify(this) + lft.lift(rhs)
+  }
+
+  /** Virtualized methods **/
+  def infix_==(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xnor(x.s, y.s)(ctx))
+  def infix_!=(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(x.s, y.s)(ctx))
+  def infix_toString(x: Bool)(implicit ctx: SrcCtx): Text = textify(x)
+
+
+  // --- Bits
+  implicit object BoolBits extends Bits[Bool] {
     override def zero(implicit ctx: SrcCtx): Bool = boolean2bool(false)
     override def one(implicit ctx: SrcCtx): Bool = boolean2bool(true)
     override def random(max: Option[Bool])(implicit ctx: SrcCtx): Bool = Bool(bool_random(max.map(_.s)))
     override def length = 1
   }
+  override protected def bitsUnapply[T](tp: Staged[T]): Option[Bits[T]] = tp match {
+    case BoolType => Some(BoolBits.asInstanceOf[Bits[T]])
+    case _ => super.bitsUnapply(tp)
+  }
 
-  /** Constant Lifting **/
+  // --- Lifts
+  implicit object Boolean2Bool extends Lift[Boolean,Bool] { val staged = BoolType }
+
+
+  /** Constant lifting **/
+  implicit def boolean2bool(x: Boolean)(implicit ctx: SrcCtx): Bool = lift(x)
   def bool(x: Boolean)(implicit ctx: SrcCtx): Const[Bool] = constant[Bool](x)
 
 
@@ -70,7 +63,7 @@ trait BoolExp extends BoolOps with BitsExp { this: TextExp =>
   case class RandomBool(max: Option[Exp[Bool]]) extends Op[Bool] { def mirror(f:Tx) = bool_random(f(max)) }
 
 
-  /** Smart Constructors **/
+  /** Constructors **/
   def bool_not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
     case Const(c: Boolean) => bool(!c)    // Constant propagation
     case Op(Not(a)) => a                  // Boolean simplification: !(!a) => a
@@ -112,5 +105,4 @@ trait BoolExp extends BoolOps with BitsExp { this: TextExp =>
     case Some(Const(false)) => bool(false)
     case _ => stageSimple(RandomBool(max))(ctx)
   }
-
 }

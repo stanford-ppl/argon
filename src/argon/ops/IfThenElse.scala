@@ -1,10 +1,13 @@
 package argon.ops
-import argon.core.Base
+import argon.core.Staging
 
-trait IfThenElseOps extends Base with BoolOps {this: TextOps => }
-trait IfThenElseApi extends IfThenElseOps with BoolApi { this: TextApi => }
+trait IfThenElseApi extends IfThenElseExp with BoolApi {
+  this: TextApi =>
+}
 
-trait IfThenElseExp extends IfThenElseOps with BoolExp with OverloadHack with VoidExp { this: TextExp =>
+trait IfThenElseExp extends Staging with BoolExp with VoidExp {
+  this: TextExp =>
+
   /** Virtualized Methods **/
   def __ifThenElse[A,B](cond: Bool, thenp: => A, elsep: => A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = {
     implicit val staged: Staged[B] = l.staged
@@ -28,7 +31,7 @@ trait IfThenElseExp extends IfThenElseOps with BoolExp with OverloadHack with Vo
     override def aliases = syms(thenp.result, elsep.result)
   }
 
-  /** Smart Constructor **/
+  /** Constructors **/
   def ifThenElse[T:Staged](cond: Exp[Bool], thenp: => Exp[T], elsep: => Exp[T])(implicit ctx: SrcCtx): Exp[T] = cond match {
     case Const(true) if context != null => thenp // Inlining is not valid if there is no outer context
     case Const(false) if context != null => elsep

@@ -2,9 +2,8 @@ package argon.ops
 
 import argon.core.Staging
 
-trait PatternOps
-trait PatternApi extends PatternOps
-trait PatternExp extends PatternOps with FixPtExp with VoidExp with TextExp /*{
+trait PatternApi extends PatternExp
+trait PatternExp extends Staging with FixPtExp with VoidExp with TextExp /*{
 
   abstract class ParallelCollection[A:Staged]
 

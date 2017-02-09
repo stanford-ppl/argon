@@ -1,15 +1,14 @@
-package argon.ops
+package argon.typeclasses
 
-/** Staged numeric types **/
-trait NumOps extends BitsOps with OrderOps { this: TextOps =>
-  type Arith[T] <: Bits[T]
-  type Num[T] <: Arith[T] with Order[T]
+import argon.core.Staging
+
+trait ArithApi extends ArithExp {
+
 }
-trait NumApi extends NumOps with BitsApi with OrderApi {this: TextApi => }
 
+trait ArithExp extends Staging {
 
-trait NumExp extends NumOps with BitsExp with OrderExp { this: TextExp =>
-  trait Arith[T] extends Bits[T] {
+  trait Arith[T] {
     def negate(x: T)(implicit ctx: SrcCtx): T
     def plus(x: T, y: T)(implicit ctx: SrcCtx): T
     def minus(x: T, y: T)(implicit ctx: SrcCtx): T
@@ -25,10 +24,6 @@ trait NumExp extends NumOps with BitsExp with OrderExp { this: TextExp =>
     def /(rhs: T)(implicit ctx: SrcCtx): T = arith[T].divide(lhs, rhs)
   }
 
-
-  trait Num[T] extends Arith[T] with Order[T]
-
   def arith[T:Arith] = implicitly[Arith[T]]
-  def num[T:Num] = implicitly[Num[T]]
 }
 

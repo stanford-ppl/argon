@@ -1,19 +1,15 @@
 package argon.ops
 
-import argon.core.ArgonExceptions
+import argon.core.{Staging, ArgonExceptions}
 
-trait StringCastOps extends TextOps with MixedNumericOps {
-  // TODO: This syntax should be DSL-specific
+trait StringCastApi extends StringCastExp with TextApi with MixedNumericApi {
   implicit class TextCastOps(x: Text) {
     def to[T:Staged](implicit ctx: SrcCtx): T = text_to_t[T](x)
   }
-  private[argon] def text_to_t[T:Staged](x: Text)(implicit ctx: SrcCtx): T
 }
 
-trait StringCastApi extends StringCastOps with TextApi with MixedNumericApi
-
-trait StringCastExp extends StringCastOps with TextExp with MixedNumericExp with ArgonExceptions {
-  /** API **/
+trait StringCastExp extends Staging with TextExp with MixedNumericExp with ArgonExceptions {
+  /** Internals **/
   private[argon] def text_to_t[T:Staged](x: Text)(implicit ctx: SrcCtx): T = typ[T] match {
     case tp:FixPtType[s,i,f] =>
       implicit val mS = tp.mS.asInstanceOf[BOOL[s]]
