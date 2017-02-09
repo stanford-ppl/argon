@@ -5,7 +5,7 @@ import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp}
 trait CppGenArrayExt extends CppGenArray {
   val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp
   import IR._
-
+ 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case ArrayUpdate(array, i, data) => emit(src"val $lhs = $array.update($i, $data)")
     case MapIndices(size, func, i)   =>
