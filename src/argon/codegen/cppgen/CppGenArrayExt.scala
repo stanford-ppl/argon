@@ -22,12 +22,13 @@ trait CppGenArrayExt extends CppGenArray {
       close("}")
 
     case ArrayMap(array,apply,func,i) =>
-      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($array);")
+      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($array->length);")
       open(src"for (int $i = 0; $i < ${array}->length; $i++) { ")
+      visitBlock(apply)
       emitBlock(func)
       emit(src"$lhs->update($i, ${func.result});")
       close("}")
-      visitBlock(apply)
+      
 
     case ArrayZip(a, b, applyA, applyB, func, i) =>
       emit(src"${lhs.tp}* $lhs = new ${lhs.tp}(${a}->length);")
