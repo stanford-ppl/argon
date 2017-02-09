@@ -14,7 +14,14 @@ trait CppGenArray extends CppCodegen {
         case LongType() => "cppDeliteArrayint32_t"
         case TextType => "cppDeliteArraystring"
         case BoolType => "cppDeliteArraybool"
-        case _ => "genericArray of $tp"
+        case fp: FixPtType[_,_,_] => 
+          fp.fracBits match {
+            case 0 => "cppDeliteArrayint32_t"
+            case _ => "cppDeliteArraydouble"
+          }
+        case _: FltPtType[_,_] => "cppDeliteArraydouble"
+        case tp_inner: ArrayType[_] => s"cppDeliteArray${remap(tp_inner)}"
+        case _ => s"genericArray of ${tp.typeArguments.head}"
       }
     case _ => super.remap(tp)
   }

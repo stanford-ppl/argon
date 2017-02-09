@@ -8,12 +8,12 @@ trait CppGenMixedNumeric extends CppCodegen with CppGenFixPt with CppGenFltPt {
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
     case FixPtToFltPt(x) => lhs.tp match {
-      case DoubleType() => emit(src"val $lhs = $x.toDouble")
-      case FloatType()  => emit(src"val $lhs = $x.toFloat")
+      case DoubleType() => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
+      case FloatType()  => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
     }
     case FltPtToFixPt(x) => lhs.tp match {
-      case IntType()  => emit(src"val $lhs = $x.toInt")
-      case LongType() => emit(src"val $lhs = $x.toLong")
+      case IntType()  => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
+      case LongType() => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
     }
     case _ => super.emitNode(lhs, rhs)
   }

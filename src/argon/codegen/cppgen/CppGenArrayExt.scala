@@ -5,6 +5,11 @@ import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp}
 trait CppGenArrayExt extends CppGenArray {
   val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp
   import IR._
+
+  private def getNestingLevel(tp: Staged[_]): Int = tp match {
+    case tp: ArrayType[_] => 1 + getNestingLevel(tp.typeArguments.head) 
+    case _ => 0
+  }
  
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case ArrayUpdate(array, i, data) => emit(src"val $lhs = $array.update($i, $data)")
@@ -60,10 +65,27 @@ trait CppGenArrayExt extends CppGenArray {
       close("}")
 
     case ArrayFlatMap(array, apply, func, i) =>
-      open(src"val $lhs = $array.indices.flatMap{$i => ")
+      emit("// flatMap, not sure if this is correct. How can I get loop size?")
+      val nesting = getNestingLevel(lhs.tp)
+      val lenString = (0 until nesting).map{ level => 
+        val grabbers = (0 until level).map{ "[0]" }.mkString("") 
+        src"${array}${grabbers}->length"
+      }.mkString("*")
+      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}(lenString);")
+      (0 until nesting).foreach { level => 
+        val grabbers = (0 until level).map{ "[0]" }.mkString("") 
+        open(src"for (int ${i}_$level = 0; ${i}_level < ${array}->length; ${i}_${level}++) { ")
+      }
+      // TODO: NEED TO FIX THE STUFF INSIDE OF HERE!
       visitBlock(apply)
       emitBlock(func)
-      close("}")
+      emit(src"$lhs->update($i, ${func.result});")
+
+      (0 until nesting).foreach { level => 
+        val grabbers = (0 until level).map{ "[0]" }.mkString("") 
+        close("}")
+      }
+
 
     case _ => super.emitNode(lhs, rhs)
   }
