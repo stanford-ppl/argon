@@ -11,8 +11,8 @@ trait CppGenArrayExt extends CppGenArray {
     case MapIndices(size, func, i)   =>
       emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($size);")
       open(src"for (int $i = 0; $i < $size; ${i}++) {")
-      emit(src"$lhs->update($i, $i);")
       emitBlock(func)
+      emit(src"$lhs->update($i, ${func.result});")
       close("}")
 
     case ArrayForeach(array,apply,func,i) =>
@@ -23,12 +23,11 @@ trait CppGenArrayExt extends CppGenArray {
 
     case ArrayMap(array,apply,func,i) =>
       emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($array);")
-      emit(src"for (int $i = 0; $i < $array; ${i}++) {")
-      open(src"$array.indices.map{$i => ")
-      emit(src"$array->update($i, $apply);")
+      open(src"for (int $i = 0; $i < ${array}->length; $i++) { ")
+      emitBlock(func)
+      emit(src"$lhs->update($i, ${func.result});")
       close("}")
       visitBlock(apply)
-      emitBlock(func)
 
     case ArrayZip(a, b, applyA, applyB, func, i) =>
       emit(src"${lhs.tp}* $lhs = new ${lhs.tp}(${a}->length);")
@@ -41,7 +40,12 @@ trait CppGenArrayExt extends CppGenArray {
 
       // 
     case ArrayReduce(array, apply, reduce, i, rV) =>
-      emit(src"${lhs.tp} $lhs = ${array}->apply(0);")
+      emit(src"${lhs.tp} $lhs;")
+      open(src"if (${array}->length > 0) { // Hack to handle reductions on things of length 0")
+      emit(src"$lhs = ${array}->apply(0);")
+      closeopen("} else {")
+      emit(src"$lhs = 0;")
+      close("}")
       open(src"for (int $i = 1; $i < ${array}->length; ${i}++) {")
       emit(src"${rV._1.tp} ${rV._1} = ${array}->apply($i);")
       emit(src"${rV._2.tp} ${rV._2} = $lhs;")

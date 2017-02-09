@@ -48,6 +48,13 @@ trait Codegen extends Traversal {
       if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen ] Emission of ${x} does not belong in this backend")}
     }
   } 
+  protected def closeopen(x: String): Unit = { // Good for "} else {" lines
+    if (emitEn) {
+      if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x); streamTab(streamName) += 1
+    } else { 
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen ] Emission of ${x} does not belong in this backend")}
+    }
+  } 
 
   final protected def toggleEn(): Unit = {
     if (emitEn) {

@@ -7,8 +7,8 @@ trait CppGenPrint extends CppCodegen {
   import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
-    case Print(x)   => emit(s"""std::cout << $x;""")
-    case Println(x) => emit(s"""std::cout << $x << std::endl;""")
+    case Print(x)   => emit(src"""std::cout << $x;""")
+    case Println(x) => emit(src"""std::cout << $x << std::endl;""")
     case _ => super.emitNode(lhs, rhs)
   }
 }
