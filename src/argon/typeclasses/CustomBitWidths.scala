@@ -1,4 +1,5 @@
-package argon.ops
+package argon.typeclasses
+
 import argon.core.Reporting
 
 /** Hack for working with customized bit widths, since Scala doesn't support integers as template parameters **/
@@ -84,4 +85,3 @@ trait CustomBitWidths extends Reporting {
   }
 
 }
-

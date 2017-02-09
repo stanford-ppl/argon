@@ -1,28 +1,28 @@
 package argon.test
 
-import org.scalatest.{FlatSpec, Matchers, ShouldMatchers}
+import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized.{SourceContext, virtualize}
 import argon.{AppCore, Config, LibCore, RunnerCore}
 import argon.ops._
-import argon.utils.deleteExts
 import argon.traversal.IRPrinter
 import argon.codegen.scalagen._
+import argon.core.Staging
 import argon.transform.ForwardTransformer
 
-trait TestOps extends BoolOps
-  with IfThenElseOps with PrintOps with TextOps with ArrayExtOps with MixedNumericOps with AssertOps
-  with StructOps with HashMapOps
-trait TestApi extends TestOps with BoolApi
-  with IfThenElseApi with PrintApi with TextApi with ArrayExtApi with MixedNumericApi with AssertApi
-  with StructApi with HashMapApi
-trait TestExp extends TestOps with BoolExp
-  with IfThenElseExp with PrintExp with TextExp with ArrayExtExp with MixedNumericExp with AssertExp
-  with StructExp with HashMapExp
+trait TestExp extends Staging
+  with ArrayExp with ArrayExtExp with AssertExp with BoolExp with CastExp with FixPtExp with FltPtExp
+  with HashMapExp with IfThenElseExp with MixedNumericExp with PrintExp with StringCastExp with StructExp
+  with TextExp with TupleExp with VoidExp
+
+trait TestApi extends TestExp
+  with ArrayApi with ArrayExtApi with AssertApi with BoolApi with CastApi with FixPtApi with FltPtApi
+  with HashMapApi with IfThenElseApi with MixedNumericApi with PrintApi with StringCastApi with StructApi
+  with TextApi with TupleApi with VoidApi
 
 trait ScalaGen extends ScalaCodegen with ScalaFileGen
-      with ScalaGenBool with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenText with ScalaGenMixedNumeric
-      with ScalaGenVoid with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert
-      with ScalaGenStructs with ScalaGenHashMap {
+  with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert with ScalaGenBool with ScalaGenFixPt with ScalaGenFltPt
+  with ScalaGenHashMap with ScalaGenIfThenElse with ScalaGenMixedNumeric with ScalaGenPrint with ScalaGenStringCast with ScalaGenStructs
+  with ScalaGenText with ScalaGenVoid {
   override val IR: TestExp
 }
 
@@ -30,7 +30,7 @@ trait IdentityTransformer extends ForwardTransformer {
   override val name = "Identity Transformer"
 }
 
-trait CompilerBase extends RunnerCore with TestExp { self =>
+trait CompilerBase extends RunnerCore with TestApi { self =>
 
   override val testbench = true
 
@@ -48,7 +48,7 @@ trait CompilerBase extends RunnerCore with TestExp { self =>
     super.settings()
   }
 }
-trait TestIR extends CompilerBase with TestApi { self =>
+trait TestIR extends CompilerBase { self =>
   lazy val scalagen = new ScalaGen { override val IR: self.type = self }
   passes += scalagen
 }

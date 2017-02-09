@@ -1,12 +1,16 @@
 package argon.ops
 
+import argon.core.Staging
+
 /** Casting between FixPt and FltPt **/
-trait MixedNumericOps extends CastOps with FixPtOps with FltPtOps { this: TextOps => }
-trait MixedNumericApi extends MixedNumericOps with CastOps with FixPtApi with FltPtApi { this: TextApi => }
+trait MixedNumericApi extends MixedNumericExp with CastApi with FixPtApi with FltPtApi {
+  this: TextApi =>
+}
 
-trait MixedNumericExp extends MixedNumericOps with CastOps with FixPtExp with FltPtExp { this: TextExp =>
+trait MixedNumericExp extends Staging with CastExp with FixPtExp with FltPtExp {
+  this: TextExp =>
 
-  override protected def cast[T:Num,R:Num](x: T)(implicit ctx: SrcCtx): R = (num[T],num[R]) match {
+  override protected def cast[T:Staged:Num,R:Staged:Num](x: T)(implicit ctx: SrcCtx): R = (typ[T],typ[R]) match {
     case (a: FixPtType[s,i,f], b: FltPtType[g,e]) =>
       implicit val mS: BOOL[s] = a.mS
       implicit val mI: INT[i] = a.mI

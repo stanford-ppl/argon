@@ -1,11 +1,10 @@
 package argon.analysis
 
-import argon.core.{Base, Staging}
+import argon.core.Staging
 import argon.traversal.Traversal
 
-trait IndexPatternOps extends Base
-trait IndexPatternApi extends IndexPatternOps
-trait IndexPatternExp extends IndexPatternOps with Staging {
+trait IndexPatternApi extends IndexPatternExp
+trait IndexPatternExp extends Staging {
   type Index
   // Variations used here allow Index to be abstract (otherwise can't as easily define stride of 1)
   sealed abstract class IndexPattern

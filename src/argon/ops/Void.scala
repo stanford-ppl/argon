@@ -1,20 +1,15 @@
 package argon.ops
-import argon.core.{Base,Staging}
+import argon.core.Staging
 
-trait VoidOps extends Base {
-  type Void
-  implicit object Unit2Void extends Lift[Unit,Void] { val staged = VoidType }
-  implicit def unit2void(x: Unit)(implicit ctx: SrcCtx): Void = lift(x)
-  implicit val VoidType: Staged[Void]
-}
-trait VoidApi extends VoidOps {
+trait VoidApi extends VoidExp {
   type Unit = Void
 }
 
-trait VoidExp extends VoidOps with Staging {
+trait VoidExp extends Staging {
   case class Void(s: Exp[Void])
-  def void()(implicit ctx: SrcCtx): Exp[Void] = constant[Void](())
 
+  /** Type classes **/
+  // --- Staged
   implicit object VoidType extends Staged[Void] {
     override def unwrapped(x: Void) = x.s
     override def wrapped(x: Exp[Void]) = Void(x)
@@ -22,6 +17,13 @@ trait VoidExp extends VoidOps with Staging {
     override def stagedClass = classOf[Void]
     override def isPrimitive = true
   }
+
+  // --- Lift
+  implicit object Unit2Void extends Lift[Unit,Void] { val staged = VoidType }
+
+  /** Constant lifting **/
+  implicit def unit2void(x: Unit)(implicit ctx: SrcCtx): Void = lift(x)
+  def void()(implicit ctx: SrcCtx): Exp[Void] = constant[Void](())
 }
 
 

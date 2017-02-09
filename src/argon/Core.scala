@@ -31,7 +31,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
   val passes: ArrayBuffer[Pass] = ArrayBuffer.empty[Pass]
   val testbench: Boolean = false
 
-  lazy val args: MArray[Text] = ArgonArray[Text](stage(InputArguments())(implicitly[SourceContext]))
+  lazy val args: ArgonArray[Text] = ArgonArray[Text](stage(InputArguments())(implicitly[SourceContext]))
   var stagingArgs: scala.Array[java.lang.String] = _
 
   def settings(): Unit = { }

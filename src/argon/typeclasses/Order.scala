@@ -1,14 +1,17 @@
-package argon.ops
+package argon.typeclasses
+
+import argon.core.Staging
+import argon.ops._
 
 /** Staged numeric types **/
-trait OrderOps extends BitsOps with BoolOps { this: TextOps =>
-  type Order[T] <: Staged[T]
+trait OrderApi extends OrderExp {
+  this: BoolApi =>
 }
-trait OrderApi extends OrderOps with BitsApi with BoolApi { this: TextApi => }
 
+trait OrderExp extends Staging {
+  this: BoolExp =>
 
-trait OrderExp extends OrderOps with BitsExp with BoolExp { this: TextExp =>
-  trait Order[T] extends Staged[T] {
+  trait Order[T] {
     def lessThan(a: T, b: T)(implicit ctx: SrcCtx): Bool
     def lessEql(a: T, b: T)(implicit ctx: SrcCtx): Bool
     def equal(a: T, b: T)(implicit ctx: SrcCtx): Bool
@@ -25,4 +28,5 @@ trait OrderExp extends OrderOps with BitsExp with BoolExp { this: TextExp =>
 
   def ord[T:Order] = implicitly[Order[T]]
 }
+
 
