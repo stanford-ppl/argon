@@ -8,13 +8,13 @@ trait CppGenIfThenElse extends CppCodegen {
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case IfThenElse(cond, thenp, elsep) =>
-      open(src"val $lhs = {")
+      emit(src"${lhs.tp} $lhs;")
       open(src"if ($cond) { ")
       emitBlock(thenp)
-      close("}")
-      open("else {")
+      emit(src"$lhs = ${thenp.result};")
+      closeopen("} else { ")
       emitBlock(elsep)
-      close("}")
+      emit(src"$lhs = ${elsep.result};")
       close("}")
 
     case _ => super.emitNode(lhs, rhs)
