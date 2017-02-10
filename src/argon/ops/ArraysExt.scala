@@ -88,8 +88,6 @@ trait ArrayExtExp extends ArrayExp {
   /** IR Nodes **/
   case class ArrayUpdate[T:Staged](array: Exp[ArgonArray[T]], i: Exp[Int32], e: Exp[T]) extends Op[Void] {
     def mirror(f:Tx) = array_update(f(array),f(i),f(e))
-
-    override def aliases = Nil
     override def contains = syms(e)
   }
   case class MapIndices[T:Staged](size: Exp[Index], func: Block[T], i: Bound[Index]) extends Op[ArgonArray[T]] {
@@ -123,6 +121,7 @@ trait ArrayExtExp extends ArrayExp {
     override def freqs  = normal(array) ++ hot(apply) ++ hot(func)
     override def binds = i +: super.binds
     override def tunnels = syms(array)
+    //override def contains = syms(func)
     val mT = typ[T]
     val mS = typ[S]
   }
@@ -140,6 +139,7 @@ trait ArrayExtExp extends ArrayExp {
     override def freqs  = normal(arrayA) ++ normal(arrayB) ++ hot(applyA) ++ hot(applyB) ++ hot(func)
     override def binds = i +: super.binds
     override def tunnels = syms(arrayA) ++ syms(arrayB)
+    //override def contains = syms(func)
     val mA = typ[A]
     val mB = typ[B]
     val mC = typ[C]

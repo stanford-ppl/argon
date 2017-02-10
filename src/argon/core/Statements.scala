@@ -6,7 +6,7 @@ import scala.collection.mutable
 
 trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   // -- State
-  protected val defCache = new mutable.HashMap[Def, List[Sym[_]]]
+  val defCache = new mutable.HashMap[Def, List[Sym[_]]]
   protected val shallowAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
   protected val deepAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
   protected val aliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]

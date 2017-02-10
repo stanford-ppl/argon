@@ -48,9 +48,9 @@ trait Definitions extends Blocks { self: Staging =>
 
     /** Alias hints -- used to check/disallow unsafe mutable aliasing **/
     // Aliases: inputs to this Def which *may* equal to the output of this Def
-    // Default: all inputs to this symbol
-    // TODO: Is this really the most sensible default rule for aliasing?
-    def aliases: List[Symbol[_]] = recursive.collectLists(__syms)(productIterator)
+    // E.g. y = if (cond) a else b: aliases should return a and b
+    // Default: All inputs which have the same type as an output
+    def aliases: List[Symbol[_]] = recursive.collectList{case s: Symbol[_] if outputTypes.contains(s.tp) => s}(productIterator)
 
     // Contains: inputs which may be returned when dereferencing the output of this Def
     // E.g. y = Array(x): contains should return x
@@ -65,6 +65,7 @@ trait Definitions extends Blocks { self: Staging =>
     // Copies: inputs which, when dereferenced, may return the same pointer as dereferencing the output of this Def
     // E.g. y = ArrayCopy(x): copies should return x
     // Default: no symbols
+    // TODO: In LMS, why is this different default than aliases?
     def copies: List[Symbol[_]] = Nil
 
 

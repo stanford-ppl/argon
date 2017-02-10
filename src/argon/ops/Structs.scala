@@ -13,6 +13,7 @@ trait StructExp extends Staging with VoidExp {
   }
 
   abstract class StructType[T] extends Staged[T] {
+    override def isPrimitive = false
     def fields: Seq[(String, Staged[_])]
   }
 
@@ -40,13 +41,11 @@ trait StructExp extends Staging with VoidExp {
   case class FieldApply[S:StructType,T:Staged](struct: Exp[S], field: String) extends Op2[S,T] {
     def mirror(f:Tx) = field_apply[S,T](f(struct), field)
 
-    override def aliases  = Nil
     override def extracts = syms(struct)
   }
   case class FieldUpdate[S:StructType,T:Staged](struct: Exp[S], field: String, value: Exp[T]) extends Op3[S,T,Void] {
     def mirror(f:Tx) = field_update(f(struct), field, f(value))
 
-    override def aliases  = Nil
     override def contains = syms(value)  // TODO: Is this necessary?
   }
 
