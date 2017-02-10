@@ -83,6 +83,7 @@ trait Staging extends Statements {
 
     val effects = atomicEffects andAlso Read(mutableInputs(d))
     log(c"  full effects = $effects")
+    log(c"  isIdempotent = ${effects.isIdempotent}")
 
     if (effects == Pure) registerDefWithCSE(d)(ctx)
     else if (effects == Cold) registerDef(d, Nil)(ctx)    // Don't add "Cold" effects to context list, but don't CSE
@@ -104,7 +105,16 @@ trait Staging extends Statements {
         val symsWithSameDef = defCache.getOrElse(d, Nil) intersect context
         val symsWithSameEffects = symsWithSameDef.filter { case Effectful(u2, es) => u2 == effects && es == deps }
 
-        if (symsWithSameEffects.isEmpty) stageEffects()
+//        log(c"def cache: ${defCache.getOrElse(d,Nil)}")
+//        log(c"context: $context")
+//        log(c"syms with same def in context: $symsWithSameDef")
+//        log(c"syms with same def and effects: $symsWithSameEffects")
+
+        if (symsWithSameEffects.isEmpty) {
+          val syms = stageEffects()
+          defCache(d) = syms
+          syms
+        }
         else {
           symsWithSameEffects.foreach(_.addCtx(ctx))
           symsWithSameEffects
