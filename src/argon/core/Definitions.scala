@@ -16,6 +16,9 @@ trait Definitions extends Blocks { self: Staging =>
 
   /** Generalized Def representation which can have arbitrary output(s) -- roughly equivalent to LMS's FatDef **/
   abstract class Def extends Node with Product {
+
+    final def allInputs: List[Symbol[_]] = nodeInputs(this.id).map{id => symFromSymId(id) }
+
     def outputTypes: List[Staged[_]]
 
     /** Scheduling dependencies -- used to calculate schedule for IR based on dependencies **/
