@@ -59,6 +59,8 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   }
   implicit def fltPtType[G:INT,E:INT]: Staged[FltPt[G,E]] = new FltPtType(INT[G],INT[E])
 
+  def isFltPtType(x: Staged[_]) = FltPtType.unapply(x).isDefined
+
   object FltPtType {
     def unapply(x:Staged[_]):Option[(Int, Int)] = x match {
       case tp:FltPtType[_, _] => Some((tp.sigBits, tp.expBits))
@@ -93,7 +95,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
     override def length: Int = INT[G].v + INT[E].v
 
     override def lessThan(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x < y
-    override def lessEql(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x <= y
+    override def lessThanOrEqual(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x <= y
     override def equal(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = infix_==(x, y)
   }
   implicit def __fltPtNum[G:INT,E:INT]: Num[FltPt[G,E]] = new FltPtNum[G,E]

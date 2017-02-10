@@ -120,7 +120,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     override def length: Int = INT[I].v + INT[F].v
 
     override def lessThan(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x < y
-    override def lessEql(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x <= y
+    override def lessThanOrEqual(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x <= y
     override def equal(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = infix_==(x, y)
   }
   implicit def __fixPtNum[S:BOOL,I:INT,F:INT]: Num[FixPt[S,I,F]] = new FixPtNum[S,I,F]()

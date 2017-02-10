@@ -96,7 +96,7 @@ trait ArrayExtExp extends ArrayExp {
     def mirror(f:Tx) = array_mapindices(f(size),f(func),i)
     override def inputs = syms(size) ++ syms(func)
     override def freqs  = normal(size) ++ hot(func)
-    override def binds = super.binds :+ i
+    override def binds = i +: super.binds
     val mT = typ[T]
   }
   case class ArrayForeach[T:Staged](
@@ -108,7 +108,7 @@ trait ArrayExtExp extends ArrayExp {
     def mirror(f:Tx) = array_foreach(f(array),f(apply),f(func),i)
     override def inputs = syms(array) ++ syms(apply) ++ syms(func)
     override def freqs  = normal(array) ++ hot(apply) ++ hot(func)
-    override def binds = super.binds :+ i
+    override def binds = i +: super.binds
     override def tunnels = syms(array)
     val mT = typ[T]
   }
@@ -121,7 +121,7 @@ trait ArrayExtExp extends ArrayExp {
     def mirror(f:Tx) = array_map(f(array),f(apply),f(func),i)
     override def inputs = syms(array) ++ syms(apply) ++ syms(func)
     override def freqs  = normal(array) ++ hot(apply) ++ hot(func)
-    override def binds = super.binds :+ i
+    override def binds = i +: super.binds
     override def tunnels = syms(array)
     val mT = typ[T]
     val mS = typ[S]
@@ -138,7 +138,7 @@ trait ArrayExtExp extends ArrayExp {
     def mirror(f:Tx) = array_zip(f(arrayA),f(arrayB),f(applyA),f(applyB),f(func),i)
     override def inputs = syms(arrayA) ++ syms(arrayB) ++ syms(applyA) ++ syms(applyB) ++ syms(func)
     override def freqs  = normal(arrayA) ++ normal(arrayB) ++ hot(applyA) ++ hot(applyB) ++ hot(func)
-    override def binds = super.binds :+ i
+    override def binds = i +: super.binds
     override def tunnels = syms(arrayA) ++ syms(arrayB)
     val mA = typ[A]
     val mB = typ[B]
@@ -169,7 +169,7 @@ trait ArrayExtExp extends ArrayExp {
     def mirror(f:Tx) = array_filter(f(array),f(apply),f(cond),i)
     override def inputs = syms(array) ++ syms(apply) ++ syms(cond)
     override def freqs  = normal(array) ++ hot(apply) ++ hot(cond)
-    override def binds = super.binds :+ i
+    override def binds = i +: super.binds
     override def tunnels = syms(array)
   }
 
@@ -182,7 +182,7 @@ trait ArrayExtExp extends ArrayExp {
     def mirror(f:Tx) = array_flatmap(f(array),f(apply),f(func),i)
     override def inputs = syms(array) ++ syms(apply) ++ syms(func)
     override def freqs  = normal(array) ++ hot(apply) ++ hot(func)
-    override def binds = super.binds :+ i
+    override def binds = i +: super.binds
     override def tunnels = syms(array)
   }
 
