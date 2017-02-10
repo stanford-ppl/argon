@@ -105,10 +105,10 @@ trait Staging extends Statements {
         val symsWithSameDef = defCache.getOrElse(d, Nil) intersect context
         val symsWithSameEffects = symsWithSameDef.filter { case Effectful(u2, es) => u2 == effects && es == deps }
 
-        log(c"def cache: ${defCache.getOrElse(d,Nil)}")
-        log(c"context: $context")
-        log(c"syms with same def in context: $symsWithSameDef")
-        log(c"syms with same def and effects: $symsWithSameEffects")
+//        log(c"def cache: ${defCache.getOrElse(d,Nil)}")
+//        log(c"context: $context")
+//        log(c"syms with same def in context: $symsWithSameDef")
+//        log(c"syms with same def and effects: $symsWithSameEffects")
 
         if (symsWithSameEffects.isEmpty) {
           val syms = stageEffects()
