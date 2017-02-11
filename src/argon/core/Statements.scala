@@ -34,8 +34,6 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   // Getting statement returns Option to account for Bounds, but this is known to be a Sym
   def stmOf(sym: Sym[_]): Stm = stmFromSymId(sym.id).get
 
-  def allInputs(d: Def): List[Exp[_]] = nodeInputs(d.id).map{id => symFromSymId(id) }
-
   private[argon] def stmFromNodeId(id: Int): Option[Stm] = {
     val x = triple(id)
     x._1.head match {

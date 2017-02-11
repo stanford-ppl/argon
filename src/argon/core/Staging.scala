@@ -131,6 +131,27 @@ trait Staging extends Statements {
 
   private def single[T:Staged](xx: List[Sym[_]]): Sym[T] = xx.head.asInstanceOf[Sym[T]]
 
+
+  // TODO: where does this actually belong?
+  def makeScopeIndex(scope: Iterable[Stm]): OrderCache = buildScopeIndex(scope.map(_.rhs.id))
+  def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache) = scheduleDepsWithIndex(syms(roots).map(_.id), cache)
+
+  def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => List[Stm]) =  {
+    def succ(node: NodeId): Iterable[NodeId] = nodeOutputs(node).map(symFromSymId).flatMap(next).map(_.rhs.id)
+
+    val start = roots.map(_.rhs.id)
+
+    if (checkAcyclic) {
+      val xx = sccs(start){node => succ(node) }
+      checkIfAcyclic(roots, xx)
+      xx.flatten.reverse
+    }
+    else {
+      dfs(start){node => succ(node) }
+    }
+  }
+
+
   /**
     * DANGER ZONE
     * Use these methods only if you know what you're doing! (i.e. your name is David and you're not drunk)
@@ -140,4 +161,5 @@ trait Staging extends Statements {
     removeEdge(x)
     context = context.filterNot(_ == x)
   }
+
 }
