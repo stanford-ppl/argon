@@ -34,6 +34,8 @@ trait Symbols extends StagedTypes with Metadata { self: Staging =>
       case that: Symbol[_] => this.id == that.id
       case _ => false
     }
+
+    def dependents: List[Exp[_]] = dependentsOf(this.id).flatMap(nodeOutputs).map(symFromSymId)
   }
 
   /** Staged symbols created as bound variables **/
@@ -54,8 +56,6 @@ trait Symbols extends StagedTypes with Metadata { self: Staging =>
   //   case x: Param[_] => x.c = 3
   // and be guaranteed that this is legal
   // :: Param is a special, mutable case of Const
-  // TODO: Is there ever a case where a Param can't be used as a Const?
-
   /** A staged constant **/
   class Const[+T] private[core](x: Any)(staged: Staged[T]) extends Exp[T](staged) {
     private val _c: Any = x
