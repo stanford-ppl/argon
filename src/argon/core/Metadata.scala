@@ -10,6 +10,9 @@ trait Metadata extends HDAG with Lattices { self: Statements =>
     def join(that: T): T = this.asInstanceOf[T]
     def isEmpiric: Boolean = true
     def mirror(f: Tx): T
+
+    def invalidateOnTransform: Boolean = false
+
     final def key = self.getClass
     override final def hashCode(): Int = key.hashCode()
   }

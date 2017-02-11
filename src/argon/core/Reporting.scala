@@ -65,19 +65,22 @@ trait Reporting {
   }
 
   final def warn(ctx: SourceContext, x: => Any): Unit = warn(ctx.toString() + ": " + x)
-  final def error(ctx: SourceContext, x: => Any): Unit = {
+  final def error(ctx: SourceContext, x: => Any, noError: Boolean = false): Unit = {
     error(ctx.fileName + ":" + ctx.line + ": " + x)
-    _errors += 1
+    if (!noError) _errors += 1
   }
 
-  final def warn(ctx: SourceContext): Unit = if (ctx.lineContent.isDefined) {
+  final def warn(ctx: SourceContext, showCaret: Boolean): Unit = if (ctx.lineContent.isDefined) {
     warn(ctx.lineContent.get)
-    warn(" "*(ctx.column-1) + "^")
+    if (showCaret) warn(" "*(ctx.column-1) + "^") else warn("")
   }
-  final def error(ctx: SourceContext): Unit = if (ctx.lineContent.isDefined) {
+  final def error(ctx: SourceContext, showCaret: Boolean): Unit = if (ctx.lineContent.isDefined) {
     error(ctx.lineContent.get)
-    error(" "*(ctx.column-1) + "^")
+    if (showCaret) error(" "*(ctx.column-1) + "^") else error("")
   }
+
+  final def warn(ctx: SourceContext): Unit = warn(ctx, showCaret = false)
+  final def error(ctx: SourceContext): Unit = error(ctx, showCaret = false)
 
   def readable(x: Any): String = x match {
     case c:Class[_]    => c.getName.split('$').last.replace("class ", "")
