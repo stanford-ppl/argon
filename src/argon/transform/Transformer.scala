@@ -86,9 +86,8 @@ abstract class Transformer { self =>
 
   final def mirror(props: Map[Class[_],Metadata[_]]): Map[Class[_],Metadata[_]] = {
     // Somehow, using mapValues here causes the metadata to be call by name, causing it to re-mirror on every fetch...
-    props.map{case (key,meta) =>
-      key -> mirror(meta)
-    }.toMap
+    // Also, scala docs lie about the return type of collect on flatMap apparently
+    props.collect{case (key,meta) if !meta.invalidateOnTransform => key -> mirror(meta) }.toMap
   }
   final def mirror[M<:Metadata[_]](m: M): M = m.mirror(self.asInstanceOf[Tx]).asInstanceOf[M]
 
