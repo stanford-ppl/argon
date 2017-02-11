@@ -1,11 +1,13 @@
 package argon.traversal
 
+import argon.Config
 import argon.core.Staging
 
 trait BlockTraversal {
   val IR: Staging
   import IR._
 
+  /** All statements defined in lower (further nested) blocks within the current traversal scope **/
   private var innerScope: Seq[NodeId] = _
 
   final protected def scrubSym(s: Sym[_]): Unit = {
@@ -32,6 +34,10 @@ trait BlockTraversal {
     withInnerScope(ids){ body }
   }
 
+  /**
+    * Check that nothing got messed up in the IR
+    * (Basically just checks that, for a given block, all effects that should be bound to that block were scheduled)
+    */
   private def scopeSanityCheck(block: Block[_], scope: Seq[Int]): Unit = {
     val observable = block.effectful.map(defOf).map(_.id).distinct // node ids for effect producers
     val actual = observable intersect scope
@@ -46,7 +52,42 @@ trait BlockTraversal {
 
   final protected def visitStms(stms: Seq[Stm]): Unit = stms.foreach(visitStm)
 
+  /**
+    * Gives a list of all statements defined in the scope of this block
+    * Only returns statements within a single level (i.e. doesn't give contents of blocks within this block)
+    * Statements are returned in the same order that they would be traversed in.
+    */
   final protected def blockContents(block: Block[_]): Seq[Stm] = traverseStmsInBlock(block, {stms => stms})
+
+  /**
+    * Gives a list of symbols which are used in this block and defined outside this block
+    * Also gives a list of all statements defined in this block, including all nested scopes
+    * NOTE: This is likely somewhat expensive, should be used sparingly
+    */
+  final protected def blockInputsAndNestedContents(block: Block[_]): (Seq[Exp[_]], Seq[Stm]) = {
+
+    // NOTE: Can't use repeated blockContents calls here, as getting schedule relies on innerScope being updated
+    def definedInBlock(x: Block[_]): Seq[Stm] = {
+      traverseStmsInBlock(x, {stms => stms ++ stms.flatMap{_.rhs.blocks.flatMap(definedInBlock)} })
+    }
+
+    val stms = definedInBlock(block)
+    val used = stms.flatMap(_.rhs.inputs) ++ block.inputs
+    val made = stms.flatMap{stm => stm.lhs ++ stm.rhs.binds }.toSet
+
+    val inputs = used filterNot (made contains _)
+
+    if (Config.verbosity > 1) {
+      log(c"Used:")
+      used.foreach{s => log(c"  ${str(s)}")}
+      log(c"Made:")
+      made.foreach{s => log(c"  ${str(s)}")}
+      log(c"Inputs:")
+      inputs.foreach{s => log(c"  ${str(s)}")}
+    }
+
+    (inputs, stms)
+  }
 
   final protected def traverseStmsInBlock(block: Block[_]): Unit = traverseStmsInBlock(block, visitStms)
   final protected def traverseStmsInBlock[A](block: Block[_], func: Seq[Stm] => A): A = {
