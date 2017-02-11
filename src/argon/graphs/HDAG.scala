@@ -7,7 +7,7 @@ trait HDAG extends AbstractHDAG with GraphMetadata {
   override type NodeId = Int
 
   // Based on performance testing LongMap is slightly faster than others (even with casting)
-  type OrderCache = scala.collection.mutable.LongMap[(NodeId,Int)]
+  type OrderCache = scala.collection.mutable.LongMap[(NodeId,Int)] // EdgeId -> (NodeId,Int)
   def OrderCache() = new scala.collection.mutable.LongMap[(NodeId,Int)]()
 
   private val comparator = new java.util.Comparator[(NodeId,Int)] {

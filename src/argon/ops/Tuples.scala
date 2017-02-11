@@ -28,7 +28,6 @@ trait TupleExp extends Staging with StructExp with NumExp with BitsExp {
     override def unwrapped(x: Tup2[A, B]) = x.s
     override def typeArguments = List(m1, m2)
     override def stagedClass = classOf[Tup2[A,B]]
-    override def isPrimitive = true
 
     override def fields = List("_1" -> m1, "_2" -> m2)
   }

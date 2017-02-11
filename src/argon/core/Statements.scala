@@ -6,7 +6,7 @@ import scala.collection.mutable
 
 trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   // -- State
-  protected val defCache = new mutable.HashMap[Def, List[Sym[_]]]
+  val defCache = new mutable.HashMap[Def, List[Sym[_]]]
   protected val shallowAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
   protected val deepAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
   protected val aliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
@@ -33,8 +33,6 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   // --- Helper functions
   // Getting statement returns Option to account for Bounds, but this is known to be a Sym
   def stmOf(sym: Sym[_]): Stm = stmFromSymId(sym.id).get
-
-  def allInputs(d: Def): List[Exp[_]] = nodeInputs(d.id).map{id => symFromSymId(id) }
 
   private[argon] def stmFromNodeId(id: Int): Option[Stm] = {
     val x = triple(id)

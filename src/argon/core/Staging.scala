@@ -98,17 +98,21 @@ trait Staging extends Statements {
           depsOf(s) = depsOf(s) ++ deps
           context +:= s // prepend (O(1))
         }
+
+        // Correctness checks -- cannot have mutable aliases, cannot mutate immutable symbols
+        val immutables = effects.writes.filterNot(isMutable)
+        val aliases = mutableAliases(d) diff effects.writes
+
+        if (aliases.nonEmpty) new IllegalMutableSharingError(ss.head, aliases)(ctx)
+        if (immutables.nonEmpty) new IllegalMutationError(ss.head, immutables)(ctx)
+
         ss
       }
+
       if (effects.isIdempotent) {
         // CSE statements which are idempotent and have identical effect summaries (e.g. repeated reads w/o writes)
         val symsWithSameDef = defCache.getOrElse(d, Nil) intersect context
         val symsWithSameEffects = symsWithSameDef.filter { case Effectful(u2, es) => u2 == effects && es == deps }
-
-//        log(c"def cache: ${defCache.getOrElse(d,Nil)}")
-//        log(c"context: $context")
-//        log(c"syms with same def in context: $symsWithSameDef")
-//        log(c"syms with same def and effects: $symsWithSameEffects")
 
         if (symsWithSameEffects.isEmpty) {
           val syms = stageEffects()
@@ -120,21 +124,33 @@ trait Staging extends Statements {
           symsWithSameEffects
         }
       }
-      else {
-        val z = stageEffects()
-        // Correctness checks -- cannot have mutable aliases, cannot mutate immutable symbols
-        val aliases = mutableAliases(d) diff effects.writes
-        val immutables = effects.writes.filterNot(isMutable)
-
-        if (aliases.nonEmpty) new IllegalMutableSharingError(z.head, aliases)(ctx)
-        if (immutables.nonEmpty) new IllegalMutationError(z.head, immutables)(ctx)
-        z
-      }
+      else stageEffects()
     }
   }
 
 
   private def single[T:Staged](xx: List[Sym[_]]): Sym[T] = xx.head.asInstanceOf[Sym[T]]
+
+
+  // TODO: where does this actually belong?
+  def makeScopeIndex(scope: Iterable[Stm]): OrderCache = buildScopeIndex(scope.map(_.rhs.id))
+  def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache) = scheduleDepsWithIndex(syms(roots).map(_.id), cache)
+
+  def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => List[Stm]) =  {
+    def succ(node: NodeId): Iterable[NodeId] = nodeOutputs(node).map(symFromSymId).flatMap(next).map(_.rhs.id)
+
+    val start = roots.map(_.rhs.id)
+
+    if (checkAcyclic) {
+      val xx = sccs(start){node => succ(node) }
+      checkIfAcyclic(roots, xx)
+      xx.flatten.reverse
+    }
+    else {
+      dfs(start){node => succ(node) }
+    }
+  }
+
 
   /**
     * DANGER ZONE
@@ -145,4 +161,5 @@ trait Staging extends Statements {
     removeEdge(x)
     context = context.filterNot(_ == x)
   }
+
 }

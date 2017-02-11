@@ -36,6 +36,8 @@ trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp {
 
   case class ArrayApply[T:Staged](array: Exp[ArgonArray[T]], i: Exp[Int32]) extends Op[T] {
     def mirror(f:Tx) = array_apply(f(array),f(i))
+    override def aliases = Nil
+    //override def extracts = syms(array) TODO: Why does this cause issues?
   }
 
   case class ArrayLength[T:Staged](array: Exp[ArgonArray[T]]) extends Op[Int32] {
