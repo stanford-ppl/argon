@@ -134,7 +134,9 @@ trait Staging extends Statements {
 
   // TODO: where does this actually belong?
   def makeScopeIndex(scope: Iterable[Stm]): OrderCache = buildScopeIndex(scope.map(_.rhs.id))
-  def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache) = scheduleDepsWithIndex(syms(roots).map(_.id), cache)
+  def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache): List[Stm] = {
+    scheduleDepsWithIndex(syms(roots).map(_.id), cache).flatMap(stmFromNodeId)
+  }
 
   def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => List[Stm]) =  {
     def succ(node: NodeId): Iterable[NodeId] = nodeOutputs(node).map(symFromSymId).flatMap(next).map(_.rhs.id)
