@@ -138,12 +138,12 @@ trait Staging extends Statements {
     scheduleDepsWithIndex(syms(roots).map(_.id), cache).flatMap(stmFromNodeId)
   }
 
-  def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => List[Stm]) =  {
+  def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => List[Stm]): List[Stm] = {
     def succ(node: NodeId): Iterable[NodeId] = nodeOutputs(node).map(symFromSymId).flatMap(next).map(_.rhs.id)
 
     val start = roots.map(_.rhs.id)
 
-    if (checkAcyclic) {
+    val ids = if (checkAcyclic) {
       val xx = sccs(start){node => succ(node) }
       checkIfAcyclic(roots, xx)
       xx.flatten.reverse
@@ -151,6 +151,7 @@ trait Staging extends Statements {
     else {
       dfs(start){node => succ(node) }
     }
+    ids.flatMap(stmFromNodeId)
   }
 
 
