@@ -11,6 +11,11 @@ trait CppGenArrayExt extends CppGenArray {
     case _ => 0
   }
  
+  private def getPrimitiveType(tp: Staged[_]): String = tp match {
+    case tp: ArrayType[_] => getPrimitiveType(tp.typeArguments.head) 
+    case _ => remap(tp)
+  }
+
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case ArrayUpdate(array, i, data) => emit(src"val $lhs = $array.update($i, $data)")
     case MapIndices(size, func, i)   =>
@@ -72,24 +77,24 @@ trait CppGenArrayExt extends CppGenArray {
       (0 until nesting).map{ level => 
         val grabbers = (0 until level).map{ m => """->apply(0))""" }.mkString("")
         val openParens = (0 until level).map{ m => "(" }.mkString{""}
-        emit(src"int size_$level = ${openParens}${array}${grabbers}->length")
+        emit(src"int size_${lhs}_$level = ${openParens}${array}${grabbers}->length;")
       }
-      emit(src"""${lhs.tp}* $lhs = new ${lhs.tp}(${(0 until nesting).map{ m => "size_$m" }.mkString("*")});""")
+      emit(src"""${lhs.tp}* $lhs = new ${lhs.tp}(${(0 until nesting).map{ m => src"size_${lhs}_$m" }.mkString("*")});""")
 
       // Open all levels of loop
       (0 until nesting).foreach { level => 
         val grabbers = (0 until level).map{ "[0]" }.mkString("") 
-        open(src"for (int ${i}_$level = 0; ${i}_${level} < ${array}->length; ${i}_${level}++) { ")
+        open(src"for (int ${i}_$level = 0; ${i}_${level} < size_${lhs}_$level; ${i}_${level}++) { ")
       }
 
       // Pluck off elements of the $array
       val applyString = (0 until nesting).map{ level => src"""->apply(${i}_${level}))""" }.mkString("")
       val parensString = (0 until nesting).map{ level => """(""" }.mkString("")
-      emit(src"${func.result.tp} ${func.result} = ${parensString}${array}${applyString}")
+      emit(src"${getPrimitiveType(lhs.tp)} ${func.result} = ${parensString}${array}${applyString};")
 
       // Update the lhs
       val flatIndex = (0 until nesting).map{ level => 
-        src"""${ (level+1 until nesting).map{ k => src"size_$k" }.mkString("*") }*${i}_${level}"""
+        src"""${ (level+1 until nesting).map{ k => src"size_${lhs}_$k" }.mkString("*") } ${ if (level+1 < nesting) "*" else "" }${i}_${level}"""
       }.mkString(" + ")
       emit(src"$lhs->update($flatIndex, ${func.result});")
 

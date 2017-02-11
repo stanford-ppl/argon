@@ -33,12 +33,12 @@ trait CppGenFixPt extends CppCodegen {
     case FixEql(x,y) => emit(src"${lhs.tp} $lhs = $x == $y;")
     case FixMod(x,y) => emit(src"${lhs.tp} $lhs = $x % $y;")
     case FixRandom(x) => lhs.tp match {
-      case IntType()  => emit(src"val $lhs = cpp.util.Random.nextInt()")
-      case LongType() => emit(src"val $lhs = cpp.util.Random.nextLong()")
+      case IntType()  => emit(src"${lhs.tp} $lhs = cpp.util.Random.nextInt()")
+      case LongType() => emit(src"${lhs.tp} $lhs = cpp.util.Random.nextLong()")
     }
     case FixConvert(x) => lhs.tp match {
-      case IntType()  => emit(src"val $lhs = $x.toInt")
-      case LongType() => emit(src"val $lhs = $x.toLong")
+      case IntType()  => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;")
+      case LongType() => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;")
     }
     case _ => super.emitNode(lhs, rhs)
   }
