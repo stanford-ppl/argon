@@ -29,8 +29,8 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case FixOr(x,y)  => emit(src"val $lhs = $x | $y")
     case FixLt(x,y)  => emit(src"val $lhs = $x < $y")
     case FixLeq(x,y) => emit(src"val $lhs = $x <= $y")
-    case FixNeq(x,y) => emit(src"val $lhs = $x != $y")
-    case FixEql(x,y) => emit(src"val $lhs = $x == $y")
+    case FixNeq(x,y) => emit(src"val $lhs = $x =/= $y")
+    case FixEql(x,y) => emit(src"val $lhs = $x === $y")
     case FixMod(x,y) => emit(src"val $lhs = $x % $y")
     case FixRandom(x) => lhs.tp match {
       case IntType()  => emit(src"val $lhs = chisel.util.Random.nextInt()")
