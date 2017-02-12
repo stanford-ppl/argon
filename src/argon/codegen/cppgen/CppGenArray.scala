@@ -35,8 +35,8 @@ trait CppGenArray extends CppCodegen {
     case op@ArrayNew(size)      => emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($size);")
     case ArrayApply(array, i)   => 
       val asterisk = if (src"${lhs.tp}".contains("cppDeliteArray")) "*" else "" // TODO: Not sure why this is necessary
-      emit(src"${lhs.tp} $lhs = ${array}->apply($i);")
-    case ArrayLength(array)     => emit(src"${lhs.tp}${asterisk} $lhs = $array->length;")
+      emit(src"${lhs.tp}${asterisk} $lhs = ${array}->apply($i);")
+    case ArrayLength(array)     => emit(src"${lhs.tp} $lhs = $array->length;")
     case InputArguments()       => emit(src"${lhs.tp}* $lhs = args;")
     case _ => super.emitNode(lhs, rhs)
   }
