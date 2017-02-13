@@ -12,4 +12,12 @@ trait ScalaCodegen extends Codegen {
     visitBlock(b)
     emit(src"${b.result}")
   }
+
+  override def copyDependencies(out: String): Unit = {
+    // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
+    s"""cp -r ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/scalagen/resources/Makefile ${out}""".!
+    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/run.sh ${out}/..""".!
+    super.copyDependencies(out)
+  }
+
 }
