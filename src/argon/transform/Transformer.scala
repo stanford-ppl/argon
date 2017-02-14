@@ -10,9 +10,9 @@ abstract class Transformer { self =>
 
   def apply[T:Staged](b: Block[T]): Exp[T] = inlineBlock(b)
 
-  def apply[T:Staged](xs: List[Exp[T]]): List[Exp[T]] = xs.map{x => this.apply(x)}
-  def apply[T:Staged](xs: Seq[Exp[T]]): Seq[Exp[T]] = xs.map{x => this.apply(x)}
-  def apply[T:Staged](x: Option[Exp[T]]): Option[Exp[T]] = x.map{z => this.apply(z) }
+  def apply[T](xs: List[Exp[T]]): List[Exp[T]] = xs.map{x => this.apply(x)}
+  def apply[T](xs: Seq[Exp[T]]): Seq[Exp[T]] = xs.map{x => this.apply(x)}
+  def apply[T](x: Option[Exp[T]]): Option[Exp[T]] = x.map{z => this.apply(z) }
 
   def tx(xs: List[Exp[_]]): List[Exp[_]] = xs.map{x => f(x) }
   def tx(xs: Set[Exp[_]]): Set[Exp[_]] = xs.map{x => f(x) }
