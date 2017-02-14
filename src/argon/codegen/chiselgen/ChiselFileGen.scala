@@ -115,17 +115,9 @@ import java.io._""")
     }
 
     // Get traits that need to be mixed in
-    val traits = if (Config.multifile == 4) { 
-      List().toSet // TODO: FIX THIS!!!
-    } else {
-      streamMapReverse.keySet.toSet.map{
-        f:String => f.split('.').dropRight(1).mkString(".") /*strip extension*/ 
-      }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
-    }
-
-    // val traits = streamMapReverse.keySet.toSet.map{
-    //   f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-    // }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
+    val traits = streamMapReverse.keySet.toSet.map{
+      f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+    }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
     withStream(getStream("TopLevelDesign")) {
       emit(s"""package app
 import templates._
