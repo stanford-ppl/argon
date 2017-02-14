@@ -23,6 +23,7 @@ trait Codegen extends Traversal {
   var streamTab = collection.mutable.Map[String, Int]() // Map from filename to its tab level
   var streamMap = collection.mutable.Map[PrintWriter, String]() // Map from PrintWriter to its string name
   var streamMapReverse = collection.mutable.Map[String, PrintWriter]() // Map from PrintWriter to its string name
+  var topLayerTraits = List[String]() // List of top layer nodes, used in multifile==4 generation
   val tabWidth: Int = 2
 
   def tabbed: String = " "*(tabWidth*(streamTab getOrElse (streamName, 0)))
