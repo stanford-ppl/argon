@@ -115,15 +115,23 @@ import java.io._""")
     }
 
     // Get traits that need to be mixed in
-    val traits = streamMapReverse.keySet.toSet.map{
-      f:String => f.split('.').dropRight(1).mkString(".") /*strip extension*/ 
-    }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
+    val traits = if (Config.multifile == 4) { 
+      List().toSet // TODO: FIX THIS!!!
+    } else {
+      streamMapReverse.keySet.toSet.map{
+        f:String => f.split('.').dropRight(1).mkString(".") /*strip extension*/ 
+      }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
+    }
+
+    // val traits = streamMapReverse.keySet.toSet.map{
+    //   f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+    // }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
     withStream(getStream("TopLevelDesign")) {
       emit(s"""package app
 import templates._
 import interfaces._
 import chisel3._
-class TopModule() extends GlobalWires with ${(traits+"TopTrait").mkString("\n with ")} {
+class TopModule() extends GlobalWires with ${(traits++Set("TopTrait")).mkString("\n with ")} {
   ${traits.map{ a => s"  create_${a}()"}.mkString("\n") }
 }
   // TopModule class mixes in all the other traits and is instantiated by tester""")

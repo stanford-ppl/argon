@@ -1,9 +1,9 @@
 package argon.codegen.cppgen
 
-import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp}
+import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, IfThenElseExp}
 
 trait CppGenArrayExt extends CppGenArray {
-  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp
+  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with IfThenElseExp
   import IR._
 
   private def getNestingLevel(tp: Staged[_]): Int = tp match {
@@ -51,15 +51,20 @@ trait CppGenArrayExt extends CppGenArray {
 
       // 
     case ArrayReduce(array, apply, reduce, i, rV) =>
-      emit(src"${lhs.tp} $lhs;")
+
+      if (isArrayType(lhs.tp)) {
+        emit(src"""${lhs.tp}${if (isArrayType(lhs.tp)) "*" else ""} $lhs;""") 
+      } else {
+        emit(src"${lhs.tp} $lhs;") 
+      }
       open(src"if (${array}->length > 0) { // Hack to handle reductions on things of length 0")
       emit(src"$lhs = ${array}->apply(0);")
       closeopen("} else {")
       emit(src"$lhs = 0;")
       close("}")
       open(src"for (int $i = 1; $i < ${array}->length; ${i}++) {")
-      emit(src"${rV._1.tp} ${rV._1} = ${array}->apply($i);")
-      emit(src"${rV._2.tp} ${rV._2} = $lhs;")
+      emit(src"""${rV._1.tp}${if (isArrayType(rV._1.tp)) "*" else ""} ${rV._1} = ${array}->apply($i);""")
+      emit(src"""${rV._2.tp}${if (isArrayType(rV._2.tp)) "*" else ""} ${rV._2} = $lhs;""")
       emitBlock(reduce)
       emit(src"$lhs = ${reduce.result};")
       close("}")
