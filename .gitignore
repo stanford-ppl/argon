@@ -10,6 +10,7 @@ out/*
 target/
 logs/*
 gen/*
+libs/*
 lib_managed/
 src_managed/
 project/boot/
