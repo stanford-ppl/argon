@@ -4,7 +4,7 @@ import argon.ops._
 import argon.{AppCore, LibCore}
 import argon.codegen.scalagen.ScalaCodegen
 import argon.core.Staging
-import org.scalatest.{FlatSpec, Matchers, ShouldMatchers}
+import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized.{SourceContext, virtualize}
 
 trait SimpleLambdaApi extends SimpleLambdaExp with FixPtApi {

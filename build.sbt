@@ -1,3 +1,11 @@
+scalaVersion := "2.12.1"
+
+val scalatestVersion = "3.0.1"
+
+val paradiseVersion = "2.1.0"  // check here: https://github.com/scalamacros/paradise/releases
+
+
+
 name := "argon"
 
 version := "1.0"
@@ -5,8 +13,6 @@ version := "1.0"
 isSnapshot := true
 
 organization := "stanford-ppl"
-
-scalaVersion := "2.11.2"
 
 scalaSource in Compile <<= baseDirectory(_/ "src")
 
@@ -20,11 +26,9 @@ publishArtifact in (Test, packageBin) := true
 
 testOptions in Test += Tests.Argument("-oDF")
 
-val paradiseVersion = "2.0.1"
-
 libraryDependencies += "org.virtualized" %% "virtualized" % "0.1"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.0" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % scalatestVersion % "test"
 
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value % "compile"
 

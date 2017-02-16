@@ -1,9 +1,9 @@
 package argon.codegen.cppgen
 
-import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp}
+import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, IfThenElseExp}
 
 trait CppGenArrayExt extends CppGenArray {
-  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp
+  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with IfThenElseExp
   import IR._
 
   private def getNestingLevel(tp: Staged[_]): Int = tp match {
@@ -11,6 +11,11 @@ trait CppGenArrayExt extends CppGenArray {
     case _ => 0
   }
  
+  private def getPrimitiveType(tp: Staged[_]): String = tp match {
+    case tp: ArrayType[_] => getPrimitiveType(tp.typeArguments.head) 
+    case _ => remap(tp)
+  }
+
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case ArrayUpdate(array, i, data) => emit(src"val $lhs = $array.update($i, $data)")
     case MapIndices(size, func, i)   =>
@@ -46,15 +51,20 @@ trait CppGenArrayExt extends CppGenArray {
 
       // 
     case ArrayReduce(array, apply, reduce, i, rV) =>
-      emit(src"${lhs.tp} $lhs;")
+
+      if (isArrayType(lhs.tp)) {
+        emit(src"""${lhs.tp}${if (isArrayType(lhs.tp)) "*" else ""} $lhs;""") 
+      } else {
+        emit(src"${lhs.tp} $lhs;") 
+      }
       open(src"if (${array}->length > 0) { // Hack to handle reductions on things of length 0")
       emit(src"$lhs = ${array}->apply(0);")
       closeopen("} else {")
       emit(src"$lhs = 0;")
       close("}")
       open(src"for (int $i = 1; $i < ${array}->length; ${i}++) {")
-      emit(src"${rV._1.tp} ${rV._1} = ${array}->apply($i);")
-      emit(src"${rV._2.tp} ${rV._2} = $lhs;")
+      emit(src"""${rV._1.tp}${if (isArrayType(rV._1.tp)) "*" else ""} ${rV._1} = ${array}->apply($i);""")
+      emit(src"""${rV._2.tp}${if (isArrayType(rV._2.tp)) "*" else ""} ${rV._2} = $lhs;""")
       emitBlock(reduce)
       emit(src"$lhs = ${reduce.result};")
       close("}")
@@ -65,22 +75,35 @@ trait CppGenArrayExt extends CppGenArray {
       close("}")
 
     case ArrayFlatMap(array, apply, func, i) =>
-      emit("// flatMap, not sure if this is correct. How can I get loop size?")
-      val nesting = getNestingLevel(lhs.tp)
-      val lenString = (0 until nesting).map{ level => 
-        val grabbers = (0 until level).map{ "[0]" }.mkString("") 
-        src"${array}${grabbers}->length"
-      }.mkString("*")
-      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}(lenString);")
+      val nesting = getNestingLevel(array.tp)
+      emit("// TODO: flatMap node assumes the func block contains only applies (.flatten)")
+
+      // Initialize lhs array
+      (0 until nesting).map{ level => 
+        val grabbers = (0 until level).map{ m => """->apply(0))""" }.mkString("")
+        val openParens = (0 until level).map{ m => "(" }.mkString{""}
+        emit(src"int size_${lhs}_$level = ${openParens}${array}${grabbers}->length;")
+      }
+      emit(src"""${lhs.tp}* $lhs = new ${lhs.tp}(${(0 until nesting).map{ m => src"size_${lhs}_$m" }.mkString("*")});""")
+
+      // Open all levels of loop
       (0 until nesting).foreach { level => 
         val grabbers = (0 until level).map{ "[0]" }.mkString("") 
-        open(src"for (int ${i}_$level = 0; ${i}_level < ${array}->length; ${i}_${level}++) { ")
+        open(src"for (int ${i}_$level = 0; ${i}_${level} < size_${lhs}_$level; ${i}_${level}++) { ")
       }
-      // TODO: NEED TO FIX THE STUFF INSIDE OF HERE!
-      visitBlock(apply)
-      emitBlock(func)
-      emit(src"$lhs->update($i, ${func.result});")
 
+      // Pluck off elements of the $array
+      val applyString = (0 until nesting).map{ level => src"""->apply(${i}_${level}))""" }.mkString("")
+      val parensString = (0 until nesting).map{ level => """(""" }.mkString("")
+      emit(src"${getPrimitiveType(lhs.tp)} ${func.result} = ${parensString}${array}${applyString};")
+
+      // Update the lhs
+      val flatIndex = (0 until nesting).map{ level => 
+        src"""${ (level+1 until nesting).map{ k => src"size_${lhs}_$k" }.mkString("*") } ${ if (level+1 < nesting) "*" else "" }${i}_${level}"""
+      }.mkString(" + ")
+      emit(src"$lhs->update($flatIndex, ${func.result});")
+
+      // Close all levels of loop
       (0 until nesting).foreach { level => 
         val grabbers = (0 until level).map{ "[0]" }.mkString("") 
         close("}")

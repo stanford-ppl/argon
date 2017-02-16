@@ -95,6 +95,9 @@ trait ArrayExtExp extends ArrayExp {
     override def inputs = syms(size) ++ syms(func)
     override def freqs  = normal(size) ++ hot(func)
     override def binds = i +: super.binds
+
+    override def aliases = Nil
+
     val mT = typ[T]
   }
   case class ArrayForeach[T:Staged](
