@@ -127,8 +127,8 @@ trait Definitions extends Blocks { self: Staging =>
 
   private val __syms: PartialFunction[Any,List[Symbol[_]]] = {
     case s: Symbol[_] => List(s)
-    case b: Block[_] => syms(b.result)
-    case d: Def => d.inputs
+    case b: Block[_]  => syms(b.result)
+    case d: Def       => d.inputs
     case l: Iterable[_] => recursive.collectLists(__syms)(l.iterator)
   }
   def syms(a: Any*): List[Symbol[_]] = {
@@ -141,14 +141,15 @@ trait Definitions extends Blocks { self: Staging =>
   def onlySyms(a: Any*): Seq[Sym[_]] = syms(a).collect{case s: Sym[_] => s}
 
 
-  private def symsFreq(a: Any): List[(Symbol[_],Float)] = recursive.collectLists {
-    case s:Symbol[_] => Iterable((s, 1.0f))
-    case d:Def => d.freqs
+  private def symsFreq(a: Any*): List[(Symbol[_],Float)] = recursive.collectLists {
+    case s: Symbol[_] => Iterable((s, 1.0f))
+    case b: Block[_]  => symsFreq(b.result)
+    case d: Def       => d.freqs
   }(a)
 
-  final def normal(e: Any) = symsFreq(e)
-  final def hot(e: Any) = symsFreq(e).map{case (s,f) => (s,f*1000.0f) }
-  final def cold(e: Any) = symsFreq(e).map{case (s,f) => (s, f*0.5f) }
+  final def normal(e: Any*) = symsFreq(e:_*)
+  final def hot(e: Any*) = symsFreq(e:_*).map{case (s,f) => (s,f*1000.0f) }
+  final def cold(e: Any*) = symsFreq(e:_*).map{case (s,f) => (s, f*0.5f) }
 
   final def aliasSyms(a: Any): Set[Symbol[_]]   = recursive.collectSets{case s: Symbol[_] => Set(s) case d: Def => d.aliases }(a)
   final def containSyms(a: Any): Set[Symbol[_]] = recursive.collectSets{case d: Def => d.contains}(a)
