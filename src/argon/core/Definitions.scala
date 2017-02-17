@@ -18,6 +18,8 @@ trait Definitions extends Blocks { self: Staging =>
   abstract class Def extends Node with Product {
 
     final def allInputs: List[Symbol[_]] = nodeInputs(this.id).map{id => symFromSymId(id) }
+    final def expInputs: List[Exp[_]] = recursive.collectLists(__exps)(productIterator)
+
 
     def outputTypes: List[Staged[_]]
 
@@ -131,6 +133,13 @@ trait Definitions extends Blocks { self: Staging =>
     case d: Def       => d.inputs
     case l: Iterable[_] => recursive.collectLists(__syms)(l.iterator)
   }
+  private val __exps: PartialFunction[Any,List[Exp[_]]] = {
+    case e: Exp[_]   => List(e)
+    case b: Block[_] => List(b.result)
+    case d: Def      => d.expInputs
+    case l: Iterable[_] => recursive.collectLists(__exps)(l.iterator)
+  }
+
   def syms(a: Any*): List[Symbol[_]] = {
     val result = if (__syms.isDefinedAt(a)) __syms(a) else Nil
     //log(c"syms($a) = $result")
