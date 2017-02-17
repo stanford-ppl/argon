@@ -163,7 +163,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
       case x: BigInt => makeFixPt(BigDecimal(x))
       case x: Int => makeFixPt(BigDecimal(x))
       case x: Long => makeFixPt(BigDecimal(x))
-      case x: Float => makeFixPt(BigDecimal(x))
+      case x: Float => makeFixPt(BigDecimal(x.toDouble))
       case x: Double => makeFixPt(BigDecimal(x))
       case x: String if !x.exists(_ == '.') => makeFixPt(BigDecimal(x))
       case c =>
