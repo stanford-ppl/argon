@@ -13,8 +13,8 @@ trait CppGenFixPt extends CppCodegen {
   }
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
-    case (IntType(), Const(c: BigInt)) => c.toInt.toString
-    case (LongType(), Const(c: BigInt)) => c.toLong.toString + "L"
+    case (IntType(), Const(c: BigDecimal)) => c.toInt.toString
+    case (LongType(), Const(c: BigDecimal)) => c.toLong.toString + "L"
     case _ => super.quoteConst(c)
   }
 

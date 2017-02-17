@@ -136,17 +136,17 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
 
 
   /** Constant lifting **/
-  private def literalToBigInt[S:BOOL,I:INT,F:INT](x: Any, enWarn: Boolean = true)(implicit ctx: SrcCtx): BigInt = {
+  private def literalToBigDecimal[S:BOOL,I:INT,F:INT](x: Any, enWarn: Boolean = true)(implicit ctx: SrcCtx): BigDecimal = {
     val sign = BOOL[S].v
     val ibits = INT[I].v
     val fbits = INT[F].v
 
     val tp = fixPtType[S,I,F]
 
-    val MAX_INTEGRAL_VALUE = if (sign) (BigInt(1) << (ibits-1)) - 1 else (BigInt(1) << ibits) - 1
-    val MIN_INTEGRAL_VALUE = if (sign) -(BigInt(1) << (ibits-1)) else BigInt(0)
+    val MAX_INTEGRAL_VALUE = BigDecimal( if (sign) (BigInt(1) << (ibits-1)) - 1 else (BigInt(1) << ibits) - 1 )
+    val MIN_INTEGRAL_VALUE = BigDecimal( if (sign) -(BigInt(1) << (ibits-1)) else BigInt(0) )
 
-    def makeInteger(v: BigInt): BigInt = {
+    def makeFixPt(v: BigDecimal): BigDecimal = {
       if (v > MAX_INTEGRAL_VALUE) {
         if (enWarn) new LiftOverflowError(tp, x)(ctx)
         MAX_INTEGRAL_VALUE
@@ -159,22 +159,25 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     }
 
     x match {
-      case x: BigInt => makeInteger(x)
-      case x: Int => makeInteger(BigInt(x))
-      case x: Long => makeInteger(BigInt(x))
-      case x: String if !x.exists(_ == '.') => makeInteger(BigInt(x))
+      case x: BigDecimal => makeFixPt(x)
+      case x: BigInt => makeFixPt(BigDecimal(x))
+      case x: Int => makeFixPt(BigDecimal(x))
+      case x: Long => makeFixPt(BigDecimal(x))
+      case x: Float => makeFixPt(BigDecimal(x))
+      case x: Double => makeFixPt(BigDecimal(x))
+      case x: String if !x.exists(_ == '.') => makeFixPt(BigDecimal(x))
       case c =>
         error(ctx, s"$c cannot be lifted to a fixed point value")
         error(ctx)
-        BigInt(0)
+        BigDecimal(0)
     }
   }
 
   private def createConstant[S:BOOL,I:INT,F:INT](x: Any, enWarn: Boolean = true)(implicit ctx: SrcCtx): Const[FixPt[S,I,F]] = {
-    constant[FixPt[S,I,F]](literalToBigInt[S,I,F](x,enWarn))
+    constant[FixPt[S,I,F]](literalToBigDecimal[S,I,F](x,enWarn))
   }
-  def fixpt[S:BOOL,I:INT,F:INT](x: BigInt)(implicit ctx: SrcCtx): Const[FixPt[S,I,F]] = createConstant[S,I,F](x, enWarn=false)
-  def int32(x: BigInt)(implicit ctx: SrcCtx): Const[Int32] = createConstant[TRUE,_32,_0](x, enWarn = true)
+  def fixpt[S:BOOL,I:INT,F:INT](x: BigDecimal)(implicit ctx: SrcCtx): Const[FixPt[S,I,F]] = createConstant[S,I,F](x, enWarn=false)
+  def int32(x: BigDecimal)(implicit ctx: SrcCtx): Const[Int32] = createConstant[TRUE,_32,_0](x, enWarn = true)
 
 
   implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
@@ -188,7 +191,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   }
 
 
-  def intParam(c: Int)(implicit ctx: SrcCtx): Param[Int32] = parameter[Int32](literalToBigInt[TRUE,_32,_0](c))
+  def intParam(c: Int)(implicit ctx: SrcCtx): Param[Int32] = parameter[Int32](literalToBigDecimal[TRUE,_32,_0](c))
 
 
   /** Lifting methods **/
@@ -283,17 +286,17 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
 
   /** Constructors **/
   def fix_neg[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = x match {
-    case Const(c:BigInt) => fixpt[S,I,F](-c)
+    case Const(c:BigDecimal) => fixpt[S,I,F](-c)
     case Op(FixNeg(x)) => x
     case _ => stage(FixNeg(x))(ctx)
   }
   def fix_inv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = x match {
-    case Const(c:BigInt) => fixpt[S,I,F](~c)
+    case Const(c:BigDecimal) if c.isWhole => fixpt[S,I,F](BigDecimal(~c.toBigInt))
     case Op(FixInv(x)) => x
     case _ => stage(FixInv(x))(ctx)
   }
   def fix_add[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a:BigInt), Const(b:BigInt)) => fixpt[S,I,F](a + b)
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => fixpt[S,I,F](a + b)
     case (a, Const(0)) => a                               // a + 0 => a
     case (Const(0), b) => b                               // 0 + a => a
     case (a, Op(FixNeg(b))) if a == b => fixpt[S,I,F](0)  // a + -a => 0
@@ -303,7 +306,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     case _ => stage(FixAdd(x,y))(ctx)
   }
   def fix_sub[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a:BigInt), Const(b:BigInt)) => fixpt[S,I,F](a - b)
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => fixpt[S,I,F](a - b)
     case (a, Const(0)) => a                                      // a - 0 => a
     case (Const(0), a) => stage(FixNeg(a))(ctx)                  // 0 - a => -a
     case (Op(FixAdd(a,b)), c) if a == c => b                     // a + b - a => b
@@ -313,7 +316,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   }
 
   def fix_mul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a: BigInt), Const(b: BigInt)) => fixpt[S,I,F](a * b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,F](a * b)
     case (_, b@Const(0)) => b
     case (a@Const(0), _) => a
     case (a, Const(1)) => a
@@ -321,42 +324,42 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     case _ => stage(FixMul(x, y) )(ctx)
   }
   def fix_div[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a: BigInt), Const(b: BigInt)) => fixpt[S,I,F](a / b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,F](a / b)
     case (a, Const(1)) => a
     case (_, Const(0)) => warn(ctx, "Division by constant 0 detected"); stage(FixDiv(x,y))(ctx)
     case _ => stage(FixDiv(x,y))(ctx)
   }
   def fix_and[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a: BigInt), Const(b: BigInt)) => fixpt[S,I,F](a & b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isWhole => fixpt[S,I,F](BigDecimal(a.toBigInt & b.toBigInt))
     case (a@Const(0), _) => a
     case (_, b@Const(0)) => b
     case _ => stage(FixAnd(x,y))(ctx)
   }
   def fix_or[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a: BigInt), Const(b: BigInt)) => fixpt[S,I,F](a | b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isWhole => fixpt[S,I,F](BigDecimal(a.toBigInt | b.toBigInt))
     case (a, Const(0)) => a
     case (Const(0), b) => b
     case _ => stage(FixOr(x,y))(ctx)
   }
   def fix_lt[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[Bool] = (x,y) match {
-    case (Const(a: BigInt), Const(b: BigInt)) => bool(a < b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => bool(a < b)
     case _ => stage( FixLt(x,y))(ctx)
   }
 
   def fix_leq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[Bool] = (x,y) match {
-    case (Const(a: BigInt), Const(b: BigInt)) => bool(a <= b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => bool(a <= b)
     case _ => stage(FixLeq(x,y))(ctx)
   }
   def fix_neq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[Bool] = (x,y) match {
-    case (Const(a: BigInt), Const(b: BigInt)) => bool(a != b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => bool(a != b)
     case _ => stage(FixNeq(x,y))(ctx)
   }
   def fix_eql[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[Bool] = (x,y) match {
-    case (Const(a: BigInt), Const(b: BigInt)) => bool(a == b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => bool(a == b)
     case _ => stage(FixEql(x,y))(ctx)
   }
   def fix_mod[S:BOOL,I:INT](x: Exp[FixPt[S,I,_0]], y: Exp[FixPt[S,I,_0]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,_0]] = (x,y) match {
-    case (Const(a: BigInt), Const(b: BigInt)) => fixpt[S,I,_0](a % b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,_0](a % b)
     case (a, Const(1)) => fixpt[S,I,_0](0)
     case _ => stage(FixMod(x,y))(ctx)
   }
