@@ -12,9 +12,17 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case _ => super.remap(tp)
   }
 
+  override protected def bitWidth(tp: Staged[_]): Int = tp match {
+      case IntType()  => 32
+      case LongType() => 32 // or 64?
+      case FixPtType(s,d,f) => d+f
+      case _ => super.bitWidth(tp)
+  }
+
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     case (IntType(), Const(c: BigDecimal)) => c.toInt.toString + ".U"
     case (LongType(), Const(c: BigDecimal)) => c.toLong.toString + ".L"
+    case (FixPtType(s,d,f), Const(c: BigDecimal)) => s"Utils.FixedPoint($s,$d,$f,$c)"
     case _ => super.quoteConst(c)
   }
 
@@ -39,6 +47,7 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case FixConvert(x) => lhs.tp match {
       case IntType()  => emit(src"val $lhs = $x // Fix to Fix")
       case LongType() => emit(src"val $lhs = $x // Fix to Long")
+      case FixPtType(s,d,f) => emit(src"val $lhs = $x // should be fixpt ${lhs.tp}")
     }
     case _ => super.emitNode(lhs, rhs)
   }

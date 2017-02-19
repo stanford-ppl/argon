@@ -15,6 +15,7 @@ trait CppGenFixPt extends CppCodegen {
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     case (IntType(), Const(c: BigDecimal)) => c.toInt.toString
     case (LongType(), Const(c: BigDecimal)) => c.toLong.toString + "L"
+    case (FixPtType(s,d,f), Const(c: BigDecimal)) => c.toString
     case _ => super.quoteConst(c)
   }
 
@@ -33,12 +34,14 @@ trait CppGenFixPt extends CppCodegen {
     case FixEql(x,y) => emit(src"${lhs.tp} $lhs = $x == $y;")
     case FixMod(x,y) => emit(src"${lhs.tp} $lhs = $x % $y;")
     case FixRandom(x) => lhs.tp match {
-      case IntType()  => emit(src"${lhs.tp} $lhs = cpp.util.Random.nextInt()")
-      case LongType() => emit(src"${lhs.tp} $lhs = cpp.util.Random.nextLong()")
+      case IntType()  => emit(src"${lhs.tp} $lhs = rand() % ${x.getOrElse(100)};")
+      case LongType() => emit(src"${lhs.tp} $lhs = rand() % ${x.getOrElse(100)};")
+      case _ => emit(src"${lhs.tp} $lhs = rand() % ${x.getOrElse(100)};")
     }
     case FixConvert(x) => lhs.tp match {
       case IntType()  => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;")
       case LongType() => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;")
+      case FixPtType(s,d,f) => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;  // should be fixpt ${lhs.tp}")
     }
     case _ => super.emitNode(lhs, rhs)
   }

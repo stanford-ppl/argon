@@ -35,6 +35,11 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     }
   }
 
+  protected def bitWidth(tp: Staged[_]): Int = {
+    throw new NoBitWidthException(tp)
+  }
+
+
   final protected def emitModule(lhs: String, x: String, args: String*): Unit = {
     // dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates/$x.scala""")
 
