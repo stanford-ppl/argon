@@ -108,6 +108,16 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
       error(c"Symbol $x has no defined access pattern")
     })
 
+  class NoBitWidthException(tp: Staged[_]) extends
+    CompilerException(16, c"Type $tp has no method for computing bit width", {
+      error(c"Type $tp has no method for computing bit width")
+    })
+
+  class UnsupportedBankingType(name: String, x: Exp[_]) extends
+    CompilerException(17, c"Memory $x has no rule for $name banking", {
+      error(c"Memory $x has no rule for $name banking")
+    })
+
   // --- User errors
   abstract class UserError(ctx: SrcCtx, console: => Unit) {
     console

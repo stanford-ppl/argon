@@ -35,11 +35,18 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     }
   }
 
+  protected def bitWidth(tp: Staged[_]): Int = {
+    throw new NoBitWidthException(tp)
+  }
+
+
   final protected def emitModule(lhs: String, x: String, args: String*): Unit = {
     // dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates/$x.scala""")
 
     emit(src"""val $lhs = Module(new ${x}(${args.mkString}))""")
   } 
+
+  protected def hasFracBits(tp: Staged[_]): Boolean = false
 
   override def copyDependencies(out: String): Unit = {
     // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy

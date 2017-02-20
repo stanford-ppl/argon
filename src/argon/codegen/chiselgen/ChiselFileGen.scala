@@ -21,13 +21,13 @@ trait ChiselFileGen extends FileGen {
     // val topTrait = getStream("TopTrait")
 
     withStream(getStream("TopTrait")) {
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Begin!")}
+      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Begin!")}
       preprocess(b)
       toggleEn() // Turn off
       emitMain(b)
       toggleEn() // Turn on
       postprocess(b)
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Complete!")}
+      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Complete!")}
       b
     }
   }
@@ -71,6 +71,8 @@ abstract class GlobalWires() extends Module{
     val ArgIn = new ArgInBundle()
     val ArgOut = new ArgOutBundle()
     val MemStreams = new MemStreamsBundle()
+    val StreamIns = new StreamInsBundle()
+    val StreamOuts = new StreamOutsBundle()
   })
 """)
     }

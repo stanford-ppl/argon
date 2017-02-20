@@ -12,6 +12,12 @@ trait ChiselGenFltPt extends ChiselCodegen {
     case _ => super.remap(tp)
   }
 
+  override protected def hasFracBits(tp: Staged[_]): Boolean = tp match {
+      case FloatType() => true
+      case DoubleType() => true
+      case _ => super.hasFracBits(tp)
+  }
+
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     case (FloatType(), Const(c: BigDecimal)) => c.toString + "f"
     case (DoubleType(), Const(c: BigDecimal)) => c.toString
