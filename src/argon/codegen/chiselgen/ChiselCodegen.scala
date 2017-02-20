@@ -46,6 +46,8 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     emit(src"""val $lhs = Module(new ${x}(${args.mkString}))""")
   } 
 
+  protected def hasFracBits(tp: Staged[_]): Boolean = false
+
   override def copyDependencies(out: String): Unit = {
     // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
     // s"mkdir ${out}${java.io.File.separator}templates" !

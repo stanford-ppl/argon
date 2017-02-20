@@ -9,6 +9,7 @@ trait CppGenFixPt extends CppCodegen {
   override protected def remap(tp: Staged[_]): String = tp match {
     case IntType() => "int32_t"
     case LongType() => "int32_t"
+    case FixPtType(s,d,f) => "Double"
     case _ => super.remap(tp)
   }
 
