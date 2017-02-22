@@ -49,19 +49,23 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   protected def hasFracBits(tp: Staged[_]): Boolean = false
 
   override def copyDependencies(out: String): Unit = {
-    // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
     // s"mkdir ${out}${java.io.File.separator}templates" !
     // s"mkdir ${out}${java.io.File.separator}templates".!
     // dependencies.foreach{dep => if (dep.needsCopy) {
     //   log(s"Copying ${dep.input} to $out")
     //   s"cp ${dep.input} ${out}${java.io.File.separator}templates${java.io.File.separator}${dep.outputPath}" !
     // }}
-    s"""cp -r ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates ${out}""".!
-    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/Makefile ${out}/..""".!
-    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/direct-test.sh ${out}/..""".!
-    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/build.sbt ${out}/..""".!
-    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/run.sh ${out}/..""".!
-    s"""cp -r ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/app-test ${out}""".!
+
+    val resourcesPath = s"${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources"
+
+    // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
+    s"""cp -r $resourcesPath/template-level/templates ${out}""".!
+    s"""cp -r $resourcesPath/template-level/fringeHW ${out}""".!
+    s"""cp    $resourcesPath/template-level/Top.scala ${out}""".!
+    s"""cp    $resourcesPath/template-level/TopTest.scala ${out}""".!
+    s"""cp    $resourcesPath/app-level/Makefile ${out}/..""".!
+    s"""cp    $resourcesPath/app-level/verilator.mk ${out}/..""".!
+    s"""cp    $resourcesPath/app-level/build.sbt ${out}/..""".!
     super.copyDependencies(out)
   }
 

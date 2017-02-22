@@ -77,16 +77,16 @@ abstract class GlobalWires() extends Module{
 """)
     }
 
-    withStream(getStream("GeneratedPoker")) {
-      emit(s"""package app
-
-import chisel3.iotesters.{PeekPokeTester, Driver, ChiselFlatSpec}
-import org.scalatest.Assertions._
-import java.io._""")
-      open(s"""class GeneratedPoker(c: TopModule) extends PeekPokeTester(c) {""")
-      emit(s"""var offchipMem = List[BigInt]()""")
-      open(s"def handleLoadStore() {")
-    }
+//    withStream(getStream("GeneratedPoker")) {
+//      emit(s"""package app
+//
+//import chisel3.iotesters.{PeekPokeTester, Driver, ChiselFlatSpec}
+//import org.scalatest.Assertions._
+//import java.io._""")
+//      open(s"""class GeneratedPoker(c: TopModule) extends PeekPokeTester(c) {""")
+//      emit(s"""var offchipMem = List[BigInt]()""")
+//      open(s"def handleLoadStore() {")
+//    }
 
     super.emitFileHeader()
   }
@@ -119,22 +119,22 @@ import java.io._""")
     // Get traits that need to be mixed in
     val traits = streamMapReverse.keySet.toSet.map{
       f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-    }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
+    }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" // - "GeneratedPoker"
     withStream(getStream("TopLevelDesign")) {
       emit(s"""package app
 import templates._
 import interfaces._
 import chisel3._
-class TopModule() extends GlobalWires with ${(traits++Set("TopTrait")).mkString("\n with ")} {
+class AccelTop(val w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int) extends GlobalWires with ${(traits++Set("TopTrait")).mkString("\n with ")} {
   ${traits.map{ a => s"  create_${a}()"}.mkString("\n") }
 }
   // TopModule class mixes in all the other traits and is instantiated by tester""")
     }
 
-    withStream(getStream("GeneratedPoker")) {
-      close("}")
-      close("}")
-    }
+//    withStream(getStream("GeneratedPoker")) {
+//      close("}")
+//      close("}")
+//    }
 
     super.emitFileFooter()
   }
