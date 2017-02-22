@@ -122,8 +122,8 @@ object StagedStructsMacro {
         val cc = q"$cls ; $mdef ; ..$evidences ; $stg ; $ev  "
 
         // Debugging
-        c.info(tree.pos, showCode(cc), force = true)
-        c.info(tree.pos, showRaw(cc), force = true)
+        //c.info(tree.pos, showCode(cc), force = true)
+        //c.info(tree.pos, showRaw(cc), force = true)
         cc
 
       case _ =>
