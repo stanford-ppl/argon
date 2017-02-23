@@ -47,7 +47,7 @@ import types._""")
 import templates._
 import chisel3._""")
       open(s"""trait BufferControlCxns extends TopTrait {""")
-      open(s"""def create_BufferControlCxns() {""")
+      if (Config.multifile < 4) open(s"""def create_BufferControlCxns() {""")
     }
 
     withStream(getStream("TopTrait")) {
@@ -73,6 +73,9 @@ abstract class GlobalWires() extends Module{
     val MemStreams = new MemStreamsBundle()
     val StreamIns = new StreamInsBundle()
     val StreamOuts = new StreamOutsBundle()
+    val dma_tomem_ios = new DMA_tomem_io()
+    val dma_frommem_ios = new DMA_frommem_io()
+    val video_decoder_ios = new Video_Decoder_io()
   })
 """)
     }
@@ -148,7 +151,7 @@ class TopModule() extends GlobalWires with ${(traits++Set("TopTrait")).mkString(
 
 
     withStream(getStream("GeneratedPoker")) {
-      close("}")
+      if (Config.multifile < 4) close("}")
       close("}")
     }
 
