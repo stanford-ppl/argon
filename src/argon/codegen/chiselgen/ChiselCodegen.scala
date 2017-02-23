@@ -66,6 +66,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     s"""cp    $resourcesPath/app-level/Makefile ${out}/..""".!
     s"""cp    $resourcesPath/app-level/verilator.mk ${out}/..""".!
     s"""cp    $resourcesPath/app-level/build.sbt ${out}/..""".!
+    s"""cp    $resourcesPath/app-level/run.sh ${out}/..""".!
     super.copyDependencies(out)
   }
 
