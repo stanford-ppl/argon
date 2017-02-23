@@ -115,7 +115,7 @@ import java.io._""")
     }
 
     withStream(getStream("BufferControlCxns")) {
-      close("}")
+      if (Config.multifile < 4) close("}")
       close("}")
     }
 
@@ -151,7 +151,7 @@ class TopModule() extends GlobalWires with ${(traits++Set("TopTrait")).mkString(
 
 
     withStream(getStream("GeneratedPoker")) {
-      if (Config.multifile < 4) close("}")
+      close("}")
       close("}")
     }
 
