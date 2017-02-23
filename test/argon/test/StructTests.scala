@@ -19,9 +19,12 @@ class StructTests extends FlatSpec with Matchers {
         val x = array(10).x
         val y = random[MyStruct]
 
+        val sum = array.reduce{(a,b) => a + b}
+
         println("Expected: 11")
         println("Value: " + x)
         println("Random: " + y)
+        println("Sum: " + sum)
       }
     }
     (new StructTest).main(Array.empty)

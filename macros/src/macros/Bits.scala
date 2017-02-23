@@ -3,9 +3,9 @@ import scala.reflect.macros.blackbox
 
 
 object Bits extends TypeclassMacro {
-  override def generateLookup(c: blackbox.Context)(name: c.TypeName): c.Tree = {
+  override def generateLookup(c: blackbox.Context)(name: c.TypeName): Option[c.Tree] = {
     import c.universe._
-    Ident(TypeName(name.toString + "BitsLookup"))
+    Some( Ident(TypeName(name.toString + "BitsLookup")) )
   }
 
   override def generateImplementation(c: blackbox.Context)(tree: c.Tree) = {
@@ -27,11 +27,9 @@ object Bits extends TypeclassMacro {
         val evidences = bitEvidence ++ stgEvidence
 
         val bitEvidenceParams = distinctTypes.zip(bitEvidence).map{case (tp,term) =>
-          //ValDef(Modifiers(Flag.PARAM | Flag.IMPLICIT), term, TypeApply(Ident(TypeName("Bits")), List(Ident(tp))), EmptyTree)
           q"$term: Bits[$tp]"
         }
         val stgEvidenceParams = distinctTypes.zip(stgEvidence).map{case (tp,term) =>
-          //ValDef(Modifiers(Flag.PARAM | Flag.IMPLICIT), term, q"Staged[$tp]", EmptyTree)
           q"$term: Staged[$tp]"
         }
         val implicits = bitEvidenceParams ++ stgEvidenceParams

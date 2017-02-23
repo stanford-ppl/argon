@@ -18,13 +18,13 @@ final class struct extends StaticAnnotation {
   * This should eventually be generated from Forge (?), for now just outlining how it might work.
   */
 abstract class TypeclassMacro {
-  def generateLookup(c: blackbox.Context)(name: c.TypeName): c.Tree
+  def generateLookup(c: blackbox.Context)(name: c.TypeName): Option[c.Tree]
   def generateImplementation(c: blackbox.Context)(className: c.Tree): List[c.Tree]
 }
 
 
 object StagedStructsMacro {
-  val typeclasses: List[TypeclassMacro] = List(Bits)
+  val typeclasses: List[TypeclassMacro] = List(Bits, Ariths)
 
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
     import c.universe._
@@ -77,7 +77,7 @@ object StagedStructsMacro {
             q""" ${Literal(Constant(termName.toString))} -> typ[$typeIdent]"""
         }
 
-        val lookups = typeclasses.map(_.generateLookup(c)(className) )
+        val lookups = typeclasses.flatMap(_.generateLookup(c)(className) )
         val parent = {
           if (lookups.length > 1) CompoundTypeTree(Template(lookups, noSelfType, Nil))
           else lookups.head
