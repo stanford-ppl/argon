@@ -17,7 +17,7 @@ trait AppCore { self =>
 
   def main(sargs: Array[String]): Unit = {
     __stagingArgs = sargs
-    Config.name = self.getClass.getName.split('$').last.replace("class ", "").replace('.','-')
+    Config.name = self.getClass.getName.split('$').head.replace("class ", "").replace('.','-')
     Config.logDir =  Config.cwd + Config.sep + "logs" + Config.sep + Config.name
     IR.compileOrRun( main() )
   }
@@ -38,10 +38,14 @@ trait CompilerCore extends Staging with ArrayExp { self =>
 
   def checkErrors(start: Long, stageName: String): Unit = if (hadErrors) {
     val time = (System.currentTimeMillis - start).toFloat
+    checkWarnings()
     error(s"""$nErrors ${plural(nErrors,"error","errors")} found during $stageName""")
     error(s"Total time: " + "%.4f".format(time/1000) + " seconds")
     if (testbench) throw new TestBenchFailed(nErrors)
     else System.exit(nErrors)
+  }
+  def checkWarnings(): Unit = if (hadWarns) {
+    warn(s"""$nWarns ${plural(nWarns, "warning","warnings")} found""")
   }
 
   def compileOrRun(blk: => Unit): Unit = {
@@ -68,6 +72,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     }
 
     val time = (System.currentTimeMillis - start).toFloat
+    checkWarnings()
     report(s"[\u001B[32mcompleted\u001B[0m] Total time: " + "%.4f".format(time/1000) + " seconds")
   }
 

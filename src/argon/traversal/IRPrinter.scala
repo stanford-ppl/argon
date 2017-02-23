@@ -8,6 +8,7 @@ trait IRPrinter extends Traversal {
   override def shouldRun = verbosity >= 1
 
   def strMeta(lhs: Exp[_]) {
+    nameOf(lhs).foreach{name => dbgs(c" - Name: $name") }
     dbgs(c" - Type: ${lhs.tp}")
     metadata.get(lhs).foreach{m => dbgs(c" - ${m._1}: ${m._2}") }
   }

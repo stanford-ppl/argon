@@ -132,7 +132,15 @@ trait Symbols extends StagedTypes with Metadata { self: Staging =>
     case _ => super.readable(x)
   }
 
+  object nameOf {
+    def apply(x: Exp[_]): Option[String] = ctxsOf(x).headOption.flatMap(_.assignedVariable)
+  }
+
   override def userReadable(x: Any): String = x match {
+    case e: Exp[_] => nameOf(e) match {
+      case Some(name) => name + " (" + super.userReadable(e) + ")"
+      case None => super.userReadable(e)
+    }
     case t: Staged[_] =>
       val tArgs = if (t.typeArguments.nonEmpty)
         t.typeArguments.map(userReadable).mkString("[",",","]")

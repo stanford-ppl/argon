@@ -16,8 +16,11 @@ trait Reporting {
 
   private var logstream: PrintStream = nullstream
   private var _errors = 0
+  private var _warns = 0
   def hadErrors = _errors > 0
   def nErrors = _errors
+  def hadWarns = _warns > 0
+  def nWarns = _warns
 
   def logError() { _errors += 1}
 
@@ -55,7 +58,7 @@ trait Reporting {
   }
 
   final def report(x: => Any): Unit = if (Config.verbosity >= 0) System.out.println(x)
-  final def warn(x: => Any): Unit = {
+  final def warn(x: => Any): Unit = if (Config.showWarn) {
     System.err.println(s"[\u001B[33mwarn\u001B[0m] $x")
     log(s"[warn] $x")
   }
@@ -64,7 +67,10 @@ trait Reporting {
     log(s"[error] $x")
   }
 
-  final def warn(ctx: SourceContext, x: => Any): Unit = warn(ctx.toString() + ": " + x)
+  final def warn(ctx: SourceContext, x: => Any, noWarn: Boolean = false): Unit = {
+    warn(ctx.toString() + ": " + x)
+    if (!noWarn) _warns += 1
+  }
   final def error(ctx: SourceContext, x: => Any, noError: Boolean = false): Unit = {
     error(ctx.fileName + ":" + ctx.line + ": " + x)
     if (!noError) _errors += 1

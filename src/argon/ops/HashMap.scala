@@ -28,7 +28,7 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
   /** Infix methods **/
   case class HashIndex[K:Staged](s: Exp[HashIndex[K]])
 
-  case class ArgonMap[K:Staged,V:Staged](s: Exp[ArgonMap[K,V]]) extends StructApi[ArgonMap[K,V]] {
+  case class ArgonMap[K:Staged,V:Staged](s: Exp[ArgonMap[K,V]]) extends Struct[ArgonMap[K,V]] {
     def keys(implicit ctx: SrcCtx): ArgonArray[K]   = field[ArgonArray[K]]("keys")
     def values(implicit ctx: SrcCtx): ArgonArray[V] = field[ArgonArray[V]]("values")
     def size(implicit ctx: SrcCtx): Index           = field[Index]("size")

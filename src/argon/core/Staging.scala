@@ -86,7 +86,7 @@ trait Staging extends Statements {
     log(c"  isIdempotent = ${effects.isIdempotent}")
 
     if (effects == Pure) registerDefWithCSE(d)(ctx)
-    else if (effects == Cold) registerDef(d, Nil)(ctx)    // Don't add "Cold" effects to context list, but don't CSE
+    //else if (effects == Cold) registerDef(d, Nil)(ctx)    // Don't add "Cold" effects to context list, but don't CSE
     else {
       checkContext()
       val deps = effectDependencies(effects)
@@ -96,7 +96,7 @@ trait Staging extends Statements {
         ss.foreach { s =>
           effectsOf(s) = effectsOf(s) andAlso effects
           depsOf(s) = depsOf(s) ++ deps
-          context +:= s // prepend (O(1))
+          context +:= s // prepend
         }
 
         // Correctness checks -- cannot have mutable aliases, cannot mutate immutable symbols
