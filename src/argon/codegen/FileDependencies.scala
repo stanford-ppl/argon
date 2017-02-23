@@ -21,8 +21,11 @@ trait FileDependencies extends Codegen {
   // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
   def copyDependencies(out: String): Unit = {
     dependencies.foreach{dep => if (dep.needsCopy) {
-      log(s"Copying ${dep.input} to $out")
-      s"cp ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}" !
+      s"mkdir ${out}${java.io.File.separator}${dep.outputPath}" !
+    }}
+    dependencies.foreach{dep => if (dep.needsCopy) {
+      log(s"cp -r ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}")
+      s"cp -r ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}" !
     }}
   }
   override protected def postprocess[S:Staged](b: Block[S]) = {

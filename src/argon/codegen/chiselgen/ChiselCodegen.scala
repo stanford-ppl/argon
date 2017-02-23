@@ -68,17 +68,14 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final protected def withSubStream[A](name: String, parent: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
     if (Config.multifile == 4) {
-      emit("// Creating sub kernel")
-      emit(src"""// create_${name}()""")
+      emit("// Creating sub kernel ${name}")
       withStream(newStream(name)) {
           emit("""package app
 import templates._
 import chisel3._""")
-          open(s"""trait ${name} extends TopTrait /*${parent.replace("AccelController","TopTrait")}*/ {""")
-          open(s"""def create_${name}() {""")
+          open(s"""trait ${name} extends ${parent.replace("AccelController","TopTrait")} {""")
           try { body } 
           finally { 
-            close("}")
             close("}")
           }
       }
