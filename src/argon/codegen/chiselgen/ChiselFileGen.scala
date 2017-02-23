@@ -46,7 +46,7 @@ import types._""")
       emit(s"""package app
 import templates._
 import chisel3._""")
-      open(s"""trait BufferControlCxns extends GlobalWires with TopTrait /*and possibly other subkernels up to this point*/ {""")
+      open(s"""trait BufferControlCxns extends TopTrait {""")
       open(s"""def create_BufferControlCxns() {""")
     }
 
@@ -55,7 +55,7 @@ import chisel3._""")
 import templates._
 import interfaces._
 import chisel3._""")
-      open(s"trait TopTrait extends GlobalWires /*and possibly subkernels*/ {")
+      open(s"trait TopTrait extends GlobalWires {")
       emit(s"// May want to have a main method defined here too")
     }
 
@@ -116,12 +116,25 @@ import java.io._""")
       close("}")
     }
 
+    if (Config.multifile == 4) {
+      val traits = streamMapReverse.keySet.toSet.map{
+        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+      }.toSet - "TopLevelDesign" - "IOModule" - "GeneratedPoker" - "GlobalWires"
+
+      withStream(getStream("TopLevelDesign")) {
+        emit(s"""package app
+import templates._
+import interfaces._
+import chisel3._
+class TopModule() extends GlobalWires with ${(traits++Set("TopTrait")).mkString("\n with ")} {}""")
+      }
+    } else {
     // Get traits that need to be mixed in
-    val traits = streamMapReverse.keySet.toSet.map{
-      f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-    }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
-    withStream(getStream("TopLevelDesign")) {
-      emit(s"""package app
+      val traits = streamMapReverse.keySet.toSet.map{
+        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+      }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
+      withStream(getStream("TopLevelDesign")) {
+        emit(s"""package app
 import templates._
 import interfaces._
 import chisel3._
@@ -129,7 +142,10 @@ class TopModule() extends GlobalWires with ${(traits++Set("TopTrait")).mkString(
   ${traits.map{ a => s"  create_${a}()"}.mkString("\n") }
 }
   // TopModule class mixes in all the other traits and is instantiated by tester""")
+      }
+        
     }
+
 
     withStream(getStream("GeneratedPoker")) {
       close("}")
