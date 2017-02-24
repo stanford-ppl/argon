@@ -32,40 +32,40 @@ trait Codegen extends Traversal {
     if (emitEn | forceful) {
       stream.println(tabbed + x)
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen ] Emission of ${x} does not belong in this backend")}
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   } 
   protected def open(x: String): Unit = {
     if (emitEn) {
       stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen ] Emission of ${x} does not belong in this backend")}
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   }
   protected def close(x: String): Unit = { 
     if (emitEn) {
       if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen ] Emission of ${x} does not belong in this backend")}
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   } 
   protected def closeopen(x: String): Unit = { // Good for "} else {" lines
     if (emitEn) {
       if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x); streamTab(streamName) += 1
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen ] Emission of ${x} does not belong in this backend")}
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   } 
 
   final protected def toggleEn(): Unit = {
     if (emitEn) {
       if (Config.emitDevel == 2) {
-        Console.println(s"[ ${lang}gen ] Disabling emits")
+        Console.println(s"[ ${lang}gen-NOTE ] Disabling emits")
       }
       emitEn = false
     } else {
       if (Config.emitDevel == 2) {
-        Console.println(s"[ ${lang}gen ] Enabling emits")
+        Console.println(s"[ ${lang}gen-NOTE ] Enabling emits")
       }
       emitEn = true      
     }
@@ -104,9 +104,9 @@ trait Codegen extends Traversal {
   protected def quoteConst(c: Const[_]): String = {
     if (Config.emitDevel > 0) {
       if (emitEn) { // Want to emit but can't
-        Console.println(s"[ ${lang}gen ] No quote for $c")  
+        Console.println(s"[ ${lang}gen-ERROR ] No quote for $c")  
       } else { // No need to emit
-        Console.println(s"[ ${lang}gen ] Quoting of $c does not belong in this backend")
+        Console.println(s"[ ${lang}gen-NOTE ] Quoting of $c does not belong in this backend")
       }
       
       ""
@@ -125,6 +125,7 @@ trait Codegen extends Traversal {
     case m: Staged[_] => remap(m)
     case s: String => s
     case c: Int => c.toString
+    case b: Boolean => b.toString
     case _ => throw new RuntimeException(s"Could not quote or remap $arg")
   }
 
@@ -134,10 +135,10 @@ trait Codegen extends Traversal {
       if (Config.emitDevel == 0) {
         throw new GenerationFailedException(rhs)
       } else {
-        Console.println(s"[ WARN ] no backend for $lhs = $rhs in $lang")  
+        Console.println(s"[ ${lang}gen-ERROR ] no backend for $lhs = $rhs in $lang")  
       } 
     } else {
-      if (Config.emitDevel == 2) Console.println(s"[ ${lang}gen ] Emission of ${lhs} = $rhs does not belong in this backend")
+      if (Config.emitDevel == 2) Console.println(s"[ ${lang}gen-NOTE ] Emission of ${lhs} = $rhs does not belong in this backend")
     }
   }
 

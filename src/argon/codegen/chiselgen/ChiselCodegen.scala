@@ -35,11 +35,18 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     }
   }
 
+  protected def bitWidth(tp: Staged[_]): Int = {
+    throw new NoBitWidthException(tp)
+  }
+
+
   final protected def emitModule(lhs: String, x: String, args: String*): Unit = {
     // dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates/$x.scala""")
 
     emit(src"""val $lhs = Module(new ${x}(${args.mkString}))""")
   } 
+
+  protected def hasFracBits(tp: Staged[_]): Boolean = false
 
   override def copyDependencies(out: String): Unit = {
     // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
@@ -61,17 +68,14 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final protected def withSubStream[A](name: String, parent: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
     if (Config.multifile == 4) {
-      emit("// Creating sub kernel")
-      emit(src"""// create_${name}()""")
+      emit("// Creating sub kernel ${name}")
       withStream(newStream(name)) {
           emit("""package app
 import templates._
 import chisel3._""")
-          open(s"""trait ${name} extends TopTrait /*${parent.replace("AccelController","TopTrait")}*/ {""")
-          open(s"""def create_${name}() {""")
+          open(s"""trait ${name} extends ${parent.replace("AccelController","TopTrait")} {""")
           try { body } 
           finally { 
-            close("}")
             close("}")
           }
       }

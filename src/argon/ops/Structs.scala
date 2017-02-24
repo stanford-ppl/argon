@@ -6,15 +6,21 @@ import argon.core.Staging
 
 trait StructApi extends StructExp with VoidApi
 
-trait StructExp extends Staging with VoidExp {
+trait StructExp extends Staging with VoidExp with TextExp {
 
-  abstract class StructApi[T:StructType] { self =>
+  abstract class Struct[T:StructType] { self =>
     def field[R:Staged](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](unwrap(self.asInstanceOf[T]), name))
+  }
+  def infix_toString[T:StructType](struct: T)(implicit ctx: SrcCtx): Text = {
+    val tp = implicitly[StructType[T]]
+    val fields = tp.fields.map{case (name,fieldTyp) => textify(field(struct, name)(tp, fieldTyp, ctx))(mtyp(fieldTyp),ctx) }
+    lift[String,Text](tp.prefix + "(") + fields.reduceLeft{(a,b) => a + "," + b } + ")"
   }
 
   abstract class StructType[T] extends Staged[T] {
     override def isPrimitive = false
     def fields: Seq[(String, Staged[_])]
+    def prefix: String = this.stagedClass.getSimpleName
   }
 
   // def record_new[T: RefinedManifest](fields: (String, _)*): T

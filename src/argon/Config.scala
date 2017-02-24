@@ -15,6 +15,8 @@ object Config {
   def sep = java.io.File.separator
 
   var verbosity: Int = getProperty("argon.verbosity", "1").toInt
+  var showWarn: Boolean = true
+
   var unsafe: Boolean = getProperty("argon.unsafe", "false").toBoolean
   var lib:  Boolean = getProperty("argon.lib", "false").toBoolean
   var name: String = getProperty("argon.name", "app")

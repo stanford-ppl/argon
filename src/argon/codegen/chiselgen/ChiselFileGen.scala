@@ -21,13 +21,13 @@ trait ChiselFileGen extends FileGen {
     // val topTrait = getStream("TopTrait")
 
     withStream(getStream("TopTrait")) {
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Begin!")}
+      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Begin!")}
       preprocess(b)
       toggleEn() // Turn off
       emitMain(b)
       toggleEn() // Turn on
       postprocess(b)
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Complete!")}
+      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Complete!")}
       b
     }
   }
@@ -46,8 +46,8 @@ import types._""")
       emit(s"""package app
 import templates._
 import chisel3._""")
-      open(s"""trait BufferControlCxns extends GlobalWires with TopTrait /*and possibly other subkernels up to this point*/ {""")
-      open(s"""def create_BufferControlCxns() {""")
+      open(s"""trait BufferControlCxns extends TopTrait {""")
+      if (Config.multifile < 4) open(s"""def create_BufferControlCxns() {""")
     }
 
     withStream(getStream("TopTrait")) {
@@ -55,7 +55,7 @@ import chisel3._""")
 import templates._
 import interfaces._
 import chisel3._""")
-      open(s"trait TopTrait extends GlobalWires /*and possibly subkernels*/ {")
+      open(s"trait TopTrait extends GlobalWires {")
       emit(s"// May want to have a main method defined here too")
     }
 
@@ -71,6 +71,11 @@ abstract class GlobalWires() extends Module{
     val ArgIn = new ArgInBundle()
     val ArgOut = new ArgOutBundle()
     val MemStreams = new MemStreamsBundle()
+    val StreamIns = new StreamInsBundle()
+    val StreamOuts = new StreamOutsBundle()
+    val dma_tomem_ios = new DMA_tomem_io()
+    val dma_frommem_ios = new DMA_frommem_io()
+    val video_decoder_ios = new Video_Decoder_io()
   })
 """)
     }
@@ -110,16 +115,29 @@ import java.io._""")
     }
 
     withStream(getStream("BufferControlCxns")) {
-      close("}")
+      if (Config.multifile < 4) close("}")
       close("}")
     }
 
+    if (Config.multifile == 4) {
+      val traits = streamMapReverse.keySet.toSet.map{
+        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+      }.toSet - "TopLevelDesign" - "IOModule" - "GeneratedPoker" - "GlobalWires"
+
+      withStream(getStream("TopLevelDesign")) {
+        emit(s"""package app
+import templates._
+import interfaces._
+import chisel3._
+class TopModule() extends GlobalWires with ${(traits++Set("TopTrait")).mkString("\n with ")} {}""")
+      }
+    } else {
     // Get traits that need to be mixed in
-    val traits = streamMapReverse.keySet.toSet.map{
-      f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-    }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
-    withStream(getStream("TopLevelDesign")) {
-      emit(s"""package app
+      val traits = streamMapReverse.keySet.toSet.map{
+        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+      }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
+      withStream(getStream("TopLevelDesign")) {
+        emit(s"""package app
 import templates._
 import interfaces._
 import chisel3._
@@ -127,7 +145,10 @@ class TopModule() extends GlobalWires with ${(traits++Set("TopTrait")).mkString(
   ${traits.map{ a => s"  create_${a}()"}.mkString("\n") }
 }
   // TopModule class mixes in all the other traits and is instantiated by tester""")
+      }
+        
     }
+
 
     withStream(getStream("GeneratedPoker")) {
       close("}")

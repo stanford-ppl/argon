@@ -7,19 +7,19 @@ trait IndexPatternApi extends IndexPatternExp
 trait IndexPatternExp extends Staging {
   type Index
   // Variations used here allow Index to be abstract (otherwise can't as easily define stride of 1)
-  sealed abstract class IndexPattern
+  sealed abstract class IndexPattern { def index: Option[Bound[Index]] }
   // a*i + b, where a and b must be loop invariant
-  case class AffineAccess(a: Exp[Index], i: Bound[Index], b: Exp[Index]) extends IndexPattern
+  case class AffineAccess(a: Exp[Index], i: Bound[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
   // i + b, where b must be loop invariant
-  case class OffsetAccess(i: Bound[Index], b: Exp[Index]) extends IndexPattern
+  case class OffsetAccess(i: Bound[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
   // a*i, where a must be loop invariant
-  case class StridedAccess(a: Exp[Index], i: Bound[Index]) extends IndexPattern
+  case class StridedAccess(a: Exp[Index], i: Bound[Index]) extends IndexPattern { def index = Some(i) }
   // linear access with some loop iterator
-  case class LinearAccess(i: Bound[Index]) extends IndexPattern
+  case class LinearAccess(i: Bound[Index]) extends IndexPattern { def index = Some(i) }
   // loop invariant access (but may change with outer loops)
-  case class InvariantAccess(b: Exp[Index]) extends IndexPattern
+  case class InvariantAccess(b: Exp[Index]) extends IndexPattern { def index = None }
   // anything else
-  case object RandomAccess extends IndexPattern
+  case object RandomAccess extends IndexPattern { def index = None }
 
   case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPattern] {
     def mirror(f:Tx) = AccessPattern(indices.map{
@@ -33,7 +33,9 @@ trait IndexPatternExp extends Staging {
   }
 
   object accessPatternOf {
-    def apply(x: Exp[_]) = metadata[AccessPattern](x).map(_.indices).getOrElse{ throw new UndefinedAccessPatternException(x) }
+    def apply(x: Exp[_]): Seq[IndexPattern] = {
+      metadata[AccessPattern](x).map(_.indices).getOrElse{ throw new UndefinedAccessPatternException(x) }
+    }
     def update(x: Exp[_], indices: Seq[IndexPattern]) { metadata.add(x, AccessPattern(indices)) }
   }
 }
