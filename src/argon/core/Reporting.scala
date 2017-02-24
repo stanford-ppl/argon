@@ -26,21 +26,34 @@ trait Reporting {
 
   def plural(x: Int, sing: String, plur: String): String = if (x == 1) sing else plur
 
-  final def withLog[T](dir: String, filename: String)(blk: => T): T = {
+  def createLog(dir: String, filename: String): PrintStream = {
+    Files.createDirectories(Paths.get(dir))
+    new PrintStream(dir + Config.sep + filename)
+  }
+
+  final def withLog[T](log: PrintStream)(blk: => T): T = {
     if (Config.verbosity >= 1) {
       val save = logstream
-      Files.createDirectories(Paths.get(dir))
-      logstream = new PrintStream(dir + Config.sep + filename)
+      logstream = log
       try {
         blk
       }
       finally {
         logstream.flush()
-        logstream.close()
         logstream = save
       }
     }
     else blk
+  }
+
+  final def withLog[T](dir: String, filename: String)(blk: => T): T = {
+    val log = createLog(dir, filename)
+    try {
+      withLog(log)(blk)
+    }
+    finally {
+      log.close()
+    }
   }
   final def withConsole[T](blk: => T): T = {
     val save = logstream
@@ -50,6 +63,7 @@ trait Reporting {
     result
   }
 
+  // TODO: Should these be macros?
   final def log(x: => Any): Unit = if (Config.verbosity >= 2) logstream.println(x)
   final def dbg(x: => Any): Unit = if (Config.verbosity >= 1) logstream.println(x)
   final def msg(x: => Any): Unit = {

@@ -1,6 +1,7 @@
 package argon
 import argon.core.Staging
-import argon.ops.{ArrayApi, ArrayExp}
+import argon.ops.ArrayExp
+import argon.transform.Transformer
 import argon.utils.deleteExts
 
 import scala.collection.mutable.ArrayBuffer
@@ -33,6 +34,8 @@ trait CompilerCore extends Staging with ArrayExp { self =>
 
   lazy val args: ArgonArray[Text] = ArgonArray[Text](stage(InputArguments())(implicitly[SourceContext]))
   var stagingArgs: scala.Array[java.lang.String] = _
+
+  lazy val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
 
   def settings(): Unit = { }
 
@@ -69,9 +72,35 @@ trait CompilerCore extends Staging with ArrayExp { self =>
       block = t.run(block)
       // After each traversal, check whether there were any reported errors
       checkErrors(start, t.name)
+
+      if (Config.verbosity >= 1) withLog(timingLog) {
+        msg(s"  ${t.name}: " + "%.4f".format(t.lastTime / 1000))
+      }
+
+      // Throw out scope cache after each transformer runs. This is because each block either
+      // a. didn't exist before
+      // b. existed but must be rescheduled now that it has new nodes
+      if (t.isInstanceOf[Transformer]) {
+        scopeCache.clear()
+      }
     }
 
     val time = (System.currentTimeMillis - start).toFloat
+
+
+    if (Config.verbosity >= 1) {
+      withLog(timingLog) {
+        msg(s"  Total: " + "%.4f".format(time / 1000))
+        msg(s"")
+        val totalTimes = passes.distinct.groupBy(_.name).mapValues{pass => pass.map(_.totalTime).sum }.toList.sortBy(_._2)
+        for (t <- totalTimes) {
+          msg(s"  ${t._1}: " + "%.4f".format(t._2 / 1000))
+        }
+      }
+      timingLog.close()
+    }
+
+
     checkWarnings()
     report(s"[\u001B[32mcompleted\u001B[0m] Total time: " + "%.4f".format(time/1000) + " seconds")
   }

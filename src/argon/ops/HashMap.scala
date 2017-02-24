@@ -9,7 +9,7 @@ trait HashMapApi extends HashMapExp with ArrayApi with StructApi {
     def groupByReduce[K:Staged,V:Staged](key: A => K)(value: A => V)(reduce: (V,V) => V)(implicit ctx: SrcCtx): ArgonMap[K,V] = {
       val i = fresh[Index]
       val rV = (fresh[V],fresh[V])
-      val aBlk = stageBlock { array.apply(wrap(i)).s : Exp[A] }
+      val aBlk = stageLambda(array.s) { array.apply(wrap(i)).s : Exp[A] }
       val kBlk = stageLambda(aBlk.result){ key(wrap(aBlk.result)).s }
       val vBlk = stageLambda(aBlk.result){ value(wrap(aBlk.result)).s }
       val rBlk = stageBlock { reduce(wrap(rV._1),wrap(rV._2)).s }
@@ -102,7 +102,6 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
     override def freqs = normal(in) ++ hot(apply) ++ hot(keyFunc) ++ hot(valFunc) ++ hot(reduce)
     override def aliases = Nil
     override def binds = syms(rV._1, rV._2, i)
-    override def tunnels = syms(in)
 
     val mA = typ[A]
     val mK = typ[K]
@@ -133,7 +132,7 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
     rV:      (Bound[V],Bound[V]),
     i:       Bound[Index]
   )(implicit ctx: SrcCtx): (Exp[ArgonArray[K]], Exp[ArgonArray[V]], Exp[HashIndex[K]]) = {
-    val aBlk = stageBlock { apply }
+    val aBlk = stageLambda(in) { apply }
     val kBlk = stageLambda(aBlk.result){ keyFunc }
     val vBlk = stageLambda(aBlk.result){ valFunc }
     val rBlk = stageBlock { reduce }

@@ -35,11 +35,11 @@ trait AbstractHDAG extends Exceptions {
 
   object NodeData {
     val value   = mutable.ArrayBuffer[Node]()
-    val outputs = mutable.ArrayBuffer[EdgeId](0.toEdgeId)   // nodeId :: nodeId+1 ==> edges for this node
-    val inputs  = mutable.ArrayBuffer[List[EdgeId]]()       // Dataflow edges (reverse) -- per node
-    val bounds  = mutable.ArrayBuffer[List[EdgeId]]()       // Edges bound by this node
-    val tunnels = mutable.ArrayBuffer[List[EdgeId]]()       // Edges bound by this node, defined elsewhere
-    val freqs   = mutable.ArrayBuffer[List[Float]]()        // Frequency hints for code motion
+    val outputs = mutable.ArrayBuffer[EdgeId](0.toEdgeId)             // nodeId :: nodeId+1 ==> edges for this node
+    val inputs  = mutable.ArrayBuffer[List[EdgeId]]()                 // Dataflow edges (reverse) -- per node
+    val bounds  = mutable.ArrayBuffer[List[EdgeId]]()                 // Edges bound by this node
+    val tunnels = mutable.ArrayBuffer[List[(EdgeId,Seq[EdgeId])]]()   // Edges bound by this node, defined elsewhere
+    val freqs   = mutable.ArrayBuffer[List[Float]]()                  // Frequency hints for code motion
   }
 
   def nodeOutputs(node: NodeId): Seq[EdgeId] = {
@@ -47,7 +47,7 @@ trait AbstractHDAG extends Exceptions {
   }
   def nodeInputs(node: NodeId): List[EdgeId] = NodeData.inputs(node.toInt)
   def nodeBounds(node: NodeId): List[EdgeId] = NodeData.bounds(node.toInt)
-  def nodeTunnels(node: NodeId): List[EdgeId] = NodeData.tunnels(node.toInt)
+  def nodeTunnels(node: NodeId): List[(EdgeId,Seq[EdgeId])] = NodeData.tunnels(node.toInt)
   def nodeFreqs(node: NodeId): List[Float] = NodeData.freqs(node.toInt)
   def nodeOf(node: NodeId): Node = NodeData.value(node.toInt)
   def edgeOf(edge: EdgeId): Edge = EdgeData.value(edge.toInt)
@@ -69,7 +69,7 @@ trait AbstractHDAG extends Exceptions {
   final def addBound(out: Edge) = addNode(Nil, List(out), Nil, Nil, Nil, null).head
 
   /** Add output edge(s) with corresponding node **/
-  final def addNode(ins: List[Edge], outs: List[Edge], binds: List[Edge], tunnel: List[Edge], freqs: List[Float], node: Node) = {
+  final def addNode(ins: List[Edge], outs: List[Edge], binds: List[Edge], tunnel: List[(Edge,Seq[Edge])], freqs: List[Float], node: Node) = {
     outs.foreach { out =>
       out.id = curEdgeId.toInt
 
@@ -87,7 +87,7 @@ trait AbstractHDAG extends Exceptions {
     NodeData.outputs += curEdgeId
     NodeData.inputs += ins.map(_.id.toEdgeId)
     NodeData.bounds += binds.map(_.id.toEdgeId)
-    NodeData.tunnels += tunnel.map(_.id.toEdgeId)
+    NodeData.tunnels += tunnel.map{case (tun,results) => (tun.id.toEdgeId, results.map(_.id.toEdgeId)) }
     NodeData.freqs += freqs
     curNodeId = (curNodeId.toInt + 1).toNodeId
 
@@ -144,8 +144,9 @@ trait AbstractHDAG extends Exceptions {
     start.foreach{node => traverse(node) }
 
     def traverse(node: NodeId) {
-      //if (verbose) log(c"  [DFS] Traversing ${triple(node)}")
       if (!visit.contains(node)) {
+        //if (verbose) log(c"  [DFS] ${triple(node)}")
+
         visit += node
         succ(node).foreach{node => traverse(node) }
         res += node
@@ -232,49 +233,52 @@ trait AbstractHDAG extends Exceptions {
     * Note that while it would be nice to only do one DFS, we need to track which nodes are bound where.
     */
   def getBoundDependents(scope: Set[NodeId]): Set[NodeId] = {
-    // Get all dependencies of root, stopping at nodes which bound it
     def getDependents(root: NodeId) = {
       val rootEdges = nodeOutputs(root)
-      //log(c"    [root = ${triple(root)}]")
-      dfs(List(root)){node =>
 
-        //log(c"      ${triple(node)}  => " )
-        forward(node, scope).filterNot{next: NodeId =>
-          //log(c"      ${triple(next)} [bounds = ${nodeBounds(next)}]")
-          nodeBounds(next) exists (rootEdges contains _)
-        }
-      }
+      // Get dependents of this node, stopping at nodes which bind the root
+      def uses(node: NodeId) = forward(node,scope) filterNot {next => nodeBounds(next) exists (rootEdges contains _) }
+
+      //log(c"    [root = ${triple(root)}]")
+
+      dfs(List(root))(uses)
     }
 
     val boundDependents = scope.flatMap{node =>
       val bounds = nodeBounds(node).map(producerOf)
       val sched = bounds.flatMap(getDependents)
 
-//      if (sched.nonEmpty) {
-//        log(c"  node: ${triple(node)}")
-//        log(c"  bounds:")
-//        bounds.foreach{bnd => log(c"    ${triple(bnd)}")}
-//        log(c"  binded symbols [must inside]: ")
-//        sched.foreach{s => log(c"    ${triple(s)}") }
+//      if (bounds.nonEmpty) {
+//        log(c"  [Bounds] node: ${triple(node)}")
+//        log(c"  [Bounds] bounds:")
+//        bounds.foreach{bnd => log(c"  [Bounds]  ${triple(bnd)}")}
+//        log(c"  [Bounds] binded: ")
+//        sched.foreach{s => log(c"  [Bounds]  ${triple(s)}") }
 //      }
       sched
     }
-    val tunnelDependents = scope.flatMap{node =>
-      val tunnels = nodeTunnels(node).map(producerOf)
-      val schedule = dfs(List(node)){node => reverse(node, scope) } filterNot(_ == node)
-      val tunnelForward = tunnels.flatMap(getDependents) diff tunnels
-//      if (tunnels.nonEmpty) {
-//        log(c"  Computing tunnel dependencies: ")
-//        log(c"  ${triple(node)}: ")
-//        log(c"  tunnels: ")
-//        tunnels.foreach{stm => log(c"    ${triple(stm)}")}
-//        log(c"  schedule: ")
-//        schedule.foreach{stm => log(c"    ${triple(stm)}")}
-//        log(c"  tunnel dependents: ")
-//        tunnelForward.foreach{stm => log(c"    ${triple(stm)}")}
-//      }
 
-      tunnelForward intersect schedule
+    val tunnelDependents = scope.flatMap{node =>
+//      if (nodeTunnels(node).nonEmpty)
+//        log(c"  [Tunnel] node: ${triple(node)}: ")
+
+      nodeTunnels(node).flatMap{case (tun,res) =>
+        val tunnel = producerOf(tun)
+        // Everything upstream of (prior to) the block results for this tunnel
+        val results = res.map(producerOf)
+        // Everything downstream of (depending on) the tunnel
+        val schedule = dfs(results){node => reverse(node,scope) }
+        val forward  = getDependents(tunnel) filterNot (_ == tunnel)
+
+//        log(c"  [Tunnel] tunnel: ")
+//        log(c"  [Tunnel]  ${triple(tunnel)}")
+//        log(c"  [Tunnel] schedule: ")
+//        schedule.foreach{stm => log(c"  [Tunnel]  ${triple(stm)}")}
+//        log(c"  [Tunnel] dependents: ")
+//        forward.foreach{stm => log(c"  [Tunnel]  ${triple(stm)}")}
+
+        schedule intersect forward
+      }
     }
     boundDependents ++ tunnelDependents
   }
@@ -334,7 +338,7 @@ trait AbstractHDAG extends Exceptions {
 
     val levelScope = currentScope.filter(canOutside)
 
-    // These log statements are VERY expensive - use only when debugging
+// These log statements are VERY expensive - use only when debugging
 //    log("Getting scope level within scope: ")
 //    scope.foreach{stm => log(c"  ${triple(stm)}") }
 //    log("For result: ")

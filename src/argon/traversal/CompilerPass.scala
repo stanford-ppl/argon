@@ -25,6 +25,9 @@ trait CompilerPass { self =>
   // --- State
   protected var tab = 0
 
+  var lastTime  = 0.0f
+  var totalTime = 0.0f
+
   // --- Debugging methods
   final protected def dbgs(x: => Any) = dbg("  "*tab + x)
   final protected def logs(x: => Any) = log("  "*tab + x)
@@ -52,7 +55,8 @@ trait CompilerPass { self =>
       Config.showWarn = saveWarnings
 
       val time = (System.currentTimeMillis - start).toFloat
-      msg(s"  $name: " + "%.4f".format(time/1000))
+      lastTime = time
+      totalTime += time
       result
     }
   } else b
