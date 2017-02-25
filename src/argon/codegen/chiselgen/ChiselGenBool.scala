@@ -18,7 +18,7 @@ trait ChiselGenBool extends ChiselCodegen {
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case Not(x)       => emit(src"val $lhs = !$x")
-    case And(x,y)     => emit(src"val $lhs = $x && $y")
+    case And(x,y)     => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x && $y")
     case Or(x,y)      => emit(src"val $lhs = $x || $y")
     case XOr(x,y)     => emit(src"val $lhs = $x =/= $y")
     case XNor(x,y)    => emit(src"val $lhs = $x === $y")
