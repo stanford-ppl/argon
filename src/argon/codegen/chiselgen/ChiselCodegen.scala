@@ -18,9 +18,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final def alphaconv_register(xx: String): Unit = {
     val x = "_reuse.*".r.replaceAllIn(xx, "")
-    Console.println(s"checking $x")
     if (alphaconv.contains(x)) {
-      Console.println(s"""$x is in list, currently maps to ${alphaconv(x)} and rep ${alphaconv(x).replace("_reuse","")}""")
       val suf = alphaconv(x).replace("_reuse","")
       if (suf == "") {
         alphaconv += (x -> "_reuse1") // If already used, increment suffix  
@@ -31,7 +29,6 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     } else {
       alphaconv += (x -> "") // Otherwise don't suffix it
     }
-    Console.println(s"conv $alphaconv")
   }
 
   override protected def quoteOrRemap(arg: Any): String = arg match {
