@@ -1,9 +1,9 @@
 package argon.codegen.cppgen
 
-import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp}
+import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, StructExp, TupleExp}
 
 trait CppGenArray extends CppCodegen {
-  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp
+  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp
   import IR._
 
 
@@ -29,8 +29,9 @@ trait CppGenArray extends CppCodegen {
             case _ => "cppDeliteArraydouble"
           }
         case _: FltPtType[_,_] => "cppDeliteArraydouble"
+        case struct: Tup2Type[_,_] => src"cppDeliteArray${tp.typeArguments.head}" // Let struct find appropriate name for this  
         case tp_inner: ArrayType[_] => s"cppDeliteArray${remap(tp_inner)}"
-        case _ => s"genericArray of ${tp.typeArguments.head}"
+        case _ => src"genericArray of ${tp.typeArguments.head}"
       }
     case _ => super.remap(tp)
   }

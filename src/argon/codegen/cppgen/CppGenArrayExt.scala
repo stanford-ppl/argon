@@ -1,14 +1,19 @@
 package argon.codegen.cppgen
 
-import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, IfThenElseExp}
+import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, IfThenElseExp, StructExp, TupleExp}
 
 trait CppGenArrayExt extends CppGenArray {
-  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with IfThenElseExp
+  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with IfThenElseExp with StructExp with TupleExp
   import IR._
 
   private def getNestingLevel(tp: Staged[_]): Int = tp match {
     case tp: ArrayType[_] => 1 + getNestingLevel(tp.typeArguments.head) 
     case _ => 0
+  }
+
+  private def zeroElement(tp: Staged[_]): String = tp match {
+    case tp: Tup2Type[_,_] => src"*(new ${tp}(0,0));"
+    case _ => "0"
   }
  
   private def getPrimitiveType(tp: Staged[_]): String = tp match {
@@ -17,7 +22,7 @@ trait CppGenArrayExt extends CppGenArray {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case ArrayUpdate(array, i, data) => emit(src"val $lhs = $array.update($i, $data)")
+    case ArrayUpdate(array, i, data) => emit(src"$array->update($i, $data);")
     case MapIndices(size, func, i)   =>
       emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($size);")
       open(src"for (int $i = 0; $i < $size; ${i}++) {")
@@ -60,7 +65,7 @@ trait CppGenArrayExt extends CppGenArray {
       open(src"if (${array}->length > 0) { // Hack to handle reductions on things of length 0")
       emit(src"$lhs = ${array}->apply(0);")
       closeopen("} else {")
-      emit(src"$lhs = 0;")
+      emit(src"$lhs = ${zeroElement(lhs.tp)};")
       close("}")
       open(src"for (int $i = 1; $i < ${array}->length; ${i}++) {")
       emit(src"""${rV._1.tp}${if (isArrayType(rV._1.tp)) "*" else ""} ${rV._1} = ${array}->apply($i);""")
