@@ -12,6 +12,7 @@ trait CppGenHashMap extends CppCodegen {
   //   case _ => super.remap(tp)
   // }
 
+
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
     case HashIndexApply(index, key) => 
       emit(src"${lhs.tp} $lhs = -1;")
