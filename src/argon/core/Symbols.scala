@@ -24,6 +24,18 @@ trait Symbols extends StagedTypes with Metadata { self: Staging =>
 
     def addCtx(ctx: SrcCtx) { ctxsOf(this) = ctx +: ctxsOf(this) }
     def setCtx(ctx: SrcCtx) { ctxsOf(this) = List(ctx) }
+
+    /*override def hashCode(): Int = this match {
+      case sym: Symbol[_] => sym.id
+      case param: Param[_] => param.pid
+      case const: Const[_] => (tp, const.c).hashCode()
+    }
+    override def equals(that: Any) = (this,that) match {
+      case (a: Symbol[_], b: Symbol[_]) => a.id == b.id
+      case (a: Param[_], b: Param[_]) => a == b
+      case (a: Const[_], b: Const[_]) => a == b
+      case _ => false
+    }*/
   }
 
   /** A staged symbol which represents a non-constant value **/
