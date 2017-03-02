@@ -35,7 +35,8 @@ trait CppCodegen extends Codegen with FileDependencies  {
     // Kill old datastructures
     s"""rm -rf ${out}/datastructures""".! 
     // Register files that are always there for cppgen
-    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/cppgen/resources/*""", "datastructures")
+    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/cppgen/resources/datastructures""")
+    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/cppgen/resources/fringeSW""")
     moveDependencies ::= AlwaysDep(s"""${out}/cpptypes.h""", "datastructures")
     moveDependencies ::= AlwaysDep(s"""${out}/interface.h""", "datastructures")
     moveDependencies ::= AlwaysDep(s"""${out}/DRAM.h""", "datastructures")

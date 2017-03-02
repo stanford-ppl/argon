@@ -18,9 +18,9 @@ trait ChiselFileGen extends FileGen {
     // val ioModule = getStream("IOModule")
     // val AccelTop = getStream("AccelTop")
     // val bufferControl = getStream("BufferControlCxns")
-    // val topTrait = getStream("TopTrait")
+    // val RootController = getStream("RootController")
 
-    withStream(getStream("TopTrait")) {
+    withStream(getStream("RootController")) {
       if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Begin!")}
       preprocess(b)
       toggleEn() // Turn off
@@ -35,42 +35,44 @@ trait ChiselFileGen extends FileGen {
 
   override protected def emitFileHeader() {
 
-//     withStream(getStream("IOModule")) {
-//       emit(s"""package accel
-// import chisel3._
-// import templates._
-// import chisel3.util._
-// import fringe._
-// import types._""")
-//       open("trait IOModule extends Module {")
-//       emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
-//       emit("val w = 32 // TODO: How to generate these properly?")
-//       emit("val v = 16 // TODO: How to generate these properly?")
-//     }
+    withStream(getStream("IOModule")) {
+      emit(s"""package accel
+import chisel3._
+import templates._
+import chisel3.util._
+import fringe._
+import types._""")
+      open("trait IOModule extends Module {")
+      emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
+      emit("val io_w = 32 // TODO: How to generate these properly?")
+      emit("val io_v = 16 // TODO: How to generate these properly?")
+    }
 
     withStream(getStream("BufferControlCxns")) {
       emit(s"""package accel
 import templates._
 import fringe._
 import chisel3._""")
-      open(s"""trait BufferControlCxns extends TopTrait {""")
+      open(s"""trait BufferControlCxns extends RootController {""")
       if (Config.multifile < 4) open(s"""def create_BufferControlCxns() {""")
     }
 
-    withStream(getStream("TopTrait")) {
+    withStream(getStream("RootController")) {
       emit(s"""package accel
 import templates._
 import fringe._
 import chisel3._""")
-      open(s"trait TopTrait extends GlobalWires {")
-      emit(s"// May want to have a main method defined here too")
+      open(s"trait RootController extends GlobalWires {")
+      emit("val pulser = Module(new Pulser())")
+      emit("pulser.io.in := io.enable")
+
     }
 
     withStream(getStream("GlobalWires")) {
       emit(s"""package accel
 import templates._
 import chisel3._
-trait GlobalWires extends Module{""")
+trait GlobalWires extends IOModule{""")
     }
 
     withStream(getStream("Instantiator")) {
@@ -79,7 +81,10 @@ trait GlobalWires extends Module{""")
       emit("package top")
       emit("")
       emit("import fringe._")
+      emit("import accel._")
       emit("import chisel3.core.Module")
+      emit("import chisel3._")
+      emit("import chisel3.util._")
       emit("import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}")
       emit("")
       emit("import scala.collection.mutable.ListBuffer")
@@ -130,7 +135,7 @@ trait GlobalWires extends Module{""")
         emit("""println(s"argOuts: $argOuts")""")
       close("}")
       emit("")
-      open("object TopTest extends CommonMain {")
+      open("object Instantiator extends CommonMain {")
         emit("type DUTType = Top")
         emit("")
         open("def supportedTarget(t: String) = t match {")
@@ -182,13 +187,24 @@ trait GlobalWires extends Module{""")
       emit("}")
     }
 
-    // withStream(getStream("IOModule")) {
-    //   emit(src"""val interface = new Top(w, numArgIns, numArgOuts, numMemoryStreams, target)""")
-    //   close("}")
-    // }
+    withStream(getStream("IOModule")) {
+      open("val io = IO(new Bundle {")
+        emit("// Control")
+        emit("val enable = Input(Bool())")
+        emit("val done = Output(Bool())")
+        emit("")
+        emit("// Tile Load")
+        emit("val memStreams = Vec(io_numMemoryStreams, Flipped(new MemoryStream(io_w, io_v)))")
+        emit("")
+        emit("// Scalars")
+        emit("val argIns = Input(Vec(io_numArgIns, UInt(io_w.W)))")
+        emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(io_w.W))))")
+        emit("")
+      close("})")
+      close("}")
+    }
 
-    withStream(getStream("TopTrait")) {
-      emit(s"// Would close main method here")
+    withStream(getStream("RootController")) {
       close(s"}")
     }
 
@@ -207,20 +223,9 @@ trait GlobalWires extends Module{""")
 import templates._
 import fringe._
 import chisel3._
-class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("TopTrait")).mkString("\n with ")} {
-  val v = 16
-  val io = IO(new Bundle {
-    // Control
-    val enable = Input(Bool())
-    val done = Output(Bool())
+class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
-    // Scalars
-    val argIns = Input(Vec(numArgIns, UInt(top_w.W)))
-    val argOuts = Vec(numArgOuts, Decoupled((UInt(top_w.W))))
-
-    // Tile Load
-    val memStreams = Vec(numMemoryStreams, Flipped(new MemoryStream(top_w, v)))
-  })
+  // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
 
 }""")
       }
@@ -228,13 +233,13 @@ class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numM
     // Get traits that need to be mixed in
       val traits = streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-      }.toSet - "AccelTop" - "GlobalWires" - "TopTrait" - "Instantiator"
+      }.toSet - "AccelTop" - "GlobalWires" - "RootController" - "Instantiator"
       withStream(getStream("AccelTop")) {
         emit(s"""package accel
 import templates._
 import fringe._
 import chisel3._
-class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("TopTrait")).mkString("\n with ")} {
+class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
   val v = 16
   val io = IO(new Bundle {
     // Control
