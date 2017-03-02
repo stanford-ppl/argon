@@ -147,16 +147,7 @@ trait GlobalWires extends IOModule{""")
         open("def dut = () => {")
 
     }
-//     withStream(getStream("GeneratedPoker")) {
-//       emit(s"""package accel
 
-// import chisel3.iotesters.{PeekPokeTester, Driver, ChiselFlatSpec}
-// import org.scalatest.Assertions._
-// import java.io._""")
-//       open(s"""class GeneratedPoker(c: AccelTop) extends PeekPokeTester(c) {""")
-//       emit(s"""var offchipMem = List[BigInt]()""")
-//       open(s"def handleLoadStore() {")
-//     }
 
     super.emitFileHeader()
   }
@@ -239,6 +230,7 @@ class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numM
 import templates._
 import fringe._
 import chisel3._
+
 class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
   val v = 16
   val io = IO(new Bundle {
@@ -261,11 +253,6 @@ class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numM
         
     }
 
-
-    // withStream(getStream("GeneratedPoker")) {
-    //   close("}")
-    //   close("}")
-    // }
 
     super.emitFileFooter()
   }

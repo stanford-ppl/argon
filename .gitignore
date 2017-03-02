@@ -24,4 +24,4 @@ project/plugins/project/
 .idea/
 *.iml
 *.swp
-tags
+*.tags

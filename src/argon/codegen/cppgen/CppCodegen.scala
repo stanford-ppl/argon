@@ -31,12 +31,14 @@ trait CppCodegen extends Codegen with FileDependencies  {
   }
 
   override def copyDependencies(out: String): Unit = {
+    val cppResourcesPath = s"${sys.env("SPATIAL_HOME")}/src/spatial/codegen/cppgen/resources"
+
     // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
     // Kill old datastructures
     s"""rm -rf ${out}/datastructures""".! 
     // Register files that are always there for cppgen
-    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/cppgen/resources/datastructures""")
-    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/cppgen/resources/fringeSW""")
+    dependencies ::= AlwaysDep(s"""${cppResourcesPath}/datastructures""")
+    dependencies ::= AlwaysDep(s"""${cppResourcesPath}/fringeSW""")
     moveDependencies ::= AlwaysDep(s"""${out}/cpptypes.h""", "datastructures")
     moveDependencies ::= AlwaysDep(s"""${out}/interface.h""", "datastructures")
     moveDependencies ::= AlwaysDep(s"""${out}/DRAM.h""", "datastructures")

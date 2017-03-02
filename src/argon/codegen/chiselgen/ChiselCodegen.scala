@@ -75,22 +75,22 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   protected def hasFracBits(tp: Staged[_]): Boolean = false
 
   override def copyDependencies(out: String): Unit = {
-    // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
     // s"mkdir ${out}${java.io.File.separator}templates" !
     // s"mkdir ${out}${java.io.File.separator}templates".!
     // dependencies.foreach{dep => if (dep.needsCopy) {
     //   log(s"Copying ${dep.input} to $out")
     //   s"cp ${dep.input} ${out}${java.io.File.separator}templates${java.io.File.separator}${dep.outputPath}" !
     // }}
-    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates""")
-    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/fringeHW""")
-    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/Makefile""", "..")
-    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/verilator.mk""", "..")
-    // dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/direct-test.sh""", "..")
-    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/build.sbt""", "..")
-    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/run.sh""","..")
-    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/Top.scala""")
-    // dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/app-test""")
+    val resourcesPath = s"${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources"
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/templates""")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/fringeHW""")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/Makefile""", "..")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/verilator.mk""", "..")
+    // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/direct-test.sh""", "..")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/build.sbt""", "..")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/run.sh""","..")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/Top.scala""")
+    // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/app-test""")
     super.copyDependencies(out)
   }
 
