@@ -32,13 +32,13 @@ trait CppCodegen extends Codegen with FileDependencies  {
 
   override def copyDependencies(out: String): Unit = {
     // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
-    s"""rm -rf ${out}/datastructures""".!
-    s"""cp -r ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/cppgen/resources ${out}/datastructures""".!
-    s"""mv ${out}/Structs.h ${out}/datastructures""".!
-    s"""mv ${out}/cppDeliteArrayStructs.h ${out}/datastructures""".!
-    s"""mv ${out}/cpptypes.h ${out}/datastructures""".!
-    s"""mv ${out}/interface.h ${out}/datastructures""".!
-    s"""mv ${out}/DRAM.h ${out}/datastructures""".!
+    // Kill old datastructures
+    s"""rm -rf ${out}/datastructures""".! 
+    // Register files that are always there for cppgen
+    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/cppgen/resources/*""", "datastructures")
+    moveDependencies ::= AlwaysDep(s"""${out}/cpptypes.h""", "datastructures")
+    moveDependencies ::= AlwaysDep(s"""${out}/interface.h""", "datastructures")
+    moveDependencies ::= AlwaysDep(s"""${out}/DRAM.h""", "datastructures")
     super.copyDependencies(out)
   }
 
