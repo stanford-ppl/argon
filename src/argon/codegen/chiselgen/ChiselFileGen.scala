@@ -45,7 +45,7 @@ import types._""")
       open("trait IOModule extends Module {")
       emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
       emit("val io_w = 32 // TODO: How to generate these properly?")
-      emit("val io_v = 16 // TODO: How to generate these properly?")
+      emit("val io_v = 1 // TODO: How to generate these properly?")
     }
 
     withStream(getStream("BufferControlCxns")) {
@@ -54,7 +54,6 @@ import templates._
 import fringe._
 import chisel3._""")
       open(s"""trait BufferControlCxns extends RootController {""")
-      if (Config.multifile < 4) open(s"""def create_BufferControlCxns() {""")
     }
 
     withStream(getStream("RootController")) {
@@ -63,8 +62,6 @@ import templates._
 import fringe._
 import chisel3._""")
       open(s"trait RootController extends GlobalWires {")
-      emit("val pulser = Module(new Pulser())")
-      emit("pulser.io.in := io.enable")
 
     }
 
@@ -200,7 +197,6 @@ trait GlobalWires extends IOModule{""")
     }
 
     withStream(getStream("BufferControlCxns")) {
-      if (Config.multifile < 4) close("}")
       close("}")
     }
 
@@ -234,21 +230,7 @@ import chisel3._
 import chisel3.util._
 
 class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
-  val v = 16
-  val io = IO(new Bundle {
-    // Control
-    val enable = Input(Bool())
-    val done = Output(Bool())
 
-    // Scalars
-    val argIns = Input(Vec(numArgIns, UInt(top_w.W)))
-    val argOuts = Vec(numArgOuts, Decoupled((UInt(top_w.W))))
-
-    // Tile Load
-    val memStreams = Vec(numMemoryStreams, Flipped(new MemoryStream(top_w, v)))
-  })
-
-  ${traits.map{ a => s"  create_${a}()"}.mkString("\n") }
 }
   // AccelTop class mixes in all the other traits and is instantiated by tester""")
       }
