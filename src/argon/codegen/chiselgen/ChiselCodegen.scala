@@ -99,10 +99,10 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     if (Config.multifile == 4) {
       emit("// Creating sub kernel ${name}")
       withStream(newStream(name)) {
-          emit("""package app
+          emit("""package accel
 import templates._
 import chisel3._""")
-          open(s"""trait ${name} extends ${parent.replace("AccelController","TopTrait")} {""")
+          open(s"""trait ${name} extends ${parent.replace("AccelController","RootController")} {""")
           try { body } 
           finally { 
             close("}")
@@ -110,10 +110,10 @@ import chisel3._""")
       }
     } else if (Config.multifile == 3 & inner) {
         withStream(newStream(name)) {
-            emit("""package app
+            emit("""package accel
   import templates._
   import chisel3._""")
-            open(s"""trait ${name} extends GlobalWires with TopTrait {""")
+            open(s"""trait ${name} extends RootController {""")
             open(s"""def create_${name}() {""")
             try { body } 
             finally { 
