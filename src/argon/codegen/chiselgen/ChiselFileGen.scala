@@ -214,6 +214,7 @@ trait GlobalWires extends IOModule{""")
 import templates._
 import fringe._
 import chisel3._
+import chisel3.util._
 class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
   // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
@@ -230,6 +231,7 @@ class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numM
 import templates._
 import fringe._
 import chisel3._
+import chisel3.util._
 
 class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
   val v = 16
