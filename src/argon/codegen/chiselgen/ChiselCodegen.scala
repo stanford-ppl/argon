@@ -84,6 +84,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     val resourcesPath = s"${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources"
     dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/templates""")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/fringeHW""")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/fringeZynq""")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/Makefile""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/verilator.mk""", "..")
     // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/direct-test.sh""", "..")
