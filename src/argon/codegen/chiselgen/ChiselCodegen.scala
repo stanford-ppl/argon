@@ -4,6 +4,7 @@ import sys.process._
 import scala.language.postfixOps
 import argon.codegen.Codegen
 import argon.Config
+import scala.collection.mutable.HashMap
 import argon.codegen.FileDependencies
 
 
@@ -12,6 +13,28 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   override val name = "Chisel Codegen"
   override val lang: String = "chisel"
   override val ext: String = "scala"
+
+  var alphaconv = HashMap[String, String]() // Map for tracking defs of nodes and if they get redeffed anywhere, we map it to a suffix
+
+  final def alphaconv_register(xx: String): Unit = {
+    val x = "_reuse.*".r.replaceAllIn(xx, "")
+    if (alphaconv.contains(x)) {
+      val suf = alphaconv(x).replace("_reuse","")
+      if (suf == "") {
+        alphaconv += (x -> "_reuse1") // If already used, increment suffix  
+      } else {
+        val newsuf = suf.toInt + 1
+        alphaconv += (x -> s"_reuse$newsuf")
+      }
+    } else {
+      alphaconv += (x -> "") // Otherwise don't suffix it
+    }
+  }
+
+  override protected def quoteOrRemap(arg: Any): String = arg match {
+    case e: Exp[_] => quote(e) + alphaconv.getOrElse(quote(e), "")
+    case _ => super.quoteOrRemap(arg)
+  }
 
   override protected def emitBlock(b: Block[_]): Unit = {
     visitBlock(b)
@@ -36,7 +59,10 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   protected def bitWidth(tp: Staged[_]): Int = {
-    throw new NoBitWidthException(tp)
+    c"$tp" match {
+      case "Avalon" => 32
+      case _ => throw new NoBitWidthException(tp)
+    }
   }
 
 
