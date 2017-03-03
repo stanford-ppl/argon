@@ -82,12 +82,14 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     //   log(s"Copying ${dep.input} to $out")
     //   s"cp ${dep.input} ${out}${java.io.File.separator}templates${java.io.File.separator}${dep.outputPath}" !
     // }}
-    s"""cp -r ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates ${out}""".!
-    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/Makefile ${out}/..""".!
-    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/direct-test.sh ${out}/..""".!
-    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/build.sbt ${out}/..""".!
-    s"""cp ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/run.sh ${out}/..""".!
-    s"""cp -r ${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/app-test ${out}""".!
+    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates""")
+    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/fringeHW""")
+    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/Makefile""", "..")
+    // dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/direct-test.sh""", "..")
+    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/build.sbt""", "..")
+    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/run.sh""","..")
+    dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/Top.scala""")
+    // dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/app-level/app-test""")
     super.copyDependencies(out)
   }
 

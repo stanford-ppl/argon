@@ -17,15 +17,25 @@ trait FileDependencies extends Codegen {
   case class CondDep(input: String, outputPath: String = "", add: () => Boolean) extends CodegenDep { def needsCopy = add() }
 
   var dependencies: List[CodegenDep] = Nil
+  var moveDependencies: List[CodegenDep] = Nil
 
   // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
   def copyDependencies(out: String): Unit = {
+    // Files that need to cp
     dependencies.foreach{dep => if (dep.needsCopy) {
       s"mkdir -p ${out}${java.io.File.separator}${dep.outputPath}" !
     }}
     dependencies.foreach{dep => if (dep.needsCopy) {
       log(s"cp -r ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}")
       s"cp -r ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}" !
+    }}
+    // Files that need to mv
+    moveDependencies.foreach{dep => if (dep.needsCopy) {
+      s"mkdir -p ${out}${java.io.File.separator}${dep.outputPath}" !
+    }}
+    moveDependencies.foreach{dep => if (dep.needsCopy) {
+      log(s"mv ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}")
+      s"mv ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}" !
     }}
   }
   override protected def postprocess[S:Staged](b: Block[S]) = {
