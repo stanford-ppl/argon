@@ -14,6 +14,8 @@ trait CppCodegen extends Codegen with FileDependencies  {
   override val lang: String = "cpp"
   override val ext: String = "cpp"
 
+  var setMems = List[String]()
+
   override protected def emitBlock(b: Block[_]): Unit = {
     visitBlock(b)
     emit(src"// results in ${b.result}")

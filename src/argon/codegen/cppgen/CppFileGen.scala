@@ -33,6 +33,7 @@ trait CppFileGen extends FileGen {
 #include <fstream>
 #include <string> 
 #include <sstream> 
+#include <stdarg.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <pwd.h>
@@ -46,7 +47,7 @@ trait CppFileGen extends FileGen {
 #include "cppDeliteArraydouble.h"
 #include "FringeContext.h"
 
-void Top_run( Interface_t *args )
+void Top_run( Interface_t *args, int n_args, ... )
 {
   // Constant fringe stuff
 
@@ -61,6 +62,14 @@ void Top_run( Interface_t *args )
   for (int i=0; i<numArgIns; i++) {
     c1->setArg(i, (uint64_t)args->ArgIns[i]);
   }
+
+  va_list ap;
+  va_start(ap, n_args);
+  for(int i = 1; i <= n_args; i++) {
+    cppDeliteArrayint32_t* array = va_arg(ap, cppDeliteArrayint32_t*);
+    c1->memcpy(array, 402653184*i, array->length * sizeof(array->apply(0)));
+  }
+  va_end(ap);
 
   // Run FPGA
   c1->run();
@@ -107,34 +116,33 @@ class Interface_t""")
     withStream(getStream("cpptypes","h")) {
       emit("""#ifndef __CPPTYPES_H__
 #define __CPPTYPES_H__
-#include "DRAM.h" 
 #endif""")
     }
 
-    withStream(getStream("DRAM","h")){
-      emit(s"""
-#include <stdint.h>
-#include <vector>
-#include <iostream>
+//     withStream(getStream("DRAM","h")){
+//       emit(s"""
+// #include <stdint.h>
+// #include <vector>
+// #include <iostream>
 
-class DRAM {
-public:
-  uint64_t baseAddr;
-  uint32_t size;
+// class DRAM {
+// public:
+//   uint64_t baseAddr;
+//   uint32_t size;
 
-  DRAM(uint64_t base, int size) {
-    this->baseAddr = base;
-    this->size = size;
-  }
-  void add_mem(long num) { data.push_back(num); }
-  long get_mem(int i) { return data[i]; }
-  long data_length() { return data.size(); }
+//   DRAM(uint64_t base, int size) {
+//     this->baseAddr = base;
+//     this->size = size;
+//   }
+//   void add_mem(long num) { data.push_back(num); }
+//   long get_mem(int i) { return data[i]; }
+//   long data_length() { return data.size(); }
 
-private:
-  std::vector<long> data;
+// private:
+//   std::vector<long> data;
 
-};""")
-    }
+// };""")
+//     }
     super.emitFileHeader()
   }
 

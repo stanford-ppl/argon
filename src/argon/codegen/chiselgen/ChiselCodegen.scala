@@ -89,7 +89,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/direct-test.sh""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/build.sbt""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/run.sh""","..")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/Top.scala""")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/Top.scala""")
     // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/app-test""")
     super.copyDependencies(out)
   }

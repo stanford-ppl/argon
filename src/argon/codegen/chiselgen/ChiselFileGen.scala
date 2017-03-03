@@ -45,7 +45,7 @@ import types._""")
       open("trait IOModule extends Module {")
       emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
       emit("val io_w = 32 // TODO: How to generate these properly?")
-      emit("val io_v = 1 // TODO: How to generate these properly?")
+      emit("val io_v = 16 // TODO: How to generate these properly?")
     }
 
     withStream(getStream("BufferControlCxns")) {
