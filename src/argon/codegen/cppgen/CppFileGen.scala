@@ -67,7 +67,8 @@ void Top_run( Interface_t *args, int n_args, ... )
   va_start(ap, n_args);
   for(int i = 1; i <= n_args; i++) {
     cppDeliteArrayint32_t* array = va_arg(ap, cppDeliteArrayint32_t*);
-    c1->memcpy(array, 402653184*i, array->length * sizeof(array->apply(0)));
+    uint64_t addr = c1->malloc(a->length * sizeof(a->apply(0)));
+    c1->memcpy(a, addr, a->length * sizeof(a->apply(0)));
   }
   va_end(ap);
 
