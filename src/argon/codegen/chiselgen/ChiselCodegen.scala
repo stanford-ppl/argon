@@ -87,6 +87,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/fringeZynq""")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/Makefile""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/verilator.mk""", "..")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/zynq.mk""", "..")
     // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/direct-test.sh""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/build.sbt""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/run.sh""","..")

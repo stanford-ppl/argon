@@ -51,7 +51,7 @@ void Top_run( Interface_t *args )
   // Constant fringe stuff
 
   // Create an execution context.
-  FringeContext *c1 = new FringeContext();
+  FringeContext *c1 = new FringeContext("accel.bit.bin");
 
   // Program FPGA
   c1->load();
