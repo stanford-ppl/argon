@@ -67,8 +67,10 @@ void Top_run( Interface_t *args, int n_args, ... )
   va_start(ap, n_args);
   for(int i = 1; i <= n_args; i++) {
     cppDeliteArrayint32_t* array = va_arg(ap, cppDeliteArrayint32_t*);
-    uint64_t addr = c1->malloc(a->length * sizeof(a->apply(0)));
-    c1->memcpy(a, addr, a->length * sizeof(a->apply(0)));
+    uint64_t addr = c1->malloc(array->length * sizeof(array->apply(0)));
+    c1->setArg(numArgIns+i-1, addr);
+    std::cout << "Setting memStream " << i << " to " << addr << std::endl;
+    c1->memcpy(addr, array, array->length * sizeof(array->apply(0)));
   }
   va_end(ap);
 
@@ -81,8 +83,6 @@ void Top_run( Interface_t *args, int n_args, ... )
     *args->ArgOuts[i] = c1->getArg(i);
   }
 
-  // Cycles is the last argument out (I think)
-  *args->ArgOuts[numArgOuts] = c1->getArg(numArgOuts);
 }
 """)
 

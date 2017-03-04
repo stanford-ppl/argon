@@ -154,6 +154,8 @@ trait GlobalWires extends IOModule{""")
 
     withStream(getStream("Instantiator")) {
           emit("val w = 32")
+          emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
+          emit("val numArgOuts = numArgIns_reg")
           emit("""val target = if (args.size > 0) args(0) else "verilator" """)
           emit("""Predef.assert(supportedTarget(target), s"ERROR: Unsupported Fringe target '$target'")""")
           emit("new Top(w, numArgIns, numArgOuts, numMemoryStreams, target)")
@@ -176,6 +178,8 @@ trait GlobalWires extends IOModule{""")
     }
 
     withStream(getStream("IOModule")) {
+      emit("val io_numArgIns = io_numArgIns_reg + io_numArgIns_mem")
+      emit("val io_numArgOuts = io_numArgOuts_reg")
       open("val io = IO(new Bundle {")
         emit("// Control")
         emit("val enable = Input(Bool())")
