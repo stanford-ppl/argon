@@ -15,6 +15,7 @@ trait CppCodegen extends Codegen with FileDependencies  {
   override val ext: String = "cpp"
 
   var setMems = List[String]()
+  var getMems = List[String]()
 
   override protected def emitBlock(b: Block[_]): Unit = {
     visitBlock(b)
@@ -43,7 +44,7 @@ trait CppCodegen extends Codegen with FileDependencies  {
     dependencies ::= AlwaysDep(s"""${cppResourcesPath}/fringeSW""")
     moveDependencies ::= AlwaysDep(s"""${out}/cpptypes.h""", "datastructures")
     moveDependencies ::= AlwaysDep(s"""${out}/interface.h""", "datastructures")
-    moveDependencies ::= AlwaysDep(s"""${out}/DRAM.h""", "datastructures")
+    // moveDependencies ::= AlwaysDep(s"""${out}/DRAM.h""", "datastructures")
     super.copyDependencies(out)
   }
 

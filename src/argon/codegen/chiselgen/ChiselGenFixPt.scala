@@ -38,7 +38,7 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case FixNeg(x)   => emit(src"val $lhs = -$x")
     case FixAdd(x,y) => emit(src"val $lhs = $x + $y")
     case FixSub(x,y) => emit(src"val $lhs = $x - $y")
-    case FixMul(x,y) => emit(src"val $lhs = $x * $y")
+    case FixMul(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x * $y")
     case FixDiv(x,y) => emit(src"val $lhs = $x / $y")
     case FixAnd(x,y) => emit(src"val $lhs = $x & $y")
     case FixOr(x,y)  => emit(src"val $lhs = $x | $y")
