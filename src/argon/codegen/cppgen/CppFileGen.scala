@@ -33,6 +33,7 @@ trait CppFileGen extends FileGen {
 #include <fstream>
 #include <string> 
 #include <sstream> 
+#include <stdarg.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <pwd.h>
@@ -46,7 +47,7 @@ trait CppFileGen extends FileGen {
 #include "cppDeliteArraydouble.h"
 #include "FringeContext.h"
 
-void Top_run( Interface_t *args )
+void Top_run( Interface_t *args, int n_args, ... )
 {
   // Constant fringe stuff
 
@@ -62,6 +63,17 @@ void Top_run( Interface_t *args )
     c1->setArg(i, (uint64_t)args->ArgIns[i]);
   }
 
+  va_list ap;
+  va_start(ap, n_args);
+  for(int i = 1; i <= n_args; i++) {
+    cppDeliteArrayint32_t* array = va_arg(ap, cppDeliteArrayint32_t*);
+    uint64_t addr = c1->malloc(2 * array->length * sizeof(array->apply(0)));
+    c1->setArg(numArgIns+i-1, addr);
+    std::cout << "Setting memStream " << i << " to " << addr << std::endl;
+    c1->memcpy(addr, array, 2 * array->length * sizeof(array->apply(0))); // No idea why we need to double the size, or else last 8 words get chopped...
+  }
+  va_end(ap);
+
   // Run FPGA
   c1->run();
 
@@ -71,8 +83,6 @@ void Top_run( Interface_t *args )
     *args->ArgOuts[i] = c1->getArg(i);
   }
 
-  // Cycles is the last argument out (I think)
-  *args->ArgOuts[numArgOuts] = c1->getArg(numArgOuts);
 }
 """)
 
@@ -107,34 +117,33 @@ class Interface_t""")
     withStream(getStream("cpptypes","h")) {
       emit("""#ifndef __CPPTYPES_H__
 #define __CPPTYPES_H__
-#include "DRAM.h" 
 #endif""")
     }
 
-    withStream(getStream("DRAM","h")){
-      emit(s"""
-#include <stdint.h>
-#include <vector>
-#include <iostream>
+//     withStream(getStream("DRAM","h")){
+//       emit(s"""
+// #include <stdint.h>
+// #include <vector>
+// #include <iostream>
 
-class DRAM {
-public:
-  uint64_t baseAddr;
-  uint32_t size;
+// class DRAM {
+// public:
+//   uint64_t baseAddr;
+//   uint32_t size;
 
-  DRAM(uint64_t base, int size) {
-    this->baseAddr = base;
-    this->size = size;
-  }
-  void add_mem(long num) { data.push_back(num); }
-  long get_mem(int i) { return data[i]; }
-  long data_length() { return data.size(); }
+//   DRAM(uint64_t base, int size) {
+//     this->baseAddr = base;
+//     this->size = size;
+//   }
+//   void add_mem(long num) { data.push_back(num); }
+//   long get_mem(int i) { return data[i]; }
+//   long data_length() { return data.size(); }
 
-private:
-  std::vector<long> data;
+// private:
+//   std::vector<long> data;
 
-};""")
-    }
+// };""")
+//     }
     super.emitFileHeader()
   }
 

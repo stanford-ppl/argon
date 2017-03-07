@@ -91,7 +91,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/direct-test.sh""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/build.sbt""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/run.sh""","..")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/Top.scala""")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/Top.scala""")
     // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/app-test""")
     super.copyDependencies(out)
   }
@@ -104,7 +104,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
           emit("""package accel
 import templates._
 import chisel3._""")
-          open(s"""trait ${name} extends ${parent.replace("AccelController","RootController")} {""")
+          open(src"""trait ${name} extends ${parent.replace("AccelController","RootController")} {""")
           try { body } 
           finally { 
             close("}")
@@ -115,7 +115,7 @@ import chisel3._""")
             emit("""package accel
   import templates._
   import chisel3._""")
-            open(s"""trait ${name} extends RootController {""")
+            open(src"""trait ${name} extends RootController {""")
             open(s"""def create_${name}() {""")
             try { body } 
             finally { 

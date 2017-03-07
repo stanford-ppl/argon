@@ -54,7 +54,6 @@ import templates._
 import fringe._
 import chisel3._""")
       open(s"""trait BufferControlCxns extends RootController {""")
-      if (Config.multifile < 4) open(s"""def create_BufferControlCxns() {""")
     }
 
     withStream(getStream("RootController")) {
@@ -63,8 +62,6 @@ import templates._
 import fringe._
 import chisel3._""")
       open(s"trait RootController extends GlobalWires {")
-      emit("val pulser = Module(new Pulser())")
-      emit("pulser.io.in := io.enable")
 
     }
 
@@ -118,6 +115,8 @@ trait GlobalWires extends IOModule{""")
 
     withStream(getStream("Instantiator")) {
           emit("val w = 32")
+          emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
+          emit("val numArgOuts = numArgIns_reg")
           emit("""val target = if (args.size > 0) args(0) else "verilator" """)
           emit("""Predef.assert(supportedTarget(target), s"ERROR: Unsupported Fringe target '$target'")""")
           emit("new Top(w, numArgIns, numArgOuts, numMemoryStreams, target)")
@@ -140,6 +139,8 @@ trait GlobalWires extends IOModule{""")
     }
 
     withStream(getStream("IOModule")) {
+      emit("val io_numArgIns = io_numArgIns_reg + io_numArgIns_mem")
+      emit("val io_numArgOuts = io_numArgOuts_reg")
       open("val io = IO(new Bundle {")
         emit("// Control")
         emit("val enable = Input(Bool())")
@@ -161,7 +162,6 @@ trait GlobalWires extends IOModule{""")
     }
 
     withStream(getStream("BufferControlCxns")) {
-      if (Config.multifile < 4) close("}")
       close("}")
     }
 
@@ -195,21 +195,7 @@ import chisel3._
 import chisel3.util._
 
 class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
-  val v = 16
-  val io = IO(new Bundle {
-    // Control
-    val enable = Input(Bool())
-    val done = Output(Bool())
 
-    // Scalars
-    val argIns = Input(Vec(numArgIns, UInt(top_w.W)))
-    val argOuts = Vec(numArgOuts, Decoupled((UInt(top_w.W))))
-
-    // Tile Load
-    val memStreams = Vec(numMemoryStreams, Flipped(new MemoryStream(top_w, v)))
-  })
-
-  ${traits.map{ a => s"  create_${a}()"}.mkString("\n") }
 }
   // AccelTop class mixes in all the other traits and is instantiated by tester""")
       }
