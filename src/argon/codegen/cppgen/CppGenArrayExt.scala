@@ -22,12 +22,13 @@ trait CppGenArrayExt extends CppGenArray {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case ArrayUpdate(array, i, data) => emit(src"$array->update($i, $data);")
+    case ArrayUpdate(array, i, data) => emit(src"${array}[$i] = $data;")
     case MapIndices(size, func, i)   =>
-      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($size);")
+      emit(src"${lhs.tp}* $lhs = (${lhs.tp}*) std::malloc($size * sizeof(${lhs.tp}));")
+      emit(src"int32_t ${lhs}_length = $size;")
       open(src"for (int $i = 0; $i < $size; ${i}++) {")
       emitBlock(func)
-      emit(src"$lhs->update($i, ${func.result});")
+      emit(src"$lhs[$i] = ${func.result};")
       close("}")
 
     case ArrayForeach(array,apply,func,i) =>
@@ -37,21 +38,23 @@ trait CppGenArrayExt extends CppGenArray {
       close("}")
 
     case ArrayMap(array,apply,func,i) =>
-      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($array->length);")
-      open(src"for (int $i = 0; $i < ${array}->length; $i++) { ")
+      emit(src"${lhs.tp}* $lhs = (${lhs.tp}*) std::malloc(${array}_length * sizeof(${array.tp}));")
+      emit(src"int32_t ${lhs}_length = ${array}_length;")
+      open(src"for (int $i = 0; $i < ${array}_length; $i++) { ")
       visitBlock(apply)
       emitBlock(func)
-      emit(src"$lhs->update($i, ${func.result});")
+      emit(src"$lhs[$i] = ${func.result};")
       close("}")
       
 
     case ArrayZip(a, b, applyA, applyB, func, i) =>
-      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}(${a}->length);")
-      open(src"for (int $i = 0; $i < ${a}->length; ${i}++) { ")
+      emit(src"${lhs.tp}* $lhs = (${lhs.tp}*) std::malloc(${a}_length * sizeof(${a.tp}));")
+      emit(src"int32_t ${lhs}_length = ${a}_length;")
+      open(src"for (int $i = 0; $i < ${a}_length; ${i}++) { ")
       visitBlock(applyA)
       visitBlock(applyB)
       emitBlock(func)
-      emit(src"${lhs}->update($i, ${func.result});")
+      emit(src"${lhs}[$i] = ${func.result};")
       close("}")
 
       // 
@@ -62,13 +65,13 @@ trait CppGenArrayExt extends CppGenArray {
       } else {
         emit(src"${lhs.tp} $lhs;") 
       }
-      open(src"if (${array}->length > 0) { // Hack to handle reductions on things of length 0")
-      emit(src"$lhs = ${array}->apply(0);")
+      open(src"if (${array}_length > 0) { // Hack to handle reductions on things of length 0")
+      emit(src"$lhs = ${array}[0];")
       closeopen("} else {")
       emit(src"$lhs = ${zeroElement(lhs.tp)};")
       close("}")
-      open(src"for (int $i = 1; $i < ${array}->length; ${i}++) {")
-      emit(src"""${rV._1.tp}${if (isArrayType(rV._1.tp)) "*" else ""} ${rV._1} = ${array}->apply($i);""")
+      open(src"for (int $i = 1; $i < ${array}_length; ${i}++) {")
+      emit(src"""${rV._1.tp}${if (isArrayType(rV._1.tp)) "*" else ""} ${rV._1} = ${array}[$i];""")
       emit(src"""${rV._2.tp}${if (isArrayType(rV._2.tp)) "*" else ""} ${rV._2} = $lhs;""")
       emitBlock(reduce)
       emit(src"$lhs = ${reduce.result};")
@@ -87,7 +90,7 @@ trait CppGenArrayExt extends CppGenArray {
       (0 until nesting).map{ level => 
         val grabbers = (0 until level).map{ m => """->apply(0))""" }.mkString("")
         val openParens = (0 until level).map{ m => "(" }.mkString{""}
-        emit(src"int size_${lhs}_$level = ${openParens}${array}${grabbers}->length;")
+        emit(src"int size_${lhs}_$level = ${openParens}${array}${grabbers}_length;")
       }
       emit(src"""${lhs.tp}* $lhs = new ${lhs.tp}(${(0 until nesting).map{ m => src"size_${lhs}_$m" }.mkString("*")});""")
 
@@ -106,7 +109,7 @@ trait CppGenArrayExt extends CppGenArray {
       val flatIndex = (0 until nesting).map{ level => 
         src"""${ (level+1 until nesting).map{ k => src"size_${lhs}_$k" }.mkString("*") } ${ if (level+1 < nesting) "*" else "" }${i}_${level}"""
       }.mkString(" + ")
-      emit(src"$lhs->update($flatIndex, ${func.result});")
+      emit(src"$lhs[$flatIndex] = ${func.result};")
 
       // Close all levels of loop
       (0 until nesting).foreach { level => 

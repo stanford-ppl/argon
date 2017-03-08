@@ -17,18 +17,18 @@ trait CppGenArray extends CppCodegen {
 
   override protected def remap(tp: Staged[_]): String = tp match {
     case tp: ArrayType[_] => tp.typeArguments.head match {
-        case DoubleType() => "cppDeliteArraydouble"
-        case FloatType() => "cppDeliteArraydouble"
-        case IntType() => "cppDeliteArrayint32_t"
-        case LongType() => "cppDeliteArrayint32_t"
+        case DoubleType() => "double"
+        case FloatType() => "double"
+        case IntType() => "int32_t"
+        case LongType() => "int32_t"
         case TextType => "cppDeliteArraystring"
-        case BoolType => "cppDeliteArraybool"
+        case BoolType => "bool"
         case fp: FixPtType[_,_,_] => 
           fp.fracBits match {
-            case 0 => "cppDeliteArrayint32_t"
-            case _ => "cppDeliteArraydouble"
+            case 0 => "int32_t"
+            case _ => "double"
           }
-        case _: FltPtType[_,_] => "cppDeliteArraydouble"
+        case _: FltPtType[_,_] => "double"
         case struct: Tup2Type[_,_] => src"cppDeliteArray${tp.typeArguments.head}" // Let struct find appropriate name for this  
         case tp_inner: ArrayType[_] => s"cppDeliteArray${remap(tp_inner)}"
         case _ => src"genericArray of ${tp.typeArguments.head}"
@@ -42,11 +42,14 @@ trait CppGenArray extends CppCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case op@ArrayNew(size)      => emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($size);")
+    case op@ArrayNew(size)      => 
+      emit(src"${lhs.tp}* $lhs = (${lhs.tp}*) std::malloc($size * sizeof(${lhs.tp}));")
+      emit(src"int32_t ${lhs}_length = $size;")
     case ArrayApply(array, i)   => 
       val asterisk = if (isArrayType(lhs.tp)) "*" else "" // TODO: Not sure why this is necessary
-      emit(src"${lhs.tp}${asterisk} $lhs = ${array}->apply($i);")
-    case ArrayLength(array)     => emit(src"${lhs.tp} $lhs = $array->length;")
+      val get = if (src"${array.tp}" == "cppDeliteArraystring") {src"->apply($i)"} else {src"[$i]"}
+      emit(src"${lhs.tp}${asterisk} $lhs = ${array}${get};")
+    case ArrayLength(array)     => emit(src"${lhs.tp} $lhs = ${array}_length;")
     case InputArguments()       => emit(src"${lhs.tp}* $lhs = args;")
     case _ => super.emitNode(lhs, rhs)
   }
