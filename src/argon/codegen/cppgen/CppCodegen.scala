@@ -43,7 +43,7 @@ trait CppCodegen extends Codegen with FileDependencies  {
     dependencies ::= AlwaysDep(s"""${cppResourcesPath}/datastructures""")
     dependencies ::= AlwaysDep(s"""${cppResourcesPath}/fringeSW""")
     moveDependencies ::= AlwaysDep(s"""${out}/cpptypes.h""", "datastructures")
-    moveDependencies ::= AlwaysDep(s"""${out}/interface.h""", "datastructures")
+    // moveDependencies ::= AlwaysDep(s"""${out}/interface.h""", "datastructures")
     // moveDependencies ::= AlwaysDep(s"""${out}/DRAM.h""", "datastructures")
     super.copyDependencies(out)
   }
