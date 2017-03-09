@@ -99,7 +99,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final protected def withSubStream[A](name: String, parent: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
     if (Config.multifile == 4) {
-      emit("// Creating sub kernel ${name}")
+      emit(src"// Creating sub kernel ${name}")
       withStream(newStream(name)) {
           emit("""package accel
 import templates._
