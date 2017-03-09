@@ -7,21 +7,26 @@ import argon.Config
 import argon.codegen.FileDependencies
 
 import scala.collection.mutable.Map
+import scala.collection.mutable.ListBuffer
 
-trait DotCodegen extends Codegen with FileDependencies { // FileDependencies extends Codegen already
+trait DotCodegen extends Codegen with FileDependencies with DotEnum { // FileDependencies extends Codegen already
   import IR._
   override val name = "Dot Codegen"
   override val lang: String = "dot"
   override val ext: String = "dot"
 
+  val edges = ListBuffer[()=>Any]() //Hack. change to bufferedStream
+
   override protected def emitBlock(b: Block[_]): Unit = {
-    //Console.println(s"testing $out $streamName ")
     visitBlock(b)
   }
 
   override def quote(s: Exp[_]): String = s match {
     case c: Const[_] => quoteConst(c)
     case b: Bound[_] => s"b${b.id}"
+    case Def(d) =>
+      val defName = d.getClass.getSimpleName
+      s"${super.quote(s)}:$defName"
     case lhs: Sym[_] => s"x${lhs.id}"
   }
 
@@ -34,30 +39,36 @@ trait DotCodegen extends Codegen with FileDependencies { // FileDependencies ext
     close(s"}")
     res
   }
-  def emitVert(n:Any, label:Any) = {
+  def emitVert(n:Exp[_]):Unit = emitVert(n, attr(n))
+  def emitVert(n:Any, label:Any):Unit = {
     emit(s"""${q(n)} [label="${q(label)}"];""")
   }
-  def emitVert(n:Any, label:Any, attr:DotAttr) = {
+  def emitVert(n:Any, label:Any, attr:DotAttr):Unit = {
     emit(s"""${q(n)} [label="${q(label)}" ${attr.list} ];""")
+  }
+  def emitVert(n:Any, attr:DotAttr):Unit = {
+    emit(s"""${q(n)} [${attr.list} ];""")
   }
   def emitEdge(from:Any, to:Any, label:String):Unit = {
     emitEdge(from, to, DotAttr().label(label))
   }
   def emitEdge(from:Any, to:Any, attr:DotAttr):Unit = {
-    emit(s"""${q(from)} -> ${q(to)} ${if (attr.attrMap.size!=0) s"[${attr.list}]" else ""}""")
+    def buffered() = { emit(s"""${q(from)} -> ${q(to)} ${if (attr.attrMap.size!=0) s"[${attr.list}]" else ""}""") }
+    edges += buffered _
   }
   def emitEdge(from:Any, to:Any):Unit = {
-    emit(s"""${q(from)} -> ${q(to)}""")
+    def buffered() = { emit(s"""${q(from)} -> ${q(to)}""") }
+    edges += buffered _
   }
-  def emitEdge(from:Any, ffield:Any, to:Any, tfield:Any):Unit = {
-    emitEdge(s"${from}:${ffield}", s"${to}:${tfield}")
-  }
-  def emitEdge(from:Any, ffield:Any, to:Any, tfield:Any, attr:DotAttr):Unit = {
-    emitEdge(s"${from}:${ffield}", s"${to}:${tfield}", attr)
-  }
-  def emitEdge(from:AnyVal, ffield:Any, fd:String, to:Any, tfield:Any, td:String):Unit = {
-    emitEdge(s"${from}:${ffield}:${fd}", s"${to}:${tfield}:${td}")
-  }
+  //def emitEdge(from:Any, ffield:Any, to:Any, tfield:Any):Unit = {
+    //emitEdge(s"${from}:${ffield}", s"${to}:${tfield}")
+  //}
+  //def emitEdge(from:Any, ffield:Any, to:Any, tfield:Any, attr:DotAttr):Unit = {
+    //emitEdge(s"${from}:${ffield}", s"${to}:${tfield}", attr)
+  //}
+  //def emitEdge(from:Any, ffield:Any, fd:String, to:Any, tfield:Any, td:String):Unit = {
+    //emitEdge(s"${from}:${ffield}:${fd}", s"${to}:${tfield}:${td}")
+  //}
 
   def emitSubGraph(n:Any, label:Any)(block: =>Any):Unit = {
 		emitSubGraph(n, DotAttr().label(label.toString))(block)
@@ -68,6 +79,11 @@ trait DotCodegen extends Codegen with FileDependencies { // FileDependencies ext
 			block
 		}
   }
+
+  def attr(n:Exp[_]):DotAttr = {
+    DotAttr().label(quote(n))
+  }
+
 }
 
 class DotAttr() {
