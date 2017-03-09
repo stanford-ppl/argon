@@ -37,6 +37,7 @@ object ArgonBuild extends Build {
       //"-diagrams-dot-timeout", "20", "-diagrams-debug",
       "-doc-title", name.value
     ),
+    autoAPIMappings := true, // Automatically link to scaladoc of depended project
 
     addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
   
