@@ -21,9 +21,9 @@ trait DotFileGen extends FileGen with DotCodegen {
     edges.foreach { edge => val e = edge() }
     close("}")
     val path = s"${out}main"
-    val cmd = s"dot -Tpdf ${path}.${ext} > ${path}.pdf" 
-    Console.println(cmd)
-    s"$cmd" !
+    //val cmd = s"dot -Tpdf ${path}.${ext} > ${path}.pdf" 
+    //Console.println(cmd)
+    //s"$cmd" !
   }
 
 }
