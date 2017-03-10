@@ -1,0 +1,2 @@
+
+addCommandAlias("make", "compile")

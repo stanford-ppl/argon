@@ -46,6 +46,7 @@ trait AccessPatternAnalyzer extends Traversal {
 
   // All loop indices encountered above the current scope
   var loopIndices = Set[Bound[Index]]()
+  var loopFromIndex = Map[Bound[Index], Exp[_]]()
   var boundIndexPatterns = Map[Exp[Index], Seq[IndexPattern]]()
 
   // The list of statements which can be scheduled prior to block traversals
@@ -56,14 +57,17 @@ trait AccessPatternAnalyzer extends Traversal {
   // The exact scope of the current loop
   var loopScope: Seq[Stm] = Nil
 
-  private def inLoop[T](indices: Seq[Bound[Index]])(blk: => T): T = {
+  private def inLoop[T](loop: Exp[_], indices: Seq[Bound[Index]])(blk: => T): T = {
     val inner = innerStms
     indices.foreach{i => innerScopes += i -> inner}
 
     val prevIndices = loopIndices
+    val prevLoops = loopFromIndex
     loopIndices ++= indices
+    loopFromIndex ++= indices.map{i => i -> loop}
     val result = blk
     loopIndices = prevIndices
+    loopFromIndex = prevLoops
     result
   }
   override protected def visitBlock[S](block: Block[S]) = {
@@ -143,7 +147,7 @@ trait AccessPatternAnalyzer extends Traversal {
       dbgs(s"  Current indices: $loopIndices")
       levels.foreach { case (indices, blocks) =>
         dbgs(s"  Traversing loop level with $indices")
-        inLoop(indices) {
+        inLoop(lhs, indices) {
           blocks.foreach { blk => visitBlock(blk) }
         }
       }

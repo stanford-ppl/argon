@@ -18,9 +18,9 @@ trait ChiselFileGen extends FileGen {
     // val ioModule = getStream("IOModule")
     // val AccelTop = getStream("AccelTop")
     // val bufferControl = getStream("BufferControlCxns")
-    // val topTrait = getStream("TopTrait")
+    // val RootController = getStream("RootController")
 
-    withStream(getStream("TopTrait")) {
+    withStream(getStream("RootController")) {
       if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Begin!")}
       preprocess(b)
       toggleEn() // Turn off
@@ -35,42 +35,41 @@ trait ChiselFileGen extends FileGen {
 
   override protected def emitFileHeader() {
 
-//     withStream(getStream("IOModule")) {
-//       emit(s"""package accel
-// import chisel3._
-// import templates._
-// import chisel3.util._
-// import fringe._
-// import types._""")
-//       open("trait IOModule extends Module {")
-//       emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
-//       emit("val w = 32 // TODO: How to generate these properly?")
-//       emit("val v = 16 // TODO: How to generate these properly?")
-//     }
+    withStream(getStream("IOModule")) {
+      emit(s"""package accel
+import chisel3._
+import templates._
+import chisel3.util._
+import fringe._
+import types._""")
+      open("trait IOModule extends Module {")
+      emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
+      emit("val io_w = 32 // TODO: How to generate these properly?")
+      emit("val io_v = 16 // TODO: How to generate these properly?")
+    }
 
     withStream(getStream("BufferControlCxns")) {
       emit(s"""package accel
 import templates._
 import fringe._
 import chisel3._""")
-      open(s"""trait BufferControlCxns extends TopTrait {""")
-      if (Config.multifile < 4) open(s"""def create_BufferControlCxns() {""")
+      open(s"""trait BufferControlCxns extends RootController {""")
     }
 
-    withStream(getStream("TopTrait")) {
+    withStream(getStream("RootController")) {
       emit(s"""package accel
 import templates._
 import fringe._
 import chisel3._""")
-      open(s"trait TopTrait extends GlobalWires {")
-      emit(s"// May want to have a main method defined here too")
+      open(s"trait RootController extends GlobalWires {")
+
     }
 
     withStream(getStream("GlobalWires")) {
       emit(s"""package accel
 import templates._
 import chisel3._
-trait GlobalWires extends Module{""")
+trait GlobalWires extends IOModule{""")
     }
 
     withStream(getStream("Instantiator")) {
@@ -79,7 +78,10 @@ trait GlobalWires extends Module{""")
       emit("package top")
       emit("")
       emit("import fringe._")
+      emit("import accel._")
       emit("import chisel3.core.Module")
+      emit("import chisel3._")
+      emit("import chisel3.util._")
       emit("import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}")
       emit("")
       emit("import scala.collection.mutable.ListBuffer")
@@ -88,53 +90,14 @@ trait GlobalWires extends Module{""")
       emit(" * Top test harness")
       emit(" */")
       open("class TopUnitTester(c: Top)(implicit args: Array[String]) extends ArgsTester(c) {")
-
-        emit("// ---- Fringe software API ----")
-        open("def writeReg(reg: Int, data: Int) {")
-          emit("poke(c.io.waddr, reg)")
-          emit("poke(c.io.wdata, data)")
-          emit("poke(c.io.wen, 1)")
-          emit("step(1)")
-          emit("poke(c.io.wen, 0)")
-        close("}")
-
-        open("def readReg(reg: Int): Int = {")
-          emit("poke(c.io.raddr, reg)")
-          emit("peek(c.io.rdata).toInt")
-        close("}")
-
-        open("def run() = {")
-          emit("var numCycles = 0")
-          emit("var status = 0")
-          emit("writeReg(c.fringe.commandReg, 1)")
-          open("while ((status == 0) && (numCycles <= 100)) {")
-            emit("step(1)")
-            emit("status = readReg(c.fringe.statusReg)")
-            emit("numCycles += 1")
-          close("}")
-          emit("numCycles")
-        close("}")
-
-        emit("  // ---- Host code ----")
-        emit("// Write to all argIns: Regs 2..numArgIns+2")
-        open("for (i <- 2 until c.numArgIns+2) {")
-          emit("if (i == 2) writeReg(i, 0x400)")
-          emit("else writeReg(i, (i-1)*2)  // Write pattern 4,6..")
-        close("}")
-        emit("run()")
-        emit("// Read all argOuts: numargIns+2..numArgIns+2+numArgOuts")
-        open("val argOuts = List.tabulate(c.numArgOuts) { i =>")
-          emit("readReg(c.numArgIns+2+i)")
-        close("}")
-        emit("")
-        emit("""println(s"argOuts: $argOuts")""")
       close("}")
       emit("")
-      open("object TopTest extends CommonMain {")
+      open("object Instantiator extends CommonMain {")
         emit("type DUTType = Top")
         emit("")
         open("def supportedTarget(t: String) = t match {")
           emit("""case "aws" => true""")
+          emit("""case "zynq" => true""")
           emit("""case "verilator" => true""")
           emit("case _ => false")
         close("}")
@@ -142,16 +105,7 @@ trait GlobalWires extends Module{""")
         open("def dut = () => {")
 
     }
-//     withStream(getStream("GeneratedPoker")) {
-//       emit(s"""package accel
 
-// import chisel3.iotesters.{PeekPokeTester, Driver, ChiselFlatSpec}
-// import org.scalatest.Assertions._
-// import java.io._""")
-//       open(s"""class GeneratedPoker(c: AccelTop) extends PeekPokeTester(c) {""")
-//       emit(s"""var offchipMem = List[BigInt]()""")
-//       open(s"def handleLoadStore() {")
-//     }
 
     super.emitFileHeader()
   }
@@ -161,6 +115,8 @@ trait GlobalWires extends Module{""")
 
     withStream(getStream("Instantiator")) {
           emit("val w = 32")
+          emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
+          emit("val numArgOuts = numArgIns_reg")
           emit("""val target = if (args.size > 0) args(0) else "verilator" """)
           emit("""Predef.assert(supportedTarget(target), s"ERROR: Unsupported Fringe target '$target'")""")
           emit("new Top(w, numArgIns, numArgOuts, numMemoryStreams, target)")
@@ -182,18 +138,30 @@ trait GlobalWires extends Module{""")
       emit("}")
     }
 
-    // withStream(getStream("IOModule")) {
-    //   emit(src"""val interface = new Top(w, numArgIns, numArgOuts, numMemoryStreams, target)""")
-    //   close("}")
-    // }
+    withStream(getStream("IOModule")) {
+      emit("val io_numArgIns = io_numArgIns_reg + io_numArgIns_mem")
+      emit("val io_numArgOuts = io_numArgOuts_reg")
+      open("val io = IO(new Bundle {")
+        emit("// Control")
+        emit("val enable = Input(Bool())")
+        emit("val done = Output(Bool())")
+        emit("")
+        emit("// Tile Load")
+        emit("val memStreams = Vec(io_numMemoryStreams, Flipped(new MemoryStream(io_w, io_v)))")
+        emit("")
+        emit("// Scalars")
+        emit("val argIns = Input(Vec(io_numArgIns, UInt(io_w.W)))")
+        emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(io_w.W))))")
+        emit("")
+      close("})")
+      close("}")
+    }
 
-    withStream(getStream("TopTrait")) {
-      emit(s"// Would close main method here")
+    withStream(getStream("RootController")) {
       close(s"}")
     }
 
     withStream(getStream("BufferControlCxns")) {
-      if (Config.multifile < 4) close("}")
       close("}")
     }
 
@@ -207,20 +175,10 @@ trait GlobalWires extends Module{""")
 import templates._
 import fringe._
 import chisel3._
-class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("TopTrait")).mkString("\n with ")} {
-  val v = 16
-  val io = IO(new Bundle {
-    // Control
-    val enable = Input(Bool())
-    val done = Output(Bool())
+import chisel3.util._
+class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
-    // Scalars
-    val argIns = Input(Vec(numArgIns, UInt(top_w.W)))
-    val argOuts = Vec(numArgOuts, Decoupled((UInt(top_w.W))))
-
-    // Tile Load
-    val memStreams = Vec(numMemoryStreams, Flipped(new MemoryStream(top_w, v)))
-  })
+  // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
 
 }""")
       }
@@ -228,39 +186,22 @@ class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numM
     // Get traits that need to be mixed in
       val traits = streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-      }.toSet - "AccelTop" - "GlobalWires" - "TopTrait" - "Instantiator"
+      }.toSet - "AccelTop" - "GlobalWires" - "RootController" - "Instantiator"
       withStream(getStream("AccelTop")) {
         emit(s"""package accel
 import templates._
 import fringe._
 import chisel3._
-class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("TopTrait")).mkString("\n with ")} {
-  val v = 16
-  val io = IO(new Bundle {
-    // Control
-    val enable = Input(Bool())
-    val done = Output(Bool())
+import chisel3.util._
 
-    // Scalars
-    val argIns = Input(Vec(numArgIns, UInt(top_w.W)))
-    val argOuts = Vec(numArgOuts, Decoupled((UInt(top_w.W))))
+class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
-    // Tile Load
-    val memStreams = Vec(numMemoryStreams, Flipped(new MemoryStream(top_w, v)))
-  })
-
-  ${traits.map{ a => s"  create_${a}()"}.mkString("\n") }
 }
   // AccelTop class mixes in all the other traits and is instantiated by tester""")
       }
         
     }
 
-
-    // withStream(getStream("GeneratedPoker")) {
-    //   close("}")
-    //   close("}")
-    // }
 
     super.emitFileFooter()
   }

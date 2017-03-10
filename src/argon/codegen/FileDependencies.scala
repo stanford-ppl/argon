@@ -18,6 +18,7 @@ trait FileDependencies extends Codegen {
 
   var dependencies: List[CodegenDep] = Nil
   var moveDependencies: List[CodegenDep] = Nil
+  var patchDependencies: List[CodegenDep] = Nil
 
   // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
   def copyDependencies(out: String): Unit = {
@@ -36,6 +37,9 @@ trait FileDependencies extends Codegen {
     moveDependencies.foreach{dep => if (dep.needsCopy) {
       log(s"mv ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}")
       s"mv ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}" !
+    }}
+    patchDependencies.foreach{dep => if (dep.needsCopy) {
+      s"${dep.input}" !
     }}
   }
   override protected def postprocess[S:Staged](b: Block[S]) = {
