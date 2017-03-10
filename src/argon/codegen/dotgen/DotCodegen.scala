@@ -131,6 +131,7 @@ trait DotEnum {
   val box       = Shape("box")
   val ellipse   = Shape("ellipse")
   val circle    = Shape("circle")
+  val hexagon   = Shape("hexagon")
 
 	val filled    = Style("filled")
   val bold      = Style("bold")
@@ -141,13 +142,13 @@ trait DotEnum {
 	val white     = Color("white")
 	val black     = Color("black")
 	val lightgrey = Color("lightgrey")
-  val hexagon   = Color("hexagon")
   val gold      = Color("gold")
   val limegreen = Color("limegreen")
   val blue      = Color("blue")
   val red       = Color("red")
   val indianred = Color("indianred1")
   val cyan      = Color("cyan4")
+  val pink      = Color("deeppink1")
 
   val both = Direction("both")
 
