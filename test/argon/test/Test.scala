@@ -132,7 +132,7 @@ object Test7 extends Test {
         else if (x || y) random[Boolean]
         else random[Boolean]
       }
-      else lift(true)
+      else true
     }
 
     println(z)

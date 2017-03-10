@@ -118,6 +118,16 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
       error(c"Memory $x has no rule for $name banking")
     })
 
+  class TupleSizeUnsupported(element: String, x: Exp[_]) extends
+    CompilerException(18, c"FieldApply $x has no rule for applying to $element th element", {
+      error(c"FieldApply $x has no rule for $element element")
+    })
+
+  class AccumWithoutReduceFunctionException(reg: Exp[_], lhs: Exp[_]) extends
+    CompilerException(19, c"Register $reg claims to be an accumulator but has no reduction function assigned", {
+      error(c"Register $reg has claims to be an accumulator but has no reduction function")
+    })
+
   // --- User errors
   abstract class UserError(ctx: SrcCtx, console: => Unit) {
     console

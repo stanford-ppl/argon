@@ -13,7 +13,10 @@ trait ScalaGenStructs extends ScalaCodegen with StructCodegen {
     open(src"case class $name(")
     val fields = tp.fields.map{case (field, t) => src"var $field: $t"}.mkString(",\n" + tabbed)
     emit(fields)
-    close(")")
+    close(") {")
+    open("")
+    emit("override def productPrefix = \"" + tp.prefix + "\"")
+    close("}")
   }
 
   protected def emitDataStructures(): Unit = if (encounteredStructs.nonEmpty) {

@@ -43,13 +43,18 @@ trait Definitions extends Blocks { self: Staging =>
 
     // Binds: symbols "bound" by this Def
     // Bound symbols define the start of scopes. Effectful symbols in a scope typically must be bound.
-    // Dataflow dependents of bound syms up until but not including the binding Def make up the majority of a scope
+    // All dependents of bound syms up until but not including the binding Def make up the majority of a scope
     // Default: All effects included in all scopes associated with this Def
     def binds: List[Symbol[_]] = blocks.flatMap(_.effectful)
 
     // Tunnels: symbols "bound" in scopes of this Def, but defined elsewhere
-    // Tunnel symbols define the start of scopes.
-    def tunnels: List[Symbol[_]] = Nil
+    // Tunnel symbols define the start of scopes, and are coupled with the result of the scope to avoid ambiguity
+    // All paths from tunnel symbols to their corresponding results are effectively bound within the scope of this Def
+    // Default: All inputs of all scopes associated with this Def, with the corresponding block results
+    def tunnels: List[(Symbol[_],Seq[Symbol[_]])] = blocks.flatMap{blk =>
+      val results = syms(blk.result +: blk.effectful)
+      blk.inputs.map{in => (in,results) }
+    }.groupBy(_._1).mapValues(_.flatMap(_._2)).toList
 
     /** Alias hints -- used to check/disallow unsafe mutable aliasing **/
     // Aliases: inputs to this Def which *may* equal to the output of this Def
