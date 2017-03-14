@@ -50,7 +50,8 @@ trait CppFileGen extends FileGen {
 
   open(s"void Application(int numThreads, cppDeliteArraystring * args) {")
   emit("// Create an execution context.")
-  emit("FringeContext *c1 = new FringeContext();")
+  emit("FringeContext *c1 = new FringeContext(\"accel.bit.bin\");")
+  emit("c1->load();")
 
 
     withStream(getStream("cpptypes","h")) {
