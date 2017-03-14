@@ -78,7 +78,7 @@ trait Symbols extends StagedTypes with Metadata { self: Staging =>
 
     private var _p: Any = x
     override def c: Any = _p
-    def c_=(rhs: Any) { if (!isFinal) _p = c }
+    def c_=(rhs: Any) { if (!isFinal) _p = rhs }
     override def toString = escapeConst(c)
 
     private var _isFinal: Boolean = false
