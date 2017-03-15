@@ -11,7 +11,7 @@ trait Metadata extends HDAG with Lattices { self: Statements =>
     def isEmpiric: Boolean = true
     def mirror(f: Tx): T
 
-    def invalidateOnTransform: Boolean = false
+    def ignoreOnTransform: Boolean = false
 
     final def key = self.getClass
     override final def hashCode(): Int = key.hashCode()
@@ -30,19 +30,22 @@ trait Metadata extends HDAG with Lattices { self: Statements =>
 
     def add[M<:Metadata[M]:Manifest](edge: Exp[_], m: M): Unit = this.add(edge, Some(m))
     def add[M<:Metadata[M]:Manifest](edge: Exp[_], m: Option[M]): Unit = {
-      val meta = getMetadata(edge)
       val k = keyOf[M]
+      val meta = getMetadata(edge)
       val prev = meta.get(k).map(_.asInstanceOf[M])
       val entry = join(m, prev) //metaUpdate(m, prev)
       if (entry.isDefined) addMetadata(edge, entry.get)
       else if (prev.isDefined) removeMetadata(edge, prev.get)
     }
+
+
     def apply[M<:Metadata[M]:Manifest](edge: Exp[_]): Option[M] = {
       val k = keyOf[M]
       getMetadata(edge).get(k).map(_.asInstanceOf[M])
     }
-    def get(edge:Exp[_]): Map[Class[_],Metadata[_]] = getMetadata(edge)
-    def set(edge:Exp[_], m: Map[Class[_],Metadata[_]]): Unit = setMetadata(edge, m)
+    def get(edge: Exp[_]): Map[Class[_],Metadata[_]] = getMetadata(edge)
+    def set(edge: Exp[_], m: Map[Class[_],Metadata[_]]): Unit = setMetadata(edge, m)
+    def add(edge: Exp[_], m: Map[Class[_],MetaData]): Unit = this.set(edge, this.get(edge) ++ m)
 
     def clearAll[M<:Metadata[M]:Manifest] = clearMetadata(keyOf[M])
   }
