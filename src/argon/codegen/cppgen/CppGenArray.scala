@@ -29,8 +29,8 @@ trait CppGenArray extends CppCodegen {
             case _ => "double"
           }
         case _: FltPtType[_,_] => "double"
-        case struct: Tup2Type[_,_] => src"cppDeliteArray${tp.typeArguments.head}" // Let struct find appropriate name for this  
-        case tp_inner: ArrayType[_] => s"cppDeliteArray${remap(tp_inner)}"
+        // case struct: Tup2Type[_,_] => src"cppDeliteArray${tp.typeArguments.head}" // Let struct find appropriate name for this  
+        case tp_inner: ArrayType[_] => s"vector<${remap(tp_inner)}>"
         case _ => src"genericArray of ${tp.typeArguments.head}"
       }
     case _ => super.remap(tp)
