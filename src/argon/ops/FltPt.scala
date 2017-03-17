@@ -18,7 +18,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   type Float64 = FltPt[_53,_11]
 
   /** Infix methods **/
-  case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) {
+  case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) extends StageAny[FltPt[G,E]] {
     def unary_-(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_neg(this.s))
     def + (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_add(this.s,that.s))
     def - (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_sub(this.s,that.s))
@@ -100,15 +100,15 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   }
   implicit def __fltPtNum[G:INT,E:INT]: Num[FltPt[G,E]] = new FltPtNum[G,E]
 
-  override protected def bitsUnapply[T](tp: FStaged[T]): Option[Bits[T]] = tp match {
+  override protected def bitsUnapply[T <: StageAny[T]](tp: FStaged[T]): Option[Bits[T]] = tp match {
     case tp: FltPtType[_,_] => Some(new FltPtNum()(tp.mG,tp.mE).asInstanceOf[Bits[T]])
     case _ => super.bitsUnapply(tp)
   }
 
 
   // --- Lift
-  implicit object Float2FltPt extends Lift[Float,Float32] { val FStaged = fltPtType[_24,_8] }
-  implicit object Double2FltPt extends Lift[Double,Float64] { val FStaged = fltPtType[_53,_11] }
+  implicit object Float2FltPt extends Lift[Float,Float32] { val fStaged = fltPtType[_24,_8] }
+  implicit object Double2FltPt extends Lift[Double,Float64] { val fStaged = fltPtType[_53,_11] }
 
 
   /** Constant lifting **/
@@ -142,7 +142,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   implicit def double2fltpt[G:INT,E:INT](x: Double)(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(createConstant[G,E](x))
   def string2fltpt[G:INT,E:INT](x: String)(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(createConstant[G,E](x))
 
-  override def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l match {
+  override def __lift[A,B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l match {
     case Float2FltPt => FltPt(createConstant[_24,_8](x)).asInstanceOf[B]
     case Double2FltPt => FltPt(createConstant[_53,_11](x)).asInstanceOf[B]
     case _ => super.__lift(x)
@@ -198,7 +198,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
 
 
   /** Casting **/
-  override protected def cast[T:FStaged:Num,R:FStaged:Num](x: T)(implicit ctx: SrcCtx): R = (ftyp[T],ftyp[R]) match {
+  override protected def cast[T <: StageAny[T] : FStaged:Num,R <: StageAny[R] : FStaged:Num](x: T)(implicit ctx: SrcCtx): R = (ftyp[T],ftyp[R]) match {
     case (a:FltPtType[g,e],b:FltPtType[g2,e2]) =>
       // Why are these asInstanceOfs necessary here??
       implicit val mG: INT[g] = a.mG.asInstanceOf[INT[g]]
@@ -211,7 +211,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
     case _ => super.cast[T,R](x)
   }
 
-  override protected def castLift[R:FStaged:Num](x: Any)(implicit ctx: SrcCtx): R = ftyp[R] match {
+  override protected def castLift[R <: StageAny[R] : FStaged:Num](x: Any)(implicit ctx: SrcCtx): R = ftyp[R] match {
     case tp:FltPtType[g,e] =>
       implicit val mG: INT[g] = tp.mG.asInstanceOf[INT[g]]
       implicit val mE: INT[e] = tp.mE.asInstanceOf[INT[e]]
@@ -228,7 +228,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
     def mE = INT[E]
     def tp = fltPtType[G,E]
   }
-  abstract class FltPtOp2[G:INT,E:INT,R:FStaged] extends Op[R] {
+  abstract class FltPtOp2[G:INT,E:INT,R <: StageAny[R] : FStaged] extends Op[R] {
     def mG = INT[G]
     def mE = INT[E]
     def tp = fltPtType[G,E]

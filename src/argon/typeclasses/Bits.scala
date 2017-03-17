@@ -16,10 +16,10 @@ trait BitsExp extends Staging {
     def length: Int
   }
 
-  protected def bitsUnapply[T](tp: FStaged[T]): Option[Bits[T]] = None
+  protected def bitsUnapply[T <: StageAny[T]](tp: FStaged[T]): Option[Bits[T]] = None
 
   object Bits {
-    def unapply[T](x: FStaged[T]): Option[Bits[T]] = bitsUnapply(x)
+    def unapply[T <: StageAny[T]](x: FStaged[T]): Option[Bits[T]] = bitsUnapply(x)
   }
 
   def zero[T:Bits](implicit ctx: SrcCtx): T = implicitly[Bits[T]].zero

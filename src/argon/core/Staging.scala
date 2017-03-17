@@ -22,7 +22,7 @@ trait Staging extends Statements {
     p
   }
 
-  def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.FStaged.wrapped(constant[B](x)(l.FStaged,ctx))
+  def __lift[A,B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.fStaged.wrapped(constant[B](x)(l.fStaged,ctx))
 
   def stagedef(d: Def)(ctx: SrcCtx): List[Sym[_]]                   = stagedefPure(d)(ctx)
   def stagedefPure(d: Def)(ctx: SrcCtx): List[Sym[_]]               = stagedefEffectful(d, Pure)(ctx)
@@ -32,14 +32,14 @@ trait Staging extends Statements {
   def stagedefGlobal(d: Def)(ctx: SrcCtx): List[Sym[_]]             = stagedefEffectful(d, Global)(ctx)
   def stagedefMutable(d: Def)(ctx: SrcCtx): List[Sym[_]]            = stagedefEffectful(d, Mutable)(ctx)
 
-  def stage[T](op: Op[T])(ctx: SrcCtx): Sym[T]                      = single[T](stagedef(op)(ctx))(op.bStaged)
-  def stagePure[T](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stagedefPure(op)(ctx))(op.bStaged)
-  def stageCold[T](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stagedefCold(op)(ctx))(op.bStaged)
-  def stageWrite[T](ss: Exp[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T]    = single[T](stagedefWrite(ss:_*)(op)(ctx))(op.bStaged)
-  def stageSimple[T](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stagedefSimple(op)(ctx))(op.bStaged)
-  def stageGlobal[T](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stagedefGlobal(op)(ctx))(op.bStaged)
-  def stageMutable[T](op: Op[T])(ctx: SrcCtx): Sym[T]               = single[T](stagedefMutable(op)(ctx))(op.bStaged)
-  def stageEffectful[T](op: Op[T], u: Effects)(ctx: SrcCtx): Sym[T] = single[T](stagedefEffectful(op, u)(ctx))(op.bStaged)
+  def stage[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]                      = single[T](stagedef(op)(ctx))(op.bStaged)
+  def stagePure[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stagedefPure(op)(ctx))(op.bStaged)
+  def stageCold[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stagedefCold(op)(ctx))(op.bStaged)
+  def stageWrite[T <: StageAny[T]](ss: Exp[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T]    = single[T](stagedefWrite(ss:_*)(op)(ctx))(op.bStaged)
+  def stageSimple[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stagedefSimple(op)(ctx))(op.bStaged)
+  def stageGlobal[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stagedefGlobal(op)(ctx))(op.bStaged)
+  def stageMutable[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]               = single[T](stagedefMutable(op)(ctx))(op.bStaged)
+  def stageEffectful[T <: StageAny[T]](op: Op[T], u: Effects)(ctx: SrcCtx): Sym[T] = single[T](stagedefEffectful(op, u)(ctx))(op.bStaged)
 
   private def registerDefWithCSE(d: Def)(ctx: SrcCtx): List[Sym[_]] = {
     // log(c"Checking defCache for $d")

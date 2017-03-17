@@ -18,7 +18,7 @@ trait BoolExp extends Staging with BitsExp { this: TextExp =>
   }
 
   /** Infix methods **/
-  case class Bool(s: Exp[Bool]) {
+  case class Bool(s: Exp[Bool]) extends StageAny[Bool] {
     def unary_!(implicit ctx: SrcCtx): Bool = Bool(bool_not(this.s)(ctx))
     def &&(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_and(this.s, that.s)(ctx))
     def ||(that: Bool)(implicit ctx: SrcCtx): Bool = Bool( bool_or(this.s, that.s)(ctx))
@@ -40,13 +40,13 @@ trait BoolExp extends Staging with BitsExp { this: TextExp =>
     override def random(max: Option[Bool])(implicit ctx: SrcCtx): Bool = Bool(bool_random(max.map(_.s)))
     override def length = 1
   }
-  override protected def bitsUnapply[T](tp: FStaged[T]): Option[Bits[T]] = tp match {
+  override protected def bitsUnapply[T <: StageAny[T]](tp: FStaged[T]): Option[Bits[T]] = tp match {
     case BoolType => Some(BoolBits.asInstanceOf[Bits[T]])
     case _ => super.bitsUnapply(tp)
   }
 
   // --- Lifts
-  implicit object Boolean2Bool extends Lift[Boolean,Bool] { val FStaged = BoolType }
+  implicit object Boolean2Bool extends Lift[Boolean,Bool] { val fStaged = BoolType }
 
 
   /** Constant lifting **/

@@ -6,7 +6,7 @@ trait VoidApi extends VoidExp {
 }
 
 trait VoidExp extends Staging {
-  case class Void(s: Exp[Void])
+  case class Void(s: Exp[Void]) extends StageAny[Void]
 
   /** Type classes **/
   // --- FStaged
@@ -19,7 +19,7 @@ trait VoidExp extends Staging {
   }
 
   // --- Lift
-  implicit object Unit2Void extends Lift[Unit,Void] { val FStaged = VoidType }
+  implicit object Unit2Void extends Lift[Unit,Void] { val fStaged = VoidType }
 
   /** Constant lifting **/
   implicit def unit2void(x: Unit)(implicit ctx: SrcCtx): Void = lift(x)

@@ -15,9 +15,10 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   case class Stm(lhs: List[Sym[_]], rhs: Def)
 
   // TODO: LMS Naming convention was weird here. What do these even stand for?
+
   object TP {
-    def unapply[A](x: Any): Option[(Sym[Any],Op[Any])] = x match {
-      case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[Any]], rhs.asInstanceOf[Op[Any]]))
+    def unapply[A](x: Any): Option[(Sym[Any], Op[_])] = x match {
+      case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[Any]], rhs))
       case _ => None
     }
   }

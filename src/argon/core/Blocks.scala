@@ -52,7 +52,7 @@ trait Blocks extends Effects { self: Staging =>
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
     * All assumptions about the current context carry over unchanged.
     */
-  def stageBlockInline[T:FStaged](block: => Exp[T]): Block[T] = {
+  def stageBlockInline[T <: StageAny[T] : FStaged](block: => Exp[T]): Block[T] = {
     val saveContext = context
     if (saveContext eq null) context = Nil
 

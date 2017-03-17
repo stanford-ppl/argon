@@ -21,7 +21,7 @@ trait Definitions extends Blocks { self: Staging =>
     final def expInputs: List[Exp[_]] = recursive.collectLists(__exps)(productIterator)
 
 
-    def outputTypes: List[FStaged[_]]
+    def outputTypes: List[BStaged[_]]
 
     /** Scheduling dependencies -- used to calculate schedule for IR based on dependencies **/
     // Inputs: symbol dataflow dependencies for this Def.
@@ -94,17 +94,17 @@ trait Definitions extends Blocks { self: Staging =>
   }
 
   /** Most common variant of Def - returns only one symbol of one type **/
-  abstract class Op[R:FStaged] extends Def {
+  abstract class Op[R:BStaged] extends Def {
     def mirror(f:Tx): Exp[R]
-    val bStaged: BStaged[R] = implicitly[FStaged[R]]
-    final override def outputTypes = List(implicitly[FStaged[R]])
+    val bStaged: BStaged[R] = implicitly[BStaged[R]]
+    final override def outputTypes = List(bStaged)
     final override def fatMirror(f:Tx): List[Exp[_]] = List(this.mirror(f))
-    def mR = ftyp[R]
+    def mR = bStaged
   }
-  abstract class Op2[A:FStaged,R:FStaged] extends Op[R] { def mA = ftyp[A] }
-  abstract class Op3[A:FStaged,B:FStaged,R:FStaged] extends Op2[A,R] { def mB = ftyp[B] }
-  abstract class Op4[A:FStaged,B:FStaged,C:FStaged,R:FStaged] extends Op3[A,B,R] { def mC = ftyp[C] }
-  abstract class Op5[A:FStaged,B:FStaged,C:FStaged,D:FStaged,R:FStaged] extends Op4[A,B,C,R] { def mD = ftyp[D] }
+  abstract class Op2[A: BStaged,R:BStaged] extends Op[R] { def mA = btyp[A] }
+  abstract class Op3[A:BStaged,B:BStaged,R:BStaged] extends Op2[A,R] { def mB = btyp[B] }
+  abstract class Op4[A:BStaged,B:BStaged,C:BStaged,R:BStaged] extends Op3[A,B,R] { def mC = btyp[C] }
+  abstract class Op5[A:BStaged,B:BStaged,C:BStaged,D:BStaged,R:BStaged] extends Op4[A,B,C,R] { def mD = btyp[D] }
 
   /** Api **/
   object Def {
@@ -114,7 +114,7 @@ trait Definitions extends Blocks { self: Staging =>
     }
   }
   object Op {
-    def unapply[T](e: Exp[T]): Option[Op[T]] = e match {
+    def unapply[T <: StageAny[T]](e: Exp[T]): Option[Op[T]] = e match {
       case s: Sym[_] => defOf(s) match {
         case op: Op[_] => Some(op.asInstanceOf[Op[T]])
         case _ => None

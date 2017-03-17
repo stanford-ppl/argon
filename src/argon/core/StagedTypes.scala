@@ -1,7 +1,6 @@
 package argon.core
 
 import scala.annotation.implicitNotFound
-
 import org.virtualized.{EmbeddedControls, SourceContext}
 import argon.State
 
@@ -9,7 +8,7 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   type SrcCtx = SourceContext
 
   /** Base type class for all FStaged types **/
-  trait FStaged[T] extends BStaged[T]{
+  trait FStaged[T <: StageAny[T]] extends BStaged[T]{
     def wrapped(x: Exp[T]): T
     def unwrapped(x: T): Exp[T]
   }
@@ -21,20 +20,33 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     def <:<(that: FStaged[_]) = isSubtype(this.stagedClass, that.stagedClass)
   }
 
-  def ftyp[T:FStaged] = implicitly[FStaged[T]]
+  /*  def toBStaged[T](s: FStaged[T]):BStaged[T] = new BStaged[T] {
+  override def typeArguments: List[BStaged[_]] = s.typeArguments.map(x => toBStaged(x))
+  override def stagedClass = s.stagedClass
+
+  override def isPrimitive = s.isPrimitive
+}
+*/
+
+  trait StageAny[+T] {
+    def s: Exp[T]
+  }
+
+
+  def ftyp[T <: StageAny[T] : FStaged]: FStaged[T] = implicitly[FStaged[T]]
   def btyp[T:BStaged] = implicitly[BStaged[T]]
-  def mftyp[A,B](x: FStaged[A]): FStaged[B] = x.asInstanceOf[FStaged[B]]
+  def mftyp[A <: StageAny[A], B <: StageAny[B]](x: FStaged[A]): FStaged[B] = x.asInstanceOf[FStaged[B]]
   def mbtyp[A,B](x: BStaged[A]): BStaged[B] = x.asInstanceOf[BStaged[B]]
 
-  def wrap[T:FStaged](s: Exp[T]): T = implicitly[FStaged[T]].wrapped(s)
-  def unwrap[T:FStaged](x: T): Exp[T] = implicitly[FStaged[T]].unwrapped(x)
+  def wrap[T <: StageAny[T] : FStaged](s: Exp[T]): T = implicitly[FStaged[T]].wrapped(s)
+  def unwrap[T <: StageAny[T] : FStaged](x: T): Exp[T] = implicitly[FStaged[T]].unwrapped(x)
 
-  def wrap[T:FStaged](xs: List[Exp[T]]): List[T] = xs.map{t => implicitly[FStaged[T]].wrapped(t) }
-  def unwrap[T:FStaged](xs: List[T]): List[Exp[T]] = xs.map{t => implicitly[FStaged[T]].unwrapped(t) }
-  def wrap[T:FStaged](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => implicitly[FStaged[T]].wrapped(t) }
-  def unwrap[T:FStaged](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => implicitly[FStaged[T]].unwrapped(t) }
+  def wrap[T <: StageAny[T] : FStaged](xs: List[Exp[T]]): List[T] = xs.map{t => implicitly[FStaged[T]].wrapped(t) }
+  def unwrap[T <: StageAny[T] : FStaged](xs: List[T]): List[Exp[T]] = xs.map{t => implicitly[FStaged[T]].unwrapped(t) }
+  def wrap[T <: StageAny[T] : FStaged](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => implicitly[FStaged[T]].wrapped(t) }
+  def unwrap[T <: StageAny[T] : FStaged](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => implicitly[FStaged[T]].unwrapped(t) }
 
-  implicit class FStagedTypeOps[T:FStaged](x: T) {
+  implicit class FStagedTypeOps[T <: StageAny[T] : FStaged](x: T) {
     def s: Exp[T] = implicitly[FStaged[T]].unwrapped(x)
   }
 
@@ -58,16 +70,16 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     **/
 
   @implicitNotFound(msg = "Cannot find way to lift type ${A}. Try adding explicit lift(_) calls to return value(s).")
-  trait Lift[A,B] {
-    def FStaged: FStaged[B]
+  trait Lift[A,B <: StageAny[B]] {
+    def fStaged: FStaged[B]
     def lift(x: A)(implicit ctx: SrcCtx): B = __lift(x)(ctx, this)
   }
 
-  def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B
-  final def lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.lift(x)
+  def __lift[A,B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B
+  final def lift[A,B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.lift(x)
 
-  implicit def selfLift[T:FStaged]: Lift[T,T] = new Lift[T,T] {
-    def FStaged = implicitly[FStaged[T]]
+  implicit def selfLift[T <: StageAny[T] : FStaged]: Lift[T,T] = new Lift[T,T] {
+    def fStaged = implicitly[FStaged[T]]
     override def lift(x: T)(implicit ctx: SrcCtx): T = x
   }
 
