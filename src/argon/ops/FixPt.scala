@@ -67,7 +67,6 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   // --- FStaged
   class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends FStaged[FixPt[S,I,F]] {
     override def wrapped(s: Exp[FixPt[S,I,F]]): FixPt[S,I,F] = FixPt[S,I,F](s)(mS,mI,mF)
-    override def unwrapped(x: FixPt[S,I,F]) = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[FixPt[S,I,F]]
     override def isPrimitive = true

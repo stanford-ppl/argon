@@ -44,7 +44,6 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
   // --- FStaged
   case class HashIndexType[K <: StageAny[K]](mK: FStaged[K]) extends FStaged[HashIndex[K]] {
     override def wrapped(x: Exp[HashIndex[K]]) = HashIndex(x)(mK)
-    override def unwrapped(x: HashIndex[K]) = x.s
     override def stagedClass = classOf[HashIndex[K]]
     override def typeArguments = List(mK)
     override def isPrimitive = true
@@ -53,7 +52,6 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
 
   case class ArgonMapType[K <: StageAny[K],V <: StageAny[V]](mK: FStaged[K], mV: FStaged[V]) extends StructType[ArgonMap[K,V]] {
     override def wrapped(x: Exp[ArgonMap[K,V]]) = ArgonMap(x)(mK,mV)
-    override def unwrapped(x: ArgonMap[K,V]) = x.s
     override def stagedClass = classOf[ArgonMap[K,V]]
     override def typeArguments = List(mK, mV)
     override def isPrimitive = true

@@ -28,7 +28,6 @@ trait TupleExp extends Staging with StructExp with NumExp with BitsExp {
   // --- FStaged
   case class Tup2Type[A <: StageAny[A] , B <: StageAny[B]](m1: FStaged[A], m2: FStaged[B]) extends StructType[Tup2[A,B]] {
     override def wrapped(x: Exp[Tup2[A,B]]): Tup2[A,B] = Tup2(x)(m1,m2)
-    override def unwrapped(x: Tup2[A, B]) = x.s
     override def typeArguments = List(m1, m2)
     override def stagedClass = classOf[Tup2[A,B]]
 

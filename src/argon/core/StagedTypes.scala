@@ -10,7 +10,6 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   /** Base type class for all FStaged types **/
   trait FStaged[T <: StageAny[T]] extends BStaged[T]{
     def wrapped(x: Exp[T]): T
-    def unwrapped(x: T): Exp[T]
   }
 
   trait BStaged[T] {
@@ -35,20 +34,12 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
 
   def ftyp[T <: StageAny[T] : FStaged]: FStaged[T] = implicitly[FStaged[T]]
   def btyp[T:BStaged] = implicitly[BStaged[T]]
-  def mftyp[A <: StageAny[A], B <: StageAny[B]](x: FStaged[A]): FStaged[B] = x.asInstanceOf[FStaged[B]]
   def mbtyp[A,B](x: BStaged[A]): BStaged[B] = x.asInstanceOf[BStaged[B]]
 
   def wrap[T <: StageAny[T] : FStaged](s: Exp[T]): T = implicitly[FStaged[T]].wrapped(s)
-  def unwrap[T <: StageAny[T] : FStaged](x: T): Exp[T] = implicitly[FStaged[T]].unwrapped(x)
-
   def wrap[T <: StageAny[T] : FStaged](xs: List[Exp[T]]): List[T] = xs.map{t => implicitly[FStaged[T]].wrapped(t) }
-  def unwrap[T <: StageAny[T] : FStaged](xs: List[T]): List[Exp[T]] = xs.map{t => implicitly[FStaged[T]].unwrapped(t) }
   def wrap[T <: StageAny[T] : FStaged](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => implicitly[FStaged[T]].wrapped(t) }
-  def unwrap[T <: StageAny[T] : FStaged](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => implicitly[FStaged[T]].unwrapped(t) }
 
-  implicit class FStagedTypeOps[T <: StageAny[T] : FStaged](x: T) {
-    def s: Exp[T] = implicitly[FStaged[T]].unwrapped(x)
-  }
 
   /** Stolen from Delite utils **/
   private def isSubtype(x: java.lang.Class[_], cls: java.lang.Class[_]): Boolean = {

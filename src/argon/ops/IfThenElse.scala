@@ -11,8 +11,8 @@ trait IfThenElseExp extends Staging with BoolExp with VoidExp {
   /** Virtualized Methods **/
   def __ifThenElse[A,B  <: StageAny[B]](cond: Bool, thenp: => A, elsep: => A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = {
     implicit val fStaged: FStaged[B] = l.fStaged
-    val unwrapThen = () => unwrap(lift(thenp) ) // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse = () => unwrap(lift(elsep) ) // wrapping it as a Function0 allows it to be delayed
+    val unwrapThen = () => lift(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = () => lift(elsep).s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 

@@ -43,7 +43,6 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   // --- FStaged
   class FltPtType[G,E](val mG: INT[G], val mE: INT[E]) extends FStaged[FltPt[G,E]] {
     override def wrapped(s: Exp[FltPt[G,E]]): FltPt[G,E] = FltPt[G,E](s)(mG,mE)
-    override def unwrapped(x: FltPt[G,E]) = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[FltPt[G,E]]
     override def isPrimitive = true

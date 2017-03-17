@@ -11,7 +11,6 @@ trait BoolExp extends Staging with BitsExp { this: TextExp =>
   // --- FStaged
   implicit object BoolType extends FStaged[Bool] {
     override def wrapped(x: Exp[Bool]): Bool = Bool(x)
-    override def unwrapped(x: Bool): Exp[Bool] = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[Bool]
     override def isPrimitive = true

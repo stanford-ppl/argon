@@ -20,7 +20,6 @@ trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp {
   // --- FStaged
   case class ArrayType[T <: StageAny[T]](child: FStaged[T]) extends FStaged[ArgonArray[T]] {
     override def wrapped(s: Exp[ArgonArray[T]]): ArgonArray[T] = ArgonArray(s)(child)
-    override def unwrapped(x: ArgonArray[T]) = x.s
     override def typeArguments = List(child)
     override def stagedClass = classOf[ArgonArray[T]]
     override def isPrimitive = false

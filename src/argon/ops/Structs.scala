@@ -9,7 +9,7 @@ trait StructApi extends StructExp with VoidApi
 trait StructExp extends Staging with VoidExp {
 
   abstract class StructApi[T <: StageAny[T]  :StructType] { self =>
-    def field[R <: StageAny[R] : FStaged](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](unwrap(self.asInstanceOf[T]), name))
+    def field[R <: StageAny[R] : FStaged](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](self.asInstanceOf[T].s, name))
   }
 
   abstract class StructType[T <: StageAny[T]] extends FStaged[T] {
