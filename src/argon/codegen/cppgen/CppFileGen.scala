@@ -45,6 +45,8 @@ trait CppFileGen extends FileGen {
 #include "cppDeliteArrays.h"
 #include "cppDeliteArraydouble.h"
 #include "FringeContext.h"
+#include <vector>
+using std::vector;
 
 """)
 
