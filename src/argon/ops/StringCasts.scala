@@ -4,13 +4,13 @@ import argon.core.{Staging, ArgonExceptions}
 
 trait StringCastApi extends StringCastExp with TextApi with MixedNumericApi {
   implicit class TextCastOps(x: Text) {
-    def to[T:Staged](implicit ctx: SrcCtx): T = text_to_t[T](x)
+    def to[T:FStaged](implicit ctx: SrcCtx): T = text_to_t[T](x)
   }
 }
 
 trait StringCastExp extends Staging with TextExp with MixedNumericExp with ArgonExceptions {
   /** Internals **/
-  private[argon] def text_to_t[T:Staged](x: Text)(implicit ctx: SrcCtx): T = typ[T] match {
+  private[argon] def text_to_t[T:FStaged](x: Text)(implicit ctx: SrcCtx): T = ftyp[T] match {
     case tp:FixPtType[s,i,f] =>
       implicit val mS = tp.mS.asInstanceOf[BOOL[s]]
       implicit val mI = tp.mI.asInstanceOf[INT[i]]

@@ -9,9 +9,9 @@ trait Blocks extends Effects { self: Staging =>
   // --- State
   //private[argon] var eX: Option[CompilerPass] = None
 
-  /** Class representing the result of a staged scope. */
+  /** Class representing the result of a FStaged scope. */
   case class Block[+T](result: Exp[T], summary: Effects, effectful: List[Sym[_]], inputs: Seq[Sym[_]]) {
-    def tp: Staged[_] = result.tp
+    def tp: BStaged[_] = result.tp
   }
 
   /**
@@ -29,7 +29,7 @@ trait Blocks extends Effects { self: Staging =>
     effects
   }
 
-  private def createBlock[T:Staged](block: => Exp[T], inputs: Seq[Sym[_]]): Block[T] = {
+  private def createBlock[T:BStaged](block: => Exp[T], inputs: Seq[Sym[_]]): Block[T] = {
     val saveContext = context
     context = Nil
 
@@ -45,14 +45,14 @@ trait Blocks extends Effects { self: Staging =>
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
     */
-  def stageBlock[T:Staged](block: => Exp[T]): Block[T] = createBlock[T](block, Nil)
-  def stageLambda[T:Staged](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, onlySyms(inputs))
+  def stageBlock[T:BStaged](block: => Exp[T]): Block[T] = createBlock[T](block, Nil)
+  def stageLambda[T:BStaged](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, onlySyms(inputs))
 
   /**
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
     * All assumptions about the current context carry over unchanged.
     */
-  def stageBlockInline[T:Staged](block: => Exp[T]): Block[T] = {
+  def stageBlockInline[T:FStaged](block: => Exp[T]): Block[T] = {
     val saveContext = context
     if (saveContext eq null) context = Nil
 

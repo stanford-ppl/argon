@@ -31,7 +31,7 @@ object TabulateTest extends Test {
   def main() {
     val array = Array.tabulate(16){i => i + 1 }
 
-    // Unstaged loop
+    // UnFStaged loop
     for (i <- 0 until 15) {
       assert(array(i) == i + 1)
     }

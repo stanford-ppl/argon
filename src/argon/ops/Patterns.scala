@@ -5,19 +5,19 @@ import argon.core.Staging
 trait PatternApi extends PatternExp
 trait PatternExp extends Staging with FixPtExp with VoidExp with TextExp /*{
 
-  abstract class ParallelCollection[A:Staged]
+  abstract class ParallelCollection[A:FStaged]
 
 
   /** Parallel Elems **/
   trait LoopElem { val chunks: Int }
 
   /** Foreach elem **/
-  case class ForeachElem[A:Staged](
+  case class ForeachElem[A:FStaged](
     func:   Block[A],   // Foreach function
     chunks: Int
   ) extends Op[Void] with LoopElem {
     def mirror(f:Tx) = foreach_elem(f(func),chunks)
-    val mA = typ[A]
+    val mA = ftyp[A]
   }
 
   /** Collect elems **/
@@ -50,11 +50,11 @@ trait PatternExp extends Staging with FixPtExp with VoidExp with TextExp /*{
 
 
   /** Output collection/strategy of a CollectElem loop body **/
-  abstract class CollectOutput[A:Staged, I:Staged, CA:Staged] {
+  abstract class CollectOutput[A:FStaged, I:FStaged, CA:FStaged] {
 
   }
 
-  abstract class CollectBaseElem[A:Staged, R:Staged](
+  abstract class CollectBaseElem[A:FStaged, R:FStaged](
     val iFunc:       Block[ParallelCollection[A]],  // FlatMap function - produces intermediate collection each iteration
     val unknownSize: Boolean,                       // Dynamic output size - true for FlatMap, generally false otherwise
     val chunks:      Int,
@@ -63,7 +63,7 @@ trait PatternExp extends Staging with FixPtExp with VoidExp with TextExp /*{
     val applyInner:  Block[A]                       // Element of intermediate collection at j
   ) extends Op2[A,R] with LoopElem
 
-  case class CollectElem[A:Staged, I<:ParallelCollection[A]:Staged, CA<:ParallelCollection[A]:Staged](
+  case class CollectElem[A:FStaged, I<:ParallelCollection[A]:FStaged, CA<:ParallelCollection[A]:FStaged](
     buffer:                   CollectOutput[A,I,CA],
     override val iFunc:       Block[ParallelCollection[A]],
     override val unknownSize: Boolean,
@@ -78,13 +78,13 @@ trait PatternExp extends Staging with FixPtExp with VoidExp with TextExp /*{
 
 
   /** Constructors **/
-  def foreach_elem[A:Staged](func: => Exp[A], chunks: Int)(implicit ctx: SrcCtx): Sym[Void] = {
+  def foreach_elem[A:FStaged](func: => Exp[A], chunks: Int)(implicit ctx: SrcCtx): Sym[Void] = {
     val blk = stageBlock{ func }
     val effects = blk.summary
     stageEffectful(ForeachElem(blk, chunks), effects.star)(ctx)
   }
 
-  def collect_elem[A:Staged, I<:ParallelCollection[A]:Staged, CA<:ParallelCollection[A]:Staged](
+  def collect_elem[A:FStaged, I<:ParallelCollection[A]:FStaged, CA<:ParallelCollection[A]:FStaged](
     buffer:      CollectOutput[A,I,CA],
     iFunc:       => Exp[ParallelCollection[A]],
     unknownSize: Boolean,

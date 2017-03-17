@@ -13,7 +13,7 @@ trait SubstTransformer extends Transformer {
   }
   def remove[T](key: Exp[T]) = subst -= key
 
-  override protected def transformExp[T:Staged](s: Exp[T]): Exp[T] = subst.get(s) match {
+  override protected def transformExp[T:BStaged](s: Exp[T]): Exp[T] = subst.get(s) match {
     case Some(y) => y.asInstanceOf[Exp[T]]
     case None => s
   }

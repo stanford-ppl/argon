@@ -1,5 +1,5 @@
 # Argon
-Argon is an experimental framework for creating staged DSLs embbedded in Scala.
+Argon is an experimental framework for creating FStaged DSLs embbedded in Scala.
 This project is based on [LMS](https://github.com/TiarkRompf/virtualization-lms-core) with some new features.
 
 Argon currently requires the macro project scala-virtualized, although this may be merged into the project eventually.

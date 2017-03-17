@@ -6,9 +6,9 @@ abstract class Transformer { self =>
   val IR: Definitions with ArgonExceptions
   import IR._
   protected val f = this.asInstanceOf[Tx]
-  def apply[T](e: Exp[T]): Exp[T] = transformExp(e)(mtyp(e.tp))
+  def apply[T](e: Exp[T]): Exp[T] = transformExp(e)(mbtyp(e.tp))
 
-  def apply[T:Staged](b: Block[T]): Exp[T] = inlineBlock(b)
+  def apply[T:BStaged](b: Block[T]): Exp[T] = inlineBlock(b)
 
   def apply[T](xs: List[Exp[T]]): List[Exp[T]] = xs.map{x => this.apply(x)}
   def apply[T](xs: Seq[Exp[T]]): Seq[Exp[T]] = xs.map{x => this.apply(x)}
@@ -20,14 +20,14 @@ abstract class Transformer { self =>
 
   def txSyms(xs: Set[Sym[_]]): Set[Sym[_]] = onlySyms(xs.map{x => f(x)}).toSet
 
-  protected def inlineBlock[T:Staged](b: Block[T]): Exp[T]
-  protected def transformBlock[T:Staged](b: Block[T]): Block[T]
-  protected def transformExp[T:Staged](s: Exp[T]): Exp[T]
+  protected def inlineBlock[T:BStaged](b: Block[T]): Exp[T]
+  protected def transformBlock[T:BStaged](b: Block[T]): Block[T]
+  protected def transformExp[T:BStaged](s: Exp[T]): Exp[T]
 
   /** Helper functions for mirroring **/
 
   // Assumes an Op is never mirrored to a Def with multiple lhs...
-  final def mirror[T:Staged](lhs: Sym[T], rhs: Op[T]): Exp[T] = {
+  final def mirror[T:BStaged](lhs: Sym[T], rhs: Op[T]): Exp[T] = {
     mirror(List(lhs), rhs).head.asInstanceOf[Exp[T]]
   }
 

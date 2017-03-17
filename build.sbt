@@ -2,9 +2,7 @@ scalaVersion := "2.12.1"
 
 val scalatestVersion = "3.0.1"
 
-val paradiseVersion = "2.1.0"  // check here: https://github.com/scalamacros/paradise/releases
-
-
+val paradiseVersion = "3.0.0-M7"  // check here: https://github.com/scalamacros/paradise/releases
 
 name := "argon"
 
@@ -26,7 +24,7 @@ publishArtifact in (Test, packageBin) := true
 
 testOptions in Test += Tests.Argument("-oDF")
 
-libraryDependencies += "org.virtualized" %% "virtualized" % "0.1"
+libraryDependencies += "org.virtualized" %% "virtualized" % "0.6"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % scalatestVersion % "test"
 
@@ -34,8 +32,7 @@ libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value %
 
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.3.2"
 
-addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
-
+addCompilerPlugin("org.scalameta" % "paradise" % paradiseVersion cross CrossVersion.full)
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
 
@@ -43,7 +40,7 @@ scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warning
 scalacOptions ++= Seq("-language:higherKinds", "-language:implicitConversions")
 
 scalacOptions in (Compile, doc) ++= Seq(
-      "-doc-root-content", 
+      "-doc-root-content",
       baseDirectory.value+"/root-doc.txt",
       "-diagrams",
       "-diagrams-debug",

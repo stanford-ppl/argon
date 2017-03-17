@@ -12,7 +12,7 @@ trait SimpleLambdaApi extends SimpleLambdaExp with FixPtApi {
 
   // Contrived example - unfused map which only returns the first value
   // Keep both blocks without having to introduce extra bound variable
-  def map[T:Staged](n: Int32)(map: Int32 => T)(map2: T => T)(implicit ctx: SrcCtx): T = {
+  def map[T:FStaged](n: Int32)(map: Int32 => T)(map2: T => T)(implicit ctx: SrcCtx): T = {
     val i = fresh[Int32]
     val m1Blk = stageBlock {
       map(wrap(i)).s
@@ -28,13 +28,13 @@ trait SimpleLambdaApi extends SimpleLambdaExp with FixPtApi {
 trait SimpleLambdaExp extends Staging with FixPtExp { this: TextExp =>
 
   /** IR Nodes **/
-  case class Map2[T: Staged](n: Exp[Int32], map1: Block[T], map2: Block[T], i: Bound[Int32]) extends Op[T] {
+  case class Map2[T: FStaged](n: Exp[Int32], map1: Block[T], map2: Block[T], i: Bound[Int32]) extends Op[T] {
     def mirror(f: Tx) = op_map2(f(n), f(map1), f(map2), i)
     override def binds = super.binds :+ i
   }
 
   /** Constructors **/
-  def op_map2[T: Staged](n: Exp[Int32], map1: => Exp[T], map2: => Exp[T], i: Bound[Int32])(implicit ctx: SrcCtx): Sym[T] = {
+  def op_map2[T: FStaged](n: Exp[Int32], map1: => Exp[T], map2: => Exp[T], i: Bound[Int32])(implicit ctx: SrcCtx): Sym[T] = {
     val m1Blk = stageBlock {
       map1
     }

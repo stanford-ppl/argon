@@ -16,7 +16,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     * By default, the rule is to mirror the node and symbol
     * @return the symbol which should replace lhs
     */
-  def transform[T:Staged](lhs: Sym[T], rhs: Op[T])(implicit ctx: SrcCtx): Exp[T] = {
+  def transform[T:BStaged](lhs: Sym[T], rhs: Op[T])(implicit ctx: SrcCtx): Exp[T] = {
     mirror(List(lhs), rhs).head.asInstanceOf[Exp[T]]
   }
 
@@ -36,15 +36,15 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   /**
     * Visit and transform each statement in the given block WITHOUT creating a staging scope
     */
-  final override protected def inlineBlock[T:Staged](b: Block[T]): Exp[T] = {
+  final override protected def inlineBlock[T:BStaged](b: Block[T]): Exp[T] = {
     inlineBlock(b, {stms => visitStms(stms); f(b.result) })
   }
 
   /**
-    * Visit and transform each statement in the given block, creating a new staged block
+    * Visit and transform each statement in the given block, creating a new BStaged block
     * with the transformed statements
     */
-  final override protected def transformBlock[T:Staged](b: Block[T]): Block[T] = {
+  final override protected def transformBlock[T:BStaged](b: Block[T]): Block[T] = {
     transformBlock(b, {stms => visitStms(stms); f(b.result) })
   }
 
@@ -52,7 +52,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     * Visit and perform some transformation `func` over all statements in the block, returning a result symbol
     * WITHOUT creating a staging scope.
     */
-  final protected def inlineBlock[T:Staged](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T] = {
+  final protected def inlineBlock[T:BStaged](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T] = {
     tab += 1
     val inputs2 = onlySyms(f.tx(b.inputs)).map(stmOf)
     val result: Exp[T] = withInnerStms(availStms diff inputs2) {
@@ -63,11 +63,11 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   }
 
   /**
-    * Visit and perform some transformation `func` over all statements in the block, returning a new staged
+    * Visit and perform some transformation `func` over all statements in the block, returning a new BStaged
     * block with the resulting transformed statements. The return Exp[T] of func will be the result symbol of the
     * new block.
     */
-  final protected def transformBlock[T:Staged](b: Block[T], func: Seq[Stm] => Exp[T]): Block[T] = {
+  final protected def transformBlock[T:BStaged](b: Block[T], func: Seq[Stm] => Exp[T]): Block[T] = {
     val inputs = onlySyms(f.tx(b.inputs))
     stageLambda(inputs:_*){ inlineBlock(b, func) }
   }
@@ -77,7 +77,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     * No new block is created, and the return type does not have to be an Exp[T]
     * Note that this means the return types may be entirely different - use with caution.
     */
-  final protected def mangleBlock[T:Staged, R](b: Block[T], func: Seq[Stm] => R): R = {
+  final protected def mangleBlock[T:BStaged, R](b: Block[T], func: Seq[Stm] => R): R = {
     tab += 1
     val inputs2 = onlySyms(f.tx(b.inputs)).map(stmOf)
     val result = withInnerStms(availStms diff inputs2) {
@@ -93,17 +93,17 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   /** Traversal functions **/
   final override protected def visitBlock[S](b: Block[S]): Block[S] = {
     tab += 1
-    val b2 = transformBlock(b)(mtyp(b.tp))
+    val b2 = transformBlock(b)(mbtyp(b.tp))
     assert(b2.tp == b.tp)
     tab -= 1
     b2
   }
 
   final override protected def visit(lhs: Sym[_], rhs: Op[_]) = {
-    createSubstRule(lhs, rhs.asInstanceOf[Op[Any]])(mtyp(lhs.tp), ctxOrHere(lhs))
+    createSubstRule(lhs, rhs.asInstanceOf[Op[Any]])(mbtyp(lhs.tp), ctxOrHere(lhs))
   }
 
-  private def createSubstRule[T:Staged](lhs: Sym[T], rhs: Op[T])(implicit ctx: SrcCtx): Unit = {
+  private def createSubstRule[T:BStaged](lhs: Sym[T], rhs: Op[T])(implicit ctx: SrcCtx): Unit = {
     val lhs2 = if (f(lhs) == lhs) {
       val lhs2 = transform(lhs, rhs)
 

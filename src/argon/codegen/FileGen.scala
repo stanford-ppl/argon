@@ -5,9 +5,9 @@ import java.io.PrintWriter
 trait FileGen extends Codegen {
   import IR._
 
-  protected def emitMain[S:Staged](b: Block[S]): Unit
+  protected def emitMain[S:BStaged](b: Block[S]): Unit
 
-  override protected def process[S:Staged](b: Block[S]): Block[S] = {
+  override protected def process[S:BStaged](b: Block[S]): Block[S] = {
 
     val file = newStream("main")
     withStream(file) {
@@ -16,11 +16,11 @@ trait FileGen extends Codegen {
       postprocess(b)
     }
   }
-  override protected def preprocess[S:Staged](b: Block[S]) = {
+  override protected def preprocess[S:BStaged](b: Block[S]) = {
     emitFileHeader()
     super.preprocess(b)
   }
-  override protected def postprocess[S:Staged](b: Block[S]) = {
+  override protected def postprocess[S:BStaged](b: Block[S]) = {
     emitFileFooter()
     super.postprocess(b)
   }

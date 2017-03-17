@@ -6,7 +6,7 @@ trait ChiselGenArray extends ChiselCodegen {
   val IR: ArrayExp
   import IR._
 
-  override protected def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: BStaged[_]): String = tp match {
     case tp: ArrayType[_] => src"List[${tp.typeArguments.head}]"
     case _ => super.remap(tp)
   }

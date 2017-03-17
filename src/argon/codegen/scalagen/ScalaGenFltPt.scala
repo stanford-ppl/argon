@@ -6,7 +6,7 @@ trait ScalaGenFltPt extends ScalaCodegen {
   val IR: FltPtExp
   import IR._
 
-  override protected def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: BStaged[_]): String = tp match {
     case FloatType()  => "Float"
     case DoubleType() => "Double"
     case _ => super.remap(tp)

@@ -18,17 +18,17 @@ trait Symbols extends StagedTypes with Metadata { self: Staging =>
 
   def ctxOrHere(x: Exp[_])(implicit ctx: SrcCtx): SrcCtx = ctxsOf(x).headOption.getOrElse(ctx)
 
-  /** Any staged symbol **/
-  sealed abstract class Exp[+T] private[core](staged: Staged[T]) extends EdgeLike {
-    def tp: Staged[T @uncheckedVariance] = staged
+  /** Any FStaged symbol **/
+  sealed abstract class Exp[+T] private[core](bstaged: BStaged[T]) extends EdgeLike {
+    def tp: BStaged[T @uncheckedVariance] = bstaged
 
     def addCtx(ctx: SrcCtx) { ctxsOf(this) = ctx +: ctxsOf(this) }
     def setCtx(ctx: SrcCtx) { ctxsOf(this) = List(ctx) }
   }
 
-  /** A staged symbol which represents a non-constant value **/
+  /** A FStaged symbol which represents a non-constant value **/
   // TODO: This could use a name change
-  sealed abstract class Symbol[+T] private[core](staged: Staged[T]) extends Exp[T](staged) with Edge {
+  sealed abstract class Symbol[+T] private[core](bstaged: BStaged[T]) extends Exp[T](bstaged) with Edge {
     override def hashCode(): Int = id
     override def equals(x: Any) = x match {
       case that: Symbol[_] => this.id == that.id
@@ -38,26 +38,26 @@ trait Symbols extends StagedTypes with Metadata { self: Staging =>
     def dependents: List[Exp[_]] = dependentsOf(this.id).flatMap(nodeOutputs).map(symFromSymId)
   }
 
-  /** Staged symbols created as bound variables **/
-  class Bound[+T] private[core](staged: Staged[T]) extends Symbol[T](staged) {
+  /** FStaged symbols created as bound variables **/
+  class Bound[+T] private[core](bstaged: BStaged[T]) extends Symbol[T](bstaged) {
     override def toString = s"b$id"
   }
 
-  /** Staged symbols with definitions **/
-  class Sym[+T] private[core](staged: Staged[T]) extends Symbol[T](staged) {
+  /** FStaged symbols with definitions **/
+  class Sym[+T] private[core](bstaged: BStaged[T]) extends Symbol[T](bstaged) {
     override def toString = s"x$id"
   }
 
 
 
-  // In compiler API, we want to be specify staged constants:
+  // In compiler API, we want to be specify FStaged constants:
   //   def foo(x: Const[Int]) ...
   // In compiler, we want to be able to write things like:
   //   case x: Param[_] => x.c = 3
   // and be guaranteed that this is legal
   // :: Param is a special, mutable case of Const
-  /** A staged constant **/
-  class Const[+T] private[core](x: Any)(staged: Staged[T]) extends Exp[T](staged) {
+  /** A FStaged constant **/
+  class Const[+T] private[core](x: Any)(bstaged: BStaged[T]) extends Exp[T](bstaged) {
     private val _c: Any = x
     def c: Any = _c
 
@@ -70,10 +70,10 @@ trait Symbols extends StagedTypes with Metadata { self: Staging =>
     override def toString = escapeConst(c)
   }
 
-  /** A staged, mutable constant **/
+  /** A FStaged, mutable constant **/
   private var nParams = 0
 
-  class Param[+T] private[core](x: Any)(staged: Staged[T]) extends Const[T](x)(staged) {
+  class Param[+T] private[core](x: Any)(bstaged: BStaged[T]) extends Const[T](x)(bstaged) {
     private[argon] val pid = {nParams -= 1; nParams}
 
     private var _p: Any = x
@@ -92,10 +92,10 @@ trait Symbols extends StagedTypes with Metadata { self: Staging =>
     }
   }
 
-  private[core] def __sym(tp: Staged[_]): Sym[_] = new Sym(tp)
-  private[core] def __bound[T:Staged]: Bound[T] = new Bound(typ[T])
-  private[core] def __const[T:Staged](x: Any): Const[T] = new Const(x)(typ[T])
-  private[core] def __param[T:Staged](x: Any): Param[T] = new Param(x)(typ[T])
+  private[core] def __sym(tp: BStaged[_]): Sym[_] = new Sym(tp)
+  private[core] def __bound[T:BStaged]: Bound[T] = new Bound(btyp[T])
+  private[core] def __const[T:BStaged](x: Any): Const[T] = new Const(x)(btyp[T])
+  private[core] def __param[T:BStaged](x: Any): Param[T] = new Param(x)(btyp[T])
 
 
   def constUnapply(s: Exp[_]): Option[Any] = s match {
@@ -123,7 +123,7 @@ trait Symbols extends StagedTypes with Metadata { self: Staging =>
     case p: Param[_] => s"Param(${escapeConst(p)})"
     case c: Const[_] => s"Const(${escapeConst(c)})"
     case s: SrcCtxs => mpos(s.pos).toString()
-    case t: Staged[_] =>
+    case t: BStaged[_] =>
       val tArgs = if (t.typeArguments.nonEmpty)
         t.typeArguments.map(readable).mkString("[",",","]")
       else ""
@@ -133,7 +133,7 @@ trait Symbols extends StagedTypes with Metadata { self: Staging =>
   }
 
   override def userReadable(x: Any): String = x match {
-    case t: Staged[_] =>
+    case t: BStaged[_] =>
       val tArgs = if (t.typeArguments.nonEmpty)
         t.typeArguments.map(userReadable).mkString("[",",","]")
       else ""

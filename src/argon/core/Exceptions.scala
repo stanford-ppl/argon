@@ -108,7 +108,7 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
       error(c"Symbol $x has no defined access pattern")
     })
 
-  class NoBitWidthException(tp: Staged[_]) extends
+  class NoBitWidthException(tp: BStaged[_]) extends
     CompilerException(16, c"Type $tp has no method for computing bit width", {
       error(c"Type $tp has no method for computing bit width")
     })
@@ -145,25 +145,25 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
     }
   })
 
-  class UnsupportedCastError(x: Staged[_], y: Staged[_])(ctx: SrcCtx) extends UserError(ctx, {
+  class UnsupportedCastError(x: BStaged[_], y: BStaged[_])(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, c"Casting from $x to $y is unsupported")
   })
 
-  class UnsupportedLiftError(c: Any, x: Staged[_])(ctx: SrcCtx) extends UserError(ctx, {
+  class UnsupportedLiftError(c: Any, x: BStaged[_])(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, c"Unsupported lift: $c of type ${c.getClass} to $x")
   })
 
-  class LiftOverflowError(tp: Staged[_], c: Any)(ctx: SrcCtx) extends UserError(ctx, {
+  class LiftOverflowError(tp: BStaged[_], c: Any)(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, u"Loss of precision detected in implicit lift: $tp cannot represent value ${escapeConst(c)}.")
     error(u"""Use the explicit annotation "${escapeConst(c)}.as[$tp]" to ignore this error.""")
   })
 
-  class LiftUnderflowError(tp: Staged[_], c: Any)(ctx: SrcCtx) extends UserError(ctx, {
+  class LiftUnderflowError(tp: BStaged[_], c: Any)(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, u"Loss of precision detected in implicit lift: $tp cannot represent value ${escapeConst(c)}.")
     error(u"""Use the explicit annotation "${escapeConst(c)}.as[$tp]" to ignore this error.""")
   })
 
-  class UnsupportedTextCastError(tp: Staged[_])(implicit ctx: SrcCtx) extends UserError(ctx, {
+  class UnsupportedTextCastError(tp: BStaged[_])(implicit ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, c"Casting from String to $tp is unsupported.")
   })
 }

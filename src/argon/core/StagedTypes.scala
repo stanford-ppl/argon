@@ -8,30 +8,34 @@ import argon.State
 trait StagedTypes extends EmbeddedControls { this: Staging =>
   type SrcCtx = SourceContext
 
-  /** Base type class for all staged types **/
-  abstract class Staged[T] {
+  /** Base type class for all FStaged types **/
+  trait FStaged[T] extends BStaged[T]{
     def wrapped(x: Exp[T]): T
     def unwrapped(x: T): Exp[T]
-    def typeArguments: List[Staged[_]] = Nil
-    def stagedClass: Class[T]
-    def isPrimitive: Boolean
-
-    def <:<(that: Staged[_]) = isSubtype(this.stagedClass, that.stagedClass)
   }
 
-  def typ[T:Staged] = implicitly[Staged[T]]
-  def mtyp[A,B](x: Staged[A]): Staged[B] = x.asInstanceOf[Staged[B]]
+  trait BStaged[T] {
+    def typeArguments: List[BStaged[_]] = Nil
+    def stagedClass: Class[T]
+    def isPrimitive: Boolean
+    def <:<(that: FStaged[_]) = isSubtype(this.stagedClass, that.stagedClass)
+  }
 
-  def wrap[T:Staged](s: Exp[T]): T = implicitly[Staged[T]].wrapped(s)
-  def unwrap[T:Staged](x: T): Exp[T] = implicitly[Staged[T]].unwrapped(x)
+  def ftyp[T:FStaged] = implicitly[FStaged[T]]
+  def btyp[T:BStaged] = implicitly[BStaged[T]]
+  def mftyp[A,B](x: FStaged[A]): FStaged[B] = x.asInstanceOf[FStaged[B]]
+  def mbtyp[A,B](x: BStaged[A]): BStaged[B] = x.asInstanceOf[BStaged[B]]
 
-  def wrap[T:Staged](xs: List[Exp[T]]): List[T] = xs.map{t => implicitly[Staged[T]].wrapped(t) }
-  def unwrap[T:Staged](xs: List[T]): List[Exp[T]] = xs.map{t => implicitly[Staged[T]].unwrapped(t) }
-  def wrap[T:Staged](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => implicitly[Staged[T]].wrapped(t) }
-  def unwrap[T:Staged](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => implicitly[Staged[T]].unwrapped(t) }
+  def wrap[T:FStaged](s: Exp[T]): T = implicitly[FStaged[T]].wrapped(s)
+  def unwrap[T:FStaged](x: T): Exp[T] = implicitly[FStaged[T]].unwrapped(x)
 
-  implicit class StagedTypeOps[T:Staged](x: T) {
-    def s: Exp[T] = implicitly[Staged[T]].unwrapped(x)
+  def wrap[T:FStaged](xs: List[Exp[T]]): List[T] = xs.map{t => implicitly[FStaged[T]].wrapped(t) }
+  def unwrap[T:FStaged](xs: List[T]): List[Exp[T]] = xs.map{t => implicitly[FStaged[T]].unwrapped(t) }
+  def wrap[T:FStaged](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => implicitly[FStaged[T]].wrapped(t) }
+  def unwrap[T:FStaged](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => implicitly[FStaged[T]].unwrapped(t) }
+
+  implicit class FStagedTypeOps[T:FStaged](x: T) {
+    def s: Exp[T] = implicitly[FStaged[T]].unwrapped(x)
   }
 
   /** Stolen from Delite utils **/
@@ -45,25 +49,25 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   }
 
 
-  /** Lift[A,B] is used in place of Staged[T] for user-facing type parameters, where the user may either
-    * give an unstaged constant or a staged symbol as the return value.
+  /** Lift[A,B] is used in place of FStaged[T] for user-facing type parameters, where the user may either
+    * give an unFStaged constant or a FStaged symbol as the return value.
     *
-    * NOTE: Including evidence of Staged[B] as an implicit parameter to Lift instances leads to problems with implicit
-    * ambiguity when calling lift(x), since the compiler may attempt to resolve Staged[B] before it resolves Lift[A,B],
-    * causing any implicit value or def with result Staged[_] in scope to qualify.
+    * NOTE: Including evidence of FStaged[B] as an implicit parameter to Lift instances leads to problems with implicit
+    * ambiguity when calling lift(x), since the compiler may attempt to resolve FStaged[B] before it resolves Lift[A,B],
+    * causing any implicit value or def with result FStaged[_] in scope to qualify.
     **/
 
   @implicitNotFound(msg = "Cannot find way to lift type ${A}. Try adding explicit lift(_) calls to return value(s).")
   trait Lift[A,B] {
-    def staged: Staged[B]
+    def FStaged: FStaged[B]
     def lift(x: A)(implicit ctx: SrcCtx): B = __lift(x)(ctx, this)
   }
 
   def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B
   final def lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.lift(x)
 
-  implicit def selfLift[T:Staged]: Lift[T,T] = new Lift[T,T] {
-    def staged = implicitly[Staged[T]]
+  implicit def selfLift[T:FStaged]: Lift[T,T] = new Lift[T,T] {
+    def FStaged = implicitly[FStaged[T]]
     override def lift(x: T)(implicit ctx: SrcCtx): T = x
   }
 

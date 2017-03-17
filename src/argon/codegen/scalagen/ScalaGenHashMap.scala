@@ -7,8 +7,8 @@ trait ScalaGenHashMap extends ScalaCodegen {
   val IR: HashMapExp
   import IR._
 
-  override protected def remap(tp: Staged[_]): String = tp match {
-    case HashIndexType(mK) => src"scala.collection.mutable.HashMap[$mK,${typ[Index]}]"
+  override protected def remap(tp: BStaged[_]): String = tp match {
+    case HashIndexType(mK) => src"scala.collection.mutable.HashMap[$mK,${btyp[Index]}]"
     case _ => super.remap(tp)
   }
 

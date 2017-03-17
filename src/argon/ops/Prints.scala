@@ -7,8 +7,8 @@ trait PrintApi extends PrintExp with TextApi with VoidApi {
 
 trait PrintExp extends Staging with TextExp with VoidExp {
   /** Direct methods **/
-  def print[T:Staged](x: T)(implicit ctx: SrcCtx): Void = Void(misc_print(textify(x).s))
-  def println[T:Staged](x: T)(implicit ctx: SrcCtx): Void = Void(misc_println(textify(x).s))
+  def print[T:FStaged](x: T)(implicit ctx: SrcCtx): Void = Void(misc_print(textify(x).s))
+  def println[T:FStaged](x: T)(implicit ctx: SrcCtx): Void = Void(misc_println(textify(x).s))
 
   def print(x: String)(implicit ctx: SrcCtx): Void = print(string2text(x))
   def println(x: String)(implicit ctx: SrcCtx): Void = println(string2text(x))
