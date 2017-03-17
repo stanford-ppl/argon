@@ -45,11 +45,16 @@ trait CppGenArray extends CppCodegen {
     case op@ArrayNew(size)      => 
       emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($size);")
     case ArrayApply(array, i)   => 
-      val asterisk = if (isArrayType(lhs.tp)) "*" else "" // TODO: Not sure why this is necessary
       val get = if (src"${array.tp}" == "cppDeliteArraystring") {
-        emit(src"${lhs.tp}${asterisk} $lhs = ${array}->apply($i);")
+        emit(src"${lhs.tp} $lhs = ${array}->apply($i);")
       } else {
-        emit(src"${lhs.tp}${asterisk} $lhs = (*${array})[$i];")
+        if (isArrayType(lhs.tp)) {
+          emit(src"${lhs.tp}* $lhs = new ${lhs.tp}((*${array})[$i].size()); //cannot apply a vector from 2D vector, so make new vec and fill it, eventually copy the vector in the constructor here")
+          emit(src"for (int ${i}_sub = 0; ${i}_sub < (*${array})[${i}].size(); ${i}_sub++) { (*$lhs)[${i}_sub] = (*${array})[$i][${i}_sub]; }")
+
+        } else {
+          emit(src"${lhs.tp} $lhs = (*${array})[$i];")
+        }
       }
     case ArrayLength(array)     => emit(src"${lhs.tp} $lhs = (*${array}).size();")
     case InputArguments()       => emit(src"${lhs.tp}* $lhs = args;")
