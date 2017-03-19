@@ -18,7 +18,7 @@ trait CppGenText extends CppCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case ToString(x) => emit(src"${lhs.tp} $lhs = convert_to_string< int32_t >($x);")
+    case ToString(x) => emit(src"${lhs.tp} $lhs = std::to_string($x);")
     case TextConcat(x,y) => emit(src"${lhs.tp} $lhs = string_plus($x, $y);")
     case TextEquals(x,y) => emit(src"val $lhs = $x == $y")
     case TextDiffer(x,y) => emit(src"val $lhs = $x != $y")

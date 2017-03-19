@@ -15,8 +15,8 @@ trait CppGenArray extends CppCodegen {
     case _ => false
   }
 
-  protected def getSize(array: Exp[_]): String = {
-    src"(*${array}).size()"
+  protected def getSize(array: Exp[_], extractor:String = ""): String = {
+    src"(*${array})${extractor}.size()"
   }
 
   protected def emitNewArray(lhs: Exp[_], tp: Staged[_], size: String): Unit = {
@@ -28,7 +28,7 @@ trait CppGenArray extends CppCodegen {
       emit(src"${dst.tp} $dst = ${array}->apply($i);")
     } else {
       if (isArrayType(dst.tp)) {
-        emit(src"${dst.tp}* $dst = new ${dst.tp}(${getSize(array)}); //cannot apply a vector from 2D vector, so make new vec and fill it, eventually copy the vector in the constructor here")
+        emit(src"""${dst.tp}* $dst = new ${dst.tp}(${getSize(array, src"[$i]")}); //cannot apply a vector from 2D vector, so make new vec and fill it, eventually copy the vector in the constructor here""")
         emit(src"for (int ${i}_sub = 0; ${i}_sub < (*${array})[${i}].size(); ${i}_sub++) { (*$dst)[${i}_sub] = (*${array})[$i][${i}_sub]; }")
 
       } else {
