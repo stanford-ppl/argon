@@ -126,7 +126,7 @@ trait Codegen extends Traversal {
     case s: String => s
     case c: Int => c.toString
     case b: Boolean => b.toString
-    case _ => throw new RuntimeException(s"Could not quote or remap $arg")
+    case _ => throw new RuntimeException(s"Could not quote or remap $arg (${arg.getClass})")
   }
 
   protected def emitBlock(b: Block[_]): Unit = visitBlock(b)

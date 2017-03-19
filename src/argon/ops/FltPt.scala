@@ -248,7 +248,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   case class FltRandom[G:INT,E:INT](max: Option[Exp[FltPt[G,E]]]) extends FltPtOp[G,E] { def mirror(f:Tx) = flt_random[G,E](f(max)) }
 
   case class FltConvert[G:INT,E:INT,G2:INT,E2:INT](x: Exp[FltPt[G,E]]) extends FltPtOp[G2,E2] {
-    def mirror(f:Tx) = flt_convert[G,E,G2,E2](x)
+    def mirror(f:Tx) = flt_convert[G,E,G2,E2](f(x))
   }
 
 

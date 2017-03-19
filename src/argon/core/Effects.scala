@@ -6,6 +6,7 @@ trait Effects extends Symbols { this: Staging =>
 
   case class Dependencies(deps: List[Exp[_]]) extends Metadata[Dependencies] {
     def mirror(f:Tx) = Dependencies(f.tx(deps))
+    override val ignoreOnTransform = true // Mirroring already takes care of identifying dependencies
   }
   object depsOf {
     def apply(x: Exp[_]) = metadata[Dependencies](x).map(_.deps).getOrElse(Nil)
@@ -21,6 +22,7 @@ trait Effects extends Symbols { this: Staging =>
     writes:  Set[Sym[_]] = Set.empty
   ) extends Metadata[Effects] {
     def mirror(f: Tx) = Effects(cold, simple, global, mutable, f.txSyms(reads), f.txSyms(writes))
+    override val ignoreOnTransform = true // Mirroring already takes care of effects
 
     private def combine(that: Effects, m1: Boolean, m2: Boolean) = Effects(
       cold = this.cold || that.cold,

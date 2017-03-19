@@ -20,8 +20,8 @@ trait Exceptions extends Reporting {
 
 trait ArgonExceptions extends Exceptions { this: Statements =>
 
-  class GenerationFailedException(node: Def) extends Exception(s"Don't know how to generate node $node") with NoStackTrace
-  class ConstantGenFailedException(c: Const[_]) extends Exception(s"Don't know how to generate constant $c") with NoStackTrace
+  class GenerationFailedException(node: Def) extends Exception(c"Don't know how to generate node $node") with NoStackTrace
+  class ConstantGenFailedException(c: Const[_]) extends Exception(c"Don't know how to generate constant $c (${c.c.getClass}) with type ${c.tp}") with NoStackTrace
 
   final def str(lhs: Exp[_]): String = lhs match {
     case Def(rhs) => c"$lhs = $rhs"
