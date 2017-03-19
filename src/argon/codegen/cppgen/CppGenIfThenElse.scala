@@ -1,11 +1,11 @@
 package argon.codegen.cppgen
 
 import argon.ops.IfThenElseExp
-import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, VoidExp, StructExp, TupleExp}
+import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, IfThenElseExp, StructExp, TupleExp, HashMapExp}
 
 
 trait CppGenIfThenElse extends CppGenArray {
-  val IR: IfThenElseExp with ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with VoidExp with StructExp with TupleExp
+  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp
   import IR._
 
   protected def isVoidType(tp: Staged[_]): Boolean = tp match {

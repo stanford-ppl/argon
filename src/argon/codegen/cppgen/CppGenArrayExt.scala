@@ -1,9 +1,9 @@
 package argon.codegen.cppgen
 
-import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, IfThenElseExp, StructExp, TupleExp}
+import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, IfThenElseExp, StructExp, TupleExp, HashMapExp}
 
 trait CppGenArrayExt extends CppGenArray {
-  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with IfThenElseExp with StructExp with TupleExp
+  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp
   import IR._
 
   private def getNestingLevel(tp: Staged[_]): Int = tp match {
@@ -21,16 +21,29 @@ trait CppGenArrayExt extends CppGenArray {
     case _ => remap(tp)
   }
 
+  protected def emitUpdate(lhs: Exp[_], value: Exp[_], i: String, tp: Staged[_]): Unit = {
+      if (isArrayType(tp)) {
+        if (getNestingLevel(tp) > 1) {throw new NDArrayException(lhs, src"$tp")}
+        emit(src"(*$lhs)[$i].resize(${getSize(value)});")
+        open(src"for (int ${value}_copier = 0; ${value}_copier < ${getSize(value)}; ${value}_copier++) {")
+          emit(src"(*$lhs)[$i][${value}_copier] = (*${value})[${value}_copier];")
+        close("}")
+      } else {
+        emit(src"(*$lhs)[$i] = ${value};")  
+      }
+
+  }
+
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case ArrayUpdate(array, i, data) => emit(src"${array}[$i] = $data;")
+    case ArrayUpdate(array, i, data) => emitUpdate(array, data, src"$i", data.tp)
     case MapIndices(size, func, i)   =>
-      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}($size);")
+      emitNewArray(lhs, lhs.tp, src"$size")
       open(src"for (int $i = 0; $i < $size; ${i}++) {")
       emitBlock(func)
       if (isArrayType(func.result.tp)) {
         if (getNestingLevel(func.result.tp) > 1) {Console.println(s"ERROR: Need to fix more than 2D arrays")}
-        emit(src"(*$lhs)[$i].resize((*${func.result}).size());")
-        open(src"for (int ${func.result}_copier = 0; ${func.result}_copier < (*${func.result}).size(); ${func.result}_copier++) {")
+        emit(src"(*$lhs)[$i].resize(${getSize(func.result)});")
+        open(src"for (int ${func.result}_copier = 0; ${func.result}_copier < ${getSize(func.result)}; ${func.result}_copier++) {")
           emit(src"(*$lhs)[$i][${func.result}_copier] = (*${func.result})[${func.result}_copier];")
         close("}")
       } else {
@@ -45,29 +58,21 @@ trait CppGenArrayExt extends CppGenArray {
       close("}")
 
     case ArrayMap(array,apply,func,i) =>
-      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}((*${array}).size());")
-      open(src"for (int $i = 0; $i < (*${array}).size(); $i++) { ")
+      emitNewArray(lhs, lhs.tp, getSize(array))
+      open(src"for (int $i = 0; $i < ${getSize(array)}; $i++) { ")
       visitBlock(apply)
       emitBlock(func)
-      if (isArrayType(func.result.tp)) {
-        if (getNestingLevel(func.result.tp) > 1) {Console.println(s"ERROR: Need to fix more than 2D arrays")}
-        emit(src"(*$lhs)[$i].resize((*${func.result}).size());")
-        open(src"for (int ${func.result}_copier = 0; ${func.result}_copier < (*${func.result}).size(); ${func.result}_copier++) {")
-          emit(src"(*$lhs)[$i][${func.result}_copier] = (*${func.result})[${func.result}_copier];")
-        close("}")
-      } else {
-        emit(src"(*${lhs})[$i] = ${func.result};")
-      }
+      emitUpdate(lhs, func.result, src"$i", func.result.tp)
       close("}")
       
 
     case ArrayZip(a, b, applyA, applyB, func, i) =>
-      emit(src"${lhs.tp}* $lhs = new ${lhs.tp}((*${a}).size());")
-      open(src"for (int $i = 0; $i < (*${a}).size(); ${i}++) { ")
+      emitNewArray(lhs, lhs.tp, getSize(a))
+      open(src"for (int $i = 0; $i < ${getSize(a)}; ${i}++) { ")
       visitBlock(applyA)
       visitBlock(applyB)
       emitBlock(func)
-      emit(src"(*${lhs})[$i] = ${func.result};")
+      emitUpdate(lhs, func.result, src"$i", func.result.tp)
       close("}")
 
       // 
@@ -78,12 +83,12 @@ trait CppGenArrayExt extends CppGenArray {
       } else {
         emit(src"${lhs.tp} $lhs;") 
       }
-      open(src"if ((*${array}).size() > 0) { // Hack to handle reductions on things of length 0")
+      open(src"if (${getSize(array)} > 0) { // Hack to handle reductions on things of length 0")
       emit(src"$lhs = (*${array})[0];")
       closeopen("} else {")
       emit(src"$lhs = ${zeroElement(lhs.tp)};")
       close("}")
-      open(src"for (int $i = 1; $i < (*${array}).size(); ${i}++) {")
+      open(src"for (int $i = 1; $i < ${getSize(array)}; ${i}++) {")
       emit(src"""${rV._1.tp}${if (isArrayType(rV._1.tp)) "*" else ""} ${rV._1} = (*${array})[$i];""")
       emit(src"""${rV._2.tp}${if (isArrayType(rV._2.tp)) "*" else ""} ${rV._2} = $lhs;""")
       emitBlock(reduce)
@@ -104,7 +109,7 @@ trait CppGenArrayExt extends CppGenArray {
         val grabbers = (0 until level).map{ m => "[0]" }.mkString("")
         emit(src"int size_${lhs}_$level = (*${array})${grabbers}.size();")
       }
-      emit(src"""${lhs.tp}* $lhs = new ${lhs.tp}(${(0 until nesting).map{ m => src"size_${lhs}_$m" }.mkString("*")});""")
+      emitNewArray(lhs, lhs.tp, src"""${(0 until nesting).map{ m => src"size_${lhs}_$m" }.mkString("*")}""")
 
       // Open all levels of loop
       (0 until nesting).foreach { level => 

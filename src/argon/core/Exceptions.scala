@@ -128,6 +128,16 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
       error(c"Register $reg has claims to be an accumulator but has no reduction function")
     })
 
+  class UnusedDRAMException(dram: Exp[_], name: String) extends
+    CompilerException(20, c"DRAM $dram ($name) was declared as a DRAM in app but is not used by the accel", {
+      error(c"DRAM $dram ($name) was declared as a DRAM in app but is not used by the accel")
+    })
+
+  class NDArrayException(array: Exp[_], name: String) extends
+    CompilerException(20, c"Array ${array} ($name) has no good codegen for CPP", {
+      error(c"Array ${array} ($name) has no good codegen for CPP")
+    })
+
   // --- User errors
   abstract class UserError(ctx: SrcCtx, console: => Unit) {
     console

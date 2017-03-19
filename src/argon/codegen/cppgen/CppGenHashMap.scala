@@ -1,10 +1,10 @@
 package argon.codegen.cppgen
 
-import argon.ops.HashMapExp
+import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, IfThenElseExp, StructExp, TupleExp, HashMapExp}
 
 
-trait CppGenHashMap extends CppCodegen {
-  val IR: HashMapExp
+trait CppGenHashMap extends CppGenArrayExt {
+  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp
   import IR._
 
   // override protected def remap(tp: Staged[_]): String = tp match {
@@ -17,7 +17,7 @@ trait CppGenHashMap extends CppCodegen {
     case HashIndexApply(index, key) => 
       emit(src"${lhs.tp} $lhs = -1;")
       open(src"for (int ${lhs}_i = 0; ${lhs}_i < ${index}_size; ${lhs}_i++) {")
-      emit(src"if (${index}->apply(${lhs}_i) == ${key}) { $lhs = ${lhs}_i; }")
+      emit(src"if ((*${index})[${lhs}_i] == ${key}) { $lhs = ${lhs}_i; }")
       close("}")
       emit(src"assert(${lhs} > -1);")
     case _ => super.emitNode(lhs, rhs)
@@ -25,12 +25,12 @@ trait CppGenHashMap extends CppCodegen {
 
   override protected def emitFat(lhs: List[Sym[_]], rhs: Def) = rhs match {
     case e @ ArgonBuildHashMap(in, apply, keyFunc, valFunc, reduce, rV, i) =>
-      emit(src"cppDeliteArray${e.mK}* ${quote(lhs(0))} = new cppDeliteArray${e.mK}(${in}->length); // Keys")
-      emit(src"cppDeliteArray${e.mV}* ${lhs(1)} = new cppDeliteArray${e.mV}(${in}->length); // Values")
-      emit(src"cppDeliteArray${e.mK}* ${lhs(2)} = ${lhs(0)}; // TODO: Probably totally wrong.  lhs2 appears to be the scala hashmap, but it seems like we only use it to lookup index of a key")
+      emit(src"vector<${e.mK}>* ${lhs(0)} = new vector<${e.mK}>((*${in}).size()); // Keys")
+      emit(src"vector<${e.mV}>* ${lhs(1)} = new vector<${e.mV}>((*${in}).size()); // Values")
+      emit(src"vector<${e.mK}>* ${lhs(2)} = ${lhs(0)}; // TODO: Probably totally wrong.  lhs2 appears to be the scala hashmap, but it seems like we only use it to lookup index of a key")
       emit(src"long ${lhs(2)}_size = 0;")
       //emit(src"//val ${lhs(2)}  = new ${HashIndexType(e.mK)}()")
-      open(src"for (int $i = 0; $i < ${in}->length; $i++) { ")
+      open(src"for (int $i = 0; $i < (*${in}).size(); $i++) { ")
         emit(s"// Apply block")
         visitBlock(apply)
         emit(s"// Key block")
@@ -39,16 +39,21 @@ trait CppGenHashMap extends CppCodegen {
         visitBlock(valFunc)
         emit(s"bool contained = false;")
         emit(s"long idx = -1;")
-        emit(src"for (int i = 0; i < ${lhs(2)}_size; i++) {if (${lhs(0)}->apply(i) == ${keyFunc.result}) {contained = true; idx = i;}}")
+        emit(src"for (int i = 0; i < ${lhs(2)}_size; i++) {if ((*${lhs(0)})[i] == ${keyFunc.result}) {contained = true; idx = i;}}")
         open(src"if (contained) {")
           emit(src"${rV._1.tp}* ${rV._1} = ${valFunc.result};")
-          emit(src"${rV._2.tp}* ${rV._2} = ${lhs(1)}->apply(idx);")
+
+          emit(src"${rV._2.tp}* ${rV._2} = new ${rV._2.tp}((*${lhs(1)})[idx].size());")
+          open(src"for (int ${rV._2}_copier = 0; ${rV._2}_copier < ${getSize(rV._2)}; ${rV._2}_copier++) {")
+            emit(src"(*${rV._2})[${rV._2}_copier] = (*${lhs(1)})[idx][${rV._2}_copier];")
+          close("}")
+
           visitBlock(reduce)
-          emit(src"${lhs(1)}->update(idx, ${reduce.result});")
+          emitUpdate(lhs(1), reduce.result, "idx", reduce.result.tp)
         closeopen("} else {")
           emit(src"//index += ${keyFunc.result} -> ${lhs(1)}.${lhs(2)}_size")
-          emit(src"${lhs(0)}->update(${lhs(2)}_size, ${keyFunc.result});")
-          emit(src"${lhs(1)}->update(${lhs(2)}_size, ${valFunc.result});")
+          emitUpdate(lhs(0), keyFunc.result, src"${lhs(2)}_size", keyFunc.result.tp)
+          emitUpdate(lhs(1), valFunc.result, src"${lhs(2)}_size", valFunc.result.tp)
           emit(src"${lhs(2)}_size += 1;")
         close("}")
       close("}")
