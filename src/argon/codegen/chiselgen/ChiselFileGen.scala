@@ -62,6 +62,7 @@ import templates._
 import fringe._
 import chisel3._""")
       open(s"trait RootController extends GlobalWires {")
+      emit(src"// Root controller for app: ${Config.name}")
 
     }
 
