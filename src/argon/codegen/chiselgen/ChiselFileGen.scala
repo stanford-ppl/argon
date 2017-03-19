@@ -16,11 +16,11 @@ trait ChiselFileGen extends FileGen {
     // // Forcefully create the following streams
     // val baseStream = getStream("GlobalWires")
     // val ioModule = getStream("IOModule")
-    // val topModule = getStream("TopLevelDesign")
+    // val AccelTop = getStream("AccelTop")
     // val bufferControl = getStream("BufferControlCxns")
-    // val topTrait = getStream("TopTrait")
+    // val RootController = getStream("RootController")
 
-    withStream(getStream("TopTrait")) {
+    withStream(getStream("RootController")) {
       if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Begin!")}
       preprocess(b)
       toggleEn() // Turn off
@@ -36,63 +36,96 @@ trait ChiselFileGen extends FileGen {
   override protected def emitFileHeader() {
 
     withStream(getStream("IOModule")) {
-      emit(s"""package interfaces
+      emit(s"""package accel
 import chisel3._
 import templates._
+import chisel3.util._
+import fringe._
 import types._""")
+      open("trait IOModule extends Module {")
+      emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
+      emit("val io_w = 32 // TODO: How to generate these properly?")
+      emit("val io_v = 16 // TODO: How to generate these properly?")
     }
 
     withStream(getStream("BufferControlCxns")) {
-      emit(s"""package app
+      emit(s"""package accel
 import templates._
+import fringe._
 import chisel3._""")
-      open(s"""trait BufferControlCxns extends GlobalWires with TopTrait /*and possibly other subkernels up to this point*/ {""")
-      open(s"""def create_BufferControlCxns() {""")
+      open(s"""trait BufferControlCxns extends RootController {""")
     }
 
-    withStream(getStream("TopTrait")) {
-      emit(s"""package app
+    withStream(getStream("RootController")) {
+      emit(s"""package accel
 import templates._
-import interfaces._
+import fringe._
 import chisel3._""")
-      open(s"trait TopTrait extends GlobalWires /*and possibly subkernels*/ {")
-      emit(s"// May want to have a main method defined here too")
+      open(s"trait RootController extends GlobalWires {")
+      emit(src"// Root controller for app: ${Config.name}")
+
     }
 
     withStream(getStream("GlobalWires")) {
-      emit(s"""package app
+      emit(s"""package accel
 import templates._
-import interfaces._
 import chisel3._
-abstract class GlobalWires() extends Module{
-  val io = IO(new Bundle{
-    val top_en = Input(Bool())
-    val top_done = Output(Bool())
-    val ArgIn = new ArgInBundle()
-    val ArgOut = new ArgOutBundle()
-    val MemStreams = new MemStreamsBundle()
-    val StreamIns = new StreamInsBundle()
-    val StreamOuts = new StreamOutsBundle()
-  })
-""")
+trait GlobalWires extends IOModule{""")
     }
 
-    withStream(getStream("GeneratedPoker")) {
-      emit(s"""package app
+    withStream(getStream("Instantiator")) {
+      emit("// See LICENSE for license details.")
+      emit("")
+      emit("package top")
+      emit("")
+      emit("import fringe._")
+      emit("import accel._")
+      emit("import chisel3.core.Module")
+      emit("import chisel3._")
+      emit("import chisel3.util._")
+      emit("import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}")
+      emit("")
+      emit("import scala.collection.mutable.ListBuffer")
 
-import chisel3.iotesters.{PeekPokeTester, Driver, ChiselFlatSpec}
-import org.scalatest.Assertions._
-import java.io._""")
-      open(s"""class GeneratedPoker(c: TopModule) extends PeekPokeTester(c) {""")
-      emit(s"""var offchipMem = List[BigInt]()""")
-      open(s"def handleLoadStore() {")
+      emit("/**")
+      emit(" * Top test harness")
+      emit(" */")
+      open("class TopUnitTester(c: Top)(implicit args: Array[String]) extends ArgsTester(c) {")
+      close("}")
+      emit("")
+      open("object Instantiator extends CommonMain {")
+        emit("type DUTType = Top")
+        emit("")
+        open("def supportedTarget(t: String) = t match {")
+          emit("""case "aws" => true""")
+          emit("""case "zynq" => true""")
+          emit("""case "verilator" => true""")
+          emit("case _ => false")
+        close("}")
+        emit("")
+        open("def dut = () => {")
+
     }
+
 
     super.emitFileHeader()
   }
 
   override protected def emitFileFooter() {
     // emitBufferControlCxns()
+
+    withStream(getStream("Instantiator")) {
+          emit("val w = 32")
+          emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
+          emit("val numArgOuts = numArgIns_reg")
+          emit("""val target = if (args.size > 0) args(0) else "verilator" """)
+          emit("""Predef.assert(supportedTarget(target), s"ERROR: Unsupported Fringe target '$target'")""")
+          emit("new Top(w, numArgIns, numArgOuts, numMemoryStreams, target)")
+        close("}")
+        emit("def tester = { c: DUTType => new TopUnitTester(c) }")
+      close("}")
+
+    }
     withStream(getStream("GlobalWires")) {
       // // Get each all unique reg strings
       // emitted_argins.toList.map{a=>a._2}.distinct.foreach{ a => 
@@ -106,35 +139,70 @@ import java.io._""")
       emit("}")
     }
 
-    withStream(getStream("TopTrait")) {
-      emit(s"// Would close main method here")
+    withStream(getStream("IOModule")) {
+      emit("val io_numArgIns = io_numArgIns_reg + io_numArgIns_mem")
+      emit("val io_numArgOuts = io_numArgOuts_reg")
+      open("val io = IO(new Bundle {")
+        emit("// Control")
+        emit("val enable = Input(Bool())")
+        emit("val done = Output(Bool())")
+        emit("")
+        emit("// Tile Load")
+        emit("val memStreams = Vec(io_numMemoryStreams, Flipped(new MemoryStream(io_w, io_v)))")
+        emit("")
+        emit("// Scalars")
+        emit("val argIns = Input(Vec(io_numArgIns, UInt(io_w.W)))")
+        emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(io_w.W))))")
+        emit("")
+      close("})")
+      close("}")
+    }
+
+    withStream(getStream("RootController")) {
       close(s"}")
     }
 
     withStream(getStream("BufferControlCxns")) {
       close("}")
-      close("}")
     }
 
-    // Get traits that need to be mixed in
-    val traits = streamMapReverse.keySet.toSet.map{
-      f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-    }.toSet - "TopLevelDesign" - "IOModule" - "GlobalWires" - "TopTrait" - "GeneratedPoker"
-    withStream(getStream("TopLevelDesign")) {
-      emit(s"""package app
+    if (Config.multifile == 4) {
+      val traits = streamMapReverse.keySet.toSet.map{
+        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+      }.toSet - "AccelTop" - "GlobalWires" - "Instantiator"
+
+      withStream(getStream("AccelTop")) {
+        emit(s"""package accel
 import templates._
-import interfaces._
+import fringe._
 import chisel3._
-class TopModule() extends GlobalWires with ${(traits++Set("TopTrait")).mkString("\n with ")} {
-  ${traits.map{ a => s"  create_${a}()"}.mkString("\n") }
+import chisel3.util._
+class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+
+  // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
+
+}""")
+      }
+    } else {
+    // Get traits that need to be mixed in
+      val traits = streamMapReverse.keySet.toSet.map{
+        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+      }.toSet - "AccelTop" - "GlobalWires" - "RootController" - "Instantiator"
+      withStream(getStream("AccelTop")) {
+        emit(s"""package accel
+import templates._
+import fringe._
+import chisel3._
+import chisel3.util._
+
+class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+
 }
-  // TopModule class mixes in all the other traits and is instantiated by tester""")
+  // AccelTop class mixes in all the other traits and is instantiated by tester""")
+      }
+        
     }
 
-    withStream(getStream("GeneratedPoker")) {
-      close("}")
-      close("}")
-    }
 
     super.emitFileFooter()
   }

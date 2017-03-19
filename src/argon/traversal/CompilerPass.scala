@@ -18,11 +18,15 @@ trait CompilerPass { self =>
 
   // --- Options
   var verbosity: Int = Config.verbosity
+  var shouldWarn: Boolean = true
   def shouldRun: Boolean = true
-  def silence() { verbosity = -1 }
+  def silence() { verbosity = -1; shouldWarn = false }
 
   // --- State
   protected var tab = 0
+
+  var lastTime  = 0.0f
+  var totalTime = 0.0f
 
   // --- Debugging methods
   final protected def dbgs(x: => Any) = dbg("  "*tab + x)
@@ -38,7 +42,9 @@ trait CompilerPass { self =>
 
     withLog(Config.logDir, outfile) {
       val saveVerbosity = Config.verbosity
+      val saveWarnings  = Config.showWarn
       Config.verbosity = this.verbosity
+      Config.showWarn  = this.shouldWarn
 
       log("Starting traversal " + name)
       val start = System.currentTimeMillis
@@ -46,9 +52,11 @@ trait CompilerPass { self =>
       val result = process(b)
 
       Config.verbosity = saveVerbosity
+      Config.showWarn = saveWarnings
 
       val time = (System.currentTimeMillis - start).toFloat
-      msg(s"  $name: " + "%.4f".format(time/1000))
+      lastTime = time
+      totalTime += time
       result
     }
   } else b

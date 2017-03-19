@@ -45,13 +45,13 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
       case _:Bound[_] => None
     }
   }
-  private[argon] def stmFromSymId(id: Int): Option[Stm] = {
+  private[argon] def stmFromSymId(id: EdgeId): Option[Stm] = {
     val node = producerOf(id)
     stmFromNodeId(node)
   }
-  private[argon] def symFromSymId(id: Int): Symbol[_] = edgeOf(id).asInstanceOf[Symbol[_]]
-  private[argon] def defFromNodeId(id: Int): Def = nodeOf(id).asInstanceOf[Def]
-  private[argon] def defFromSymId(id: Int): Option[Def] = stmFromSymId(id).map(_.rhs)
+  private[argon] def symFromSymId(id: EdgeId): Symbol[_] = edgeOf(id).asInstanceOf[Symbol[_]]
+  private[argon] def defFromNodeId(id: NodeId): Def = nodeOf(id).asInstanceOf[Def]
+  private[argon] def defFromSymId(id: EdgeId): Option[Def] = stmFromSymId(id).map(_.rhs)
 
   // --- Symbol aliasing
   private def noPrims(x: Set[Symbol[_]]): Set[Sym[_]] = x.collect{case s: Sym[_] if !s.tp.isPrimitive => s}

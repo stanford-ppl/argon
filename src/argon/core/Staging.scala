@@ -1,7 +1,9 @@
 package argon.core
 import argon.utils.escapeConst
 
-trait Staging extends Statements {
+import scala.collection.mutable
+
+trait Staging extends Scheduling {
   def fresh[T:Staged]: Bound[T] = {
     val bnd = __bound[T]
     addBound(bnd)
@@ -86,7 +88,7 @@ trait Staging extends Statements {
     log(c"  isIdempotent = ${effects.isIdempotent}")
 
     if (effects == Pure) registerDefWithCSE(d)(ctx)
-    else if (effects == Cold) registerDef(d, Nil)(ctx)    // Don't add "Cold" effects to context list, but don't CSE
+    //else if (effects == Cold) registerDef(d, Nil)(ctx)    // Don't add "Cold" effects to context list, but don't CSE
     else {
       checkContext()
       val deps = effectDependencies(effects)
@@ -96,7 +98,7 @@ trait Staging extends Statements {
         ss.foreach { s =>
           effectsOf(s) = effectsOf(s) andAlso effects
           depsOf(s) = depsOf(s) ++ deps
-          context +:= s // prepend (O(1))
+          context +:= s // prepend
         }
 
         // Correctness checks -- cannot have mutable aliases, cannot mutate immutable symbols
@@ -130,29 +132,6 @@ trait Staging extends Statements {
 
 
   private def single[T:Staged](xx: List[Sym[_]]): Sym[T] = xx.head.asInstanceOf[Sym[T]]
-
-
-  // TODO: where does this actually belong?
-  def makeScopeIndex(scope: Iterable[Stm]): OrderCache = buildScopeIndex(scope.map(_.rhs.id))
-  def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache): List[Stm] = {
-    scheduleDepsWithIndex(syms(roots).map(_.id), cache).flatMap(stmFromNodeId)
-  }
-
-  def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => List[Stm]): List[Stm] = {
-    def succ(node: NodeId): Iterable[NodeId] = nodeOutputs(node).map(symFromSymId).flatMap(next).map(_.rhs.id)
-
-    val start = roots.map(_.rhs.id)
-
-    val ids = if (checkAcyclic) {
-      val xx = sccs(start){node => succ(node) }
-      checkIfAcyclic(roots, xx)
-      xx.flatten.reverse
-    }
-    else {
-      dfs(start){node => succ(node) }
-    }
-    ids.flatMap(stmFromNodeId)
-  }
 
 
   /**

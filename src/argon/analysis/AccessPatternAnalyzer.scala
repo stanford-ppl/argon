@@ -7,19 +7,19 @@ trait IndexPatternApi extends IndexPatternExp
 trait IndexPatternExp extends Staging {
   type Index
   // Variations used here allow Index to be abstract (otherwise can't as easily define stride of 1)
-  sealed abstract class IndexPattern
+  sealed abstract class IndexPattern { def index: Option[Bound[Index]] }
   // a*i + b, where a and b must be loop invariant
-  case class AffineAccess(a: Exp[Index], i: Bound[Index], b: Exp[Index]) extends IndexPattern
+  case class AffineAccess(a: Exp[Index], i: Bound[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
   // i + b, where b must be loop invariant
-  case class OffsetAccess(i: Bound[Index], b: Exp[Index]) extends IndexPattern
+  case class OffsetAccess(i: Bound[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
   // a*i, where a must be loop invariant
-  case class StridedAccess(a: Exp[Index], i: Bound[Index]) extends IndexPattern
+  case class StridedAccess(a: Exp[Index], i: Bound[Index]) extends IndexPattern { def index = Some(i) }
   // linear access with some loop iterator
-  case class LinearAccess(i: Bound[Index]) extends IndexPattern
+  case class LinearAccess(i: Bound[Index]) extends IndexPattern { def index = Some(i) }
   // loop invariant access (but may change with outer loops)
-  case class InvariantAccess(b: Exp[Index]) extends IndexPattern
+  case class InvariantAccess(b: Exp[Index]) extends IndexPattern { def index = None }
   // anything else
-  case object RandomAccess extends IndexPattern
+  case object RandomAccess extends IndexPattern { def index = None }
 
   case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPattern] {
     def mirror(f:Tx) = AccessPattern(indices.map{
@@ -33,7 +33,9 @@ trait IndexPatternExp extends Staging {
   }
 
   object accessPatternOf {
-    def apply(x: Exp[_]) = metadata[AccessPattern](x).map(_.indices).getOrElse{ throw new UndefinedAccessPatternException(x) }
+    def apply(x: Exp[_]): Seq[IndexPattern] = {
+      metadata[AccessPattern](x).map(_.indices).getOrElse{ throw new UndefinedAccessPatternException(x) }
+    }
     def update(x: Exp[_], indices: Seq[IndexPattern]) { metadata.add(x, AccessPattern(indices)) }
   }
 }
@@ -44,6 +46,7 @@ trait AccessPatternAnalyzer extends Traversal {
 
   // All loop indices encountered above the current scope
   var loopIndices = Set[Bound[Index]]()
+  var loopFromIndex = Map[Bound[Index], Exp[_]]()
   var boundIndexPatterns = Map[Exp[Index], Seq[IndexPattern]]()
 
   // The list of statements which can be scheduled prior to block traversals
@@ -54,14 +57,17 @@ trait AccessPatternAnalyzer extends Traversal {
   // The exact scope of the current loop
   var loopScope: Seq[Stm] = Nil
 
-  private def inLoop[T](indices: Seq[Bound[Index]])(blk: => T): T = {
+  private def inLoop[T](loop: Exp[_], indices: Seq[Bound[Index]])(blk: => T): T = {
     val inner = innerStms
     indices.foreach{i => innerScopes += i -> inner}
 
     val prevIndices = loopIndices
+    val prevLoops = loopFromIndex
     loopIndices ++= indices
+    loopFromIndex ++= indices.map{i => i -> loop}
     val result = blk
     loopIndices = prevIndices
+    loopFromIndex = prevLoops
     result
   }
   override protected def visitBlock[S](block: Block[S]) = {
@@ -141,7 +147,7 @@ trait AccessPatternAnalyzer extends Traversal {
       dbgs(s"  Current indices: $loopIndices")
       levels.foreach { case (indices, blocks) =>
         dbgs(s"  Traversing loop level with $indices")
-        inLoop(indices) {
+        inLoop(lhs, indices) {
           blocks.foreach { blk => visitBlock(blk) }
         }
       }

@@ -11,7 +11,7 @@ trait TupleExp extends Staging with StructExp with NumExp with BitsExp {
   this: TextExp =>
 
   /** Infix methods **/
-  case class Tup2[A:Staged,B:Staged](s: Exp[Tup2[A,B]]) extends StructApi[Tup2[A,B]] {
+  case class Tup2[A:Staged,B:Staged](s: Exp[Tup2[A,B]]) extends Struct[Tup2[A,B]] {
     def _1(implicit ctx: SrcCtx): A = field[A]("_1")
     def _2(implicit ctx: SrcCtx): B = field[B]("_2")
   }
@@ -22,7 +22,7 @@ trait TupleExp extends Staging with StructExp with NumExp with BitsExp {
   def unpack[A:Staged,B:Staged](t: Tup2[A,B])(implicit ctx: SrcCtx): (A,B) = (t._1, t._2)
 
   /** Virtualized methods **/
-  def infix_toString[A:Staged,B:Staged](x: Tup2[A,B])(implicit ctx: SrcCtx): Text = "Tup2(" + textify(x._1) + ", " + textify(x._2) + ")"
+  // def infix_toString[A:Staged,B:Staged](x: Tup2[A,B])(implicit ctx: SrcCtx): Text = "Tup2(" + textify(x._1) + ", " + textify(x._2) + ")"
 
   /** Type classes **/
   // --- Staged
