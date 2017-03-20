@@ -2,7 +2,7 @@ package argon.codegen.scalagen
 
 import argon.ops.MixedNumericExp
 
-trait ScalaGenMixedNumeric extends ScalaCodegen with ScalaGenFixPt with ScalaGenFltPt {
+trait ScalaGenMixedNumeric extends ScalaCodegen {
   val IR: MixedNumericExp
   import IR._
 

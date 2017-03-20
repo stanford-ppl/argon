@@ -4,11 +4,18 @@ import argon.core.Reporting
 
 /** Hack for working with customized bit widths, since Scala doesn't support integers as template parameters **/
 trait CustomBitWidths extends Reporting {
-  def BOOL[T:BOOL] = implicitly[BOOL[T]]
-  def INT[T:INT] = implicitly[INT[T]]
+  def BOOL[T:BOOL]: BOOL[T] = implicitly[BOOL[T]]
+  def INT[T:INT]: INT[T] = implicitly[INT[T]]
+  def INT_T[T](x: Int): INT[T] = new INT[T] { val v = x }
 
   sealed abstract class BOOL[T] { val v: Boolean }
-  sealed abstract class INT[T] { val v: Int }
+  sealed abstract class INT[T] {
+    val v: Int
+    override def equals(x: Any): Boolean = x match {
+      case that: INT[_] => this.v == that.v
+      case _ => false
+    }
+  }
 
   trait TRUE;  implicit object BOOL_TRUE extends BOOL[TRUE] { val v = true }
   trait FALSE; implicit object BOOL_FALSE extends BOOL[FALSE] { val v = false }
