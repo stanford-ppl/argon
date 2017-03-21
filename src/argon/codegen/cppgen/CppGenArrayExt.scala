@@ -79,20 +79,21 @@ trait CppGenArrayExt extends CppGenArray {
     case ArrayReduce(array, apply, reduce, i, rV) =>
 
       if (isArrayType(lhs.tp)) {
-        emit(src"""${lhs.tp}${if (isArrayType(lhs.tp)) "*" else ""} $lhs;""") 
+        emit(src"""${lhs.tp}* $lhs = new ${lhs.tp}(${getSize(array, "[0]")});""") 
       } else {
         emit(src"${lhs.tp} $lhs;") 
       }
       open(src"if (${getSize(array)} > 0) { // Hack to handle reductions on things of length 0")
-      emit(src"$lhs = (*${array})[0];")
+        emitApply(lhs, array, "0", false)
       closeopen("} else {")
-      emit(src"$lhs = ${zeroElement(lhs.tp)};")
+        emit(src"$lhs = ${zeroElement(lhs.tp)};")
       close("}")
       open(src"for (int $i = 1; $i < ${getSize(array)}; ${i}++) {")
-      emit(src"""${rV._1.tp}${if (isArrayType(rV._1.tp)) "*" else ""} ${rV._1} = (*${array})[$i];""")
-      emit(src"""${rV._2.tp}${if (isArrayType(rV._2.tp)) "*" else ""} ${rV._2} = $lhs;""")
-      emitBlock(reduce)
-      emit(src"$lhs = ${reduce.result};")
+        emitApply(rV._1, array, src"$i")
+        // emit(src"""${rV._1.tp}${if (isArrayType(rV._1.tp)) "*" else ""} ${rV._1} = (*${array})[$i];""")
+        emit(src"""${rV._2.tp}${if (isArrayType(rV._2.tp)) "*" else ""} ${rV._2} = $lhs;""")
+        emitBlock(reduce)
+        emit(src"$lhs = ${reduce.result};")
       close("}")
 
     case ArrayFilter(array, apply, cond, i) =>

@@ -60,6 +60,7 @@ import chisel3._""")
       emit(s"""package accel
 import templates._
 import fringe._
+import types._
 import chisel3._""")
       open(s"trait RootController extends GlobalWires {")
       emit(src"// Root controller for app: ${Config.name}")
@@ -70,6 +71,7 @@ import chisel3._""")
       emit(s"""package accel
 import templates._
 import chisel3._
+import types._
 trait GlobalWires extends IOModule{""")
     }
 

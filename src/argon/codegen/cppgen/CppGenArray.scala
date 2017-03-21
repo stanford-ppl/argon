@@ -23,16 +23,28 @@ trait CppGenArray extends CppCodegen {
     emit(src"${tp}* $lhs = new ${tp}($size);")
   }
 
-  protected def emitApply(dst: Exp[_], array: Exp[_], i: Exp[_]): Unit = {
+  protected def emitApply(dst: Exp[_], array: Exp[_], i: String, isDef: Boolean = true): Unit = {
     val get = if (src"${array.tp}" == "cppDeliteArraystring") {
-      emit(src"${dst.tp} $dst = ${array}->apply($i);")
+      if (isDef) {
+        emit(src"${dst.tp} $dst = ${array}->apply($i);")  
+      } else {
+        emit(src"$dst = ${array}->apply($i);")  
+      }
     } else {
       if (isArrayType(dst.tp)) {
-        emit(src"""${dst.tp}* $dst = new ${dst.tp}(${getSize(array, src"[$i]")}); //cannot apply a vector from 2D vector, so make new vec and fill it, eventually copy the vector in the constructor here""")
-        emit(src"for (int ${i}_sub = 0; ${i}_sub < (*${array})[${i}].size(); ${i}_sub++) { (*$dst)[${i}_sub] = (*${array})[$i][${i}_sub]; }")
-
+        val iterator = if ("^[0-9].*".r.findFirstIn(src"$i").isDefined) {src"${array}_applier"} else {src"$i"}
+        if (isDef) {
+          emit(src"""${dst.tp}* $dst = new ${dst.tp}(${getSize(array, src"[$i]")}); //cannot apply a vector from 2D vector, so make new vec and fill it, eventually copy the vector in the constructor here""")
+          emit(src"for (int ${iterator}_sub = 0; ${iterator}_sub < (*${array})[${i}].size(); ${iterator}_sub++) { (*$dst)[${iterator}_sub] = (*${array})[$i][${iterator}_sub]; }")          
+        } else {
+          emit(src"for (int ${iterator}_sub = 0; ${iterator}_sub < (*${array})[${i}].size(); ${iterator}_sub++) { (*$dst)[${iterator}_sub] = (*${array})[$i][${iterator}_sub]; }")          
+        }
       } else {
-        emit(src"${dst.tp} $dst = (*${array})[$i];")
+        if (isDef) {
+          emit(src"${dst.tp} $dst = (*${array})[$i];")  
+        } else {
+          emit(src"$dst = (*${array})[$i];")
+        }
       }
     }
   }
@@ -66,7 +78,7 @@ trait CppGenArray extends CppCodegen {
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case op@ArrayNew(size)      => emitNewArray(lhs, lhs.tp, src"$size")
-    case ArrayApply(array, i)   => emitApply(lhs, array, i)
+    case ArrayApply(array, i)   => emitApply(lhs, array, src"$i")
     case ArrayLength(array)     => emit(src"${lhs.tp} $lhs = ${getSize(array)};")
     case InputArguments()       => emit(src"${lhs.tp}* $lhs = args;")
     case _ => super.emitNode(lhs, rhs)
