@@ -15,6 +15,7 @@ trait ChiselGenStringCast extends ChiselCodegen {
     case StringToFixPt(x) => lhs.tp match {
       case IntType()  => emit(src"val $lhs = $x.toInt")
       case LongType() => emit(src"val $lhs = $x.toLong")
+      case _ => emit(src"val $lhs = $x // No rule for this")
     }
 
     case StringToBool(x) => emit(src"val $lhs = $x.toBoolean")
