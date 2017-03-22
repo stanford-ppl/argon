@@ -121,4 +121,10 @@ trait Effects extends Symbols { this: Staging =>
     case _ => super.readable(a)
   }
 
+
+  override def reset(): Unit = {
+    super.reset()
+    context = null
+  }
+
 }

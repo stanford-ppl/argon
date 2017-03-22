@@ -92,4 +92,12 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
     val writes = effects.writes.map{s => extractAtomicWrite(s) }
     effects.copy(writes = writes)
   }
+
+  override def reset(): Unit = {
+    super.reset()
+    defCache.clear()
+    shallowAliasCache.clear()
+    deepAliasCache.clear()
+    aliasCache.clear()
+  }
 }

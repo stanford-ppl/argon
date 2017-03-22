@@ -15,7 +15,7 @@ trait RunnerCore extends CompilerCore {
     //msg(c"in output directory $out")
 
     val proc = scala.sys.process.Process(Seq("sbt", s"""run ${testArgs.mkString(" ")}"""), new java.io.File(out))
-    val logger = ProcessLogger{str => log(str)}
+    val logger = ProcessLogger{str => msg(str)}
     val exitCode = withLog(Config.logDir, State.paddedPass + " RUN.log") { proc.run(logger).exitValue() }
 
     val time = (System.currentTimeMillis - start).toFloat

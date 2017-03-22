@@ -67,12 +67,4 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     override def lift(x: T)(implicit ctx: SrcCtx): T = x
   }
 
-
-
-  def reset(): Unit = {
-    State.flex = false
-    State.staging = false
-    State.EVAL = false
-    State.pass = 1
-  }
 }

@@ -1,6 +1,7 @@
 package argon.core
 
 import argon.graphs.HDAG
+import argon.State
 
 trait Metadata extends HDAG with Lattices { self: Statements =>
   type MetaData = Metadata[_]
@@ -48,5 +49,13 @@ trait Metadata extends HDAG with Lattices { self: Statements =>
     def add(edge: Exp[_], m: Map[Class[_],MetaData]): Unit = this.set(edge, this.get(edge) ++ m)
 
     def clearAll[M<:Metadata[M]:Manifest] = clearMetadata(keyOf[M])
+  }
+
+  override def reset(): Unit = {
+    super.reset()
+    State.flex = false
+    State.staging = false
+    State.EVAL = false
+    State.pass = 1
   }
 }

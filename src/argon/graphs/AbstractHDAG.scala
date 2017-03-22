@@ -42,6 +42,22 @@ trait AbstractHDAG extends Exceptions {
     val freqs   = mutable.ArrayBuffer[List[Float]]()                  // Frequency hints for code motion
   }
 
+  def reset(): Unit = {
+    curEdgeId = 0.toEdgeId
+    curNodeId = 0.toNodeId
+    curInputId = 0.toEdgeId
+    EdgeData.value.clear()
+    EdgeData.producer.clear()
+    EdgeData.dependents.clear()
+    NodeData.value.clear()
+    NodeData.outputs.clear()
+    NodeData.outputs += 0.toEdgeId
+    NodeData.inputs.clear()
+    NodeData.bounds.clear()
+    NodeData.tunnels.clear()
+    NodeData.freqs.clear()
+  }
+
   def nodeOutputs(node: NodeId): Seq[EdgeId] = {
     (NodeData.outputs(node.toInt).toInt until NodeData.outputs(node.toInt+1).toInt).map(_.toEdgeId)
   }
