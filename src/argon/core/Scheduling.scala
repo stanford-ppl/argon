@@ -53,4 +53,9 @@ trait Scheduling extends Statements { this: Staging =>
     schedule.flatMap { nodeId => stmFromNodeId(nodeId) }
   })
 
+  override def reset(): Unit = {
+    super.reset()
+    scopeCache.clear()
+  }
+
 }
