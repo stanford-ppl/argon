@@ -7,11 +7,11 @@ trait CppFileGen extends FileGen {
   import IR._
 
 
-  override protected def emitMain[S:BStaged](b: Block[S]): Unit = {
+  override protected def emitMain[S:Staged](b: Block[S]): Unit = {
     emitBlock(b)
   }
 
-  override protected def process[S:BStaged](b: Block[S]): Block[S] = {
+  override protected def process[S:Staged](b: Block[S]): Block[S] = {
 
     // Forcefully create the following streams
     withStream(getStream("TopHost")) {

@@ -21,7 +21,7 @@ trait Definitions extends Blocks { self: Staging =>
     final def expInputs: List[Exp[_]] = recursive.collectLists(__exps)(productIterator)
 
 
-    def outputTypes: List[BStaged[_]]
+    def outputTypes: List[Staged[_]]
 
     /** Scheduling dependencies -- used to calculate schedule for IR based on dependencies **/
     // Inputs: symbol dataflow dependencies for this Def.
@@ -94,17 +94,17 @@ trait Definitions extends Blocks { self: Staging =>
   }
 
   /** Most common variant of Def - returns only one symbol of one type **/
-  abstract class Op[R:BStaged] extends Def {
+  abstract class Op[R:Staged] extends Def {
     def mirror(f:Tx): Exp[R]
-    val bStaged: BStaged[R] = implicitly[BStaged[R]]
-    final override def outputTypes = List(bStaged)
+    val Staged: Staged[R] = implicitly[Staged[R]]
+    final override def outputTypes = List(Staged)
     final override def fatMirror(f:Tx): List[Exp[_]] = List(this.mirror(f))
-    def mR = bStaged
+    def mR = Staged
   }
-  abstract class Op2[A: BStaged,R:BStaged] extends Op[R] { def mA = btyp[A] }
-  abstract class Op3[A:BStaged,B:BStaged,R:BStaged] extends Op2[A,R] { def mB = btyp[B] }
-  abstract class Op4[A:BStaged,B:BStaged,C:BStaged,R:BStaged] extends Op3[A,B,R] { def mC = btyp[C] }
-  abstract class Op5[A:BStaged,B:BStaged,C:BStaged,D:BStaged,R:BStaged] extends Op4[A,B,C,R] { def mD = btyp[D] }
+  abstract class Op2[A:Staged,R:Staged] extends Op[R] { def mA = btyp[A] }
+  abstract class Op3[A:Staged,B:Staged,R:Staged] extends Op2[A,R] { def mB = btyp[B] }
+  abstract class Op4[A:Staged,B:Staged,C:Staged,R:Staged] extends Op3[A,B,R] { def mC = btyp[C] }
+  abstract class Op5[A:Staged,B:Staged,C:Staged,D:Staged,R:Staged] extends Op4[A,B,C,R] { def mD = btyp[D] }
 
   /** Api **/
   object Def {

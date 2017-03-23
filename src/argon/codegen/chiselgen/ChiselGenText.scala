@@ -7,7 +7,7 @@ trait ChiselGenText extends ChiselCodegen {
   val IR: TextExp
   import IR._
 
-  override protected def remap(tp: BStaged[_]): String = tp match {
+  override protected def remap(tp: Staged[_]): String = tp match {
     case TextType => "String"
     case _ => super.remap(tp)
   }

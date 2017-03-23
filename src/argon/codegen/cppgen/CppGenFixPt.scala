@@ -6,7 +6,7 @@ trait CppGenFixPt extends CppCodegen {
   val IR: FixPtExp
   import IR._
 
-  override protected def remap(tp: BStaged[_]): String = tp match {
+  override protected def remap(tp: Staged[_]): String = tp match {
     case IntType() => "int32_t"
     case LongType() => "int32_t"
     case FixPtType(s,d,f) => "double"

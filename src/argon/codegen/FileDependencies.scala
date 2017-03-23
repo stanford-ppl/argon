@@ -28,7 +28,7 @@ trait FileDependencies extends Codegen {
       s"cp -r ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}" !
     }}
   }
-  override protected def postprocess[S:BStaged](b: Block[S]) = {
+  override protected def postprocess[S:Staged](b: Block[S]) = {
     copyDependencies(out)
     super.postprocess(b)
   }

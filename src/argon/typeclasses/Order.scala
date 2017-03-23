@@ -3,7 +3,7 @@ package argon.typeclasses
 import argon.core.Staging
 import argon.ops._
 
-/** FStaged numeric types **/
+/** Staged numeric types **/
 trait OrderApi extends OrderExp {
   this: BoolApi =>
 }

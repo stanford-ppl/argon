@@ -7,7 +7,7 @@ trait ScalaGenHashMap extends ScalaCodegen {
   val IR: HashMapExp
   import IR._
 
-  override protected def remap(tp: BStaged[_]): String = tp match {
+  override protected def remap(tp: Staged[_]): String = tp match {
     case HashIndexType(mK) => src"scala.collection.mutable.HashMap[$mK,${btyp[Index]}]"
     case _ => super.remap(tp)
   }
@@ -21,8 +21,8 @@ trait ScalaGenHashMap extends ScalaCodegen {
     case e @ ArgonBuildHashMap(in, apply, keyFunc, valFunc, reduce, rV, i) =>
       open(src"val (${lhs(0)},${lhs(1)},${lhs(2)}) = {")
       //   replaced by Ruben. Why was it like this in the first place
-      //     emit(src"val index  = new ${HashIndexType(e.mK)}()")
-        emit(src"val index  = new ${e.mK}()")
+           emit(src"val index  = new ${HashIndexType(mbtyp(e.mK))}()")
+      //  emit(src"val index  = new ${e.mK}()")
         emit(src"val keys   = new scala.collection.mutable.ArrayBuffer[${e.mK}]()")
         emit(src"val values = new scala.collection.mutable.ArrayBuffer[${e.mV}]()")
 

@@ -6,12 +6,12 @@ trait CppGenArrayExt extends CppGenArray {
   val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with IfThenElseExp
   import IR._
 
-  private def getNestingLevel(tp: BStaged[_]): Int = tp match {
+  private def getNestingLevel(tp: Staged[_]): Int = tp match {
     case tp: ArrayType[_] => 1 + getNestingLevel(tp.typeArguments.head) 
     case _ => 0
   }
  
-  private def getPrimitiveType(tp: BStaged[_]): String = tp match {
+  private def getPrimitiveType(tp: Staged[_]): String = tp match {
     case tp: ArrayType[_] => getPrimitiveType(tp.typeArguments.head) 
     case _ => remap(tp)
   }

@@ -53,7 +53,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     val start = System.currentTimeMillis()
     var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(blk).s } }
 
-    if (curEdgeId == 0) return  // Nothing was FStaged -- likely running in library mode (or empty program)
+    if (curEdgeId == 0) return  // Nothing was Staged -- likely running in library mode (or empty program)
 
     // Exit now if errors were found during staging
     checkErrors(start, "staging")

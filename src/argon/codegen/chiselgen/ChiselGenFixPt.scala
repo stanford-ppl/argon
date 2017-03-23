@@ -6,20 +6,20 @@ trait ChiselGenFixPt extends ChiselCodegen {
   val IR: FixPtExp
   import IR._
 
-  override protected def remap(tp: BStaged[_]): String = tp match {
+  override protected def remap(tp: Staged[_]): String = tp match {
     case IntType() => "Int"
     case LongType() => "Long"
     case _ => super.remap(tp)
   }
 
-  override protected def bitWidth(tp: BStaged[_]): Int = tp match {
+  override protected def bitWidth(tp: Staged[_]): Int = tp match {
       case IntType()  => 32
       case LongType() => 32 // or 64?
       case FixPtType(s,d,f) => d+f
       case _ => super.bitWidth(tp)
   }
 
-  override protected def hasFracBits(tp: BStaged[_]): Boolean = tp match {
+  override protected def hasFracBits(tp: Staged[_]): Boolean = tp match {
       case IntType()  => false
       case LongType() => false
       case FixPtType(s,d,f) => if (f == 0) false else true

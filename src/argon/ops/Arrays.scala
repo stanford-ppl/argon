@@ -17,19 +17,19 @@ trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp {
   }
 
   /** Type classes **/
-  // --- FStaged
-  case class ArrayType[T <: StageAny[T]](child: FStaged[T]) extends FStaged[ArgonArray[T]] {
+  // --- Staged
+  case class ArrayType[T <: StageAny[T]](child: Staged[T]) extends FStaged[ArgonArray[T]] {
     override def wrapped(s: Exp[ArgonArray[T]]): ArgonArray[T] = ArgonArray(s)(child)
     override def typeArguments = List(child)
     override def stagedClass = classOf[ArgonArray[T]]
     override def isPrimitive = false
   }
-  implicit def arrayType[T <: StageAny[T] : FStaged]: FStaged[ArgonArray[T]] = ArrayType(ftyp[T])
+  implicit def arrayType[T <: StageAny[T] : Staged]: FStaged[ArgonArray[T]] = ArrayType(ftyp[T])
 
   /** IR Nodes **/
   case class InputArguments() extends Op[ArgonArray[Text]] { def mirror(f:Tx) = stage(InputArguments())(here) }
 
-  case class ArrayNew[T <: StageAny[T] : FStaged](size: Exp[Int32]) extends Op2[T,ArgonArray[T]] {
+  case class ArrayNew[T <: StageAny[T] : FStaged](size: Exp[Int32]) extends Op2[T, ArgonArray[T]] {
     def mirror(f:Tx) = array_new[T](f(size))
   }
 

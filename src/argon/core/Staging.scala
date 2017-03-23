@@ -2,19 +2,19 @@ package argon.core
 import argon.utils.escapeConst
 
 trait Staging extends Statements {
-  def fresh[T:BStaged]: Bound[T] = {
+  def fresh[T:Staged]: Bound[T] = {
     val bnd = __bound[T]
     addBound(bnd)
     bnd
   }
-  def constant[T:BStaged](c: Any)(implicit ctx: SrcCtx): Const[T] = {
+  def constant[T:Staged](c: Any)(implicit ctx: SrcCtx): Const[T] = {
     val cc = __const[T](c)
     log(c"Making constant ${btyp[T]} from ${escapeConst(c)} : ${c.getClass}")
     registerInput(cc)
     cc.setCtx(ctx)
     cc
   }
-  def parameter[T:BStaged](c: Any)(implicit ctx: SrcCtx): Param[T] = {
+  def parameter[T:Staged](c: Any)(implicit ctx: SrcCtx): Param[T] = {
     val p = __param[T](c)
     log(c"Making parameter ${btyp[T]} from ${escapeConst(p)} : ${c.getClass}")
     registerInput(p)
@@ -22,7 +22,7 @@ trait Staging extends Statements {
     p
   }
 
-  def __lift[A,B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.fStaged.wrapped(constant[B](x)(l.fStaged,ctx))
+  def __lift[A,B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.Staged.wrapped(constant[B](x)(l.Staged,ctx))
 
   def stagedef(d: Def)(ctx: SrcCtx): List[Sym[_]]                   = stagedefPure(d)(ctx)
   def stagedefPure(d: Def)(ctx: SrcCtx): List[Sym[_]]               = stagedefEffectful(d, Pure)(ctx)
@@ -32,14 +32,14 @@ trait Staging extends Statements {
   def stagedefGlobal(d: Def)(ctx: SrcCtx): List[Sym[_]]             = stagedefEffectful(d, Global)(ctx)
   def stagedefMutable(d: Def)(ctx: SrcCtx): List[Sym[_]]            = stagedefEffectful(d, Mutable)(ctx)
 
-  def stage[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]                      = single[T](stagedef(op)(ctx))(op.bStaged)
-  def stagePure[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stagedefPure(op)(ctx))(op.bStaged)
-  def stageCold[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stagedefCold(op)(ctx))(op.bStaged)
-  def stageWrite[T <: StageAny[T]](ss: Exp[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T]    = single[T](stagedefWrite(ss:_*)(op)(ctx))(op.bStaged)
-  def stageSimple[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stagedefSimple(op)(ctx))(op.bStaged)
-  def stageGlobal[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stagedefGlobal(op)(ctx))(op.bStaged)
-  def stageMutable[T <: StageAny[T]](op: Op[T])(ctx: SrcCtx): Sym[T]               = single[T](stagedefMutable(op)(ctx))(op.bStaged)
-  def stageEffectful[T <: StageAny[T]](op: Op[T], u: Effects)(ctx: SrcCtx): Sym[T] = single[T](stagedefEffectful(op, u)(ctx))(op.bStaged)
+  def stage[T](op: Op[T])(ctx: SrcCtx): Sym[T]                      = single[T](stagedef(op)(ctx))(op.Staged)
+  def stagePure[T](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stagedefPure(op)(ctx))(op.Staged)
+  def stageCold[T](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stagedefCold(op)(ctx))(op.Staged)
+  def stageWrite[T](ss: Exp[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T]    = single[T](stagedefWrite(ss:_*)(op)(ctx))(op.Staged)
+  def stageSimple[T](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stagedefSimple(op)(ctx))(op.Staged)
+  def stageGlobal[T](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stagedefGlobal(op)(ctx))(op.Staged)
+  def stageMutable[T](op: Op[T])(ctx: SrcCtx): Sym[T]               = single[T](stagedefMutable(op)(ctx))(op.Staged)
+  def stageEffectful[T](op: Op[T], u: Effects)(ctx: SrcCtx): Sym[T] = single[T](stagedefEffectful(op, u)(ctx))(op.Staged)
 
   private def registerDefWithCSE(d: Def)(ctx: SrcCtx): List[Sym[_]] = {
     // log(c"Checking defCache for $d")
@@ -129,7 +129,7 @@ trait Staging extends Statements {
   }
 
 
-  private def single[T:BStaged](xx: List[Sym[_]]): Sym[T] = xx.head.asInstanceOf[Sym[T]]
+  private def single[T:Staged](xx: List[Sym[_]]): Sym[T] = xx.head.asInstanceOf[Sym[T]]
 
 
   // TODO: where does this actually belong?

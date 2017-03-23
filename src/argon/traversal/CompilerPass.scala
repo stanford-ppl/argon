@@ -31,7 +31,7 @@ trait CompilerPass { self =>
 
   // --- Methods
   /** External method called by compiler **/
-  final def run[T:BStaged](b: Block[T]): Block[T] = if (shouldRun) {
+  final def run[T:Staged](b: Block[T]): Block[T] = if (shouldRun) {
 
     val outfile = State.paddedPass + " " + name + ".log"
     State.pass += 1
@@ -55,5 +55,5 @@ trait CompilerPass { self =>
 
 
   /** Called to execute this pass. Override to implement custom IR processing **/
-  protected def process[S:BStaged](block: Block[S]): Block[S]
+  protected def process[S:Staged](block: Block[S]): Block[S]
 }

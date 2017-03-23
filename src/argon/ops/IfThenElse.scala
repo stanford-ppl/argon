@@ -10,7 +10,7 @@ trait IfThenElseExp extends Staging with BoolExp with VoidExp {
 
   /** Virtualized Methods **/
   def __ifThenElse[A,B  <: StageAny[B]](cond: Bool, thenp: => A, elsep: => A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = {
-    implicit val fStaged: FStaged[B] = l.fStaged
+    implicit val Staged: Staged[B] = l.Staged
     val unwrapThen = () => lift(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
     val unwrapElse = () => lift(elsep).s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
@@ -24,7 +24,7 @@ trait IfThenElseExp extends Staging with BoolExp with VoidExp {
 
 
   /** IR Nodes **/
-  case class IfThenElse[T <: StageAny[T] : FStaged](cond: Exp[Bool], thenp: Block[T], elsep: Block[T]) extends Op[T] {
+  case class IfThenElse[T: Staged](cond: Exp[Bool], thenp: Block[T], elsep: Block[T]) extends Op[T] {
     def mirror(f:Tx) = ifThenElse[T](f(cond), f(thenp), f(elsep))
 
     override def freqs   = normal(cond) ++ cold(thenp) ++ cold(elsep)
@@ -32,7 +32,7 @@ trait IfThenElseExp extends Staging with BoolExp with VoidExp {
   }
 
   /** Constructors **/
-  def ifThenElse[T <: StageAny[T] : FStaged](cond: Exp[Bool], thenp: => Exp[T], elsep: => Exp[T])(implicit ctx: SrcCtx): Exp[T] = cond match {
+  def ifThenElse[T: Staged](cond: Exp[Bool], thenp: => Exp[T], elsep: => Exp[T])(implicit ctx: SrcCtx): Exp[T] = cond match {
     case Const(true) if context != null => thenp // Inlining is not valid if there is no outer context
     case Const(false) if context != null => elsep
     case Op(Not(x)) => ifThenElse(x, elsep, thenp)

@@ -5,14 +5,14 @@ import argon.core.Staging
 trait PatternApi extends PatternExp
 trait PatternExp extends Staging with FixPtExp with VoidExp with TextExp /*{
 
-  abstract class ParallelCollection[A <: StageAny[A] : FStaged]
+  abstract class ParallelCollection[A <: StageAny[A] : Staged]
 
 
   /** Parallel Elems **/
   trait LoopElem { val chunks: Int }
 
   /** Foreach elem **/
-  case class ForeachElem[A <: StageAny[A] : FStaged](
+  case class ForeachElem[A <: StageAny[A] : Staged](
     func:   Block[A],   // Foreach function
     chunks: Int
   ) extends Op[Void] with LoopElem {
@@ -50,11 +50,11 @@ trait PatternExp extends Staging with FixPtExp with VoidExp with TextExp /*{
 
 
   /** Output collection/strategy of a CollectElem loop body **/
-  abstract class CollectOutput[A <: StageAny[A] : FStaged, I:FStaged, CA <: StageAny[A] : FStaged] {
+  abstract class CollectOutput[A <: StageAny[A] : Staged, I:Staged, CA <: StageAny[A] : Staged] {
 
   }
 
-  abstract class CollectBaseElem[A <: StageAny[A] : FStaged, R <: StageAny[R] : FStaged](
+  abstract class CollectBaseElem[A <: StageAny[A] : Staged, R <: StageAny[R] : Staged](
     val iFunc:       Block[ParallelCollection[A]],  // FlatMap function - produces intermediate collection each iteration
     val unknownSize: Boolean,                       // Dynamic output size - true for FlatMap, generally false otherwise
     val chunks:      Int,
@@ -63,7 +63,7 @@ trait PatternExp extends Staging with FixPtExp with VoidExp with TextExp /*{
     val applyInner:  Block[A]                       // Element of intermediate collection at j
   ) extends Op2[A,R] with LoopElem
 
-  case class CollectElem[A <: StageAny[A] : FStaged, I<:ParallelCollection[A]:FStaged, CA<:ParallelCollection[A]:FStaged](
+  case class CollectElem[A <: StageAny[A] : Staged, I<:ParallelCollection[A]:Staged, CA<:ParallelCollection[A]:Staged](
     buffer:                   CollectOutput[A,I,CA],
     override val iFunc:       Block[ParallelCollection[A]],
     override val unknownSize: Boolean,
@@ -78,13 +78,13 @@ trait PatternExp extends Staging with FixPtExp with VoidExp with TextExp /*{
 
 
   /** Constructors **/
-  def foreach_elem[A <: StageAny[A] : FStaged](func: => Exp[A], chunks: Int)(implicit ctx: SrcCtx): Sym[Void] = {
+  def foreach_elem[A <: StageAny[A] : Staged](func: => Exp[A], chunks: Int)(implicit ctx: SrcCtx): Sym[Void] = {
     val blk = stageBlock{ func }
     val effects = blk.summary
     stageEffectful(ForeachElem(blk, chunks), effects.star)(ctx)
   }
 
-  def collect_elem[A <: StageAny[A] : FStaged, I<:ParallelCollection[A]:FStaged, CA<:ParallelCollection[A]:FStaged](
+  def collect_elem[A <: StageAny[A] : Staged, I<:ParallelCollection[A]:Staged, CA<:ParallelCollection[A]:Staged](
     buffer:      CollectOutput[A,I,CA],
     iFunc:       => Exp[ParallelCollection[A]],
     unknownSize: Boolean,

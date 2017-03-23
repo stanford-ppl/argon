@@ -7,7 +7,7 @@ trait CppGenArray extends CppCodegen {
   import IR._
 
 
-  protected def isArrayType(tp: BStaged[_]): Boolean = tp match {
+  protected def isArrayType(tp: Staged[_]): Boolean = tp match {
     case tp: ArrayType[_] => tp.typeArguments.head match {
       case tp: ArrayType[_] => println("EXCEPTION: Probably can't handle nested array types in ifthenelse"); true
       case _ => true
@@ -15,7 +15,7 @@ trait CppGenArray extends CppCodegen {
     case _ => false
   }
 
-  override protected def remap(tp: BStaged[_]): String = tp match {
+  override protected def remap(tp: Staged[_]): String = tp match {
     case tp: ArrayType[_] => tp.typeArguments.head match {
         case DoubleType() => "cppDeliteArraydouble"
         case FloatType() => "cppDeliteArraydouble"
