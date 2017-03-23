@@ -18,7 +18,7 @@ trait AppCore { self =>
 
   def main(sargs: Array[String]): Unit = {
     __stagingArgs = sargs
-    Config.name = self.getClass.getName.split('$').head.replace("class ", "").replace('.','-')
+    Config.name = self.getClass.getName.replace("class ", "").replace('.','-').replace("$","") //.split('$').head
     Config.logDir =  Config.cwd + Config.sep + "logs" + Config.sep + Config.name
     IR.compileOrRun( main() )
   }
