@@ -376,8 +376,8 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   override def bool_not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
     case Def(node@FixNeq(a,b)) => stage( FixEql(a,b)(node.mS,node.mI,node.mF) )(ctx)
     case Def(node@FixEql(a,b)) => stage( FixNeq(a,b)(node.mS,node.mI,node.mF) )(ctx)
-    case Def( node@FixLt(a,b)) => stage( FixLeq(a,b)(node.mS,node.mI,node.mF) )(ctx)
-    case Def(node@FixLeq(a,b)) => stage(  FixLt(a,b)(node.mS,node.mI,node.mF) )(ctx)
+    case Def( node@FixLt(a,b)) => stage( FixLeq(b,a)(node.mS,node.mI,node.mF) )(ctx)
+    case Def(node@FixLeq(a,b)) => stage(  FixLt(b,a)(node.mS,node.mI,node.mF) )(ctx)
     case _ => super.bool_not(x)
   }
 

@@ -1,7 +1,6 @@
 package argon.traversal
 
 import argon.core.Staging
-import argon.{Config, State}
 
 /**
   * Single or iterative traversal of the IR with pre- and post- processing

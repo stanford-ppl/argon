@@ -303,8 +303,8 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   override def bool_not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
     case Op(node@FltNeq(a,b)) => stage( FltEql(a,b)(node.mG,node.mE) )(ctx)
     case Op(node@FltEql(a,b)) => stage( FltNeq(a,b)(node.mG,node.mE) )(ctx)
-    case Op( node@FltLt(a,b)) => stage( FltLeq(a,b)(node.mG,node.mE) )(ctx)
-    case Op(node@FltLeq(a,b)) => stage(  FltLt(a,b)(node.mG,node.mE) )(ctx)
+    case Op( node@FltLt(a,b)) => stage( FltLeq(b,a)(node.mG,node.mE) )(ctx)
+    case Op(node@FltLeq(a,b)) => stage(  FltLt(b,a)(node.mG,node.mE) )(ctx)
     case _ => super.bool_not(x)
   }
 
