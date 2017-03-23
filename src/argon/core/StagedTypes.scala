@@ -3,6 +3,9 @@ package argon.core
 import scala.annotation.implicitNotFound
 import org.virtualized.{EmbeddedControls, SourceContext}
 import argon.State
+import scala.language.experimental.macros
+
+import scala.reflect.macros.whitebox.Context
 
 trait StagedTypes extends EmbeddedControls { this: Staging =>
   type SrcCtx = SourceContext
@@ -18,19 +21,19 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
 
   type FStaged[T <: StageAny[T]] = Staged[T]
 
-
-  /*  def toBStaged[T](s: Staged[T]):Staged[T] = new Staged[T] {
-  override def typeArguments: List[Staged[_]] = s.typeArguments.map(x => toBStaged(x))
-  override def stagedClass = s.stagedClass
-
-  override def isPrimitive = s.isPrimitive
-}
-*/
-
-  trait StageAny[+T] {
+  trait StageAny[T] {
     def s: Exp[T]
+    def ===(x: T): Boolean
+    def =!=(x: T): Boolean
   }
 
+  import StagedTypes._
+
+  def infix_==[A,B](x1: StageAny[A], x2: StageAny[B]): Boolean = macro incorrectEqualImpl
+  def infix_==[A](x1: StageAny[A], x2: StageAny[A]): Boolean = macro correctEqualImpl
+
+  def infix_!=[A,B](x1: StageAny[A], x2: StageAny[B]): Boolean = macro incorrectUnequalImpl
+  def infix_!=[A](x1: StageAny[A], x2: StageAny[A]): Boolean = macro correctUnequalImpl
 
   def ftyp[T: Staged]: Staged[T] = implicitly[Staged[T]]
   def btyp[T: Staged] = implicitly[Staged[T]]
@@ -82,5 +85,30 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     State.staging = false
     State.EVAL = false
     State.pass = 1
+  }
+}
+
+private object StagedTypes {
+
+  def incorrectEqualImpl(c: Context)(
+    x1: c.Expr[Any], x2: c.Expr[Any]): c.Expr[Boolean] = {
+    c.abort(c.enclosingPosition, "Should compare similar type of Stage Any")
+  }
+
+  def correctEqualImpl(c: Context)(
+    x1: c.Expr[Any], x2: c.Expr[Any]): c.Expr[Boolean] = {
+    import c.universe._
+    c.Expr(q"$x1 === $x2")
+  }
+
+  def incorrectUnequalImpl(c: Context)(
+    x1: c.Expr[Any], x2: c.Expr[Any]): c.Expr[Boolean] = {
+    c.abort(c.enclosingPosition, "Should compare similar type of Stage Any")
+  }
+
+  def correctUnequalImpl(c: Context)(
+    x1: c.Expr[Any], x2: c.Expr[Any]): c.Expr[Boolean] = {
+    import c.universe._
+    c.Expr(q"$x1 =!= $x2")
   }
 }
