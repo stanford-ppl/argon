@@ -20,6 +20,13 @@ trait CppGenFixPt extends CppCodegen {
     case _ => super.quoteConst(c)
   }
 
+  override protected def hasFracBits(tp: Staged[_]): Boolean = tp match {
+      case IntType()  => false
+      case LongType() => false
+      case FixPtType(s,d,f) => if (f == 0) false else true
+      case _ => super.hasFracBits(tp)
+  }
+
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case FixInv(x)   => emit(src"${lhs.tp} $lhs = ~$x;")
     case FixNeg(x)   => emit(src"${lhs.tp} $lhs = -$x;")

@@ -57,6 +57,8 @@ trait Codegen extends Traversal {
     }
   } 
 
+  protected def hasFracBits(tp: Staged[_]): Boolean = false
+
   final protected def toggleEn(): Unit = {
     if (emitEn) {
       if (Config.emitDevel == 2) {

@@ -72,8 +72,6 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     emit(src"""val $lhs = Module(new ${x}(${args.mkString}))""")
   } 
 
-  protected def hasFracBits(tp: Staged[_]): Boolean = false
-
   override def copyDependencies(out: String): Unit = {
     // s"mkdir ${out}${java.io.File.separator}templates" !
     // s"mkdir ${out}${java.io.File.separator}templates".!
