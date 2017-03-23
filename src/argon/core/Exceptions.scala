@@ -138,6 +138,11 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
       error(c"Array ${array} ($name) has no good codegen for CPP")
     })
 
+  class OuterLevelInnerStyleException(name: String) extends
+    CompilerException(20, c"Controller ${name} claims to be an outer level controller but has style of an innerpipe", {
+      error(c"Controller ${name} claims to be an outer level controller but has style of an innerpipe")
+    })
+
   // --- User errors
   abstract class UserError(ctx: SrcCtx, console: => Unit) {
     console
