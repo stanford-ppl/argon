@@ -22,14 +22,12 @@ trait BoolExp extends Staging with BitsExp { this: TextExp =>
     def &&(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_and(this.s, that.s)(ctx))
     def ||(that: Bool)(implicit ctx: SrcCtx): Bool = Bool( bool_or(this.s, that.s)(ctx))
     def ^ (that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(this.s, that.s)(ctx))
+    def ===(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xnor(this.s, that.s)(ctx))
+    def =!=(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(this.s, that.s)(ctx))
 
-    def +[A](rhs: A)(implicit ctx: SrcCtx, lft: Lift[A,Text]): Text = textify(this) + lft.lift(rhs)
+    override def toText(implicit ctx: SrcCtx) = textify(this)
+
   }
-
-  /** Virtualized methods **/
-  def infix_==(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xnor(x.s, y.s)(ctx))
-  def infix_!=(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(x.s, y.s)(ctx))
-  def infix_toString(x: Bool)(implicit ctx: SrcCtx): Text = textify(x)
 
 
   // --- Bits
@@ -45,12 +43,14 @@ trait BoolExp extends Staging with BitsExp { this: TextExp =>
   }
 
   // --- Lifts
-  implicit object Boolean2Bool extends Lift[Boolean,Bool] { val Staged = BoolType }
+  implicit object Boolean2Bool extends Lift[Boolean,Bool] {
+    override def lift(x: Boolean)(implicit ctx: SrcCtx) = boolean2bool(x)
+  }
 
 
   /** Constant lifting **/
-  implicit def boolean2bool(x: Boolean)(implicit ctx: SrcCtx): Bool = lift(x)
-  def bool(x: Boolean)(implicit ctx: SrcCtx): Const[Bool] = constant[Bool](x)
+  implicit def boolean2bool(x: Boolean)(implicit ctx: SrcCtx): Bool = Bool(bool(x))
+  def bool(x: Boolean)(implicit ctx: SrcCtx): Exp[Bool] = constant[Bool](x)
 
 
   /** IR Nodes **/

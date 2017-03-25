@@ -26,7 +26,11 @@ trait HashMapApi extends HashMapExp with ArrayApi with StructApi {
 
 trait HashMapExp extends Staging with ArrayExp with StructExp {
   /** Infix methods **/
-  case class HashIndex[K <: StageAny[K] : Staged](s: Exp[HashIndex[K]]) extends StageAny[HashIndex[K]]
+  case class HashIndex[K <: StageAny[K] : Staged](s: Exp[HashIndex[K]]) extends StageAny[HashIndex[K]] {
+    def =!=(x: HashIndex[K])(implicit ctx: SrcCtx): Bool = ???
+    def ===(x: HashIndex[K])(implicit ctx: SrcCtx): Bool = ???
+    def toText(implicit ctx: SrcCtx): Text = ???
+  }
 
   case class ArgonMap[K <: StageAny[K] : Staged,V <: StageAny[V] : Staged](s: Exp[ArgonMap[K,V]]) extends StructApi[ArgonMap[K,V]] with StageAny[ArgonMap[K,V]] {
     def keys(implicit ctx: SrcCtx): ArgonArray[K]   = field[ArgonArray[K]]("keys")
@@ -35,9 +39,16 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
 
     private def index(implicit ctx: SrcCtx) = field[HashIndex[K]]("index")
     private def get(key: K)(implicit ctx: SrcCtx): Index = wrap(hash_index_apply(this.index.s, key.s))
+
+
     def apply(key: K)(implicit ctx: SrcCtx): V = this.values.apply(this.get(key))
-    @virtualize
-    def contains(key: K)(implicit ctx: SrcCtx): Bool = this.get(key) != lift(-1)
+
+    def contains(key: K)(implicit ctx: SrcCtx): Bool = ???
+
+    def =!=(x: ArgonMap[K,V])(implicit ctx: SrcCtx): Bool = ???
+    def ===(x: ArgonMap[K,V])(implicit ctx: SrcCtx): Bool = ???
+    def toText(implicit ctx: SrcCtx): Text = ???
+
   }
 
   /** Type classes **/

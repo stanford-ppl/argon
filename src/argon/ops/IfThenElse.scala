@@ -9,17 +9,37 @@ trait IfThenElseExp extends Staging with BoolExp with VoidExp {
   this: TextExp =>
 
   /** Virtualized Methods **/
-  def __ifThenElse[A,B  <: StageAny[B]](cond: Bool, thenp: => A, elsep: => A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = {
-    implicit val Staged: Staged[B] = l.Staged
-    val unwrapThen = () => lift(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse = () => lift(elsep).s // wrapping it as a Function0 allows it to be delayed
+  def __ifThenElse[T <: StageAny[T] : Staged](cond: Bool, thenp: T, elsep: T)(implicit ctx: SrcCtx): T = {
+    val unwrapThen = () => thenp.s // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = () => elsep.s // wrapping it as a Function0 allows it to be delayed
+    wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
+  }
+/*
+  def __ifThenElse[A, T <: StageAny[T] : Staged](cond: Bool, thenp: A, elsep: T)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
+    val unwrapThen = () => l.lift(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = () => elsep.s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 
+  def __ifThenElse[A, T <: StageAny[T] : Staged](cond: Bool, thenp: A, elsep: A)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
+    val unwrapThen = () => l.lift(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = () => l.lift(elsep).s // wrapping it as a Function0 allows it to be delayed
+    wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
+  }
+*/
+  def __ifThenElse[A, T <: StageAny[T] : Staged](cond: Bool, thenp: T, elsep: A)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
+    val unwrapThen = () => thenp.s // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = () => l.lift(elsep).s // wrapping it as a Function0 allows it to be delayed
+    wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
+  }
+
+
+
+
   // special hack for "if (x) { thing }"
-  def __ifThenElse[A,B](cond: Bool, thenp: => Void, elsep: => Unit)(implicit ctx: SrcCtx): Void = {
+  def __ifThenElse(cond: Bool, thenp: => Void, elsep: => Unit)(implicit ctx: SrcCtx): Void = {
     val elseBlk = () => lift[Unit,Void](elsep)
-    __ifThenElse(cond, thenp, elseBlk())(ctx, selfLift[Void])
+    __ifThenElse(cond, thenp, elseBlk())(VoidType, ctx)
   }
 
 

@@ -14,6 +14,10 @@ trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp {
   case class ArgonArray[T <: StageAny[T] : FStaged](s: Exp[ArgonArray[T]]) extends StageAny[ArgonArray[T]] {
     def apply(i: Int32)(implicit ctx: SrcCtx): T = wrap(array_apply(s, i.s))
     def length(implicit ctx: SrcCtx): Int32 = wrap(array_length(s))
+    def ===(that: ArgonArray[T])(implicit ctx: SrcCtx) = ???
+    def =!=(that: ArgonArray[T])(implicit ctx: SrcCtx) = ???
+
+    override def toText(implicit ctx: SrcCtx) = textify(this)
   }
 
   /** Type classes **/

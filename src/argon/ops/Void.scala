@@ -2,11 +2,18 @@ package argon.ops
 import argon.core.Staging
 
 trait VoidApi extends VoidExp {
+  self: TextExp =>
   type Unit = Void
 }
 
 trait VoidExp extends Staging {
-  case class Void(s: Exp[Void]) extends StageAny[Void]
+  self: TextExp =>
+  case class Void(s: Exp[Void]) extends StageAny[Void] {
+    def ===(that: Void)(implicit ctx: SrcCtx) = ???
+    def =!=(that: Void)(implicit ctx: SrcCtx) = ???
+
+    override def toText(implicit ctx: SrcCtx) = textify(this)
+  }
 
   /** Type classes **/
   // --- Staged
@@ -18,7 +25,9 @@ trait VoidExp extends Staging {
   }
 
   // --- Lift
-  implicit object Unit2Void extends Lift[Unit,Void] { val Staged = VoidType }
+  implicit object Unit2Void extends Lift[Unit,Void] {
+    override def lift(x: Unit)(implicit ctx: SrcCtx) = Void(void())
+  }
 
   /** Constant lifting **/
   implicit def unit2void(x: Unit)(implicit ctx: SrcCtx): Void = lift(x)

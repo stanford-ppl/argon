@@ -14,15 +14,16 @@ trait TupleExp extends Staging with StructExp with NumExp with BitsExp {
   case class Tup2[A <: StageAny[A] : Staged,B <: StageAny[B] : Staged](s: Exp[Tup2[A,B]]) extends StructApi[Tup2[A,B]] with StageAny[Tup2[A,B]] {
     def _1(implicit ctx: SrcCtx): A = field[A]("_1")
     def _2(implicit ctx: SrcCtx): B = field[B]("_2")
+    def =!=(x: Tup2[A,B])(implicit ctx: SrcCtx): Bool = ???
+    def ===(x: Tup2[A,B])(implicit ctx: SrcCtx): Bool = ???
+    def toText(implicit ctx: SrcCtx): Text = ???
+
   }
 
   /** Direct methods **/
   def pack[A <: StageAny[A] : Staged,B <: StageAny[B] : Staged](a: A, b: B)(implicit ctx: SrcCtx): Tup2[A,B] = struct[Tup2[A,B]]("_1" -> a.s, "_2" -> b.s)
   def pack[A <: StageAny[A] : Staged,B <: StageAny[B] : Staged](t: (A, B))(implicit ctx: SrcCtx): Tup2[A,B] = struct[Tup2[A,B]]("_1" -> t._1.s, "_2" -> t._2.s)
   def unpack[A <: StageAny[A] : Staged,B <: StageAny[B] : Staged](t: Tup2[A,B])(implicit ctx: SrcCtx): (A,B) = (t._1, t._2)
-
-  /** Virtualized methods **/
-  def infix_toString[A <: StageAny[A] : Staged,B <: StageAny[B] : Staged](x: Tup2[A,B])(implicit ctx: SrcCtx): Text = "Tup2(" + textify(x._1) + ", " + textify(x._2) + ")"
 
   /** Type classes **/
   // --- Staged
@@ -33,7 +34,7 @@ trait TupleExp extends Staging with StructExp with NumExp with BitsExp {
 
     override def fields = List("_1" -> m1, "_2" -> m2)
   }
-  implicit def tup2Type[A <: StageAny[A] : Staged,B <: StageAny[B] : Staged]: StructType[Tup2[A,B]] = Tup2Type(ftyp[A],ftyp[B])
+  implicit def tup2Type[A <: StageAny[A] : Staged,B <: StageAny[B] : Staged]: Tup2Type[A,B] = Tup2Type(ftyp[A],ftyp[B])
 
   // --- Bits
   class Tup2Bits[A <: StageAny[A] : Staged:Bits,B <: StageAny[B] : Staged:Bits] extends Bits[Tup2[A,B]] {

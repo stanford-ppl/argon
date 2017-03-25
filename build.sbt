@@ -24,7 +24,7 @@ publishArtifact in (Test, packageBin) := true
 
 testOptions in Test += Tests.Argument("-oDF")
 
-libraryDependencies += "org.virtualized" %% "virtualized" % "0.6"
+libraryDependencies += "org.virtualized" %% "virtualized" % "0.7"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % scalatestVersion % "test"
 
@@ -34,7 +34,7 @@ libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.3.2"
 
 addCompilerPlugin("org.scalameta" % "paradise" % paradiseVersion cross CrossVersion.full)
 
-scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings")//, "-Xlog-implicits")
 
 // It would be very annoying to have to import these everywhere in this project
 scalacOptions ++= Seq("-language:higherKinds", "-language:implicitConversions")

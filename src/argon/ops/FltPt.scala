@@ -28,15 +28,11 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
     def <=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(this.s,that.s))
     def > (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool( flt_lt(that.s,this.s))
     def >=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(that.s,this.s))
+    def ===(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_eql(that.s,this.s))
+    def =!=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_eql(that.s,this.s))
 
-    def +(rhs: Text)(implicit ctx: SrcCtx): Text = textify(this) + lift(rhs)
-    def +(rhs: String)(implicit ctx: SrcCtx): Text = this + lift[String,Text](rhs)
+    override def toText(implicit ctx: SrcCtx) = textify(this)
   }
-
-  /** Virtualized methods **/
-  def infix_!=[G:INT,E:INT](x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = Bool(flt_neq(x.s,y.s))
-  def infix_==[G:INT,E:INT](x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = Bool(flt_eql(x.s,y.s))
-  def infix_toString[G:INT,E:INT](x: FltPt[G,E])(implicit ctx: SrcCtx): Text = textify(x)
 
 
   /** Type classes **/
@@ -95,7 +91,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
 
     override def lessThan(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x < y
     override def lessThanOrEqual(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x <= y
-    override def equal(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = infix_==(x, y)
+    override def equal(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x === y
   }
   implicit def __fltPtNum[G:INT,E:INT]: Num[FltPt[G,E]] = new FltPtNum[G,E]
 
@@ -106,8 +102,12 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
 
 
   // --- Lift
-  implicit object Float2FltPt extends Lift[Float,Float32] { val Staged = fltPtType[_24,_8] }
-  implicit object Double2FltPt extends Lift[Double,Float64] { val Staged = fltPtType[_53,_11] }
+  implicit object Float2FltPt extends Lift[Float,Float32] {
+    override def lift(x: Float)(implicit ctx: SrcCtx) = float2fltpt(x)
+  }
+  implicit object Double2FltPt extends Lift[Double,Float64] {
+    override def lift(x: Double)(implicit ctx: SrcCtx) = double2fltpt(x)
+  }
 
 
   /** Constant lifting **/
@@ -141,59 +141,9 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   implicit def double2fltpt[G:INT,E:INT](x: Double)(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(createConstant[G,E](x))
   def string2fltpt[G:INT,E:INT](x: String)(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(createConstant[G,E](x))
 
-  override def __lift[A,B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l match {
-    case Float2FltPt => FltPt(createConstant[_24,_8](x)).asInstanceOf[B]
-    case Double2FltPt => FltPt(createConstant[_53,_11](x)).asInstanceOf[B]
-    case _ => super.__lift(x)
-  }
+
 
   def fltpt[G:INT,E:INT](x: BigDecimal)(implicit ctx: SrcCtx): Const[FltPt[G,E]] = createConstant[G,E](x, enWarn=false)
-
-  /** Lifting methods **/
-  implicit class IntFltPtOps(x: Int) {
-    private def lift[G:INT,E:INT](implicit ctx: SrcCtx): FltPt[G,E] = int2fltpt[G,E](x)
-    def + [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] + y
-    def - [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] - y
-    def * [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] * y
-    def / [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] / y
-    def < [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] < y
-    def <=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] <= y
-    def > [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] > y
-    def >=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] >= y
-  }
-  implicit class LongFltPtOps(x: Long) {
-    private def lift[G:INT,E:INT](implicit ctx: SrcCtx): FltPt[G,E] = long2fltpt[G,E](x)
-    def + [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] + y
-    def - [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] - y
-    def * [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] * y
-    def / [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] / y
-    def < [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] < y
-    def <=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] <= y
-    def > [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] > y
-    def >=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] >= y
-  }
-  implicit class FloatFltPtOps(x: Float) {
-    private def lift[G:INT,E:INT](implicit ctx: SrcCtx): FltPt[G,E] = float2fltpt[G,E](x)
-    def + [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] + y
-    def - [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] - y
-    def * [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] * y
-    def / [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] / y
-    def < [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] < y
-    def <=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] <= y
-    def > [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] > y
-    def >=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] >= y
-  }
-  implicit class DoubleFltPtOps(x: Double) {
-    private def lift[G:INT,E:INT](implicit ctx: SrcCtx): FltPt[G,E] = double2fltpt[G,E](x)
-    def + [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] + y
-    def - [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] - y
-    def * [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] * y
-    def / [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] / y
-    def < [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] < y
-    def <=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] <= y
-    def > [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] > y
-    def >=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] >= y
-  }
 
 
   /** Casting **/

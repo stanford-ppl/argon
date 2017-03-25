@@ -4,10 +4,12 @@ package argon.ops
 import argon.Config
 import argon.core.Staging
 
-trait StructApi extends StructExp with VoidApi
+trait StructApi extends StructExp with VoidApi{
+  self: TextApi =>
+}
 
 trait StructExp extends Staging with VoidExp {
-
+  self: TextExp =>
   abstract class StructApi[T <: StageAny[T]  :StructType] { self =>
     def field[R <: StageAny[R] : Staged](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](self.asInstanceOf[T].s, name))
   }

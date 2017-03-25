@@ -11,33 +11,15 @@ trait TextExp extends Staging with BoolExp {
   /** Infix methods **/
   case class Text(s: Exp[Text]) extends StageAny[Text] {
     def +(that: String)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, string2text(that).s))
-    def +[T <: StageAny[T] : FStaged](that: T)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, textify(that).s))
-    def !=(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_differ(this.s, that.s))
-    def ==(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
+    def +[T <: StageAny[T] : FStaged](that: T)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, that.toText.s))
+    def =!=(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_differ(this.s, that.s))
+    def ===(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
     def equals(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
+
+    override def toText(implicit ctx: SrcCtx) = this
   }
 
-  /** Direct methods **/
-  def textify[T <: StageAny[T] : FStaged](x: T)(implicit ctx: SrcCtx): Text = Text(sym_tostring(x.s))
-
-
-  /** Virtualized methods **/
-  def infix_toString[S <: StageAny[S] : Staged](x: S)(implicit ctx: SrcCtx): Text = textify(x)
-  def infix_+[R <: StageAny[R] : Staged](x1: String, x2: R)(implicit ctx: SrcCtx): Text = string2text(x1) + textify(x2)
-  def infix_+[R <: StageAny[R] : Staged](x1: R, x2: String)(implicit ctx: SrcCtx): Text = textify(x1) + string2text(x2)
-
-  def infix_==(x: Text, a: Any)(implicit ctx: SrcCtx): Bool = a match {
-    case y: Text   => x == y
-    case s: String => x == string2text(s)
-    case _         => boolean2bool(false)
-  }
-  def infix_!=(x: Text, a: Any)(implicit ctx: SrcCtx): Bool = a match {
-    case y: Text   => x != y
-    case s: String => x != string2text(s)
-    case _         => boolean2bool(false)
-  }
-  def infix_==(s: String, b: Text)(implicit ctx: SrcCtx): Bool = string2text(s) == b
-  def infix_!=(s: String, b: Text)(implicit ctx: SrcCtx): Bool = string2text(s) != b
+  def textify[T <: StageAny[T] : Staged](x: T)(implicit ctx: SrcCtx): Text = Text(sym_tostring(x.s))
 
   /** Type classes **/
   // --- Staged
@@ -49,7 +31,9 @@ trait TextExp extends Staging with BoolExp {
   }
 
   // --- Lift
-  implicit object String2Text extends Lift[String,Text] { val Staged = TextType }
+  implicit object String2Text extends Lift[String,Text] {
+    override def lift(x: String)(implicit ctx: SrcCtx) = Text(text(x))
+  }
 
   /** Constant Lifting **/
   implicit def string2text(x: String): Text = lift(x)

@@ -22,7 +22,7 @@ trait Staging extends Statements {
     p
   }
 
-  def __lift[A,B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.Staged.wrapped(constant[B](x)(l.Staged,ctx))
+  //def __lift[A,B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.Staged.wrapped(constant[B](x)(l.Staged,ctx))
 
   def stagedef(d: Def)(ctx: SrcCtx): List[Sym[_]]                   = stagedefPure(d)(ctx)
   def stagedefPure(d: Def)(ctx: SrcCtx): List[Sym[_]]               = stagedefEffectful(d, Pure)(ctx)

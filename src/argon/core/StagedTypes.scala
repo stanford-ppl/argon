@@ -3,14 +3,13 @@ package argon.core
 import scala.annotation.implicitNotFound
 import org.virtualized.{EmbeddedControls, SourceContext}
 import argon.State
-import scala.language.experimental.macros
 
+import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
 
 trait StagedTypes extends EmbeddedControls { this: Staging =>
   type SrcCtx = SourceContext
 
-  /** Base type class for all Staged types **/
   trait Staged[T] {
     def wrapped(e: Exp[T]): T
     def typeArguments: List[Staged[_]] = Nil
@@ -21,19 +20,55 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
 
   type FStaged[T <: StageAny[T]] = Staged[T]
 
+  type Bool
+  type Text
+
   trait StageAny[T] {
     def s: Exp[T]
-    def ===(x: T): Boolean
-    def =!=(x: T): Boolean
+    def ===(x: T)(implicit ctx: SrcCtx): Bool
+    def =!=(x: T)(implicit ctx: SrcCtx): Bool
+    def toText(implicit ctx: SrcCtx): Text
+  }
+
+  def infix_toString[T <: StageAny[T] : Staged](x: T) = x.toText
+
+  /** Constructors **/
+  def sym_tostring[S <: StageAny[S]](x: Exp[S])(implicit ctx: SrcCtx): Exp[Text]
+
+  def __equals[T <: StageAny[T] : Staged](x: T, y: T)(implicit ctx: SrcCtx): Bool = {
+    x === y
+  }
+
+  def __equals[A, T <: StageAny[T] : Staged](x: A, y: T)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
+    l.lift(x) === y
+  }
+
+  def __equals[A, T <: StageAny[T] : Staged](x: T, y: A)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
+    x === l.lift(y)
+  }
+
+  def __unequals[T <: StageAny[T] : Staged](x: T, y: T)(implicit ctx: SrcCtx): Bool = {
+    x =!= y
+  }
+
+  def __unequals[A, T <: StageAny[T] : Staged](x: A, y: T)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
+    l.lift(x) =!= y
+  }
+
+  def __unequals[A, T <: StageAny[T] : Staged](x: T, y: A)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
+    x =!= l.lift(y)
   }
 
   import StagedTypes._
 
-  def infix_==[A,B](x1: StageAny[A], x2: StageAny[B]): Boolean = macro incorrectEqualImpl
-  def infix_==[A](x1: StageAny[A], x2: StageAny[A]): Boolean = macro correctEqualImpl
 
-  def infix_!=[A,B](x1: StageAny[A], x2: StageAny[B]): Boolean = macro incorrectUnequalImpl
-  def infix_!=[A](x1: StageAny[A], x2: StageAny[A]): Boolean = macro correctUnequalImpl
+  def infix_==[A,B](x1: StageAny[A], x2: StageAny[B]): Bool = macro equalImpl[Bool]
+  def infix_==[A, B, C <: StageAny[B]](x1: StageAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro equalLiftRightImpl[Bool]
+  def infix_==[A, B, C <: StageAny[B]](x1: A, x2: StageAny[B])(implicit l: Lift[A,C]): Bool = macro equalLiftLeftImpl[Bool]
+
+  def infix_!=[A, B](x1: StageAny[A], x2: StageAny[B]): Bool = macro unequalImpl[Bool]
+  def infix_!=[A, B, C <: StageAny[B]](x1: StageAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro unequalLiftRightImpl[Bool]
+  def infix_!=[A, B, C <: StageAny[B]](x1:A, x2: StageAny[B])(implicit l: Lift[A,C]): Bool = macro unequalLiftLeftImpl[Bool]
 
   def ftyp[T: Staged]: Staged[T] = implicitly[Staged[T]]
   def btyp[T: Staged] = implicitly[Staged[T]]
@@ -66,19 +101,10 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
 
   @implicitNotFound(msg = "Cannot find way to lift type ${A}. Try adding explicit lift(_) calls to return value(s).")
   trait Lift[A,B <: StageAny[B]] {
-    def Staged: Staged[B]
-    def lift(x: A)(implicit ctx: SrcCtx): B = __lift(x)(ctx, this)
+    def lift(x: A)(implicit ctx: SrcCtx): B
   }
 
-  def __lift[A,B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B
-  final def lift[A,B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.lift(x)
-
-  implicit def selfLift[T <: StageAny[T] : FStaged]: Lift[T,T] = new Lift[T,T] {
-    def Staged = implicitly[Staged[T]]
-    override def lift(x: T)(implicit ctx: SrcCtx): T = x
-  }
-
-
+  final def lift[A, B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.lift(x)
 
   def reset(): Unit = {
     State.flex = false
@@ -90,25 +116,41 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
 
 private object StagedTypes {
 
-  def incorrectEqualImpl(c: Context)(
-    x1: c.Expr[Any], x2: c.Expr[Any]): c.Expr[Boolean] = {
-    c.abort(c.enclosingPosition, "Should compare similar type of Stage Any")
-  }
 
-  def correctEqualImpl(c: Context)(
-    x1: c.Expr[Any], x2: c.Expr[Any]): c.Expr[Boolean] = {
+
+  def equalImpl[T](c: Context)(
+    x1: c.Expr[Any], x2: c.Expr[Any]): c.Expr[T] = {
     import c.universe._
     c.Expr(q"$x1 === $x2")
   }
 
-  def incorrectUnequalImpl(c: Context)(
-    x1: c.Expr[Any], x2: c.Expr[Any]): c.Expr[Boolean] = {
-    c.abort(c.enclosingPosition, "Should compare similar type of Stage Any")
+  def equalLiftRightImpl[T](c: Context)(
+    x1: c.Expr[Any], x2: c.Expr[Any])(l: c.Tree): c.Expr[T] = {
+    import c.universe._
+    c.Expr(q"$x1 === lift($x2)")
   }
 
-  def correctUnequalImpl(c: Context)(
-    x1: c.Expr[Any], x2: c.Expr[Any]): c.Expr[Boolean] = {
+  def equalLiftLeftImpl[T](c: Context)(
+    x1: c.Expr[Any], x2: c.Expr[Any])(l: c.Tree): c.Expr[T] = {
     import c.universe._
-    c.Expr(q"$x1 =!= $x2")
+    c.Expr(q"lift($x1) === $x2")
+  }
+
+  def unequalImpl[T](c: Context)(
+    x1: c.Expr[Any], x2: c.Expr[Any]): c.Expr[T] = {
+    import c.universe._
+    c.Expr(q"__unequals($x1, $x2)")
+  }
+
+  def unequalLiftRightImpl[T](c: Context)(
+    x1: c.Expr[Any], x2: c.Expr[Any])(l: c.Tree): c.Expr[T] = {
+    import c.universe._
+    c.Expr(q"$x1 === lift($x2)")
+  }
+
+  def unequalLiftLeftImpl[T](c: Context)(
+    x1: c.Expr[Any], x2: c.Expr[Any])(l: c.Tree): c.Expr[T] = {
+    import c.universe._
+    c.Expr(q"lift($x1) === $x2")
   }
 }
