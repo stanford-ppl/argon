@@ -46,6 +46,7 @@ trait BoolExp extends Staging with BitsExp { this: TextExp =>
 
   // --- Lifts
   implicit object Boolean2Bool extends Lift[Boolean,Bool] {
+    val staged = btyp[Bool]
     override def lift(x: Boolean)(implicit ctx: SrcCtx) = boolean2bool(x)
   }
 

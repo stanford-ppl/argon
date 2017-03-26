@@ -15,7 +15,7 @@ trait ArrayExtApi extends ArrayExtExp with ArrayApi {
   }
 
   implicit class ArrayInfixOps[T:StageAny](a: Array[T]) {
-    def update[A](i: Index, data: A)(implicit ctx: SrcCtx, lft: Lift[A,T]): Void = array_infix_update(a, i, lft.lift(data))
+    def update[A](i: Index, data: T)(implicit ctx: SrcCtx): Void = array_infix_update(a, i, data)
     def foreach(func: T => Void)(implicit ctx: SrcCtx): Void = array_infix_foreach(a, func)
     def map[R:StageAny](func: T => R)(implicit ctx: SrcCtx): Array[R] = array_infix_map(a, func)
     def zip[S:StageAny,R:StageAny](b: Array[S])(func: (T,S) => R)(implicit ctx: SrcCtx): Array[R] = array_infix_zip(a, b, func)

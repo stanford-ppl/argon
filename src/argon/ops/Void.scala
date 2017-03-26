@@ -28,6 +28,7 @@ trait VoidExp extends Staging {
 
   // --- Lift
   implicit object Unit2Void extends Lift[Unit,Void] {
+    val staged = btyp[Void]
     override def lift(x: Unit)(implicit ctx: SrcCtx) = Void(void())
   }
 

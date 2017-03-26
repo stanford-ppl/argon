@@ -21,19 +21,21 @@ trait IfThenElseExp extends Staging with BoolExp with VoidExp {
     val unwrapElse: () => Exp[T] = Fun0(elsep.s) // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
-/*
-  def __ifThenElse[A, T:StageAny](cond: Bool, thenp: A, elsep: T)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
-    val unwrapThen = () => l.lift(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse = () => elsep.s // wrapping it as a Function0 allows it to be delayed
+
+  def __ifThenElse[A, T:StageAny](cond: Bool, thenp: A, elsep: =>T)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
+    val unwrapThen = Fun0(l.lift(thenp).s) // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = Fun0(elsep.s) // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 
-  def __ifThenElse[A, T:StageAny](cond: Bool, thenp: A, elsep: A)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
-    val unwrapThen = () => l.lift(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse = () => l.lift(elsep).s // wrapping it as a Function0 allows it to be delayed
-    wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
+
+  def __ifThenElse[A, B, T](cond: Bool, thenp: A, elsep: B)(implicit ctx: SrcCtx, l: Lift[A, T], l2: Lift[B, T]): T = {
+    implicit val staged: Staged[T] = l2.staged
+    val unwrapThen = Fun0(l.lift(thenp).asInstanceOf[StageAny[T]].s) // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = Fun0(l2.lift(elsep).asInstanceOf[StageAny[T]].s) // wrapping it as a Function0 allows it to be delayed
+    wrap(ifThenElse[T](cond.s, unwrapThen(), unwrapElse()))
   }
-*/
+
   def __ifThenElse[A, T:StageAny](cond: Bool, thenp: => T, elsep: A)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
     val unwrapThen = Fun0(thenp.s) // directly calling unwrap(thenp) forces thenp to be evaluated here
     val unwrapElse = Fun0(l.lift(elsep).s) // wrapping it as a Function0 allows it to be delayed

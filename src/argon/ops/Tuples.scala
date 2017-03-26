@@ -36,6 +36,7 @@ trait TupleExp extends Staging with StructExp with NumExp with BitsExp {
 
     override def fields = List("_1" -> m1, "_2" -> m2)
   }
+
   implicit def tup2Type[A:StageAny,B:StageAny]: Tup2Type[A,B] = Tup2Type(ftyp[A],ftyp[B])
 
   // --- Bits

@@ -33,6 +33,7 @@ trait TextExp extends Staging with BoolExp {
 
   // --- Lift
   implicit object String2Text extends Lift[String,Text] {
+    val staged = btyp[Text]
     override def lift(x: String)(implicit ctx: SrcCtx) = Text(text(x))
   }
 

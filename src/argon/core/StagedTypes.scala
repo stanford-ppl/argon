@@ -33,8 +33,6 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
 
   def infix_toString[T:StageAny](x: T) = x.toText
 
-  /** Constructors **/
-  def sym_tostring[S <: StageAny[S]](x: Exp[S])(implicit ctx: SrcCtx): Exp[Text]
 
   def __equals[T:StageAny](x: T, y: T)(implicit ctx: SrcCtx): Bool = {
     x === y
@@ -101,11 +99,12 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     **/
 
   @implicitNotFound(msg = "Cannot find way to lift type ${A}. Try adding explicit lift(_) calls to return value(s).")
-  trait Lift[A,B <: StageAny[B]] {
+  trait Lift[A,B] {
+    val staged: Staged[B]
     def lift(x: A)(implicit ctx: SrcCtx): B
   }
 
-  final def lift[A, B <: StageAny[B]](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.lift(x)
+  final def lift[A, B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.lift(x)
 
   def reset(): Unit = {
     State.flex = false

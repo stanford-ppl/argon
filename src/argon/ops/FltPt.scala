@@ -105,9 +105,11 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
 
   // --- Lift
   implicit object Float2FltPt extends Lift[Float,Float32] {
+    val staged = btyp[Float32]
     override def lift(x: Float)(implicit ctx: SrcCtx) = float2fltpt(x)
   }
   implicit object Double2FltPt extends Lift[Double,Float64] {
+    val staged = btyp[Float64]
     override def lift(x: Double)(implicit ctx: SrcCtx) = double2fltpt(x)
   }
 

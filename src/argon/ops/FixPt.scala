@@ -121,10 +121,12 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
 
   // --- Lift
   implicit object Int2FixPt extends Lift[Int,Int32] {
+    val staged = btyp[Int32]
     override def lift(x: Int)(implicit ctx: SrcCtx) = int2fixpt(x)
   }
 
   implicit object Long2FixPt extends Lift[Long,Int64] {
+    val staged = btyp[Int64]
     override def lift(x: Long)(implicit ctx: SrcCtx) = long2fixpt(x)
   }
 
