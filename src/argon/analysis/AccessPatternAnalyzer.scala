@@ -33,10 +33,9 @@ trait IndexPatternExp extends Staging {
   }
 
   object accessPatternOf {
-    def apply(x: Exp[_]): Seq[IndexPattern] = {
-      metadata[AccessPattern](x).map(_.indices).getOrElse{ throw new UndefinedAccessPatternException(x) }
-    }
+    def apply(x: Exp[_]): Seq[IndexPattern] = accessPatternOf.get(x).getOrElse{ throw new UndefinedAccessPatternException(x) }
     def update(x: Exp[_], indices: Seq[IndexPattern]) { metadata.add(x, AccessPattern(indices)) }
+    def get(x: Exp[_]): Option[Seq[IndexPattern]] = metadata[AccessPattern](x).map(_.indices)
   }
 }
 
