@@ -92,6 +92,17 @@ trait Codegen extends Traversal {
     file      
   }
 
+  final protected def newTemplate(name: String, exten: String = ext): PrintWriter = {
+    // TODO: Assert streamMap does not contain this guy already
+    val fullname = name + "." + exten
+    streamTab += (fullname -> 0)
+    Files.createDirectories(Paths.get(out))
+    val file = new PrintWriter(s"${out}${name}.$exten")
+    streamMap += (file -> fullname)
+    streamMapReverse += (fullname -> file)
+    file      
+  }
+
   final protected def getStream(name: String, exten: String = ext): PrintWriter = { // Use stream if it exists, otherwise maek it exist
     // TODO: Assert streamMap does not contain this guy already
     val fullname = name + "." + exten

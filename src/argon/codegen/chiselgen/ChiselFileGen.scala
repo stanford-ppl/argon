@@ -119,7 +119,7 @@ trait GlobalWires extends IOModule{""")
     withStream(getStream("Instantiator")) {
           emit("val w = 32")
           emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
-          emit("val numArgOuts = numArgIns_reg")
+          emit("val numArgOuts = numArgOuts_reg")
           emit("""val target = if (args.size > 0) args(0) else "verilator" """)
           emit("""Predef.assert(supportedTarget(target), s"ERROR: Unsupported Fringe target '$target'")""")
           emit("new Top(w, numArgIns, numArgOuts, numMemoryStreams, target)")
