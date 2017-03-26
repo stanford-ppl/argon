@@ -6,14 +6,19 @@ trait IfThenElseApi extends IfThenElseExp with BoolApi {
   this: TextApi =>
 }
 
+//hack around https://github.com/scalameta/scalameta/issues/667
+object Fun0{
+  def apply[T](e:T): () => T = () => e
+}
+
 @stageany
 trait IfThenElseExp extends Staging with BoolExp with VoidExp {
   this: TextExp =>
 
   /** Virtualized Methods **/
-  def __ifThenElse[T:StageAny](cond: Bool, thenp: T, elsep: T)(implicit ctx: SrcCtx): T = {
-    val unwrapThen = () => thenp.s // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse = () => elsep.s // wrapping it as a Function0 allows it to be delayed
+  def __ifThenElse[T:StageAny](cond: Bool, thenp: =>T, elsep: =>T)(implicit ctx: SrcCtx): T = {
+    val unwrapThen: () => Exp[T] = Fun0(thenp.s) // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse: () => Exp[T] = Fun0(elsep.s) // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 /*
@@ -29,9 +34,9 @@ trait IfThenElseExp extends Staging with BoolExp with VoidExp {
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 */
-  def __ifThenElse[A, T:StageAny](cond: Bool, thenp: T, elsep: A)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
-    val unwrapThen = () => thenp.s // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse = () => l.lift(elsep).s // wrapping it as a Function0 allows it to be delayed
+  def __ifThenElse[A, T:StageAny](cond: Bool, thenp: => T, elsep: A)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
+    val unwrapThen = Fun0(thenp.s) // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = Fun0(l.lift(elsep).s) // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 
@@ -40,7 +45,7 @@ trait IfThenElseExp extends Staging with BoolExp with VoidExp {
 
   // special hack for "if (x) { thing }"
   def __ifThenElse(cond: Bool, thenp: => Void, elsep: => Unit)(implicit ctx: SrcCtx): Void = {
-    val elseBlk = () => lift[Unit,Void](elsep)
+    val elseBlk = Fun0(lift[Unit,Void](elsep))
     __ifThenElse(cond, thenp, elseBlk())(VoidType, ctx)
   }
 

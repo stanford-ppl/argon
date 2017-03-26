@@ -36,7 +36,7 @@ trait ArrayExtExp extends ArrayExp {
   }
   private[argon] def array_from_function[T:StageAny](size: Index, func: Index => T)(implicit ctx: SrcCtx): ArgonArray[T] = {
     val i = fresh[Index]
-    val fBlk = () => func(wrap(i)).s
+    val fBlk = Fun0(func(wrap(i)).s)
     ArgonArray( array_mapindices(size.s, fBlk(), i) )
   }
   private[argon] def array_infix_foreach[T:StageAny](array: ArgonArray[T], func: T => Void)(implicit ctx: SrcCtx): Void = {
