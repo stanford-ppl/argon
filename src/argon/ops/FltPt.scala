@@ -2,6 +2,7 @@ package argon.ops
 
 import argon.core.{ArgonExceptions, Staging}
 import argon.typeclasses._
+import org.virtualized.stageany
 
 trait FltPtApi extends FltPtExp with BoolApi with BitsApi with NumApi with OrderApi with CastApi { this: TextApi =>
   type Double = Float64
@@ -9,6 +10,7 @@ trait FltPtApi extends FltPtExp with BoolApi with BitsApi with NumApi with Order
   type Half = Float16
 }
 
+@stageany
 trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderExp with CastExp with CustomBitWidths with ArgonExceptions {
   this: TextExp =>
 
@@ -147,7 +149,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
 
 
   /** Casting **/
-  override protected def cast[T: Staged:Num,R <: StageAny[R] : Staged:Num](x: T)(implicit ctx: SrcCtx): R = (ftyp[T],ftyp[R]) match {
+  override protected def cast[T: Staged:Num,R:StageAny:Num](x: T)(implicit ctx: SrcCtx): R = (ftyp[T],ftyp[R]) match {
     case (a:FltPtType[g,e],b:FltPtType[g2,e2]) =>
       // Why are these asInstanceOfs necessary here??
       implicit val mG: INT[g] = a.mG.asInstanceOf[INT[g]]
@@ -160,7 +162,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
     case _ => super.cast[T,R](x)
   }
 
-  override protected def castLift[R <: StageAny[R] : Staged:Num](x: Any)(implicit ctx: SrcCtx): R = ftyp[R] match {
+  override protected def castLift[R:StageAny:Num](x: Any)(implicit ctx: SrcCtx): R = ftyp[R] match {
     case tp:FltPtType[g,e] =>
       implicit val mG: INT[g] = tp.mG.asInstanceOf[INT[g]]
       implicit val mE: INT[e] = tp.mE.asInstanceOf[INT[e]]
@@ -177,7 +179,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
     def mE = INT[E]
     def tp = fltPtType[G,E]
   }
-  abstract class FltPtOp2[G:INT,E:INT,R <: StageAny[R] : Staged] extends Op[R] {
+  abstract class FltPtOp2[G:INT,E:INT,R:StageAny] extends Op[R] {
     def mG = INT[G]
     def mE = INT[E]
     def tp = fltPtType[G,E]

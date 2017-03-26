@@ -1,16 +1,18 @@
 package argon.ops
 
 import argon.core.Staging
+import org.virtualized.stageany
 
 /** Casting between FixPt and FltPt **/
 trait MixedNumericApi extends MixedNumericExp with CastApi with FixPtApi with FltPtApi {
   this: TextApi =>
 }
 
+@stageany
 trait MixedNumericExp extends Staging with CastExp with FixPtExp with FltPtExp {
   this: TextExp =>
 
-  override protected def cast[T: Staged:Num,R <: StageAny[R] : Staged:Num](x: T)(implicit ctx: SrcCtx): R = (ftyp[T],ftyp[R]) match {
+  override protected def cast[T: Staged:Num,R:StageAny:Num](x: T)(implicit ctx: SrcCtx): R = (ftyp[T],ftyp[R]) match {
     case (a: FixPtType[s,i,f], b: FltPtType[g,e]) =>
       implicit val mS: BOOL[s] = a.mS
       implicit val mI: INT[i] = a.mI

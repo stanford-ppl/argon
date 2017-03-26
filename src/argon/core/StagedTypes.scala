@@ -1,12 +1,13 @@
 package argon.core
 
 import scala.annotation.implicitNotFound
-import org.virtualized.{EmbeddedControls, SourceContext}
+import org.virtualized.{EmbeddedControls, SourceContext, stageany}
 import argon.State
 
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
 
+@stageany
 trait StagedTypes extends EmbeddedControls { this: Staging =>
   type SrcCtx = SourceContext
 
@@ -30,32 +31,32 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     def toText(implicit ctx: SrcCtx): Text
   }
 
-  def infix_toString[T <: StageAny[T] : Staged](x: T) = x.toText
+  def infix_toString[T:StageAny](x: T) = x.toText
 
   /** Constructors **/
   def sym_tostring[S <: StageAny[S]](x: Exp[S])(implicit ctx: SrcCtx): Exp[Text]
 
-  def __equals[T <: StageAny[T] : Staged](x: T, y: T)(implicit ctx: SrcCtx): Bool = {
+  def __equals[T:StageAny](x: T, y: T)(implicit ctx: SrcCtx): Bool = {
     x === y
   }
 
-  def __equals[A, T <: StageAny[T] : Staged](x: A, y: T)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
+  def __equals[A, T:StageAny](x: A, y: T)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
     l.lift(x) === y
   }
 
-  def __equals[A, T <: StageAny[T] : Staged](x: T, y: A)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
+  def __equals[A, T:StageAny](x: T, y: A)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
     x === l.lift(y)
   }
 
-  def __unequals[T <: StageAny[T] : Staged](x: T, y: T)(implicit ctx: SrcCtx): Bool = {
+  def __unequals[T:StageAny](x: T, y: T)(implicit ctx: SrcCtx): Bool = {
     x =!= y
   }
 
-  def __unequals[A, T <: StageAny[T] : Staged](x: A, y: T)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
+  def __unequals[A, T:StageAny](x: A, y: T)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
     l.lift(x) =!= y
   }
 
-  def __unequals[A, T <: StageAny[T] : Staged](x: T, y: A)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
+  def __unequals[A, T:StageAny](x: T, y: A)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = {
     x =!= l.lift(y)
   }
 

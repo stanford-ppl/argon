@@ -1,33 +1,35 @@
 package argon.ops
 import argon.core.Staging
+import org.virtualized.stageany
 
 trait IfThenElseApi extends IfThenElseExp with BoolApi {
   this: TextApi =>
 }
 
+@stageany
 trait IfThenElseExp extends Staging with BoolExp with VoidExp {
   this: TextExp =>
 
   /** Virtualized Methods **/
-  def __ifThenElse[T <: StageAny[T] : Staged](cond: Bool, thenp: T, elsep: T)(implicit ctx: SrcCtx): T = {
+  def __ifThenElse[T:StageAny](cond: Bool, thenp: T, elsep: T)(implicit ctx: SrcCtx): T = {
     val unwrapThen = () => thenp.s // directly calling unwrap(thenp) forces thenp to be evaluated here
     val unwrapElse = () => elsep.s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 /*
-  def __ifThenElse[A, T <: StageAny[T] : Staged](cond: Bool, thenp: A, elsep: T)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
+  def __ifThenElse[A, T:StageAny](cond: Bool, thenp: A, elsep: T)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
     val unwrapThen = () => l.lift(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
     val unwrapElse = () => elsep.s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 
-  def __ifThenElse[A, T <: StageAny[T] : Staged](cond: Bool, thenp: A, elsep: A)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
+  def __ifThenElse[A, T:StageAny](cond: Bool, thenp: A, elsep: A)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
     val unwrapThen = () => l.lift(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
     val unwrapElse = () => l.lift(elsep).s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 */
-  def __ifThenElse[A, T <: StageAny[T] : Staged](cond: Bool, thenp: T, elsep: A)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
+  def __ifThenElse[A, T:StageAny](cond: Bool, thenp: T, elsep: A)(implicit ctx: SrcCtx, l: Lift[A, T]): T = {
     val unwrapThen = () => thenp.s // directly calling unwrap(thenp) forces thenp to be evaluated here
     val unwrapElse = () => l.lift(elsep).s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))

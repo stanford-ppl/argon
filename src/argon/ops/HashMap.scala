@@ -1,12 +1,13 @@
 package argon.ops
 
 import argon.core.Staging
-import org.virtualized.virtualize
+import org.virtualized.{stageany, virtualize}
 
+@stageany
 trait HashMapApi extends HashMapExp with ArrayApi with StructApi {
 
-  implicit class ArrayGroupByOps[A <: StageAny[A] : Staged](array: Array[A]) {
-    def groupByReduce[K <: StageAny[K] : Staged,V <: StageAny[V] : Staged](key: A => K)(value: A => V)(reduce: (V,V) => V)(implicit ctx: SrcCtx): ArgonMap[K,V] = {
+  implicit class ArrayGroupByOps[A:StageAny](array: Array[A]) {
+    def groupByReduce[K:StageAny,V:StageAny](key: A => K)(value: A => V)(reduce: (V,V) => V)(implicit ctx: SrcCtx): ArgonMap[K,V] = {
       val i = fresh[Index]
       val rV = (fresh[V],fresh[V])
       val aBlk = stageBlock { array.apply(wrap(i)).s : Exp[A] }
@@ -24,15 +25,16 @@ trait HashMapApi extends HashMapExp with ArrayApi with StructApi {
   }
 }
 
+@stageany
 trait HashMapExp extends Staging with ArrayExp with StructExp {
   /** Infix methods **/
-  case class HashIndex[K <: StageAny[K] : Staged](s: Exp[HashIndex[K]]) extends StageAny[HashIndex[K]] {
+  case class HashIndex[K:StageAny](s: Exp[HashIndex[K]]) extends StageAny[HashIndex[K]] {
     def =!=(x: HashIndex[K])(implicit ctx: SrcCtx): Bool = ???
     def ===(x: HashIndex[K])(implicit ctx: SrcCtx): Bool = ???
     def toText(implicit ctx: SrcCtx): Text = ???
   }
 
-  case class ArgonMap[K <: StageAny[K] : Staged,V <: StageAny[V] : Staged](s: Exp[ArgonMap[K,V]]) extends StructApi[ArgonMap[K,V]] with StageAny[ArgonMap[K,V]] {
+  case class ArgonMap[K:StageAny,V:StageAny](s: Exp[ArgonMap[K,V]]) extends StructApi[ArgonMap[K,V]] with StageAny[ArgonMap[K,V]] {
     def keys(implicit ctx: SrcCtx): ArgonArray[K]   = field[ArgonArray[K]]("keys")
     def values(implicit ctx: SrcCtx): ArgonArray[V] = field[ArgonArray[V]]("values")
     def size(implicit ctx: SrcCtx): Index           = field[Index]("size")
@@ -59,7 +61,7 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
     override def typeArguments = List(mK)
     override def isPrimitive = true
   }
-  implicit def StagedHash[K <: StageAny[K] : Staged]: Staged[HashIndex[K]] = HashIndexType(ftyp[K])
+  implicit def StagedHash[K:StageAny]: Staged[HashIndex[K]] = HashIndexType(ftyp[K])
 
   case class ArgonMapType[K <: StageAny[K],V <: StageAny[V]](mK: Staged[K], mV: Staged[V]) extends StructType[ArgonMap[K,V]] {
     override def wrapped(x: Exp[ArgonMap[K,V]]) = ArgonMap(x)(mK,mV)
@@ -74,12 +76,12 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
 
   /** IR Nodes **/
   // Gets an integer key entry from a hash index, -1 if it is not present
-  case class HashIndexApply[K <: StageAny[K] : Staged](index: Exp[HashIndex[K]], key: Exp[K]) extends Op[Index] {
+  case class HashIndexApply[K:StageAny](index: Exp[HashIndex[K]], key: Exp[K]) extends Op[Index] {
     def mirror(f:Tx) = hash_index_apply(f(index), f(key))
   }
 
   // Creates a struct representing an Argon Map with fields keys, values, index, and size
-  case class ArgonMapNew[K <: StageAny[K] : Staged,V <: StageAny[V] : Staged](
+  case class ArgonMapNew[K:StageAny,V:StageAny](
     keys:   Exp[ArgonArray[K]],
     values: Exp[ArgonArray[V]],
     index:  Exp[HashIndex[K]],
@@ -92,7 +94,7 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
   // Creates an array of keys from an initial data structure
   // TODO: Should be a subclass of groupByReduce, and probably multiple nodes to begin with
   // For now just experimenting with creating (fat) Defs early in IR
-  case class ArgonBuildHashMap[A <: StageAny[A] : Staged,K <: StageAny[K] : Staged,V <: StageAny[V] : Staged](
+  case class ArgonBuildHashMap[A:StageAny,K:StageAny,V:StageAny](
     in:      Exp[ArgonArray[A]],
     apply:   Block[A],
     keyFunc: Block[K],
@@ -121,11 +123,11 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
 
 
   /** Constructors **/
-  protected def hash_index_apply[K <: StageAny[K] : Staged](index: Exp[HashIndex[K]], key: Exp[K])(implicit ctx: SrcCtx): Exp[Index] = {
+  protected def hash_index_apply[K:StageAny](index: Exp[HashIndex[K]], key: Exp[K])(implicit ctx: SrcCtx): Exp[Index] = {
     stage( HashIndexApply(index, key) )(ctx)
   }
 
-  protected def argon_map_new[K <: StageAny[K] : Staged,V <: StageAny[V] : Staged](
+  protected def argon_map_new[K:StageAny,V:StageAny](
     keys:   Exp[ArgonArray[K]],
     values: Exp[ArgonArray[V]],
     index:  Exp[HashIndex[K]],
@@ -134,7 +136,7 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
     stage( ArgonMapNew(keys,values,index,size) )(ctx)
   }
 
-  private def argon_build_hashmap[A <: StageAny[A] : Staged,K <: StageAny[K] : Staged,V <: StageAny[V] : Staged](
+  private def argon_build_hashmap[A:StageAny,K:StageAny,V:StageAny](
     in:      Exp[ArgonArray[A]],
     apply:   => Exp[A],
     keyFunc: => Exp[K],

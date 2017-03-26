@@ -1,17 +1,20 @@
 package argon.ops
 
 import argon.core.Staging
+import org.virtualized.stageany
 
+@stageany
 trait ArrayApi extends ArrayExp with FixPtApi with VoidApi with TextApi {
   type Array[T <: StageAny[T]] = ArgonArray[T]
 
   // Same as Array.empty[T](size)
-  def Array[T <: StageAny[T] : FStaged](size: Int32)(implicit ctx: SrcCtx): ArgonArray[T] = ArgonArray(array_new[T](size.s))
+  def Array[T:StageAny](size: Int32)(implicit ctx: SrcCtx): ArgonArray[T] = ArgonArray(array_new[T](size.s))
 }
 
+@stageany
 trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp {
   /** Infix methods **/
-  case class ArgonArray[T <: StageAny[T] : FStaged](s: Exp[ArgonArray[T]]) extends StageAny[ArgonArray[T]] {
+  case class ArgonArray[T:StageAny](s: Exp[ArgonArray[T]]) extends StageAny[ArgonArray[T]] {
     def apply(i: Int32)(implicit ctx: SrcCtx): T = wrap(array_apply(s, i.s))
     def length(implicit ctx: SrcCtx): Int32 = wrap(array_length(s))
     def ===(that: ArgonArray[T])(implicit ctx: SrcCtx) = ???
@@ -28,34 +31,34 @@ trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp {
     override def stagedClass = classOf[ArgonArray[T]]
     override def isPrimitive = false
   }
-  implicit def arrayType[T <: StageAny[T] : Staged]: FStaged[ArgonArray[T]] = ArrayType(ftyp[T])
+  implicit def arrayType[T:StageAny]: FStaged[ArgonArray[T]] = ArrayType(ftyp[T])
 
   /** IR Nodes **/
   case class InputArguments() extends Op[ArgonArray[Text]] { def mirror(f:Tx) = stage(InputArguments())(here) }
 
-  case class ArrayNew[T <: StageAny[T] : FStaged](size: Exp[Int32]) extends Op2[T, ArgonArray[T]] {
+  case class ArrayNew[T:StageAny](size: Exp[Int32]) extends Op2[T, ArgonArray[T]] {
     def mirror(f:Tx) = array_new[T](f(size))
   }
 
-  case class ArrayApply[T <: StageAny[T] : FStaged](array: Exp[ArgonArray[T]], i: Exp[Int32]) extends Op[T] {
+  case class ArrayApply[T:StageAny](array: Exp[ArgonArray[T]], i: Exp[Int32]) extends Op[T] {
     def mirror(f:Tx) = array_apply(f(array),f(i))
     override def aliases = Nil
     //override def extracts = syms(array) TODO: Why does this cause issues?
   }
 
-  case class ArrayLength[T <: StageAny[T] : FStaged](array: Exp[ArgonArray[T]]) extends Op[Int32] {
+  case class ArrayLength[T:StageAny](array: Exp[ArgonArray[T]]) extends Op[Int32] {
     def mirror(f:Tx) = array_length(f(array))
   }
 
   /** Constructors **/
-  def array_new[T <: StageAny[T] : FStaged](size: Exp[Int32])(implicit ctx: SrcCtx): Sym[ArgonArray[T]] = {
+  def array_new[T:StageAny](size: Exp[Int32])(implicit ctx: SrcCtx): Sym[ArgonArray[T]] = {
     stageMutable(ArrayNew[T](size))(ctx)
   }
-  def array_apply[T <: StageAny[T] : FStaged](array: Exp[ArgonArray[T]], i: Exp[Int32])(implicit ctx: SrcCtx): Sym[T] = {
+  def array_apply[T:StageAny](array: Exp[ArgonArray[T]], i: Exp[Int32])(implicit ctx: SrcCtx): Sym[T] = {
     stage(ArrayApply(array,i))(ctx)
   }
 
-  def array_length[T <: StageAny[T] : FStaged](array: Exp[ArgonArray[T]])(implicit ctx: SrcCtx): Sym[Int32] = {
+  def array_length[T:StageAny](array: Exp[ArgonArray[T]])(implicit ctx: SrcCtx): Sym[Int32] = {
     stage(ArrayLength(array))(ctx)
   }
 

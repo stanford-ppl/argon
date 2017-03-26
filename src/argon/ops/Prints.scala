@@ -1,14 +1,16 @@
 package argon.ops
 import argon.core.Staging
+import org.virtualized.stageany
 
 trait PrintApi extends PrintExp with TextApi with VoidApi {
   def println()(implicit ctx: SrcCtx): Void = println("")
 }
 
+@stageany
 trait PrintExp extends Staging with TextExp with VoidExp {
   /** Direct methods **/
-  def print[T <: StageAny[T] : FStaged](x: T)(implicit ctx: SrcCtx): Void = Void(misc_print(textify(x).s))
-  def println[T <: StageAny[T] : FStaged](x: T)(implicit ctx: SrcCtx): Void = Void(misc_println(textify(x).s))
+  def print[T:StageAny](x: T)(implicit ctx: SrcCtx): Void = Void(misc_print(textify(x).s))
+  def println[T:StageAny](x: T)(implicit ctx: SrcCtx): Void = Void(misc_println(textify(x).s))
 
   def print(x: String)(implicit ctx: SrcCtx): Void = print(string2text(x))
   def println(x: String)(implicit ctx: SrcCtx): Void = println(string2text(x))

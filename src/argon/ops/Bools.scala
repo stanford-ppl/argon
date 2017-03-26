@@ -1,11 +1,13 @@
 package argon.ops
 import argon.core.Staging
 import argon.typeclasses._
+import org.virtualized.stageany
 
 trait BoolApi extends BoolExp with BitsApi { this: TextApi =>
   type Boolean = Bool
 }
 
+@stageany
 trait BoolExp extends Staging with BitsExp { this: TextExp =>
   /** Type classes **/
   // --- Staged

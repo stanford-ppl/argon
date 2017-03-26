@@ -12,7 +12,7 @@ trait SimpleLambdaApi extends SimpleLambdaExp with FixPtApi {
 
   // Contrived example - unfused map which only returns the first value
   // Keep both blocks without having to introduce extra bound variable
-  def map[T <: StageAny[T] : Staged](n: Int32)(map: Int32 => T)(map2: T => T)(implicit ctx: SrcCtx): T = {
+  def map[T:StageAny](n: Int32)(map: Int32 => T)(map2: T => T)(implicit ctx: SrcCtx): T = {
     val i = fresh[Int32]
     val m1Blk = stageBlock {
       map(wrap(i)).s

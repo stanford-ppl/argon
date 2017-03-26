@@ -2,6 +2,7 @@ package argon.ops
 
 import argon.core.Staging
 import argon.typeclasses._
+import org.virtualized.stageany
 
 trait FixPtApi extends FixPtExp with BitsApi with NumApi with OrderApi with CastApi with BoolApi { this: TextApi =>
   type Long  = Int64
@@ -10,6 +11,7 @@ trait FixPtApi extends FixPtExp with BitsApi with NumApi with OrderApi with Cast
   type Char  = Int8
 }
 
+@stageany
 trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with CustomBitWidths with CastExp with BoolExp {
   this: TextExp =>
 
@@ -185,7 +187,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
 
 
   /** Casting **/
-  override protected def cast[T: Staged:Num,R <: StageAny[R] : Staged:Num](x: T)(implicit ctx: SrcCtx): R = (ftyp[T],ftyp[R]) match {
+  override protected def cast[T: Staged:Num,R:StageAny:Num](x: T)(implicit ctx: SrcCtx): R = (ftyp[T],ftyp[R]) match {
     case (a:FixPtType[s,i,f],b:FixPtType[s2,i2,f2]) =>
       implicit val mS: BOOL[s] = a.mS
       implicit val mI: INT[i] = a.mI
@@ -198,7 +200,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     case _ => super.cast[T,R](x)
   }
 
-  override protected def castLift[R <: StageAny[R] : Staged:Num](x: Any)(implicit ctx: SrcCtx): R = ftyp[R] match {
+  override protected def castLift[R:StageAny:Num](x: Any)(implicit ctx: SrcCtx): R = ftyp[R] match {
     case tp:FixPtType[s,i,f] =>
       implicit val mS: BOOL[s] = tp.mS
       implicit val mI: INT[i] = tp.mI
@@ -214,7 +216,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     def mF = INT[F]
     def tp = fixPtType[S,I,F]
   }
-  abstract class FixPtOp2[S:BOOL,I:INT,F:INT,R <: StageAny[R] : Staged] extends Op[R] {
+  abstract class FixPtOp2[S:BOOL,I:INT,F:INT,R:StageAny] extends Op[R] {
     def mS = BOOL[S]
     def mI = INT[I]
     def mF = INT[F]

@@ -1,6 +1,7 @@
 package argon.ops
 
-import argon.core.{Staging, ArgonExceptions}
+import argon.core.{ArgonExceptions, Staging}
+import org.virtualized.stageany
 
 trait StringCastApi extends StringCastExp with TextApi with MixedNumericApi {
   implicit class TextCastOps(x: Text) {
@@ -8,6 +9,7 @@ trait StringCastApi extends StringCastExp with TextApi with MixedNumericApi {
   }
 }
 
+@stageany
 trait StringCastExp extends Staging with TextExp with MixedNumericExp with ArgonExceptions {
   /** Internals **/
   private[argon] def text_to_t[T: Staged](x: Text)(implicit ctx: SrcCtx): T = ftyp[T] match {

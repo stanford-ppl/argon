@@ -24,7 +24,7 @@ publishArtifact in (Test, packageBin) := true
 
 testOptions in Test += Tests.Argument("-oDF")
 
-libraryDependencies += "org.virtualized" %% "virtualized" % "0.7"
+libraryDependencies += "org.virtualized" %% "virtualized" % "0.9-SNAPSHOT"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % scalatestVersion % "test"
 

@@ -3,15 +3,17 @@ package argon.ops
 // import org.virtualized.{RefinedManifest,RecordOps,Record}
 import argon.Config
 import argon.core.Staging
+import org.virtualized.stageany
 
 trait StructApi extends StructExp with VoidApi{
   self: TextApi =>
 }
 
+@stageany
 trait StructExp extends Staging with VoidExp {
   self: TextExp =>
   abstract class StructApi[T <: StageAny[T]  :StructType] { self =>
-    def field[R <: StageAny[R] : Staged](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](self.asInstanceOf[T].s, name))
+    def field[R:StageAny](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](self.asInstanceOf[T].s, name))
   }
 
   abstract class StructType[T <: StageAny[T]] extends FStaged[T] {
@@ -22,7 +24,7 @@ trait StructExp extends Staging with VoidExp {
   // def record_new[T: RefinedManifest](fields: (String, _)*): T
   // def record_select[T: Manifest](record: Record, field: String): T
   def struct[T <: StageAny[T] :StructType](fields: (String, Exp[_])*)(implicit ctx: SrcCtx): T = wrap(struct_new[T](fields))
-  def field[T <: StageAny[T] :StructType,R <: StageAny[R] : Staged](struct: T, name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](struct.s, name))
+  def field[T <: StageAny[T] :StructType,R:StageAny](struct: T, name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](struct.s, name))
 
   /** IR Nodes **/
   abstract class StructAlloc[T <: StageAny[T] : StructType] extends Op[T] {

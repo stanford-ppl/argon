@@ -1,11 +1,13 @@
 package argon.ops
 import argon.core.Staging
+import org.virtualized.stageany
 
 trait VoidApi extends VoidExp {
   self: TextExp =>
   type Unit = Void
 }
 
+@stageany
 trait VoidExp extends Staging {
   self: TextExp =>
   case class Void(s: Exp[Void]) extends StageAny[Void] {
