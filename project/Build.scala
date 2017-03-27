@@ -57,7 +57,8 @@ object ArgonBuild extends Build {
   )
 
 
-  lazy val argon = Project("argon", file("."), settings = argonSettings) dependsOn (macros)
+  lazy val argon = Project("argon", file("."), settings = argonSettings) dependsOn (macros, virtualized)
   
   lazy val macros = Project("macros", file("macros"), settings = virtBuildSettings)
+  lazy val virtualized = Project("virtualized", file("scala-virtualized"), settings = virtBuildSettings)
 }

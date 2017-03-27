@@ -17,9 +17,9 @@ trait Symbols extends StagedTypes with Metadata with Graph { self: Staging =>
   def mpos(pos: List[SrcCtx]) = pos.head
   def mpos(s: Exp[_]) = ctxsOf(s).head
 
-  def ctx(x: Exp[_]): SrcCtx = ctxsOf(x).headOption.getOrElse(EmptyContext)
-
   implicit class SrcCtxOps(x: Exp[_]) {
+    def ctx: SrcCtx = ctxsOf(x).headOption.getOrElse(EmptyContext)
+    def ctxOrElse(els: SrcCtx) = ctxsOf(x).headOption.getOrElse(els)
     def addCtx(ctx: SrcCtx) { ctxsOf(x) = ctx +: ctxsOf(x) }
     def setCtx(ctx: SrcCtx) { ctxsOf(x) = List(ctx) }
   }

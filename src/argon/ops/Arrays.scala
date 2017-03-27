@@ -5,10 +5,6 @@ import org.virtualized.EmptyContext
 
 trait ArrayApi extends ArrayExp with FixPtApi with VoidApi with TextApi with FltPtApi {
   type Array[T] = MetaArray[T]
-
-  // TODO: Change this - different than Scala syntax
-  // Same as Array.empty[T](size)
-  // def Array[T:Meta](size: Int32)(implicit ctx: SrcCtx): MetaArray[T] = MetaArray(array_new[T](size.s))
 }
 
 trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp with BoolExp with FltPtExp {

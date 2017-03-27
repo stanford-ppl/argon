@@ -97,7 +97,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   }
 
   final override protected def visit(lhs: Sym[_], rhs: Op[_]) = {
-    createSubstRule(lhs, rhs.asInstanceOf[Op[Any]])(mtyp(lhs.tp), ctx(lhs))
+    createSubstRule(lhs, rhs.asInstanceOf[Op[Any]])(mtyp(lhs.tp), lhs.ctx)
   }
 
   private def createSubstRule[T:Type](lhs: Sym[T], rhs: Op[T])(implicit ctx: SrcCtx): Unit = {
@@ -130,7 +130,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   }
 
 
-  final override protected def visitFat(lhs: Seq[Sym[_]], rhs: Def) = transformFat(lhs, rhs)(ctx(lhs.head))
+  final override protected def visitFat(lhs: Seq[Sym[_]], rhs: Def) = transformFat(lhs, rhs)(lhs.head.ctx)
 
   /**
     * DANGER ZONE

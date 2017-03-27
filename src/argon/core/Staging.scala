@@ -87,7 +87,6 @@ trait Staging extends Scheduling {
     log(c"  isIdempotent = ${effects.isIdempotent}")
 
     if (effects == Pure) registerDefWithCSE(d)(ctx)
-    //else if (effects == Cold) registerDef(d, Nil)(ctx)    // Don't add "Cold" effects to context list, but don't CSE
     else {
       checkContext()
       val deps = effectDependencies(effects)
