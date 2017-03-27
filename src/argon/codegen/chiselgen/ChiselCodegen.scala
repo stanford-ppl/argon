@@ -101,6 +101,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       withStream(newStream(name)) {
           emit("""package accel
 import templates._
+import types._
 import chisel3._""")
           open(src"""trait ${name} extends ${parent.replace("AccelController","RootController")} {""")
           try { body } 
@@ -112,6 +113,7 @@ import chisel3._""")
         withStream(newStream(name)) {
             emit("""package accel
   import templates._
+  import types._
   import chisel3._""")
             open(src"""trait ${name} extends RootController {""")
             open(s"""def create_${name}() {""")

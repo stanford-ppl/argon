@@ -27,9 +27,18 @@ trait ChiselGenFixPt extends ChiselCodegen {
   }
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
-    case (IntType(), Const(cc: BigDecimal)) => cc.toInt.toString + ".U(32.W)"
+    case (IntType(), Const(cc: BigDecimal)) => 
+      if (cc >= 0) {
+        cc.toInt.toString + ".U(32.W)"  
+      } else {
+        cc.toInt.toString + ".S(32.W).asUInt"
+      }
+      
     case (LongType(), Const(cc: BigDecimal)) => cc.toLong.toString + ".L"
-    case (FixPtType(s,d,f), Const(cc: BigDecimal)) => if (hasFracBits(c.tp)) s"Utils.FixedPoint($s,$d,$f,$cc)" else cc.toInt.toString + ".U(32.W)"
+    case (FixPtType(s,d,f), Const(cc: BigDecimal)) => 
+      if (hasFracBits(c.tp)) {s"Utils.FixedPoint($s,$d,$f,$cc)"} else {
+        if (cc >= 0) cc.toInt.toString + ".U(32.W)" else cc.toInt.toString + ".S(32.W).asUInt"
+      }
     case _ => super.quoteConst(c)
   }
 
