@@ -19,11 +19,11 @@ trait ChiselGenFixPt extends ChiselCodegen {
       case _ => super.bitWidth(tp)
   }
 
-  override protected def hasFracBits(tp: Staged[_]): Boolean = tp match {
+  override protected def needsFPType(tp: Staged[_]): Boolean = tp match {
+      case FixPtType(s,d,f) => if (s) true else if (f == 0) false else true
       case IntType()  => false
       case LongType() => false
-      case FixPtType(s,d,f) => if (f == 0) false else true
-      case _ => super.hasFracBits(tp)
+      case _ => super.needsFPType(tp)
   }
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
@@ -36,7 +36,7 @@ trait ChiselGenFixPt extends ChiselCodegen {
       
     case (LongType(), Const(cc: BigDecimal)) => cc.toLong.toString + ".L"
     case (FixPtType(s,d,f), Const(cc: BigDecimal)) => 
-      if (hasFracBits(c.tp)) {s"Utils.FixedPoint($s,$d,$f,$cc)"} else {
+      if (needsFPType(c.tp)) {s"Utils.FixedPoint($s,$d,$f,$cc)"} else {
         if (cc >= 0) cc.toInt.toString + ".U(32.W)" else cc.toInt.toString + ".S(32.W).asUInt"
       }
     case _ => super.quoteConst(c)
