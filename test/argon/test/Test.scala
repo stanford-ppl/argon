@@ -11,17 +11,17 @@ import argon.transform.ForwardTransformer
 
 trait TestExp extends Staging
   with ArrayExp with ArrayExtExp with AssertExp with BoolExp with CastExp with FixPtExp with FltPtExp
-  with HashMapExp with IfThenElseExp with MixedNumericExp with PrintExp with StringCastExp with StructExp
+  with HashMapExp with IfThenElseExp with PrintExp with StructExp
   with TextExp with TupleExp with VoidExp
 
 trait TestApi extends TestExp
   with ArrayApi with ArrayExtApi with AssertApi with BoolApi with CastApi with FixPtApi with FltPtApi
-  with HashMapApi with IfThenElseApi with MixedNumericApi with PrintApi with StringCastApi with StructApi
+  with HashMapApi with IfThenElseApi with PrintApi with StructApi
   with TextApi with TupleApi with VoidApi
 
 trait ScalaGen extends ScalaCodegen with ScalaFileGen
   with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert with ScalaGenBool with ScalaGenFixPt with ScalaGenFltPt
-  with ScalaGenHashMap with ScalaGenIfThenElse with ScalaGenMixedNumeric with ScalaGenPrint with ScalaGenStringCast with ScalaGenStructs
+  with ScalaGenHashMap with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenStructs
   with ScalaGenText with ScalaGenVoid {
   override val IR: TestExp
 }

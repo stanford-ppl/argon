@@ -1,7 +1,6 @@
 package argon.ops
 
 import argon.core.Staging
-import org.virtualized.SourceContext
 
 trait TextApi extends TextExp with BoolApi {
   type String = Text
@@ -9,16 +8,20 @@ trait TextApi extends TextExp with BoolApi {
 
 trait TextExp extends Staging with BoolExp {
   /** Infix methods **/
-  case class Text(s: Exp[Text]) {
+  case class Text(s: Exp[Text]) extends MetaAny[Text] {
     def +(that: String)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, string2text(that).s))
-    def +[T:Type](that: T)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, textify(that).s))
+    def +[T:Meta](that: T)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, textify(that).s))
     def !=(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_differ(this.s, that.s))
     def ==(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
+
+    def =!=(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_differ(this.s, that.s))
+    def ===(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
     def equals(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
+    def toText(implicit ctx: SrcCtx) = this
   }
 
   /** Direct methods **/
-  def textify[T:Type](x: T)(implicit ctx: SrcCtx): Text = Text(sym_tostring(x.s))
+  def textify[T:Meta](x: T)(implicit ctx: SrcCtx): Text = Text(sym_tostring(x.s))
 
 
   /** Virtualized methods **/
@@ -26,31 +29,19 @@ trait TextExp extends Staging with BoolExp {
   def infix_+[R:Type](x1: String, x2: R)(implicit ctx: SrcCtx): Text = string2text(x1) + textify(x2)
   def infix_+[R:Type](x1: R, x2: String)(implicit ctx: SrcCtx): Text = textify(x1) + string2text(x2)
 
-  def infix_==(x: Text, a: Any)(implicit ctx: SrcCtx): Bool = a match {
-    case y: Text   => x == y
-    case s: String => x == string2text(s)
-    case _         => boolean2bool(false)
-  }
-  def infix_!=(x: Text, a: Any)(implicit ctx: SrcCtx): Bool = a match {
-    case y: Text   => x != y
-    case s: String => x != string2text(s)
-    case _         => boolean2bool(false)
-  }
-  def infix_==(s: String, b: Text)(implicit ctx: SrcCtx): Bool = string2text(s) == b
-  def infix_!=(s: String, b: Text)(implicit ctx: SrcCtx): Bool = string2text(s) != b
-
   /** Type classes **/
   // --- Staged
-  implicit object TextType extends Type[Text] {
-    override def wrapped(x: Exp[Text]) = Text(x)
-    override def unwrapped(x: Text) = x.s
-    override def typeArguments = Nil
-    override def stagedClass = classOf[Text]
-    override def isPrimitive = true
+  implicit object TextType extends Meta[Text] {
+    def wrapped(x: Exp[Text]) = Text(x)
+    def stagedClass = classOf[Text]
+    def isPrimitive = true
   }
 
   // --- Lift
-  implicit object String2Text extends Lift[String,Text] { val staged = TextType }
+  implicit object String2Text extends Lift[String,Text] {
+    val staged = typ[Text]
+    override def apply(x: String)(implicit ctx: SrcCtx) = Text(text(x))
+  }
 
   /** Constant Lifting **/
   implicit def string2text(x: String): Text = lift(x)

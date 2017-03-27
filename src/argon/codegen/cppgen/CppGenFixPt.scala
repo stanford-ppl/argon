@@ -1,9 +1,9 @@
 package argon.codegen.cppgen
 
-import argon.ops.FixPtExp
+import argon.ops.{FixPtExp, FltPtExp}
 
 trait CppGenFixPt extends CppCodegen {
-  val IR: FixPtExp
+  val IR: FixPtExp with FltPtExp
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
@@ -51,6 +51,16 @@ trait CppGenFixPt extends CppCodegen {
       case LongType() => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;")
       case FixPtType(s,d,f) => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;  // should be fixpt ${lhs.tp}")
     }
+    case FixPtToFltPt(x) => lhs.tp match {
+      case DoubleType() => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
+      case FloatType()  => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
+    }
+    case StringToFixPt(x) => lhs.tp match {
+      case IntType()  => emit(src"int32_t $lhs = atoi(${x}.c_str());")
+      case LongType() => emit(src"long $lhs = std::stol($x);")
+      case FixPtType(s,d,f) => emit(src"float $lhs = std::stof($x);")
+    }
+
     case _ => super.emitNode(lhs, rhs)
   }
 }

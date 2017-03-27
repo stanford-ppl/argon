@@ -1,9 +1,9 @@
 package argon.codegen.chiselgen
 
-import argon.ops.FixPtExp
+import argon.ops.{FixPtExp, FltPtExp}
 
 trait ChiselGenFixPt extends ChiselCodegen {
-  val IR: FixPtExp
+  val IR: FixPtExp with FltPtExp
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
@@ -55,6 +55,15 @@ trait ChiselGenFixPt extends ChiselCodegen {
       case IntType()  => emit(src"val $lhs = $x // Fix to Fix")
       case LongType() => emit(src"val $lhs = $x // Fix to Long")
       case FixPtType(s,d,f) => emit(src"val $lhs = $x // should be fixpt ${lhs.tp}")
+    }
+    case FixPtToFltPt(x) => lhs.tp match {
+      case DoubleType() => emit(src"val $lhs = $x.toDouble")
+      case FloatType()  => emit(src"val $lhs = $x.toFloat")
+    }
+    case StringToFixPt(x) => lhs.tp match {
+      case IntType()  => emit(src"val $lhs = $x.toInt")
+      case LongType() => emit(src"val $lhs = $x.toLong")
+      case _ => emit(src"val $lhs = $x // No rule for this")
     }
     case _ => super.emitNode(lhs, rhs)
   }

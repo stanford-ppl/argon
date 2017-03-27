@@ -3,14 +3,16 @@ package argon.ops
 import argon.core.{ArgonExceptions, Staging}
 import argon.typeclasses._
 
-trait FltPtApi extends FltPtExp with BoolApi with BitsApi with NumApi with OrderApi with CastApi { this: TextApi =>
+trait FltPtApi extends FltPtExp with BoolApi with BitsApi with NumApi with OrderApi with CastApi {
+  this: TextApi with FixPtExp =>
+
   type Double = Float64
   type Float = Float32
   type Half = Float16
 }
 
 trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderExp with CastExp with CustomBitWidths with ArgonExceptions {
-  this: TextExp =>
+  this: TextExp with FixPtExp =>
 
   /** Type aliases **/
   type Float16 = FltPt[_11,_5]
@@ -18,7 +20,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   type Float64 = FltPt[_53,_11]
 
   /** Infix methods **/
-  case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) {
+  case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) extends MetaAny[FltPt[G,E]] {
     def unary_-(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_neg(this.s))
     def + (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_add(this.s,that.s))
     def - (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_sub(this.s,that.s))
@@ -28,25 +30,19 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
     def <=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(this.s,that.s))
     def > (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool( flt_lt(that.s,this.s))
     def >=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(that.s,this.s))
+    def ===(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_eql(that.s,this.s))
+    def =!=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_eql(that.s,this.s))
 
-    def +(rhs: Text)(implicit ctx: SrcCtx): Text = textify(this) + lift(rhs)
-    def +(rhs: String)(implicit ctx: SrcCtx): Text = this + lift[String,Text](rhs)
+    override def toText(implicit ctx: SrcCtx) = textify(this)
   }
-
-  /** Virtualized methods **/
-  def infix_!=[G:INT,E:INT](x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = Bool(flt_neq(x.s,y.s))
-  def infix_==[G:INT,E:INT](x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = Bool(flt_eql(x.s,y.s))
-  def infix_toString[G:INT,E:INT](x: FltPt[G,E])(implicit ctx: SrcCtx): Text = textify(x)
 
 
   /** Type classes **/
   // --- Staged
-  class FltPtType[G,E](val mG: INT[G], val mE: INT[E]) extends Type[FltPt[G,E]] with CanBits[FltPt[G,E]] {
-    override def wrapped(s: Exp[FltPt[G,E]]): FltPt[G,E] = FltPt[G,E](s)(mG,mE)
-    override def unwrapped(x: FltPt[G,E]) = x.s
-    override def typeArguments = Nil
-    override def stagedClass = classOf[FltPt[G,E]]
-    override def isPrimitive = true
+  class FltPtType[G,E](val mG: INT[G], val mE: INT[E]) extends Meta[FltPt[G,E]] with CanBits[FltPt[G,E]] {
+    def wrapped(s: Exp[FltPt[G,E]]): FltPt[G,E] = FltPt[G,E](s)(mG,mE)
+    def stagedClass = classOf[FltPt[G,E]]
+    def isPrimitive = true
 
     override def hashCode() = (sigBits, expBits).##
     override def equals(x: Any) = x match {
@@ -56,7 +52,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
 
     def sigBits: Int = mG.v
     def expBits: Int = mE.v
-    def getBits(children: Seq[Type[_]]) = Some(__fltPtNum[G,E])
+    protected def getBits(children: Seq[Type[_]]) = Some(__fltPtNum[G,E])
   }
   implicit def fltPtType[G:INT,E:INT]: Type[FltPt[G,E]] = new FltPtType(INT[G],INT[E])
 
@@ -97,14 +93,12 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
 
     override def lessThan(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x < y
     override def lessThanOrEqual(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x <= y
-    override def equal(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = infix_==(x, y)
+    override def equal(x: FltPt[G,E], y: FltPt[G,E])(implicit ctx: SrcCtx) = x === y
+
+    def toFixPt[S:BOOL,I:INT,F:INT](x: FltPt[G,E])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(flt_to_fix[G,E,S,I,F](x.s))
+    def toFltPt[G2:INT,E2:INT](x: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G2,E2] = FltPt(flt_convert[G,E,G2,E2](x.s))
   }
   implicit def __fltPtNum[G:INT,E:INT]: Num[FltPt[G,E]] = new FltPtNum[G,E]
-
-  override protected def bitsUnapply[T](tp: Type[T]): Option[Bits[T]] = tp match {
-    case tp: FltPtType[_,_] =>
-    case _ => super.bitsUnapply(tp)
-  }
 
 
   // --- Lift
@@ -149,84 +143,18 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   implicit def double2fltpt[G:INT,E:INT](x: Double)(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(createConstant[G,E](x))
   def string2fltpt[G:INT,E:INT](x: String)(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(createConstant[G,E](x))
 
-  override def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l match {
-    case Float2FltPt => FltPt(createConstant[_24,_8](x)).asInstanceOf[B]
-    case Double2FltPt => FltPt(createConstant[_53,_11](x)).asInstanceOf[B]
-    case _ => super.__lift(x)
-  }
-
   def fltpt[G:INT,E:INT](x: BigDecimal)(implicit ctx: SrcCtx): Const[FltPt[G,E]] = createConstant[G,E](x, enWarn=false)
 
-  /** Lifting methods **/
-  implicit class IntFltPtOps(x: Int) {
-    private def lift[G:INT,E:INT](implicit ctx: SrcCtx): FltPt[G,E] = int2fltpt[G,E](x)
-    def + [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] + y
-    def - [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] - y
-    def * [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] * y
-    def / [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] / y
-    def < [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] < y
-    def <=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] <= y
-    def > [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] > y
-    def >=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] >= y
-  }
-  implicit class LongFltPtOps(x: Long) {
-    private def lift[G:INT,E:INT](implicit ctx: SrcCtx): FltPt[G,E] = long2fltpt[G,E](x)
-    def + [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] + y
-    def - [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] - y
-    def * [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] * y
-    def / [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] / y
-    def < [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] < y
-    def <=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] <= y
-    def > [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] > y
-    def >=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] >= y
-  }
-  implicit class FloatFltPtOps(x: Float) {
-    private def lift[G:INT,E:INT](implicit ctx: SrcCtx): FltPt[G,E] = float2fltpt[G,E](x)
-    def + [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] + y
-    def - [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] - y
-    def * [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] * y
-    def / [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] / y
-    def < [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] < y
-    def <=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] <= y
-    def > [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] > y
-    def >=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] >= y
-  }
-  implicit class DoubleFltPtOps(x: Double) {
-    private def lift[G:INT,E:INT](implicit ctx: SrcCtx): FltPt[G,E] = double2fltpt[G,E](x)
-    def + [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] + y
-    def - [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] - y
-    def * [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] * y
-    def / [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = lift[G,E] / y
-    def < [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] < y
-    def <=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] <= y
-    def > [G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] > y
-    def >=[G:INT,E:INT](y: FltPt[G,E])(implicit ctx: SrcCtx): Bool = lift[G,E] >= y
-  }
-
-
   /** Casting **/
-  override protected def cast[T:Type:Num,R:Type:Num](x: T)(implicit ctx: SrcCtx): R = (typ[T],typ[R]) match {
-    case (a:FltPtType[g,e],b:FltPtType[g2,e2]) =>
-      // Why are these asInstanceOfs necessary here??
-      implicit val mG: INT[g] = a.mG.asInstanceOf[INT[g]]
-      implicit val mE: INT[e] = a.mE.asInstanceOf[INT[e]]
-      implicit val mG2: INT[g2] = b.mG.asInstanceOf[INT[g2]]
-      implicit val mE2: INT[e2] = b.mE.asInstanceOf[INT[e2]]
-
-      b.wrapped( flt_convert[g,e,g2,e2](x.asInstanceOf[FltPt[g,e]].s) ).asInstanceOf[R]
-
-    case _ => super.cast[T,R](x)
+  implicit def fltpt2fltpt[G:INT,E:INT, G2:INT,E2:INT] = new Cast[FltPt[G,E],FltPt[G2,E2]] {
+    def apply(x: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G2,E2] = wrap(flt_convert[G,E,G2,E2](x.s))
   }
-
-  override protected def castLift[R:Type:Num](x: Any)(implicit ctx: SrcCtx): R = typ[R] match {
-    case tp:FltPtType[g,e] =>
-      implicit val mG: INT[g] = tp.mG.asInstanceOf[INT[g]]
-      implicit val mE: INT[e] = tp.mE.asInstanceOf[INT[e]]
-
-      FltPt(createConstant[g,e](x)).asInstanceOf[R]
-    case _ => super.castLift[R](x)
+  implicit def fltpt2fixpt[G:INT,E:INT,S:BOOL,I:INT,F:INT] = new Cast[FltPt[G,E],FixPt[S,I,F]] {
+    def apply(x: FltPt[G,E])(implicit ctx: SrcCtx): FixPt[S,I,F] = wrap(flt_to_fix[G,E,S,I,F](x.s))
   }
-
+  implicit def text2fltpt[G:INT,E:INT] = new Cast[Text,FltPt[G,E]] {
+    def apply(x: Text)(implicit ctx: SrcCtx): FltPt[G,E] = wrap(text_to_fltpt[G,E](x.s))
+  }
 
 
   /** Nodes **/
@@ -257,7 +185,12 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   case class FltConvert[G:INT,E:INT,G2:INT,E2:INT](x: Exp[FltPt[G,E]]) extends FltPtOp[G2,E2] {
     def mirror(f:Tx) = flt_convert[G,E,G2,E2](f(x))
   }
-
+  case class FltPtToFixPt[G:INT,E:INT,S:BOOL,I:INT,F:INT](x: Exp[FltPt[G,E]]) extends FixPtOp[S,I,F] {
+    def mirror(f:Tx) = flt_to_fix[G,E,S,I,F](f(x))
+  }
+  case class StringToFltPt[G:INT,E:INT](x: Exp[Text]) extends FltPtOp[G,E] {
+    def mirror(f:Tx) = text_to_fltpt[G,E](x)
+  }
 
   /** Constructors **/
   def flt_neg[G:INT,E:INT](x: Exp[FltPt[G,E]])(implicit ctx: SrcCtx): Exp[FltPt[G,E]] = x match {
@@ -304,7 +237,13 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   def flt_convert[G:INT,E:INT,G2:INT,E2:INT](x: Exp[FltPt[_,_]])(implicit ctx: SrcCtx): Exp[FltPt[G2,E2]] = {
     stage(FltConvert[G,E,G2,E2](x.asInstanceOf[Exp[FltPt[G,E]]]))(ctx)
   }
-
+  def flt_to_fix[G:INT,E:INT,S:BOOL,I:INT,F:INT](x: Exp[FltPt[_,_]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = {
+    stage(FltPtToFixPt[G,E,S,I,F](x.asInstanceOf[Exp[FltPt[G,E]]]))(ctx)
+  }
+  def text_to_fltpt[G:INT,E:INT](x: Exp[Text])(implicit ctx: SrcCtx): Exp[FltPt[G,E]] = x match {
+    case Const(c: String) => string2fltpt[G,E](c).s
+    case _ => stage(StringToFltPt[G,E](x))(ctx)
+  }
 
   /** Other rewrite rules **/
   override def bool_not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {

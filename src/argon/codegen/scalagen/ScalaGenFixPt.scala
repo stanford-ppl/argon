@@ -1,9 +1,9 @@
 package argon.codegen.scalagen
 
-import argon.ops.FixPtExp
+import argon.ops.{FixPtExp, FltPtExp}
 
 trait ScalaGenFixPt extends ScalaCodegen {
-  val IR: FixPtExp
+  val IR: FixPtExp with FltPtExp
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
@@ -42,6 +42,14 @@ trait ScalaGenFixPt extends ScalaCodegen {
     }
 
     case FixConvert(x) => lhs.tp match {
+      case IntType()  => emit(src"val $lhs = $x.toInt")
+      case LongType() => emit(src"val $lhs = $x.toLong")
+    }
+    case FixPtToFltPt(x) => lhs.tp match {
+      case DoubleType() => emit(src"val $lhs = $x.toDouble")
+      case FloatType()  => emit(src"val $lhs = $x.toFloat")
+    }
+    case StringToFixPt(x) => lhs.tp match {
       case IntType()  => emit(src"val $lhs = $x.toInt")
       case LongType() => emit(src"val $lhs = $x.toLong")
     }

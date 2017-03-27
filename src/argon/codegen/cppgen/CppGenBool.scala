@@ -23,6 +23,7 @@ trait CppGenBool extends CppCodegen {
     case XOr(x,y)     => emit(src"bool $lhs = $x != $y;")
     case XNor(x,y)    => emit(src"bool $lhs = $x == $y;")
     case RandomBool(x) => emit(src"bool $lhs = java.util.concurrent.ThreadLocalRandom.current().nextBoolean();")
+    case StringToBool(x) => emit(src"bool $lhs = $x.toBoolean")
     case _ => super.emitNode(lhs, rhs)
   }
 }

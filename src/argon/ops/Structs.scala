@@ -1,32 +1,63 @@
 package argon.ops
 
-// import org.virtualized.{RefinedManifest,RecordOps,Record}
 import argon.Config
 import argon.core.Staging
 
-trait StructApi extends StructExp with VoidApi
+trait StructApi extends StructExp with VoidApi{
+  self: TextApi =>
+}
 
 trait StructExp extends Staging with VoidExp with TextExp {
 
-  abstract class Struct[T:StructType] { self =>
-    def field[R:Type](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](unwrap(self.asInstanceOf[T]), name))
-  }
-  def infix_toString[T:StructType](struct: T)(implicit ctx: SrcCtx): Text = {
-    val tp = implicitly[StructType[T]]
-    val fields = tp.fields.map{case (name,fieldTyp) => textify(field(struct, name)(tp, fieldTyp, ctx))(mtyp(fieldTyp),ctx) }
-    lift[String,Text](tp.prefix + "(") + fields.reduceLeft{(a,b) => a + "," + b } + ")"
+  abstract class MetaStruct[T:StructType] extends MetaAny[T]{ self =>
+    def field[R:Meta](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](self.s, name))
+
+    def =!=(that: T)(implicit ctx: SrcCtx): Bool = struct_unequals(this,that)
+    def ===(that: T)(implicit ctx: SrcCtx): Bool = struct_equals(this,that)
+
+    def toText(implicit ctx: SrcCtx) = {
+      val tp = implicitly[StructType[T]]
+      val fields = tp.fields.map{case (name,fieldTyp) => textify(field(name)(fieldTyp, ctx))(mmeta(fieldTyp),ctx) }
+      lift[String,Text](tp.prefix + "(") + fields.reduceLeft{(a,b) => a + "," + b } + ")"
+    }
   }
 
-  abstract class StructType[T] extends Type[T] {
+  def struct_equals[T:StructType](a: T, b: T)(implicit ctx: SrcCtx): Bool = {
+    val tp = implicitly[StructType[T]]
+    def eql[F:Meta](x: F, y: F): Bool = x === y
+
+    tp.fields.map {case (name, fieldTyp) =>
+      implicit val mA: Meta[_] = fieldTyp
+      val a = field(a, name)(tp, fieldTyp, ctx)
+      val b = field(b, name)(tp, fieldTyp, ctx)
+      eql(a,b)(mmeta(fieldTyp))
+    }.reduce(_&&_)
+  }
+  def struct_unequals[T:StructType](a: T, b: T)(implicit ctx: SrcCtx): Bool = {
+    val tp = implicitly[StructType[T]]
+    def neq[F:Meta](x: F, y: F): Bool = x =!= y
+
+    tp.fields.map {case (name, fieldTyp) =>
+      implicit val mA: Meta[_] = fieldTyp
+      val a = field(a, name)(tp, fieldTyp, ctx)
+      val b = field(b, name)(tp, fieldTyp, ctx)
+      neq(a,b)(mmeta(fieldTyp))
+    }.reduce(_||_)
+  }
+
+
+
+  abstract class StructType[T](implicit ev: T <:< MetaStruct[T]) extends Meta[T] {
     override def isPrimitive = false
-    def fields: Seq[(String, Type[_])]
+    def fields: Seq[(String, Meta[_])]
     def prefix: String = this.stagedClass.getSimpleName
   }
 
   // def record_new[T: RefinedManifest](fields: (String, _)*): T
   // def record_select[T: Manifest](record: Record, field: String): T
   def struct[T:StructType](fields: (String, Exp[_])*)(implicit ctx: SrcCtx): T = wrap(struct_new[T](fields))
-  def field[T:StructType,R:Type](struct: T, name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](struct.s, name))
+  def field[T:StructType,R:Meta](struct: T, name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](struct.s, name))
+
 
   /** IR Nodes **/
   abstract class StructAlloc[T:StructType] extends Op[T] {
@@ -83,7 +114,7 @@ trait StructExp extends Staging with VoidExp with TextExp {
 
   def unwrapStruct[S:StructType,T:Type](struct: Exp[S], index: String): Option[Exp[T]] = struct match {
     case Op(Struct(elems)) => elems.get(index) match {
-      case Some(x) if x.tp <:< typ[T] => Some(x.asInstanceOf[Exp[T]]) // TODO: Should this be staged asInstanceOf?
+      case Some(x) if x.tp <:< typ[T] => Some(x.asInstanceOf[Exp[T]]) // TODO: Should this be Staged asInstanceOf?
       case None =>
         throw new NoFieldException(struct, index) // TODO: Should this be a user error?
     }

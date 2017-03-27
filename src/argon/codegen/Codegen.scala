@@ -57,6 +57,7 @@ trait Codegen extends Traversal {
     }
   } 
 
+  // TODO: Why is this here?
   protected def hasFracBits(tp: Type[_]): Boolean = false
 
   final protected def toggleEn(): Unit = {

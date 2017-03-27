@@ -17,13 +17,14 @@ trait ScalaGenBool extends ScalaCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case Not(x)       => emit(src"val $lhs = !$x")
-    case And(x,y)     => emit(src"val $lhs = $x && $y")
-    case Or(x,y)      => emit(src"val $lhs = $x || $y")
-    case XOr(x,y)     => emit(src"val $lhs = $x != $y")
-    case XNor(x,y)    => emit(src"val $lhs = $x == $y")
+    case Not(x)    => emit(src"val $lhs = !$x")
+    case And(x,y)  => emit(src"val $lhs = $x && $y")
+    case Or(x,y)   => emit(src"val $lhs = $x || $y")
+    case XOr(x,y)  => emit(src"val $lhs = $x != $y")
+    case XNor(x,y) => emit(src"val $lhs = $x == $y")
     case RandomBool(None) => emit(src"val $lhs = java.util.concurrent.ThreadLocalRandom.current().nextBoolean()")
     case RandomBool(Some(max)) => emit(src"val $lhs = java.util.concurrent.ThreadLocalRandom.current().nextBoolean() && $max")
+    case StringToBool(x) => emit(src"val $lhs = $x.toBoolean")
     case _ => super.emitNode(lhs, rhs)
   }
 }

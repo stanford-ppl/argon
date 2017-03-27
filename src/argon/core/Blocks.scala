@@ -7,7 +7,7 @@ trait Blocks extends Effects { self: Staging =>
   type Pass = CompilerPass{ val IR: self.type }
 
   /** Class representing the result of a staged scope. */
-  case class Block[+T](result: Exp[T], summary: Effects, effectful: List[Sym[_]], inputs: Seq[Sym[_]]) {
+  case class Block[+T](result: Exp[T], summary: Effects, effectful: Seq[Sym[_]], inputs: Seq[Sym[_]]) {
     def tp: Type[_] = result.tp
   }
 
@@ -15,7 +15,7 @@ trait Blocks extends Effects { self: Staging =>
     * Computes an *external* summary for a seq of nodes
     * (Ignores reads/writes on data allocated within the scope)
     */
-  def summarizeScope(context: List[Sym[_]]): Effects = {
+  def summarizeScope(context: Seq[Sym[_]]): Effects = {
     var effects = Pure
     val allocs = new mutable.HashSet[Sym[_]]
     def clean(xs: Set[Sym[_]]) = xs diff allocs

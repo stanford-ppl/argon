@@ -22,9 +22,9 @@ trait OrderExp extends Staging {
     def >=(rhs: T)(implicit ctx: SrcCtx) = ord[T].lessThanOrEqual(rhs, lhs)
     def < (rhs: T)(implicit ctx: SrcCtx) = ord[T].lessThan(lhs, rhs)
     def <=(rhs: T)(implicit ctx: SrcCtx) = ord[T].lessThanOrEqual(lhs, rhs)
+    def ===(rhs: T)(implicit ctx: SrcCtx): Bool = ord[T].equal(lhs, rhs)
+    def =!=(rhs: T)(implicit ctx: SrcCtx): Bool = !(lhs === rhs)
   }
-  def infix_==[T:Order](lhs: T, rhs: T)(implicit ctx: SrcCtx): Bool = ord[T].equal(lhs, rhs)
-  def infix_!=[T:Order](lhs: T, rhs: T)(implicit ctx: SrcCtx): Bool = !ord[T].equal(lhs, rhs)
 
   def ord[T:Order] = implicitly[Order[T]]
 }

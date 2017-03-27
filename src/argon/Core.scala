@@ -5,7 +5,7 @@ import argon.transform.Transformer
 import argon.utils.deleteExts
 
 import scala.collection.mutable.ArrayBuffer
-import org.virtualized.SourceContext
+import org.virtualized.{EmptyContext, SourceContext}
 
 trait AppCore { self =>
   val IR: CompilerCore
@@ -32,7 +32,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
   val passes: ArrayBuffer[Pass] = ArrayBuffer.empty[Pass]
   val testbench: Boolean = false
 
-  lazy val args: ArgonArray[Text] = ArgonArray[Text](stage(InputArguments())(implicitly[SourceContext]))
+  lazy val args: MetaArray[Text] = input_arguments()(EmptyContext)
   var stagingArgs: scala.Array[java.lang.String] = _
 
   lazy val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
@@ -60,7 +60,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     val start = System.currentTimeMillis()
     var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(blk).s } }
 
-    if (curEdgeId == 0) return  // Nothing was staged -- likely running in library mode (or empty program)
+    if (curEdgeId == 0) return  // Nothing was Staged -- likely running in library mode (or empty program)
 
     // Exit now if errors were found during staging
     checkErrors(start, "staging")

@@ -33,8 +33,7 @@ abstract class Transformer { self =>
 
   def transferMetadata(a: Exp[_], b: Exp[_]): Unit = {
     val m2 = mirror(metadata.get(a))
-    metadata.add(b, m2)
-    //metadata.set(b, m2) // Want to preserve effects, dependencies set during mirroring
+    metadata.add(b, m2) // Want to preserve effects, dependencies set during mirroring
   }
 
   // FIXME: Hack: only mirror metadata if the symbol is new (did not exist before starting mirroring)
@@ -74,7 +73,6 @@ abstract class Transformer { self =>
     }
 
     val (lhs2, _) = transferMetadataIfNew(lhs){ rhs.mirrorNode(lhs, self.asInstanceOf[Tx]) }
-
 
     log(c"Result: ${str(lhs2)}")
     lhs2.foreach{s2 =>

@@ -3,7 +3,9 @@ package argon.ops
 import argon.core.Staging
 import argon.typeclasses._
 
-trait FixPtApi extends FixPtExp with BitsApi with NumApi with OrderApi with CastApi with BoolApi { this: TextApi =>
+trait FixPtApi extends FixPtExp with BitsApi with NumApi with OrderApi with CastApi with BoolApi {
+  this: TextApi with FltPtExp =>
+
   type Long  = Int64
   type Int   = Int32
   type Short = Int16
@@ -11,7 +13,7 @@ trait FixPtApi extends FixPtExp with BitsApi with NumApi with OrderApi with Cast
 }
 
 trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with CustomBitWidths with CastExp with BoolExp {
-  this: TextExp =>
+  this: TextExp with FltPtExp =>
 
   /** Type Aliases **/
   type Int64 = FixPt[TRUE,_64,_0]
@@ -22,7 +24,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   type Index = Int32  // Addressing, sizes, etc.
 
   /** Infix Methods **/
-  case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) {
+  case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt[S,I,F]] {
     def unary_-(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_neg(this.s))
     def unary_~(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_inv(this.s))
     def + (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_add(this.s,that.s))
@@ -36,8 +38,10 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     def > (that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool( fix_lt(that.s,this.s))
     def >=(that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool(fix_leq(that.s,this.s))
 
-    def +(rhs: Text)(implicit ctx: SrcCtx): Text = textify(this) + lift(rhs)
-    def +(rhs: String)(implicit ctx: SrcCtx): Text = this + lift[String,Text](rhs)
+    def ===(that: FixPt[S,I,F])(implicit ctx: SrcCtx) = Bool(fix_eql(this.s, that.s))
+    def =!=(that: FixPt[S,I,F])(implicit ctx: SrcCtx) = Bool(fix_neq(this.s, that.s))
+
+    override def toText(implicit ctx: SrcCtx) = textify(this)
   }
 
   implicit class FixPtIntLikeOps[S:BOOL,I:INT](x: FixPt[S,I,_0]) {
@@ -47,27 +51,11 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   /** Direct methods **/
   def mod[S:BOOL,I:INT](x: FixPt[S,I,_0], y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = FixPt[S,I,_0](fix_mod(x.s, y.s))
 
-  /** Virtualized methods **/
-  def infix_!=[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = Bool(fix_neq(x.s,y.s))
-  def infix_==[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = Bool(fix_eql(x.s,y.s))
-
-  def infix_!=[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: Int)(implicit ctx: SrcCtx): Bool = Bool(fix_neq(x.s,fixpt[S,I,F](y)))
-  def infix_==[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: Int)(implicit ctx: SrcCtx): Bool = Bool(fix_eql(x.s,fixpt[S,I,F](y)))
-  def infix_!=[S:BOOL,I:INT,F:INT](x: Int, y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = Bool(fix_neq(fixpt[S,I,F](x),y.s))
-  def infix_==[S:BOOL,I:INT,F:INT](x: Int, y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = Bool(fix_eql(fixpt[S,I,F](x),y.s))
-  def infix_!=[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: Long)(implicit ctx: SrcCtx): Bool = Bool(fix_neq(x.s,fixpt[S,I,F](y)))
-  def infix_==[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F], y: Long)(implicit ctx: SrcCtx): Bool = Bool(fix_eql(x.s,fixpt[S,I,F](y)))
-  def infix_!=[S:BOOL,I:INT,F:INT](x: Long, y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = Bool(fix_neq(fixpt[S,I,F](x),y.s))
-  def infix_==[S:BOOL,I:INT,F:INT](x: Long, y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = Bool(fix_eql(fixpt[S,I,F](x),y.s))
-
-  def infix_toString[S:BOOL,I:INT,F:INT](x: FixPt[S,I,F])(implicit ctx: SrcCtx): Text = textify(x)
-
 
   /** Type classes **/
   // --- Staged
-  class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Type[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] {
+  class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Meta[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] {
     override def wrapped(s: Exp[FixPt[S,I,F]]): FixPt[S,I,F] = FixPt[S,I,F](s)(mS,mI,mF)
-    override def unwrapped(x: FixPt[S,I,F]) = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[FixPt[S,I,F]]
     override def isPrimitive = true
@@ -81,7 +69,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
       case _ => false
     }
     override def hashCode() = (mS,mI,mF).##
-    override def getBits(children: Seq[Type[_]]) = Some(__fixPtNum[S,I,F])
+    protected def getBits(children: Seq[Type[_]]) = Some(__fixPtNum[S,I,F])
   }
   implicit def fixPtType[S:BOOL,I:INT,F:INT]: Type[FixPt[S,I,F]] = new FixPtType[S,I,F](BOOL[S],INT[I],INT[F])
 
@@ -122,7 +110,10 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
 
     override def lessThan(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x < y
     override def lessThanOrEqual(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x <= y
-    override def equal(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = infix_==(x, y)
+    override def equal(x: FixPt[S,I,F], y: FixPt[S,I,F])(implicit ctx: SrcCtx) = x === y
+
+    def toFixPt[S2:BOOL,I2:INT,F2:INT](x: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S2,I2,F2] = FixPt(fix_convert[S,I,F,S2,I2,F2](x.s))
+    def toFltPt[G:INT,E:INT](x: FixPt[S,I,F])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(fix_to_flt[S,I,F,G,E](x.s))
   }
   implicit def __fixPtNum[S:BOOL,I:INT,F:INT]: Num[FixPt[S,I,F]] = new FixPtNum[S,I,F]()
 
@@ -188,59 +179,17 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
 
   def intParam(c: Int)(implicit ctx: SrcCtx): Param[Int32] = parameter[Int32](literalToBigDecimal[TRUE,_32,_0](c))
 
-  /** Lifting methods **/
-  /*implicit class IntFixPtOps(x: Int) {
-    private def lift[S:BOOL,I:INT,F:INT](implicit ctx: SrcCtx): FixPt[S,I,F] = int2fixpt[S,I,F](x)
-    def + [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] + y
-    def - [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] - y
-    def * [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] * y
-    def / [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] / y
-    def & [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] & y
-    def | [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] | y
-    def < [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = lift[S,I,F] < y
-    def <=[S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = lift[S,I,F] <= y
-    def > [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = lift[S,I,F] > y
-    def >=[S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = lift[S,I,F] >= y
-    def % [S:BOOL,I:INT](y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = lift[S,I,_0] % y
-  }
-  implicit class LongFixPtOps(x: Long) {
-    private def lift[S:BOOL,I:INT,F:INT](implicit ctx: SrcCtx): FixPt[S,I,F] = long2fixpt[S,I,F](x)
-    def + [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] + y
-    def - [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] - y
-    def * [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] * y
-    def / [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] / y
-    def & [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] & y
-    def | [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] | y
-    def < [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = lift[S,I,F] < y
-    def <=[S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = lift[S,I,F] <= y
-    def > [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = lift[S,I,F] > y
-    def >=[S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = lift[S,I,F] >= y
-    def % [S:BOOL,I:INT](y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = lift[S,I,_0] % y
-  }*/
-
-
   /** Casting **/
-  override protected def cast[T:Type:Num,R:Type:Num](x: T)(implicit ctx: SrcCtx): R = (typ[T],typ[R]) match {
-    case (a:FixPtType[s,i,f],b:FixPtType[s2,i2,f2]) =>
-      implicit val mS: BOOL[s] = a.mS
-      implicit val mI: INT[i] = a.mI
-      implicit val mF: INT[f] = a.mF
-      implicit val mS2: BOOL[s2] = b.mS
-      implicit val mI2: INT[i2] = b.mI
-      implicit val mF2: INT[f2] = b.mF
-      wrap(fix_convert[s,i,f,s2,i2,f2](x.asInstanceOf[FixPt[s,i,f]].s)).asInstanceOf[R]
-
-    case _ => super.cast[T,R](x)
+  implicit def fixpt2fixpt[S:BOOL,I:INT,F:INT, S2:BOOL,I2:INT,F2:INT] = new Cast[FixPt[S,I,F],FixPt[S2,I2,F2]] {
+    def apply(x: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S2,I2,F2] = wrap(fix_convert[S,I,F,S2,I2,F2](x.s))
+  }
+  implicit def fixpt2fltpt[S:BOOL,I:INT,F:INT, G:INT,E:INT] = new Cast[FixPt[S,I,F],FltPt[G,E]] {
+    def apply(x: FixPt[S,I,F])(implicit ctx: SrcCtx): FltPt[G,E] = wrap(fix_to_flt[S,I,F,G,E](x.s))
+  }
+  implicit def text2fixpt[S:BOOL,I:INT,F:INT] = new Cast[Text,FixPt[S,I,F]] {
+    def apply(x: Text)(implicit ctx: SrcCtx): FixPt[S,I,F] = wrap(text_to_fixpt[S,I,F](x.s))
   }
 
-  override protected def castLift[R:Type:Num](x: Any)(implicit ctx: SrcCtx): R = typ[R] match {
-    case tp:FixPtType[s,i,f] =>
-      implicit val mS: BOOL[s] = tp.mS
-      implicit val mI: INT[i] = tp.mI
-      implicit val mF: INT[f] = tp.mF
-      FixPt(createConstant[s,i,f](x, enWarn = false)).asInstanceOf[R]
-    case _ => super.castLift[R](x)
-  }
 
   /** IR Nodes **/
   abstract class FixPtOp[S:BOOL,I:INT,F:INT] extends Op[FixPt[S,I,F]] {
@@ -275,6 +224,14 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
 
   case class FixConvert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp[S2,I2,F2] {
     def mirror(f:Tx) = fix_convert[S,I,F,S2,I2,F2](f(x))
+  }
+
+  case class FixPtToFltPt[S:BOOL,I:INT,F:INT,G:INT,E:INT](x: Exp[FixPt[S,I,F]]) extends FltPtOp[G,E] {
+    def mirror(f:Tx) = fix_to_flt[S,I,F,G,E](f(x))
+  }
+
+  case class StringToFixPt[S:BOOL,I:INT,F:INT](x: Exp[Text]) extends FixPtOp[S,I,F] {
+    def mirror(f:Tx) = text_to_fixpt[S,I,F](x)
   }
 
 
@@ -363,6 +320,15 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
 
   def fix_convert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[_,_,_]])(implicit ctx: SrcCtx): Exp[FixPt[S2,I2,F2]] = {
     stage(FixConvert[S,I,F,S2,I2,F2](x.asInstanceOf[Exp[FixPt[S,I,F]]]))(ctx)
+  }
+
+  def fix_to_flt[S:BOOL,I:INT,F:INT,G:INT,E:INT](x: Exp[FixPt[_,_,_]])(implicit ctx: SrcCtx): Exp[FltPt[G,E]] = {
+    stage(FixPtToFltPt[S,I,F,G,E](x.asInstanceOf[Exp[FixPt[S,I,F]]]))(ctx)
+  }
+
+  def text_to_fixpt[S:BOOL,I:INT,F:INT](x: Exp[Text])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = x match {
+    case Const(c: String) => string2fixpt[S,I,F](c).s
+    case _ => stage(StringToFixPt[S,I,F](x))(ctx)
   }
 
 

@@ -23,6 +23,7 @@ trait ChiselGenBool extends ChiselCodegen {
     case XOr(x,y)     => emit(src"val $lhs = $x =/= $y")
     case XNor(x,y)    => emit(src"val $lhs = $x === $y")
     case RandomBool(x) => emit(src"val $lhs = java.util.concurrent.ThreadLocalRandom.current().nextBoolean()")
+    case StringToBool(x) => emit(src"val $lhs = $x.toBoolean")
     case _ => super.emitNode(lhs, rhs)
   }
 }

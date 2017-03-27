@@ -10,8 +10,9 @@ object ArrayAtomicWrite extends Test {
 
   @virtualize
   def main() {
-    val x = Array[Array[Int]](32)
-    Array.tabulate(32){i => x(i) = Array.fill(16){ 0.as[Int] } } // hack...
+    val x = Array.empty[Array[Int]](32)
+
+    Array.tabulate(32){i => x(i) = Array.fill(16){ 0.as[Int] } }
 
     x(0)(1) = 3
 

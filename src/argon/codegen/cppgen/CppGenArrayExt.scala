@@ -22,16 +22,17 @@ trait CppGenArrayExt extends CppGenArray {
   }
 
   protected def emitUpdate(lhs: Exp[_], value: Exp[_], i: String, tp: Type[_]): Unit = {
-      if (isArrayType(tp)) {
-        if (getNestingLevel(tp) > 1) {throw new NDArrayException(lhs, src"$tp")}
-        emit(src"(*$lhs)[$i].resize(${getSize(value)});")
-        open(src"for (int ${value}_copier = 0; ${value}_copier < ${getSize(value)}; ${value}_copier++) {")
-          emit(src"(*$lhs)[$i][${value}_copier] = (*${value})[${value}_copier];")
-        close("}")
-      } else {
-        emit(src"(*$lhs)[$i] = ${value};")  
-      }
+    if (isArrayType(tp)) {
+      if (getNestingLevel(tp) > 1) throw new NDArrayException(lhs, src"$tp")
 
+      emit(src"(*$lhs)[$i].resize(${getSize(value)});")
+      open(src"for (int ${value}_copier = 0; ${value}_copier < ${getSize(value)}; ${value}_copier++) {")
+        emit(src"(*$lhs)[$i][${value}_copier] = (*${value})[${value}_copier];")
+      close("}")
+    }
+    else {
+      emit(src"(*$lhs)[$i] = ${value};")
+    }
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {

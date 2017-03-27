@@ -54,7 +54,7 @@ trait Traversal extends CompilerPass with BlockTraversal { self =>
       rhs.blocks.foreach {blk => visitBlock(blk) }
   }
 
-  protected def visitFat(lhs: List[Sym[_]], rhs: Def): Unit = {}
+  protected def visitFat(lhs: Seq[Sym[_]], rhs: Def): Unit = {}
 }
 
 trait IterativeTraversal extends Traversal {

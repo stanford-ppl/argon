@@ -2,7 +2,6 @@ package argon.transform
 
 import argon.core.Staging
 import argon.traversal.Traversal
-import org.virtualized.SourceContext
 
 trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   val IR: Staging
@@ -41,7 +40,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   }
 
   /**
-    * Visit and transform each statement in the given block, creating a new staged block
+    * Visit and transform each statement in the given block, creating a new Staged block
     * with the transformed statements
     */
   override protected def transformBlock[T:Type](b: Block[T]): Block[T] = {
@@ -63,7 +62,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   }
 
   /**
-    * Visit and perform some transformation `func` over all statements in the block, returning a new staged
+    * Visit and perform some transformation `func` over all statements in the block, returning a new Staged
     * block with the resulting transformed statements. The return Exp[T] of func will be the result symbol of the
     * new block.
     */
@@ -86,8 +85,6 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     tab -= 1
     result
   }
-
-
 
 
   /** Traversal functions **/

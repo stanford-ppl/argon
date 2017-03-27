@@ -1,8 +1,6 @@
 package argon.codegen.cppgen
 
-import argon.ops.IfThenElseExp
 import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, IfThenElseExp, StructExp, TupleExp, HashMapExp}
-
 
 trait CppGenIfThenElse extends CppGenArray {
   val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp

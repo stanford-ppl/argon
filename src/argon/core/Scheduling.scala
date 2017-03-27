@@ -50,7 +50,7 @@ trait Scheduling extends Statements { this: Staging =>
     val schedule = getLocalSchedule(availableNodes = availNodes, result = allDependencies.map(_.id))
     scopeSanityCheck(block, schedule)
 
-    schedule.flatMap { nodeId => stmFromNodeId(nodeId) }
+    schedule.flatMap{nodeId => stmFromNodeId(nodeId) }
   })
 
   override def reset(): Unit = {

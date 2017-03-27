@@ -18,9 +18,9 @@ object MirroringTest extends Test { self =>
     context = Nil
     argon.Config.verbosity = 3
     withLog(argon.Config.logDir, "MirroringTest.log") {
-      val x = Array[Int](1)
+      val x = Array.empty[Int](1)
       val y = array_update(x.s, int32(0), int32(16))
-      val z = Array[Int](2)
+      val z = Array.empty[Int](2)
       val tx = new ForwardTransformer {
         val IR: self.IR.type = self.IR
       }

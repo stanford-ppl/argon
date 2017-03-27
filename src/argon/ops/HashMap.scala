@@ -1,12 +1,11 @@
 package argon.ops
 
 import argon.core.Staging
-import org.virtualized.virtualize
 
 trait HashMapApi extends HashMapExp with ArrayApi with StructApi {
 
-  implicit class ArrayGroupByOps[A:Type](array: Array[A]) {
-    def groupByReduce[K:Type,V:Type](key: A => K)(value: A => V)(reduce: (V,V) => V)(implicit ctx: SrcCtx): ArgonMap[K,V] = {
+  implicit class ArrayGroupByOps[A:Meta](array: MetaArray[A]) {
+    def groupByReduce[K:Meta,V:Meta](key: A => K)(value: A => V)(reduce: (V,V) => V)(implicit ctx: SrcCtx): MetaHashMap[K,V] = {
       val i = fresh[Index]
       val rV = (fresh[V],fresh[V])
       val aBlk = stageLambda(array.s) { array.apply(wrap(i)).s : Exp[A] }
@@ -15,52 +14,54 @@ trait HashMapApi extends HashMapExp with ArrayApi with StructApi {
       val rBlk = stageBlock { reduce(wrap(rV._1),wrap(rV._2)).s }
       val effects = aBlk.summary andAlso kBlk.summary andAlso vBlk.summary andAlso rBlk.summary
 
-      val out = stageDefEffectful( ArgonBuildHashMap(array.s, aBlk, kBlk, vBlk, rBlk, rV, i), effects.star)(ctx)
-      val keys   = out(0).asInstanceOf[Exp[ArgonArray[K]]]
-      val values = out(1).asInstanceOf[Exp[ArgonArray[V]]]
+      val out = stageDefEffectful( BuildHashMap(array.s, aBlk, kBlk, vBlk, rBlk, rV, i), effects.star)(ctx)
+      val keys   = out(0).asInstanceOf[Exp[MetaArray[K]]]
+      val values = out(1).asInstanceOf[Exp[MetaArray[V]]]
       val index  = out(2).asInstanceOf[Exp[HashIndex[K]]]
-      wrap(argon_map_new(keys, values, index, wrap(keys).length.s))
+      wrap(hashmap_new(keys, values, index, wrap(keys).length.s))
     }
   }
 }
 
 trait HashMapExp extends Staging with ArrayExp with StructExp {
   /** Infix methods **/
-  case class HashIndex[K:Type](s: Exp[HashIndex[K]])
 
-  case class ArgonMap[K:Type,V:Type](s: Exp[ArgonMap[K,V]]) extends Struct[ArgonMap[K,V]] {
-    def keys(implicit ctx: SrcCtx): ArgonArray[K]   = field[ArgonArray[K]]("keys")
-    def values(implicit ctx: SrcCtx): ArgonArray[V] = field[ArgonArray[V]]("values")
-    def size(implicit ctx: SrcCtx): Index           = field[Index]("size")
+  case class HashIndex[K:Meta](s: Exp[HashIndex[K]]) extends MetaAny[HashIndex[K]] {
+    def =!=(x: HashIndex[K])(implicit ctx: SrcCtx): Bool = ???
+    def ===(x: HashIndex[K])(implicit ctx: SrcCtx): Bool = ???
+    def toText(implicit ctx: SrcCtx): Text = textify(this)
+  }
+
+  case class MetaHashMap[K:Meta,V:Meta](s: Exp[MetaHashMap[K,V]]) extends MetaStruct[MetaHashMap[K,V]] {
+    def keys(implicit ctx: SrcCtx): MetaArray[K]   = field[MetaArray[K]]("keys")
+    def values(implicit ctx: SrcCtx): MetaArray[V] = field[MetaArray[V]]("values")
+    def size(implicit ctx: SrcCtx): Index          = field[Index]("size")
 
     private def index(implicit ctx: SrcCtx) = field[HashIndex[K]]("index")
     private def get(key: K)(implicit ctx: SrcCtx): Index = wrap(hash_index_apply(this.index.s, key.s))
+
     def apply(key: K)(implicit ctx: SrcCtx): V = this.values.apply(this.get(key))
-    @virtualize
-    def contains(key: K)(implicit ctx: SrcCtx): Bool = this.get(key) != lift(-1)
+    def contains(key: K)(implicit ctx: SrcCtx): Bool = this.get(key) =!= -1
   }
 
   /** Type classes **/
   // --- Staged
-  case class HashIndexType[K](mK: Type[K]) extends Type[HashIndex[K]] {
+  case class HashIndexType[K](mK: Meta[K]) extends Meta[HashIndex[K]] {
     override def wrapped(x: Exp[HashIndex[K]]) = HashIndex(x)(mK)
-    override def unwrapped(x: HashIndex[K]) = x.s
     override def stagedClass = classOf[HashIndex[K]]
     override def typeArguments = List(mK)
     override def isPrimitive = true
   }
-  implicit def stagedHash[K:Type]: Type[HashIndex[K]] = HashIndexType(typ[K])
+  implicit def stagedHash[K:Meta]: Type[HashIndex[K]] = HashIndexType(meta[K])
 
-  case class ArgonMapType[K,V](mK: Type[K], mV: Type[V]) extends StructType[ArgonMap[K,V]] {
-    override def wrapped(x: Exp[ArgonMap[K,V]]) = ArgonMap(x)(mK,mV)
-    override def unwrapped(x: ArgonMap[K,V]) = x.s
-    override def stagedClass = classOf[ArgonMap[K,V]]
+  case class HashMapType[K,V](mK: Meta[K], mV: Meta[V]) extends StructType[MetaHashMap[K,V]] {
+    override def wrapped(x: Exp[MetaHashMap[K,V]]) = MetaHashMap(x)(mK,mV)
+    override def stagedClass = classOf[MetaHashMap[K,V]]
     override def typeArguments = List(mK, mV)
     override def isPrimitive = true
     override def fields = Seq("keys" -> ArrayType(mK), "values" -> ArrayType(mV), "index" -> HashIndexType(mK), "size" -> IntType)
   }
-  implicit def stagedMap[K:Type,V:Type]: StructType[ArgonMap[K,V]] = ArgonMapType(typ[K],typ[V])
-
+  implicit def stagedMap[K:Meta,V:Meta]: StructType[MetaHashMap[K,V]] = HashMapType(meta[K],meta[V])
 
   /** IR Nodes **/
   // Gets an integer key entry from a hash index, -1 if it is not present
@@ -69,21 +70,21 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
   }
 
   // Creates a struct representing an Argon Map with fields keys, values, index, and size
-  case class ArgonMapNew[K:Type,V:Type](
-    keys:   Exp[ArgonArray[K]],
-    values: Exp[ArgonArray[V]],
+  case class HashMapNew[K:Type,V:Type](
+    keys:   Exp[MetaArray[K]],
+    values: Exp[MetaArray[V]],
     index:  Exp[HashIndex[K]],
     size:   Exp[Index]
-  ) extends StructAlloc[ArgonMap[K,V]] {
+  ) extends StructAlloc[MetaHashMap[K,V]] {
     def elems = Seq("keys" -> keys, "values" -> values, "index" -> index, "size" -> size)
-    def mirror(f:Tx) = argon_map_new(f(keys),f(values),f(index),f(size))
+    def mirror(f:Tx) = hashmap_new(f(keys),f(values),f(index),f(size))
   }
 
   // Creates an array of keys from an initial data structure
   // TODO: Should be a subclass of groupByReduce, and probably multiple nodes to begin with
   // For now just experimenting with creating (fat) Defs early in IR
-  case class ArgonBuildHashMap[A:Type,K:Type,V:Type](
-    in:      Exp[ArgonArray[A]],
+  case class BuildHashMap[A:Meta,K:Meta,V:Meta](
+    in:      Exp[MetaArray[A]],
     apply:   Block[A],
     keyFunc: Block[K],
     valFunc: Block[V],
@@ -92,20 +93,20 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
     i:       Bound[Index]
   ) extends Def {
     def fatMirror(f:Tx) = {
-      val out = argon_build_hashmap(f(in),f(apply),f(keyFunc),f(valFunc),f(reduce),rV,i)
+      val out = build_hashmap(f(in),f(apply),f(keyFunc),f(valFunc),f(reduce),rV,i)
       List(out._1,out._2,out._3)
     }
 
-    def outputTypes = List(ArrayType(typ[K]), ArrayType(typ[V]), HashIndexType(typ[K]))
+    def outputTypes = List(ArrayType(meta[K]), ArrayType(meta[V]), HashIndexType(meta[K]))
 
     override def inputs = dyns(in) ++ dyns(apply) ++ dyns(keyFunc) ++ dyns(valFunc) ++ dyns(reduce)
     override def freqs = normal(in) ++ hot(apply) ++ hot(keyFunc) ++ hot(valFunc) ++ hot(reduce)
     override def aliases = Nil
     override def binds = dyns(rV._1, rV._2, i)
 
-    val mA = typ[A]
-    val mK = typ[K]
-    val mV = typ[V]
+    val mA: Meta[A] = meta[A]
+    val mK: Meta[K] = meta[K]
+    val mV: Meta[V] = meta[V]
   }
 
 
@@ -114,33 +115,33 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
     stage( HashIndexApply(index, key) )(ctx)
   }
 
-  protected def argon_map_new[K:Type,V:Type](
-    keys:   Exp[ArgonArray[K]],
-    values: Exp[ArgonArray[V]],
+  protected def hashmap_new[K:Type,V:Type](
+    keys:   Exp[MetaArray[K]],
+    values: Exp[MetaArray[V]],
     index:  Exp[HashIndex[K]],
     size:   Exp[Index]
-  )(implicit ctx: SrcCtx): Exp[ArgonMap[K,V]] = {
-    stage( ArgonMapNew(keys,values,index,size) )(ctx)
+  )(implicit ctx: SrcCtx): Exp[MetaHashMap[K,V]] = {
+    stage( HashMapNew(keys,values,index,size) )(ctx)
   }
 
-  private def argon_build_hashmap[A:Type,K:Type,V:Type](
-    in:      Exp[ArgonArray[A]],
+  private def build_hashmap[A:Meta,K:Meta,V:Meta](
+    in:      Exp[MetaArray[A]],
     apply:   => Exp[A],
     keyFunc: => Exp[K],
     valFunc: => Exp[V],
     reduce:  => Exp[V],
     rV:      (Bound[V],Bound[V]),
     i:       Bound[Index]
-  )(implicit ctx: SrcCtx): (Exp[ArgonArray[K]], Exp[ArgonArray[V]], Exp[HashIndex[K]]) = {
+  )(implicit ctx: SrcCtx): (Exp[MetaArray[K]], Exp[MetaArray[V]], Exp[HashIndex[K]]) = {
     val aBlk = stageLambda(in) { apply }
     val kBlk = stageLambda(aBlk.result){ keyFunc }
     val vBlk = stageLambda(aBlk.result){ valFunc }
     val rBlk = stageBlock { reduce }
     val effects = aBlk.summary andAlso kBlk.summary andAlso vBlk.summary andAlso rBlk.summary
-    val out = stageDefEffectful( ArgonBuildHashMap(in, aBlk, kBlk, vBlk, rBlk, rV, i), effects.star)(ctx)
+    val out = stageDefEffectful( BuildHashMap(in, aBlk, kBlk, vBlk, rBlk, rV, i), effects.star)(ctx)
 
-    val keys   = out(0).asInstanceOf[Exp[ArgonArray[K]]]
-    val values = out(1).asInstanceOf[Exp[ArgonArray[V]]]
+    val keys   = out(0).asInstanceOf[Exp[MetaArray[K]]]
+    val values = out(1).asInstanceOf[Exp[MetaArray[V]]]
     val index  = out(2).asInstanceOf[Exp[HashIndex[K]]]
     (keys, values, index)
   }

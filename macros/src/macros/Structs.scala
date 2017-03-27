@@ -59,7 +59,11 @@ object StagedStructsMacro {
 
         val cls =
           q"""
+<<<<<<< HEAD
             case class $className(s: Exp[$className]) extends Struct[$className] {
+=======
+            case class $className(s: Exp[$className]) extends Struct[$className] with StageAny[$className] {
+>>>>>>> meta-merge
               ..$fieldList
             }
            """
@@ -87,12 +91,20 @@ object StagedStructsMacro {
           q"""
             object ${TermName(className.toString + "Type")} extends StructType[$className] with $parent {
               override def wrapped(x: Exp[$className]) = ${className.toTermName}(x)
+<<<<<<< HEAD
               override def unwrapped(x: $className) = x.s
+=======
+>>>>>>> meta-merge
               override def typeArguments = Nil
               override def stagedClass = classOf[$className]
               override def fields = Seq(..$childList)
             }
            """
+<<<<<<< HEAD
+=======
+        // override def unwrapped(x: $className) = x.s
+
+>>>>>>> meta-merge
 
         /**
           * Staged Evidence
@@ -111,7 +123,11 @@ object StagedStructsMacro {
         }
         val body = fields.map{
           case ValDef(_, termName, typeIdent, rhs) =>
+<<<<<<< HEAD
             q"${Literal(Constant(termName.toString))} -> unwrap($termName)"
+=======
+            q"${Literal(Constant(termName.toString))} -> $termName.s"
+>>>>>>> meta-merge
         }
 
         // TODO: We assume for now that struct annotation is always used within a trait - any way to be more general?

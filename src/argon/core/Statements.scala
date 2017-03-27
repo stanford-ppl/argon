@@ -17,7 +17,7 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   // "Typed pair" - symbol + an op
   object TP {
     def unapply[A](x: Stm): Option[(Sym[_],Op[_])] = x match {
-      case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[_]], rhs.asInstanceOf[Op[_]]))
+      case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[_]], rhs))
       case _ => None
     }
   }
@@ -51,6 +51,7 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
     val node = producerOf(id)
     stmFromNodeId(node)
   }
+
   private[argon] def symFromSymId(id: EdgeId): Dyn[_] = edgeOf(id).asInstanceOf[Dyn[_]]
   private[argon] def defFromNodeId(id: NodeId): Def = nodeOf(id).asInstanceOf[Def]
   private[argon] def defFromSymId(id: EdgeId): Option[Def] = stmFromSymId(id).map(_.rhs)

@@ -6,7 +6,11 @@ object ArgonBuild extends Build {
     
   val compilerVersion = "2.12.1"
   val scalatestVersion = "3.0.1"
+<<<<<<< HEAD
   val paradiseVersion = "2.1.0"  // check here: https://github.com/scalamacros/paradise/releases
+=======
+  val paradiseVersion = "3.0.0-M7"  // check here: https://github.com/scalamacros/paradise/releases
+>>>>>>> meta-merge
 
   lazy val virtBuildSettings = Defaults.defaultSettings ++ Seq(
 
@@ -14,7 +18,11 @@ object ArgonBuild extends Build {
     scalaVersion := compilerVersion,
 
     publishArtifact in (Compile, packageDoc) := false,
+<<<<<<< HEAD
     libraryDependencies += "org.virtualized" %% "virtualized" % "0.1",
+=======
+    libraryDependencies += "org.virtualized" %% "virtualized" % "0.9-SNAPSHOT",
+>>>>>>> meta-merge
     libraryDependencies += "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value % "compile",
     libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.3.2",
@@ -38,8 +46,13 @@ object ArgonBuild extends Build {
       "-doc-title", name.value
     ),
 
+<<<<<<< HEAD
     addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
   
+=======
+    addCompilerPlugin("org.scalameta" % "paradise" % paradiseVersion cross CrossVersion.full),
+
+>>>>>>> meta-merge
     scalaSource in Compile <<= baseDirectory(_ / "src"),
     scalaSource in Test <<= baseDirectory(_ / "test"),
 

@@ -214,16 +214,15 @@ trait Graph extends Exceptions {
 
 
   // --- Visit methods (scoped)
-  def ordered(node: NodeId, cache: OrderCache): Iterable[NodeId]
-  = scheduleDepsWithIndex(nodeInputs(node), cache)
-  def reverse(node: NodeId, scope: Set[NodeId]): Iterable[NodeId]
-  = nodeInputs(node).map(producerOf) filter scope.contains
-  def forward(node: NodeId, scope: Set[NodeId]): Iterable[NodeId]
-  = nodeOutputs(node).flatMap(dependentsOf) filter scope.contains
-  def noCold(node: NodeId, scope: Set[NodeId]): Iterable[NodeId]
-  = nodeInputs(node).zip(nodeFreqs(node)).filter(_._2 > 0.75f).map(x => producerOf(x._1)) filter scope.contains
-  def noHot(node: NodeId, scope: Set[NodeId]): Iterable[NodeId]
-  = nodeInputs(node).zip(nodeFreqs(node)).filter(_._2 < 100f).map(x => producerOf(x._1)) filter scope.contains
+  def ordered(node: NodeId, cache: OrderCache): Iterable[NodeId] = scheduleDepsWithIndex(nodeInputs(node), cache)
+  def reverse(node: NodeId, scope: Set[NodeId]): Iterable[NodeId] = nodeInputs(node).map(producerOf) filter scope.contains
+  def forward(node: NodeId, scope: Set[NodeId]): Iterable[NodeId] = nodeOutputs(node).flatMap(dependentsOf) filter scope.contains
+  def noCold(node: NodeId, scope: Set[NodeId]): Iterable[NodeId] = {
+    nodeInputs(node).zip(nodeFreqs(node)).filter(_._2 > 0.75f).map(x => producerOf(x._1)) filter scope.contains
+  }
+  def noHot(node: NodeId, scope: Set[NodeId]): Iterable[NodeId] = {
+    nodeInputs(node).zip(nodeFreqs(node)).filter(_._2 < 100f).map(x => producerOf(x._1)) filter scope.contains
+  }
 
 
   // --- Visit methods (unscoped)

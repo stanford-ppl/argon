@@ -1,9 +1,9 @@
 package argon.codegen.cppgen
 
-import argon.ops.FltPtExp
+import argon.ops.{FixPtExp, FltPtExp}
 
 trait CppGenFltPt extends CppCodegen {
-  val IR: FltPtExp
+  val IR: FltPtExp with FixPtExp
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
@@ -36,6 +36,15 @@ trait CppGenFltPt extends CppCodegen {
       case FloatType()  => emit(src"val $lhs = $x.toFloat")
       case DoubleType() => emit(src"val $lhs = $x.toDouble")
     }
+    case FltPtToFixPt(x) => lhs.tp match {
+      case IntType()  => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
+      case LongType() => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
+    }
+    case StringToFltPt(x) => lhs.tp match {
+      case DoubleType() => emit(src"float $lhs = std::stof($x);")
+      case FloatType()  => emit(src"float $lhs = std::stof($x);")
+    }
+
     case _ => super.emitNode(lhs, rhs)
   }
 

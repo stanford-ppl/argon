@@ -1,9 +1,7 @@
 package argon.codegen.pirgen
 
-import sys.process._
 import scala.language.postfixOps
 import argon.codegen.Codegen
-import argon.Config
 import argon.codegen.FileDependencies
 
 trait PIRCodegen extends Codegen with FileDependencies { // FileDependencies extends Codegen already

@@ -94,11 +94,12 @@ trait Definitions extends Blocks { self: Staging =>
 
   /** Most common variant of Def - returns only one symbol of one type **/
   abstract class Op[R:Type] extends Def {
+    val mR = typ[R]
+
     def mirror(f:Tx): Exp[R]
 
-    final override def outputTypes = List(implicitly[Type[R]])
+    final override def outputTypes = List(mR)
     final override def fatMirror(f:Tx): List[Exp[_]] = List(this.mirror(f))
-    def mR = typ[R]
   }
   abstract class Op2[A:Type,R:Type] extends Op[R] { def mA = typ[A] }
   abstract class Op3[A:Type,B:Type,R:Type] extends Op2[A,R] { def mB = typ[B] }

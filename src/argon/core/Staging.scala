@@ -4,6 +4,7 @@ import argon.utils.escapeConst
 import scala.collection.mutable
 
 trait Staging extends Scheduling {
+
   def fresh[T:Type]: Bound[T] = {
     val bnd = new Bound(typ[T])
     addBound(bnd)
@@ -128,9 +129,7 @@ trait Staging extends Scheduling {
     }
   }
 
-
   private def single[T:Type](xx: Seq[Sym[_]]): Sym[T] = xx.head.asInstanceOf[Sym[T]]
-
 
   /**
     * DANGER ZONE

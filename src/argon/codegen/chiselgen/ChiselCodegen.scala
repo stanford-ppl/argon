@@ -7,7 +7,6 @@ import argon.Config
 import scala.collection.mutable.HashMap
 import argon.codegen.FileDependencies
 
-
 trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies extends Codegen already
   import IR._
   override val name = "Chisel Codegen"

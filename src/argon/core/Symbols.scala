@@ -75,7 +75,7 @@ trait Symbols extends StagedTypes with Metadata with Graph { self: Staging =>
     override def toString = escapeConst(c)
   }
 
-  /** A staged, mutable constant **/
+  /** A Staged, mutable constant **/
   private var nParams = 0
 
   class Param[+T] private[core](x: Any)(staged: Type[T]) extends Const[T](x)(staged) {

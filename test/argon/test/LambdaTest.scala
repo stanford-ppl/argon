@@ -8,11 +8,11 @@ import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized.{SourceContext, virtualize}
 
 trait SimpleLambdaApi extends SimpleLambdaExp with FixPtApi {
-  this: TextApi =>
+  this: TextApi with FltPtApi =>
 
   // Contrived example - unfused map which only returns the first value
   // Keep both blocks without having to introduce extra bound variable
-  def map[T:Type](n: Int32)(map: Int32 => T)(map2: T => T)(implicit ctx: SrcCtx): T = {
+  def map[T:Meta](n: Int32)(map: Int32 => T)(map2: T => T)(implicit ctx: SrcCtx): T = {
     val i = fresh[Int32]
     val m1Blk = stageBlock {
       map(wrap(i)).s
@@ -25,7 +25,7 @@ trait SimpleLambdaApi extends SimpleLambdaExp with FixPtApi {
   }
 }
 
-trait SimpleLambdaExp extends Staging with FixPtExp { this: TextExp =>
+trait SimpleLambdaExp extends Staging with FixPtExp { this: TextExp with FltPtExp =>
 
   /** IR Nodes **/
   case class Map2[T: Type](n: Exp[Int32], map1: Block[T], map2: Block[T], i: Bound[Int32]) extends Op[T] {

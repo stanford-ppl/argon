@@ -1,4 +1,5 @@
 package argon.ops
+
 import argon.core.Staging
 import argon.typeclasses._
 
@@ -6,33 +7,29 @@ trait BoolApi extends BoolExp with BitsApi { this: TextApi =>
   type Boolean = Bool
 }
 
-trait BoolExp extends Staging with BitsExp { this: TextExp =>
-  /** Type classes **/
-  // --- Staged
-  implicit object BoolType extends Type[Bool] with CanBits[Bool] {
-    override def wrapped(x: Exp[Bool]): Bool = Bool(x)
-    override def unwrapped(x: Bool): Exp[Bool] = x.s
-    override def typeArguments = Nil
-    override def stagedClass = classOf[Bool]
-    override def isPrimitive = true
-    override def getBits(children: Seq[Type[_]]) = Some(BoolBits)
-  }
+trait BoolExp extends Staging with BitsExp with CastExp { this: TextExp =>
 
   /** Infix methods **/
-  case class Bool(s: Exp[Bool]) {
+  case class Bool(s: Exp[Bool]) extends MetaAny[Bool] {
     def unary_!(implicit ctx: SrcCtx): Bool = Bool(bool_not(this.s)(ctx))
     def &&(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_and(this.s, that.s)(ctx))
     def ||(that: Bool)(implicit ctx: SrcCtx): Bool = Bool( bool_or(this.s, that.s)(ctx))
     def ^ (that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(this.s, that.s)(ctx))
 
-    def +[A](rhs: A)(implicit ctx: SrcCtx, lft: Lift[A,Text]): Text = textify(this) + lft.lift(rhs)
+    def ===(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xnor(this.s, that.s)(ctx))
+    def =!=(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(this.s, that.s)(ctx))
+    override def toText(implicit ctx: SrcCtx) = textify(this)
   }
 
-  /** Virtualized methods **/
-  def infix_==(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xnor(x.s, y.s)(ctx))
-  def infix_!=(x: Bool, y: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(x.s, y.s)(ctx))
-  def infix_toString(x: Bool)(implicit ctx: SrcCtx): Text = textify(x)
-
+  /** Type classes **/
+  // --- Staged
+  implicit object BoolType extends Meta[Bool] with CanBits[Bool] {
+    override def wrapped(x: Exp[Bool]): Bool = Bool(x)
+    override def typeArguments = Nil
+    override def stagedClass = classOf[Bool]
+    override def isPrimitive = true
+    protected def getBits(children: Seq[Type[_]]) = Some(BoolBits)
+  }
 
   // --- Bits
   implicit object BoolBits extends Bits[Bool] {
@@ -50,8 +47,14 @@ trait BoolExp extends Staging with BitsExp { this: TextExp =>
 
 
   /** Constant lifting **/
-  implicit def boolean2bool(x: Boolean)(implicit ctx: SrcCtx): Bool = lift(x)
-  def bool(x: Boolean)(implicit ctx: SrcCtx): Const[Bool] = constant[Bool](x)
+  implicit def boolean2bool(x: Boolean)(implicit ctx: SrcCtx): Bool = Bool(bool(x))
+  def bool(x: Boolean)(implicit ctx: SrcCtx): Exp[Bool] = constant[Bool](x)
+
+
+  /** Casts **/
+  implicit object Text2Bool extends Cast[Text,Bool] {
+    override def apply(x: Text)(implicit ctx: SrcCtx): Bool = Bool(text_to_bool(x.s))
+  }
 
 
   /** IR Nodes **/
@@ -61,6 +64,7 @@ trait BoolExp extends Staging with BitsExp { this: TextExp =>
   case class XOr(a: Exp[Bool], b: Exp[Bool]) extends Op[Bool]  { def mirror(f:Tx) = bool_xor(f(a), f(b)) }
   case class XNor(a: Exp[Bool], b: Exp[Bool]) extends Op[Bool] { def mirror(f:Tx) = bool_xnor(f(a), f(b)) }
   case class RandomBool(max: Option[Exp[Bool]]) extends Op[Bool] { def mirror(f:Tx) = bool_random(f(max)) }
+  case class StringToBool(x: Exp[Text]) extends Op[Bool] { def mirror(f:Tx) = text_to_bool(x) }
 
 
   /** Constructors **/
@@ -105,4 +109,10 @@ trait BoolExp extends Staging with BitsExp { this: TextExp =>
     case Some(Const(false)) => bool(false)
     case _ => stageSimple(RandomBool(max))(ctx)
   }
+  def text_to_bool(x: Exp[Text])(implicit ctx: SrcCtx): Exp[Bool] = x match {
+    case Const("true") => bool(true)
+    case Const("false") => bool(false)
+    case _ => stage(StringToBool(x))(ctx)
+  }
+
 }

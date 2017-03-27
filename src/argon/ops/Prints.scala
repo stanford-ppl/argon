@@ -1,18 +1,19 @@
 package argon.ops
+
 import argon.core.Staging
 
 trait PrintApi extends PrintExp with TextApi with VoidApi {
-  def println()(implicit ctx: SrcCtx): Void = println("")
-}
-
-trait PrintExp extends Staging with TextExp with VoidExp {
   /** Direct methods **/
+  def println()(implicit ctx: SrcCtx): Void = println("")
+
   def print[T:Type](x: T)(implicit ctx: SrcCtx): Void = Void(misc_print(textify(x).s))
   def println[T:Type](x: T)(implicit ctx: SrcCtx): Void = Void(misc_println(textify(x).s))
 
-  def print(x: String)(implicit ctx: SrcCtx): Void = print(string2text(x))
-  def println(x: String)(implicit ctx: SrcCtx): Void = println(string2text(x))
+  def print(x: java.lang.String)(implicit ctx: SrcCtx): Void = print(string2text(x))
+  def println(x: java.lang.String)(implicit ctx: SrcCtx): Void = println(string2text(x))
+}
 
+trait PrintExp extends Staging with TextExp with VoidExp {
   /** IR Nodes **/
   case class Print(x: Exp[Text]) extends Op[Void] { def mirror(f:Tx) = misc_print(f(x)) }
   case class Println(x: Exp[Text]) extends Op[Void] { def mirror(f:Tx) = misc_println(f(x)) }

@@ -8,7 +8,7 @@ object UpdateTest extends Test {
   import IR._
   @virtualize
   def main() {
-    val array = Array[Int](16)
+    val array = Array.empty[Int](16)
     array(5) = 3
     assert(array(5) == 3)
     println("Array update appears to be working")
