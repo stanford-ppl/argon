@@ -42,7 +42,7 @@ trait FileDependencies extends Codegen {
       s"${dep.input}" !
     }}
   }
-  override protected def postprocess[S:Staged](b: Block[S]) = {
+  override protected def postprocess[S:Type](b: Block[S]) = {
     copyDependencies(out)
     super.postprocess(b)
   }

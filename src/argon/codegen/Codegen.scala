@@ -57,7 +57,7 @@ trait Codegen extends Traversal {
     }
   } 
 
-  protected def hasFracBits(tp: Staged[_]): Boolean = false
+  protected def hasFracBits(tp: Type[_]): Boolean = false
 
   final protected def toggleEn(): Unit = {
     if (emitEn) {
@@ -113,7 +113,7 @@ trait Codegen extends Traversal {
     }
   }
 
-  protected def remap(tp: Staged[_]): String = tp.toString
+  protected def remap(tp: Type[_]): String = tp.toString
   protected def quoteConst(c: Const[_]): String = {
     if (Config.emitDevel > 0) {
       if (emitEn) { // Want to emit but can't
@@ -135,7 +135,7 @@ trait Codegen extends Traversal {
 
   protected def quoteOrRemap(arg: Any): String = arg match {
     case e: Exp[_] => quote(e)
-    case m: Staged[_] => remap(m)
+    case m: Type[_] => remap(m)
     case s: String => s
     case c: Int => c.toString
     case b: Boolean => b.toString

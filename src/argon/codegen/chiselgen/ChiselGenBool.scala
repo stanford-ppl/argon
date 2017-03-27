@@ -6,7 +6,7 @@ trait ChiselGenBool extends ChiselCodegen {
   val IR: BoolExp
   import IR._
 
-  override protected def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: Type[_]): String = tp match {
     case BoolType => "Boolean"
     case _ => super.remap(tp)
   }

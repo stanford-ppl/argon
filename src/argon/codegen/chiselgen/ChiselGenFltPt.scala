@@ -6,13 +6,13 @@ trait ChiselGenFltPt extends ChiselCodegen {
   val IR: FltPtExp
   import IR._
 
-  override protected def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: Type[_]): String = tp match {
     case FloatType()  => "Float"
     case DoubleType() => "Double"
     case _ => super.remap(tp)
   }
 
-  override protected def hasFracBits(tp: Staged[_]): Boolean = tp match {
+  override protected def hasFracBits(tp: Type[_]): Boolean = tp match {
       case FloatType() => true
       case DoubleType() => true
       case _ => super.hasFracBits(tp)

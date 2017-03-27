@@ -6,22 +6,22 @@ trait CppGenArrayExt extends CppGenArray {
   val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp
   import IR._
 
-  private def getNestingLevel(tp: Staged[_]): Int = tp match {
+  private def getNestingLevel(tp: Type[_]): Int = tp match {
     case tp: ArrayType[_] => 1 + getNestingLevel(tp.typeArguments.head) 
     case _ => 0
   }
 
-  private def zeroElement(tp: Staged[_]): String = tp match {
+  private def zeroElement(tp: Type[_]): String = tp match {
     case tp: Tup2Type[_,_] => src"*(new ${tp}(0,0));"
     case _ => "0"
   }
  
-  private def getPrimitiveType(tp: Staged[_]): String = tp match {
+  private def getPrimitiveType(tp: Type[_]): String = tp match {
     case tp: ArrayType[_] => getPrimitiveType(tp.typeArguments.head) 
     case _ => remap(tp)
   }
 
-  protected def emitUpdate(lhs: Exp[_], value: Exp[_], i: String, tp: Staged[_]): Unit = {
+  protected def emitUpdate(lhs: Exp[_], value: Exp[_], i: String, tp: Type[_]): Unit = {
       if (isArrayType(tp)) {
         if (getNestingLevel(tp) > 1) {throw new NDArrayException(lhs, src"$tp")}
         emit(src"(*$lhs)[$i].resize(${getSize(value)});")

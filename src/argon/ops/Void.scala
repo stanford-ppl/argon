@@ -10,7 +10,7 @@ trait VoidExp extends Staging {
 
   /** Type classes **/
   // --- Staged
-  implicit object VoidType extends Staged[Void] {
+  implicit object VoidType extends Type[Void] {
     override def unwrapped(x: Void) = x.s
     override def wrapped(x: Exp[Void]) = Void(x)
     override def typeArguments = Nil

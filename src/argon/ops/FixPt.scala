@@ -65,7 +65,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
 
   /** Type classes **/
   // --- Staged
-  class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Staged[FixPt[S,I,F]] {
+  class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Type[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] {
     override def wrapped(s: Exp[FixPt[S,I,F]]): FixPt[S,I,F] = FixPt[S,I,F](s)(mS,mI,mF)
     override def unwrapped(x: FixPt[S,I,F]) = x.s
     override def typeArguments = Nil
@@ -81,30 +81,31 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
       case _ => false
     }
     override def hashCode() = (mS,mI,mF).##
+    override def getBits(children: Seq[Type[_]]) = Some(__fixPtNum[S,I,F])
   }
-  implicit def fixPtType[S:BOOL,I:INT,F:INT]: Staged[FixPt[S,I,F]] = new FixPtType[S,I,F](BOOL[S],INT[I],INT[F])
+  implicit def fixPtType[S:BOOL,I:INT,F:INT]: Type[FixPt[S,I,F]] = new FixPtType[S,I,F](BOOL[S],INT[I],INT[F])
 
   object FixPtType {
-    def unapply(x:Staged[_]):Option[(Boolean, Int, Int)] = x match {
+    def unapply(x:Type[_]):Option[(Boolean, Int, Int)] = x match {
       case tp:FixPtType[_,_,_] => Some((tp.isSigned, tp.intBits, tp.fracBits))
       case _ => None
     }
   }
   object IntType extends FixPtType(BOOL[TRUE],INT[_32],INT[_0]) {
-    def unapply(x: Staged[_]): Boolean = x match {
+    def unapply(x: Type[_]): Boolean = x match {
       case FixPtType(true, 32, 0) => true
       case _ => false
     }
   }
   object LongType extends FixPtType(BOOL[TRUE],INT[_64],INT[_0]) {
-    def unapply(x: Staged[_]): Boolean = x match {
+    def unapply(x: Type[_]): Boolean = x match {
       case FixPtType(true, 64, 0) => true
       case _ => false
     }
   }
 
-  def isFixPtType(x: Staged[_]) = FixPtType.unapply(x).isDefined
-  def isInt32Type(x: Staged[_]) = IntType.unapply(x)
+  def isFixPtType(x: Type[_]) = FixPtType.unapply(x).isDefined
+  def isInt32Type(x: Type[_]) = IntType.unapply(x)
 
   // --- Num
   class FixPtNum[S:BOOL,I:INT,F:INT] extends Num[FixPt[S,I,F]] {
@@ -125,14 +126,15 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   }
   implicit def __fixPtNum[S:BOOL,I:INT,F:INT]: Num[FixPt[S,I,F]] = new FixPtNum[S,I,F]()
 
-  override protected def bitsUnapply[T](tp: Staged[T]): Option[Bits[T]] = tp match {
-    case tp: FixPtType[_,_,_] => Some(new FixPtNum()(tp.mS,tp.mI,tp.mF).asInstanceOf[Bits[T]])
-    case _ => super.bitsUnapply(tp)
-  }
-
   // --- Lift
-  implicit object Int2FixPt extends Lift[Int,Int32] { val staged = fixPtType[TRUE,_32,_0] }
-  implicit object Long2FixPt extends Lift[Long,Int64] { val staged = fixPtType[TRUE,_64,_0] }
+  implicit object Int2FixPt extends Lift[Int,Int32] {
+    val staged = fixPtType[TRUE,_32,_0]
+    def apply(x: Int)(implicit ctx: SrcCtx): Int32 = int2fixpt(x)
+  }
+  implicit object Long2FixPt extends Lift[Long,Int64] {
+    val staged = fixPtType[TRUE,_64,_0]
+    def apply(x: Long)(implicit ctx: SrcCtx): Int64 = long2fixpt(x)
+  }
 
 
   /** Constant lifting **/
@@ -184,18 +186,10 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
   def string2fixpt[S:BOOL,I:INT,F:INT](x: String)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
 
-  override def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l match {
-    case Int2FixPt => FixPt(createConstant[TRUE,_32,_0](x)).asInstanceOf[B]
-    case Long2FixPt => FixPt(createConstant[TRUE,_32,_0](x)).asInstanceOf[B]
-    case _ => super.__lift(x)
-  }
-
-
   def intParam(c: Int)(implicit ctx: SrcCtx): Param[Int32] = parameter[Int32](literalToBigDecimal[TRUE,_32,_0](c))
 
-
   /** Lifting methods **/
-  implicit class IntFixPtOps(x: Int) {
+  /*implicit class IntFixPtOps(x: Int) {
     private def lift[S:BOOL,I:INT,F:INT](implicit ctx: SrcCtx): FixPt[S,I,F] = int2fixpt[S,I,F](x)
     def + [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] + y
     def - [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = lift[S,I,F] - y
@@ -222,11 +216,11 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     def > [S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = lift[S,I,F] > y
     def >=[S:BOOL,I:INT,F:INT](y: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool = lift[S,I,F] >= y
     def % [S:BOOL,I:INT](y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = lift[S,I,_0] % y
-  }
+  }*/
 
 
   /** Casting **/
-  override protected def cast[T:Staged:Num,R:Staged:Num](x: T)(implicit ctx: SrcCtx): R = (typ[T],typ[R]) match {
+  override protected def cast[T:Type:Num,R:Type:Num](x: T)(implicit ctx: SrcCtx): R = (typ[T],typ[R]) match {
     case (a:FixPtType[s,i,f],b:FixPtType[s2,i2,f2]) =>
       implicit val mS: BOOL[s] = a.mS
       implicit val mI: INT[i] = a.mI
@@ -239,7 +233,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     case _ => super.cast[T,R](x)
   }
 
-  override protected def castLift[R:Staged:Num](x: Any)(implicit ctx: SrcCtx): R = typ[R] match {
+  override protected def castLift[R:Type:Num](x: Any)(implicit ctx: SrcCtx): R = typ[R] match {
     case tp:FixPtType[s,i,f] =>
       implicit val mS: BOOL[s] = tp.mS
       implicit val mI: INT[i] = tp.mI
@@ -255,7 +249,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     def mF = INT[F]
     def tp = fixPtType[S,I,F]
   }
-  abstract class FixPtOp2[S:BOOL,I:INT,F:INT,R:Staged] extends Op[R] {
+  abstract class FixPtOp2[S:BOOL,I:INT,F:INT,R:Type] extends Op[R] {
     def mS = BOOL[S]
     def mI = INT[I]
     def mF = INT[F]

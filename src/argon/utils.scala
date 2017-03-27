@@ -37,13 +37,13 @@ object utils {
       singleVisit(x){x => out ++= blk(x.asInstanceOf[A]) }
       out.result
     }
-    def buildList[A,B](blk: A => Iterable[B])(x: Iterable[A]): List[B] = {
+    def buildSeq[A,B](blk: A => Iterable[B])(x: Iterable[A]): Seq[B] = {
       val out = new mutable.ListBuffer[B]
       singleVisit(x){x => out ++= blk(x.asInstanceOf[A]) }
       out.result
     }
 
-    def collectList[T](blk: PartialFunction[Any,T])(x:Any):List[T] = {
+    def collectSeq[T](blk: PartialFunction[Any,T])(x: Any): Seq[T] = {
       val out = new mutable.ListBuffer[T]
       singleVisit(x){x => if (blk.isDefinedAt(x)) out += blk(x) }
       out.result
@@ -54,7 +54,7 @@ object utils {
       out.result
     }
 
-    def collectLists[T](blk: PartialFunction[Any,Iterable[T]])(x:Any):List[T] = {
+    def collectSeqs[T](blk: PartialFunction[Any,Iterable[T]])(x:Any): Seq[T] = {
       val out = new mutable.ListBuffer[T]
       singleVisit(x){x => if (blk.isDefinedAt(x)) out ++= blk(x) }
       out.result
@@ -67,39 +67,29 @@ object utils {
   }
 
   object recursive {
-    private def recurseVisit[T](x:Any)(func: PartialFunction[Any,Unit]):Unit = x match {
+    private def recurseVisit[T](x: Any)(func: PartialFunction[Any,Unit]): Unit = x match {
       case e if func.isDefinedAt(e) => func(e)
       case ss:Iterator[_] => while (ss.hasNext) { recurseVisit(ss.next)(func) }
       case ss:Iterable[_] => recurseVisit(ss.iterator)(func)
       case ss:Product => recurseVisit(ss.productIterator)(func)
       case _ =>
     }
-    /*def buildSet[A, B](blk:A => Iterable[B])(x:Iterable[A]):Set[B] = {
-      val out = new mutable.SetBuilder[B, Set[B]](Set.empty[B])
-      recurseVisit(x)(blk andThen e => out ++= blk(x.asInstanceOf[A]) }
-      out.result
-    }
-    def buildList[A, B](blk:A => Iterable[B])(x:Iterable[A]):List[B] = {
-      val out = new mutable.ListBuffer[B]
-      recurseVisit(x) { x => out ++= blk(x.asInstanceOf[A]) }
-      out.result
-    }*/
-    def collectList[T](blk:PartialFunction[Any, T])(x:Any):List[T] = {
+    def collectSeq[T](blk: PartialFunction[Any, T])(x: Any): Seq[T] = {
       val out = new mutable.ListBuffer[T]
       recurseVisit(x)(blk andThen(e => out += e))
       out.result
     }
-    def collectSet[T](blk:PartialFunction[Any, T])(x:Any):Set[T] = {
+    def collectSet[T](blk: PartialFunction[Any, T])(x:Any):Set[T] = {
       val out = new mutable.SetBuilder[T, Set[T]](Set.empty[T])
       recurseVisit(x)(blk andThen(e => out += e))
       out.result
     }
-    def collectLists[T](blk:PartialFunction[Any, Iterable[T]])(x:Any):List[T] = {
+    def collectSeqs[T](blk: PartialFunction[Any, Iterable[T]])(x: Any): Seq[T] = {
       val out = new mutable.ListBuffer[T]
       recurseVisit(x)(blk andThen(e => out ++= e))
       out.result
     }
-    def collectSets[T](blk:PartialFunction[Any, Iterable[T]])(x:Any):Set[T] = {
+    def collectSets[T](blk: PartialFunction[Any, Iterable[T]])(x: Any): Set[T] = {
       val out = new mutable.SetBuilder[T, Set[T]](Set.empty[T])
       recurseVisit(x)(blk andThen(e => out ++= e))
       out.result

@@ -4,13 +4,13 @@ trait Effects extends Symbols { this: Staging =>
   var context: List[Sym[_]] = _
   final def checkContext(): Unit = if (context == null) throw new UninitializedEffectContextException()
 
-  case class Dependencies(deps: List[Exp[_]]) extends Metadata[Dependencies] {
+  case class Dependencies(deps: Seq[Exp[_]]) extends Metadata[Dependencies] {
     def mirror(f:Tx) = Dependencies(f.tx(deps))
     override val ignoreOnTransform = true // Mirroring already takes care of identifying dependencies
   }
   object depsOf {
     def apply(x: Exp[_]) = metadata[Dependencies](x).map(_.deps).getOrElse(Nil)
-    def update(x: Exp[_], deps: List[Exp[_]]) = metadata.add(x, Dependencies(deps))
+    def update(x: Exp[_], deps: Seq[Exp[_]]) = metadata.add(x, Dependencies(deps))
   }
 
   case class Effects(
@@ -48,8 +48,8 @@ trait Effects extends Symbols { this: Staging =>
   val Simple  = Effects(simple = true)
   val Global  = Effects(global = true)
   val Mutable = Effects(mutable = true)
-  def Read(xs: Exp[_]*)  = Effects(reads =  onlySyms(xs).toSet)
-  def Write(xs: Exp[_]*) = Effects(writes = onlySyms(xs).toSet)
+  def Read(xs: Exp[_]*)  = Effects(reads =  syms(xs).toSet)
+  def Write(xs: Exp[_]*) = Effects(writes = syms(xs).toSet)
   def Read(xs: Set[Sym[_]]) = Effects(reads = xs)
   def Write(xs: Set[Sym[_]]) = Effects(writes = xs)
 

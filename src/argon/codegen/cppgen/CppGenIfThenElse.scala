@@ -8,7 +8,7 @@ trait CppGenIfThenElse extends CppGenArray {
   val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp
   import IR._
 
-  protected def isVoidType(tp: Staged[_]): Boolean = tp match {
+  protected def isVoidType(tp: Type[_]): Boolean = tp match {
     case VoidType => true
     case _ => false
   }

@@ -7,7 +7,7 @@ trait CppGenText extends CppCodegen {
   val IR: TextExp
   import IR._
 
-  override protected def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: Type[_]): String = tp match {
     case TextType => "string"
     case _ => super.remap(tp)
   }

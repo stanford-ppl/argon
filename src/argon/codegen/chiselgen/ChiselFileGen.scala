@@ -7,11 +7,11 @@ trait ChiselFileGen extends FileGen {
   import IR._
 
 
-  override protected def emitMain[S:Staged](b: Block[S]): Unit = {
+  override protected def emitMain[S:Type](b: Block[S]): Unit = {
     emitBlock(b)
   }
 
-  override protected def process[S:Staged](b: Block[S]): Block[S] = {
+  override protected def process[S:Type](b: Block[S]): Block[S] = {
 
     // // Forcefully create the following streams
     // val baseStream = getStream("GlobalWires")

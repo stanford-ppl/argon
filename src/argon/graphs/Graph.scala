@@ -3,9 +3,9 @@ package argon.graphs
 import argon.core.Exceptions
 import scala.collection.mutable
 
-trait AbstractHDAG extends Exceptions {
-  type EdgeId
-  type NodeId
+trait Graph extends Exceptions {
+  type EdgeId = Int
+  type NodeId = Int
 
   implicit class EdgeIdToInt(x: EdgeId) { @inline def toInt: Int = x.asInstanceOf[Int] }
   implicit class NodeIdToInt(x: NodeId) { @inline def toInt: Int = x.asInstanceOf[Int] }
@@ -36,10 +36,10 @@ trait AbstractHDAG extends Exceptions {
   object NodeData {
     val value   = mutable.ArrayBuffer[Node]()
     val outputs = mutable.ArrayBuffer[EdgeId](0.toEdgeId)             // nodeId :: nodeId+1 ==> edges for this node
-    val inputs  = mutable.ArrayBuffer[List[EdgeId]]()                 // Dataflow edges (reverse) -- per node
-    val bounds  = mutable.ArrayBuffer[List[EdgeId]]()                 // Edges bound by this node
-    val tunnels = mutable.ArrayBuffer[List[(EdgeId,Seq[EdgeId])]]()   // Edges bound by this node, defined elsewhere
-    val freqs   = mutable.ArrayBuffer[List[Float]]()                  // Frequency hints for code motion
+    val inputs  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Dataflow edges (reverse) -- per node
+    val bounds  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Edges bound by this node
+    val tunnels = mutable.ArrayBuffer[Seq[(EdgeId,Seq[EdgeId])]]()   // Edges bound by this node, defined elsewhere
+    val freqs   = mutable.ArrayBuffer[Seq[Float]]()                  // Frequency hints for code motion
   }
 
   def reset(): Unit = {
@@ -61,13 +61,13 @@ trait AbstractHDAG extends Exceptions {
   def nodeOutputs(node: NodeId): Seq[EdgeId] = {
     (NodeData.outputs(node.toInt).toInt until NodeData.outputs(node.toInt+1).toInt).map(_.toEdgeId)
   }
-  def nodeInputs(node: NodeId): List[EdgeId] = NodeData.inputs(node.toInt)
-  def nodeBounds(node: NodeId): List[EdgeId] = NodeData.bounds(node.toInt)
-  def nodeTunnels(node: NodeId): List[(EdgeId,Seq[EdgeId])] = NodeData.tunnels(node.toInt)
-  def nodeFreqs(node: NodeId): List[Float] = NodeData.freqs(node.toInt)
+  def nodeInputs(node: NodeId): Seq[EdgeId] = NodeData.inputs(node.toInt)
+  def nodeBounds(node: NodeId): Seq[EdgeId] = NodeData.bounds(node.toInt)
+  def nodeTunnels(node: NodeId): Seq[(EdgeId,Seq[EdgeId])] = NodeData.tunnels(node.toInt)
+  def nodeFreqs(node: NodeId): Seq[Float] = NodeData.freqs(node.toInt)
   def nodeOf(node: NodeId): Node = NodeData.value(node.toInt)
   def edgeOf(edge: EdgeId): Edge = EdgeData.value(edge.toInt)
-  def dependentsOf(edge: EdgeId): List[NodeId] = EdgeData.dependents(edge.toInt)
+  def dependentsOf(edge: EdgeId): Seq[NodeId] = EdgeData.dependents(edge.toInt)
   def producerOf(edge: EdgeId): NodeId = EdgeData.producer(edge.toInt)
   def triple(id: NodeId): Triple = (nodeOutputs(id).map(edgeOf), nodeOf(id), nodeInputs(id).map(edgeOf))
 
@@ -82,10 +82,10 @@ trait AbstractHDAG extends Exceptions {
   }
 
   /** Add an edge with no node but which may be required for scheduling **/
-  final def addBound(out: Edge) = addNode(Nil, List(out), Nil, Nil, Nil, null).head
+  final def addBound(out: Edge) = addNode(Nil, Seq(out), Nil, Nil, Nil, null).head
 
   /** Add output edge(s) with corresponding node **/
-  final def addNode(ins: List[Edge], outs: List[Edge], binds: List[Edge], tunnel: List[(Edge,Seq[Edge])], freqs: List[Float], node: Node) = {
+  final def addNode(ins: Seq[Edge], outs: Seq[Edge], binds: Seq[Edge], tunnel: Seq[(Edge,Seq[Edge])], freqs: Seq[Float], node: Node) = {
     outs.foreach { out =>
       out.id = curEdgeId.toInt
 
@@ -138,7 +138,7 @@ trait AbstractHDAG extends Exceptions {
 
   //performance hotspot!
   //should be O(1) wrt 'scope' (nodes in graph), try to keep this as efficient as possible
-  def scheduleDepsWithIndex(roots: Iterable[EdgeId], cache: OrderCache): List[NodeId] = {
+  def scheduleDepsWithIndex(roots: Iterable[EdgeId], cache: OrderCache): Seq[NodeId] = {
     val sortedSet = new java.util.TreeSet[(NodeId,Int)](comparator)
 
     for (edge <- roots) {
@@ -312,7 +312,7 @@ trait AbstractHDAG extends Exceptions {
     * The one drawback of this is that we cannot code motion non-effectful dependencies of block effects
     */
 
-  def getLocalScope(currentScope: Seq[NodeId], result: List[EdgeId], localCache: OrderCache): Seq[NodeId] = {
+  def getLocalScope(currentScope: Seq[NodeId], result: Seq[EdgeId], localCache: OrderCache): Seq[NodeId] = {
     val scope = currentScope.toSet
 
     // TODO: This was the entire focused scope in LMS (descriptively called "e1")
@@ -384,7 +384,7 @@ trait AbstractHDAG extends Exceptions {
   }
 
 
-  def getLocalSchedule[A](availableNodes: Seq[NodeId], result: List[EdgeId]): Seq[NodeId] = {
+  def getLocalSchedule[A](availableNodes: Seq[NodeId], result: Seq[EdgeId]): Seq[NodeId] = {
     val availCache = buildScopeIndex(availableNodes)
     val availRoots = scheduleDepsWithIndex(result, availCache)
     val localNodes = getSchedule(availRoots, availCache, checkAcyclic = true)

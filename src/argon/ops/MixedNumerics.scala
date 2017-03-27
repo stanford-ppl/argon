@@ -10,7 +10,7 @@ trait MixedNumericApi extends MixedNumericExp with CastApi with FixPtApi with Fl
 trait MixedNumericExp extends Staging with CastExp with FixPtExp with FltPtExp {
   this: TextExp =>
 
-  override protected def cast[T:Staged:Num,R:Staged:Num](x: T)(implicit ctx: SrcCtx): R = (typ[T],typ[R]) match {
+  override protected def cast[T:Type:Num,R:Type:Num](x: T)(implicit ctx: SrcCtx): R = (typ[T],typ[R]) match {
     case (a: FixPtType[s,i,f], b: FltPtType[g,e]) =>
       implicit val mS: BOOL[s] = a.mS
       implicit val mI: INT[i] = a.mI

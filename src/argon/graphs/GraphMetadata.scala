@@ -2,9 +2,7 @@ package argon.graphs
 
 import scala.collection.mutable
 
-trait GraphMetadata {
-  type MetaData
-  type EdgeId = Int
+class GraphMetadata[MetaData] {
   def keyOf[M<:MetaData:Manifest] = manifest[M].runtimeClass.asInstanceOf[Class[M]]
 
   /**
@@ -42,5 +40,10 @@ trait GraphMetadata {
   final def clearMetadata(m: Class[_]): Unit = {
     edgeMetadata.indices.foreach{id => edgeMetadata(id) -= m }
     otherMetadata.indices.foreach{id => otherMetadata(id) -= m }
+  }
+
+  def reset(): Unit = {
+    edgeMetadata.clear()
+    otherMetadata.clear()
   }
 }

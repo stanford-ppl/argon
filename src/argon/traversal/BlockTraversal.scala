@@ -89,6 +89,6 @@ trait BlockTraversal {
   protected def visitBlock[S](block: Block[S]): Block[S] = { traverseStmsInBlock(block); block }
 
   protected def getCustomSchedule(scope: Seq[Stm], result: Seq[Exp[_]]): Seq[Stm] = {
-    IR.getLocalSchedule(scope.map(_.rhs.id), syms(result).map(_.id)).flatMap(stmFromNodeId)
+    IR.getLocalSchedule(scope.map(_.rhs.id), dyns(result).map(_.id)).flatMap(stmFromNodeId)
   }
 }

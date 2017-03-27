@@ -7,7 +7,7 @@ trait CppGenArray extends CppCodegen {
   import IR._
 
 
-  protected def isArrayType(tp: Staged[_]): Boolean = tp match {
+  protected def isArrayType(tp: Type[_]): Boolean = tp match {
     case tp: ArrayType[_] => tp.typeArguments.head match {
       case tp: ArrayType[_] => println("EXCEPTION: Probably can't handle nested array types in ifthenelse"); true
       case _ => true
@@ -19,7 +19,7 @@ trait CppGenArray extends CppCodegen {
     src"(*${array})${extractor}.size()"
   }
 
-  protected def emitNewArray(lhs: Exp[_], tp: Staged[_], size: String): Unit = {
+  protected def emitNewArray(lhs: Exp[_], tp: Type[_], size: String): Unit = {
     emit(src"${tp}* $lhs = new ${tp}($size);")
   }
 
@@ -49,7 +49,7 @@ trait CppGenArray extends CppCodegen {
     }
   }
 
-  override protected def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: Type[_]): String = tp match {
     case tp: ArrayType[_] => tp.typeArguments.head match {
         case DoubleType() => "vector<double>"
         case FloatType() => "vector<double>"

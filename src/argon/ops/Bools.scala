@@ -9,12 +9,13 @@ trait BoolApi extends BoolExp with BitsApi { this: TextApi =>
 trait BoolExp extends Staging with BitsExp { this: TextExp =>
   /** Type classes **/
   // --- Staged
-  implicit object BoolType extends Staged[Bool] {
+  implicit object BoolType extends Type[Bool] with CanBits[Bool] {
     override def wrapped(x: Exp[Bool]): Bool = Bool(x)
     override def unwrapped(x: Bool): Exp[Bool] = x.s
     override def typeArguments = Nil
     override def stagedClass = classOf[Bool]
     override def isPrimitive = true
+    override def getBits(children: Seq[Type[_]]) = Some(BoolBits)
   }
 
   /** Infix methods **/
@@ -40,13 +41,12 @@ trait BoolExp extends Staging with BitsExp { this: TextExp =>
     override def random(max: Option[Bool])(implicit ctx: SrcCtx): Bool = Bool(bool_random(max.map(_.s)))
     override def length = 1
   }
-  override protected def bitsUnapply[T](tp: Staged[T]): Option[Bits[T]] = tp match {
-    case BoolType => Some(BoolBits.asInstanceOf[Bits[T]])
-    case _ => super.bitsUnapply(tp)
-  }
 
   // --- Lifts
-  implicit object Boolean2Bool extends Lift[Boolean,Bool] { val staged = BoolType }
+  implicit object Boolean2Bool extends Lift[Boolean,Bool] {
+    val staged = BoolType
+    def apply(x: Boolean)(implicit ctx: SrcCtx): Bool = boolean2bool(x)
+  }
 
 
   /** Constant lifting **/

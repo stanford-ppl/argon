@@ -28,10 +28,8 @@ trait Lattices {
   }
 
   def lat[T:Lattice] = implicitly[Lattice[T]]
-
   def meet[T:Lattice](a: T, b: T): T = lat[T].meet(a, b)
   def join[T:Lattice](a: T, b: T): T = lat[T].join(a, b)
-
 
   implicit def OptionCanHaveLattice[T:Lattice]: Lattice[Option[T]] = new Lattice[Option[T]] {
     def meet(a: Option[T], b: Option[T]): Option[T] = (a,b) match {

@@ -6,7 +6,7 @@ trait CppGenAsserts extends CppCodegen {
   val IR: AssertExp
   import IR._
 
-  override protected def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: Type[_]): String = tp match {
     case _ => super.remap(tp)
   }
 

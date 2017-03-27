@@ -103,7 +103,7 @@ trait CppGenStructs extends CppCodegen with StructCodegen {
 
   }
 
-  override protected def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: Type[_]): String = tp match {
     // case TupleType[] 
     // case IntType() => "Int"
     // case LongType() => "Long"

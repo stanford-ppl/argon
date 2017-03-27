@@ -6,23 +6,25 @@ import scala.collection.mutable
 
 trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   // -- State
-  val defCache = new mutable.HashMap[Def, List[Sym[_]]]
+  val defCache = new mutable.HashMap[Def, Seq[Sym[_]]]
   protected val shallowAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
   protected val deepAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
   protected val aliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
 
   // --- Statements
-  case class Stm(lhs: List[Sym[_]], rhs: Def)
+  case class Stm(lhs: Seq[Sym[_]], rhs: Def)
 
-  // TODO: LMS Naming convention was weird here. What do these even stand for?
+  // "Typed pair" - symbol + an op
   object TP {
-    def unapply[A](x: Any): Option[(Sym[Any],Op[Any])] = x match {
-      case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[Any]], rhs.asInstanceOf[Op[Any]]))
+    def unapply[A](x: Stm): Option[(Sym[_],Op[_])] = x match {
+      case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[_]], rhs.asInstanceOf[Op[_]]))
       case _ => None
     }
   }
+
+  // "Tupled type pair" - one or more symbols + a Def
   object TTP {
-    def unapply(x: Any): Option[(List[Sym[_]],Def)] = x match {
+    def unapply(x: Stm): Option[(Seq[Sym[_]],Def)] = x match {
       case Stm(_, rhs: Op[_]) => None
       case stm: Stm => Some((stm.lhs,stm.rhs))
       case _ => None
@@ -49,12 +51,12 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
     val node = producerOf(id)
     stmFromNodeId(node)
   }
-  private[argon] def symFromSymId(id: EdgeId): Symbol[_] = edgeOf(id).asInstanceOf[Symbol[_]]
+  private[argon] def symFromSymId(id: EdgeId): Dyn[_] = edgeOf(id).asInstanceOf[Dyn[_]]
   private[argon] def defFromNodeId(id: NodeId): Def = nodeOf(id).asInstanceOf[Def]
   private[argon] def defFromSymId(id: EdgeId): Option[Def] = stmFromSymId(id).map(_.rhs)
 
   // --- Symbol aliasing
-  private def noPrims(x: Set[Symbol[_]]): Set[Sym[_]] = x.collect{case s: Sym[_] if !s.tp.isPrimitive => s}
+  private def noPrims(x: Set[Dyn[_]]): Set[Sym[_]] = x.collect{case s: Sym[_] if !s.tp.isPrimitive => s}
 
   def shallowAliases(x: Any): Set[Sym[_]] = {
     noPrims(aliasSyms(x)).flatMap { case s@Def(d) => shallowAliasCache.getOrElseUpdate(s, shallowAliases(d)) + s } ++
@@ -86,7 +88,7 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
     * TODO: Any reason for this to be Sym[_] => Seq[Sym[_]] ?
     */
   def recurseAtomicLookup(s: Exp[_]): Exp[_] = s
-  final def extractAtomicWrite(s: Sym[_]): Sym[_] = onlySyms(recurseAtomicLookup(s)).headOption.getOrElse(s)
+  final def extractAtomicWrite(s: Sym[_]): Sym[_] = syms(recurseAtomicLookup(s)).headOption.getOrElse(s)
 
   final def propagateWrites(effects: Effects): Effects = if (!Config.allowAtomicWrites) effects else {
     val writes = effects.writes.map{s => extractAtomicWrite(s) }

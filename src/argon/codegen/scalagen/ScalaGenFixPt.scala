@@ -6,7 +6,7 @@ trait ScalaGenFixPt extends ScalaCodegen {
   val IR: FixPtExp
   import IR._
 
-  override protected def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: Type[_]): String = tp match {
     case IntType() => "Int"
     case LongType() => "Long"
     case _ => super.remap(tp)

@@ -1,37 +1,68 @@
 package argon.core
 
 import scala.annotation.implicitNotFound
-
 import org.virtualized.{EmbeddedControls, SourceContext}
-import argon.State
 
 trait StagedTypes extends EmbeddedControls { this: Staging =>
   type SrcCtx = SourceContext
+  type Bool
+  type Text
 
   /** Base type class for all staged types **/
-  abstract class Staged[T] {
+  sealed abstract class Type[T] {
     def wrapped(x: Exp[T]): T
     def unwrapped(x: T): Exp[T]
-    def typeArguments: List[Staged[_]] = Nil
-    def stagedClass: Class[T]
+    def typeArguments: List[Type[_]] = Nil
+    def stagedClass: Class[T] = classOf[T]
     def isPrimitive: Boolean
 
-    def <:<(that: Staged[_]) = isSubtype(this.stagedClass, that.stagedClass)
+    def <:<(that: Type[_]) = isSubtype(this.stagedClass, that.stagedClass)
   }
 
-  def typ[T:Staged] = implicitly[Staged[T]]
-  def mtyp[A,B](x: Staged[A]): Staged[B] = x.asInstanceOf[Staged[B]]
+  trait StagedAny[T] {
+    def s: Exp[T]
+    def ===(x: T)(implicit ctx: SrcCtx): Bool
+    def =!=(x: T)(implicit ctx: SrcCtx): Bool
+    def toText(implicit ctx: SrcCtx): Text
+  }
 
-  def wrap[T:Staged](s: Exp[T]): T = implicitly[Staged[T]].wrapped(s)
-  def unwrap[T:Staged](x: T): Exp[T] = implicitly[Staged[T]].unwrapped(x)
+  def infix_toString[T<:StagedAny[T]](x: T) = x.toText
+  def __equals[T<:StagedAny[T]](x: T, y: T)(implicit ctx: SrcCtx): Bool = x === y
+  def __equals[A, T<:StagedAny[T]](x: A, y: T)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = lift(x) === y
+  def __equals[A, T<:StagedAny[T]](x: T, y: A)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = x === lift(y)
+  def __unequals[T<:StagedAny[T]](x: T, y: T)(implicit ctx: SrcCtx): Bool = x =!= y
+  def __unequals[A, T<:StagedAny[T]](x: A, y: T)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = lift(x) =!= y
+  def __unequals[A, T<:StagedAny[T]](x: T, y: A)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = x =!= lift(y)
 
-  def wrap[T:Staged](xs: List[Exp[T]]): List[T] = xs.map{t => implicitly[Staged[T]].wrapped(t) }
-  def unwrap[T:Staged](xs: List[T]): List[Exp[T]] = xs.map{t => implicitly[Staged[T]].unwrapped(t) }
-  def wrap[T:Staged](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => implicitly[Staged[T]].wrapped(t) }
-  def unwrap[T:Staged](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => implicitly[Staged[T]].unwrapped(t) }
+  import StagedTypes._
 
-  implicit class StagedTypeOps[T:Staged](x: T) {
-    def s: Exp[T] = implicitly[Staged[T]].unwrapped(x)
+
+  def infix_==[A,B](x1: StageAny[A], x2: StageAny[B]): Bool = macro equalImpl[Bool]
+  def infix_==[A, B, C <: StageAny[B]](x1: StageAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro equalLiftRightImpl[Bool]
+  def infix_==[A, B, C <: StageAny[B]](x1: A, x2: StageAny[B])(implicit l: Lift[A,C]): Bool = macro equalLiftLeftImpl[Bool]
+
+  def infix_!=[A, B](x1: StageAny[A], x2: StageAny[B]): Bool = macro unequalImpl[Bool]
+  def infix_!=[A, B, C <: StageAny[B]](x1: StageAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro unequalLiftRightImpl[Bool]
+  def infix_!=[A, B, C <: StageAny[B]](x1:A, x2: StageAny[B])(implicit l: Lift[A,C]): Bool = macro unequalLiftLeftImpl[Bool]
+
+
+  abstract class Meta[T] extends Type[T] {
+
+  }
+
+  def typ[T:Type] = implicitly[Type[T]]
+  def mtyp[A,B](x: Type[A]): Type[B] = x.asInstanceOf[Type[B]]
+
+  def wrap[T:Type](s: Exp[T]): T = implicitly[Type[T]].wrapped(s)
+  def unwrap[T:Type](x: T): Exp[T] = implicitly[Type[T]].unwrapped(x)
+
+  def wrap[T:Type](xs: List[Exp[T]]): List[T] = xs.map{t => implicitly[Type[T]].wrapped(t) }
+  def unwrap[T:Type](xs: List[T]): List[Exp[T]] = xs.map{t => implicitly[Type[T]].unwrapped(t) }
+  def wrap[T:Type](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => implicitly[Type[T]].wrapped(t) }
+  def unwrap[T:Type](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => implicitly[Type[T]].unwrapped(t) }
+
+  implicit class StagedTypeOps[T:Type](x: T) {
+    def s: Exp[T] = implicitly[Type[T]].unwrapped(x)
   }
 
   /** Stolen from Delite utils **/
@@ -55,16 +86,15 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
 
   @implicitNotFound(msg = "Cannot find way to lift type ${A}. Try adding explicit lift(_) calls to return value(s).")
   trait Lift[A,B] {
-    def staged: Staged[B]
-    def lift(x: A)(implicit ctx: SrcCtx): B = __lift(x)(ctx, this)
+    val staged: Type[B]
+    def apply(x: A)(implicit ctx: SrcCtx): B
   }
 
-  def __lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B
-  final def lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l.lift(x)
+  final def lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l(x)
 
-  implicit def selfLift[T:Staged]: Lift[T,T] = new Lift[T,T] {
-    def staged = implicitly[Staged[T]]
-    override def lift(x: T)(implicit ctx: SrcCtx): T = x
+  implicit def selfLift[T:Type]: Lift[T,T] = new Lift[T,T] {
+    val staged = implicitly[Type[T]]
+    override def apply(x: T)(implicit ctx: SrcCtx): T = x
   }
 
 }

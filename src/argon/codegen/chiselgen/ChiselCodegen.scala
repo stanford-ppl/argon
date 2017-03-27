@@ -58,7 +58,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     }
   }
 
-  protected def bitWidth(tp: Staged[_]): Int = {
+  protected def bitWidth(tp: Type[_]): Int = {
     c"$tp" match {
       case "Avalon" => 32
       case _ => throw new NoBitWidthException(tp)

@@ -6,7 +6,7 @@ trait CppGenFltPt extends CppCodegen {
   val IR: FltPtExp
   import IR._
 
-  override protected def remap(tp: Staged[_]): String = tp match {
+  override protected def remap(tp: Type[_]): String = tp match {
     case FloatType()  => "Float"
     case DoubleType() => "Double"
     case _ => super.remap(tp)

@@ -19,7 +19,7 @@ trait Traversal extends CompilerPass with BlockTraversal { self =>
 
   // --- Methods
   /** Run a single traversal, including pre- and post- processing **/
-  final protected def runSingle[S:Staged](b: Block[S]): Block[S] = {
+  final protected def runSingle[S:Type](b: Block[S]): Block[S] = {
     val b2 = preprocess(b)
     val b3 = visitBlock(b2)
     postprocess(b3)
@@ -29,9 +29,9 @@ trait Traversal extends CompilerPass with BlockTraversal { self =>
     * Called to execute this traversal, including optional pre- and post- processing.
     * Default is to run pre-processing, then a single traversal, then post-processing
     */
-  protected def process[S:Staged](block: Block[S]): Block[S] = runSingle(block)
-  protected def preprocess[S:Staged](block: Block[S]): Block[S] = { block }
-  protected def postprocess[S:Staged](block: Block[S]): Block[S] = { block }
+  protected def process[S:Type](block: Block[S]): Block[S] = runSingle(block)
+  protected def preprocess[S:Type](block: Block[S]): Block[S] = { block }
+  protected def postprocess[S:Type](block: Block[S]): Block[S] = { block }
   override protected def visitBlock[S](block: Block[S]): Block[S] = {
     tab += 1
     super.visitBlock(block)
@@ -79,7 +79,7 @@ trait IterativeTraversal extends Traversal {
   protected def retry() { _retry = true }
   protected def failedToConverge() = throw new TraversalFailedToConvergeException(c"$name did not converge.")
   protected def failedToComplete() = throw new TraversalFailedToCompleteException(c"$name did not complete.")
-  final protected def runIterative[S:Staged](b: Block[S]): Block[S] = {
+  final protected def runIterative[S:Type](b: Block[S]): Block[S] = {
     var curBlock = preprocess(b)
     do {
       runs = 0
@@ -99,5 +99,5 @@ trait IterativeTraversal extends Traversal {
   }
 
 
-  override protected def process[S:Staged](b: Block[S]): Block[S] = runIterative(b)
+  override protected def process[S:Type](b: Block[S]): Block[S] = runIterative(b)
 }

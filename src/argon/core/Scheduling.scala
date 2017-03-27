@@ -9,7 +9,7 @@ trait Scheduling extends Statements { this: Staging =>
 
   def makeScopeIndex(scope: Iterable[Stm]): OrderCache = buildScopeIndex(scope.map(_.rhs.id))
   def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache): List[Stm] = {
-    scheduleDepsWithIndex(syms(roots).map(_.id), cache).flatMap(stmFromNodeId)
+    scheduleDepsWithIndex(dyns(roots).map(_.id), cache).flatMap(stmFromNodeId)
   }
 
   def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => List[Stm]): List[Stm] = {
@@ -45,7 +45,7 @@ trait Scheduling extends Statements { this: Staging =>
       }
     }
 
-    val allDependencies = syms(block.result +: block.effectful)
+    val allDependencies = dyns(block.result +: block.effectful)
     // Result and scheduling dependencies
     val schedule = getLocalSchedule(availableNodes = availNodes, result = allDependencies.map(_.id))
     scopeSanityCheck(block, schedule)

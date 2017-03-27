@@ -1,10 +1,9 @@
 package argon.core
 
-import argon.graphs.HDAG
+import argon.graphs.{Graph, GraphMetadata}
 import argon.State
 
-trait Metadata extends HDAG with Lattices { self: Statements =>
-  type MetaData = Metadata[_]
+trait Metadata extends Graph with Lattices { self: Statements =>
 
   abstract class Metadata[T] { self =>
     def meet(that: T): T = this.asInstanceOf[T]
@@ -26,7 +25,7 @@ trait Metadata extends HDAG with Lattices { self: Statements =>
     val bottom = None
   }
 
-  object metadata {
+  object metadata extends GraphMetadata[Metadata[_]] {
     private def keyOf[M<:Metadata[M]:Manifest] = manifest[M].runtimeClass.asInstanceOf[Class[M]]
 
     def add[M<:Metadata[M]:Manifest](edge: Exp[_], m: M): Unit = this.add(edge, Some(m))
@@ -46,13 +45,14 @@ trait Metadata extends HDAG with Lattices { self: Statements =>
     }
     def get(edge: Exp[_]): Map[Class[_],Metadata[_]] = getMetadata(edge)
     def set(edge: Exp[_], m: Map[Class[_],Metadata[_]]): Unit = setMetadata(edge, m)
-    def add(edge: Exp[_], m: Map[Class[_],MetaData]): Unit = this.set(edge, this.get(edge) ++ m)
+    def add(edge: Exp[_], m: Map[Class[_],Metadata[_]]): Unit = this.set(edge, this.get(edge) ++ m)
 
     def clearAll[M<:Metadata[M]:Manifest] = clearMetadata(keyOf[M])
   }
 
   override def reset(): Unit = {
     super.reset()
+    metadata.reset()
     State.flex = false
     State.staging = false
     State.EVAL = false
