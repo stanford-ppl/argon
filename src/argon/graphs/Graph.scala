@@ -42,7 +42,8 @@ trait Graph extends Exceptions {
     val freqs   = mutable.ArrayBuffer[Seq[Float]]()                  // Frequency hints for code motion
   }
 
-  def reset(): Unit = {
+  override def reset(): Unit = {
+    super.reset()
     curEdgeId = 0.toEdgeId
     curNodeId = 0.toNodeId
     curInputId = 0.toEdgeId

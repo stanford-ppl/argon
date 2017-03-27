@@ -12,8 +12,8 @@ trait StructExp extends Staging with VoidExp with TextExp {
   abstract class MetaStruct[T:StructType] extends MetaAny[T]{ self =>
     def field[R:Meta](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](self.s, name))
 
-    def =!=(that: T)(implicit ctx: SrcCtx): Bool = struct_unequals(this,that)
-    def ===(that: T)(implicit ctx: SrcCtx): Bool = struct_equals(this,that)
+    def =!=(that: T)(implicit ctx: SrcCtx): Bool = struct_unequals(this.asInstanceOf[T],that)
+    def ===(that: T)(implicit ctx: SrcCtx): Bool = struct_equals(this.asInstanceOf[T],that)
 
     def toText(implicit ctx: SrcCtx) = {
       val tp = implicitly[StructType[T]]
@@ -28,9 +28,9 @@ trait StructExp extends Staging with VoidExp with TextExp {
 
     tp.fields.map {case (name, fieldTyp) =>
       implicit val mA: Meta[_] = fieldTyp
-      val a = field(a, name)(tp, fieldTyp, ctx)
-      val b = field(b, name)(tp, fieldTyp, ctx)
-      eql(a,b)(mmeta(fieldTyp))
+      val x = field(a, name)(tp, fieldTyp, ctx)
+      val y = field(b, name)(tp, fieldTyp, ctx)
+      eql(x,y)(mmeta(fieldTyp))
     }.reduce(_&&_)
   }
   def struct_unequals[T:StructType](a: T, b: T)(implicit ctx: SrcCtx): Bool = {
@@ -39,9 +39,9 @@ trait StructExp extends Staging with VoidExp with TextExp {
 
     tp.fields.map {case (name, fieldTyp) =>
       implicit val mA: Meta[_] = fieldTyp
-      val a = field(a, name)(tp, fieldTyp, ctx)
-      val b = field(b, name)(tp, fieldTyp, ctx)
-      neq(a,b)(mmeta(fieldTyp))
+      val x = field(a, name)(tp, fieldTyp, ctx)
+      val y = field(b, name)(tp, fieldTyp, ctx)
+      neq(x,y)(mmeta(fieldTyp))
     }.reduce(_||_)
   }
 

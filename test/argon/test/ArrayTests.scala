@@ -20,7 +20,7 @@ object FillTest extends Test {
   @virtualize
   def main() {
     val array = Array.fill(10){ random[Int] }
-    assert(array(0) != array(1))
+    assert(array(0) != array(1) || array(0) != array(2))  // Very unlikely to have duplicate (but still possible..)
     println("Array tabulate appears to be working")
   }
 }
@@ -106,7 +106,7 @@ object FlatMapTest extends Test {
   @virtualize
   def main() {
     val a = Array.tabulate(16){i => i}
-    val b = a.flatMap{x => Array[Int](x) }
+    val b = a.flatMap{x => Array.empty[Int](x) }
     assert(b.length == 120)
     println("FlatMap appears to be working")
   }

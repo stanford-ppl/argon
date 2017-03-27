@@ -8,11 +8,11 @@ trait Scheduling extends Statements { this: Staging =>
   val scopeCache = mutable.HashMap[Block[_],Seq[Stm]]()
 
   def makeScopeIndex(scope: Iterable[Stm]): OrderCache = buildScopeIndex(scope.map(_.rhs.id))
-  def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache): List[Stm] = {
+  def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache): Seq[Stm] = {
     scheduleDepsWithIndex(dyns(roots).map(_.id), cache).flatMap(stmFromNodeId)
   }
 
-  def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => List[Stm]): List[Stm] = {
+  def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => Seq[Stm]): Seq[Stm] = {
     def succ(node: NodeId): Iterable[NodeId] = nodeOutputs(node).map(symFromSymId).flatMap(next).map(_.rhs.id)
 
     val start = roots.map(_.rhs.id)

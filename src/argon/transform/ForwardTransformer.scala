@@ -26,7 +26,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     * For TTP cases, any number of lhs symbols can theoretically be transformed to any other number.
     * Therefore, substitution rules must be much more explicitly managed
     */
-  def transformFat(lhs: List[Sym[_]], rhs: Def)(implicit ctx: SrcCtx): Unit = {
+  def transformFat(lhs: Seq[Sym[_]], rhs: Def)(implicit ctx: SrcCtx): Unit = {
     val lhs2 = mirror(lhs, rhs)
     assert(lhs.length == lhs2.length)
     lhs.zip(lhs2).foreach{case (s, s2) => register(s -> s2) }
@@ -130,7 +130,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   }
 
 
-  final override protected def visitFat(lhs: List[Sym[_]], rhs: Def) = transformFat(lhs, rhs)(ctx(lhs.head))
+  final override protected def visitFat(lhs: Seq[Sym[_]], rhs: Def) = transformFat(lhs, rhs)(ctx(lhs.head))
 
   /**
     * DANGER ZONE

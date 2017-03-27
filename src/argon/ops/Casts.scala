@@ -11,15 +11,11 @@ trait CastApi extends CastExp {
   }
 
   implicit class LiftOps[A](x: A) {
-    def as[B:Meta:Num](implicit ctx: SrcCtx, lift: Lift[A,B]): B = lift(x)
+    def as[B:Meta:Num](implicit ctx: SrcCtx, lift: Cast[A,B]): B = lift(x)
   }
 }
 
 trait CastExp extends Staging {
   this: BoolExp =>
-
-  trait Cast[A,B] {
-    def apply(x: A)(implicit ctx: SrcCtx): B
-  }
 
 }

@@ -40,7 +40,7 @@ abstract class Transformer { self =>
   // Assumption: If the symbol we get back from cloning/mirroring had already been created by this
   // point, the mirrored symbol underwent a rewrite rule or CSE. The correct thing to do here is
   // to keep the previously created symbol's metadata, not the mirrored version of lhs's.
-  final protected def transferMetadataIfNew(lhs: List[Exp[_]])(tx: => List[Exp[_]]): (List[Exp[_]], List[Boolean]) = {
+  final protected def transferMetadataIfNew(lhs: Seq[Exp[_]])(tx: => Seq[Exp[_]]): (Seq[Exp[_]], Seq[Boolean]) = {
     val id = IR.curEdgeId
     val lhs2 = tx
     val out = lhs.zip(lhs2).map{
@@ -65,7 +65,7 @@ abstract class Transformer { self =>
   }
 
 
-  final def mirror(lhs: List[Sym[_]], rhs: Def): List[Exp[_]] = {
+  final def mirror(lhs: Seq[Sym[_]], rhs: Def): Seq[Exp[_]] = {
     log(c"Mirror: $lhs = $rhs")
     lhs.foreach{s =>
       if (lhs.length > 1) log(c"$s")

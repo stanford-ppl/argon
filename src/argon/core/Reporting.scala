@@ -123,4 +123,8 @@ trait Reporting {
     def u(args: Any*): String = sc.raw(args.map(userReadable): _*).stripMargin
   }
 
+  def reset(): Unit = {
+    _errors = 0
+    _warns = 0
+  }
 }

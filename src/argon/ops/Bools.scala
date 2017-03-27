@@ -23,13 +23,14 @@ trait BoolExp extends Staging with BitsExp with CastExp { this: TextExp =>
 
   /** Type classes **/
   // --- Staged
-  implicit object BoolType extends Meta[Bool] with CanBits[Bool] {
+  object BoolType extends Meta[Bool] with CanBits[Bool] {
     override def wrapped(x: Exp[Bool]): Bool = Bool(x)
     override def typeArguments = Nil
     override def stagedClass = classOf[Bool]
     override def isPrimitive = true
     protected def getBits(children: Seq[Type[_]]) = Some(BoolBits)
   }
+  implicit def boolType: Meta[Bool] = BoolType
 
   // --- Bits
   implicit object BoolBits extends Bits[Bool] {
@@ -40,8 +41,10 @@ trait BoolExp extends Staging with BitsExp with CastExp { this: TextExp =>
   }
 
   // --- Lifts
-  implicit object Boolean2Bool extends Lift[Boolean,Bool] {
-    val staged = BoolType
+  implicit object LiftBoolean2Bool extends Lift[Boolean,Bool] {
+    def apply(x: Boolean)(implicit ctx: SrcCtx): Bool = boolean2bool(x)
+  }
+  implicit object CastBoolean2Bool extends Cast[Boolean,Bool] {
     def apply(x: Boolean)(implicit ctx: SrcCtx): Bool = boolean2bool(x)
   }
 

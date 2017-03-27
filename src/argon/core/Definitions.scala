@@ -78,7 +78,7 @@ trait Definitions extends Blocks { self: Staging =>
     def fatMirror(f:Tx): Seq[Exp[_]]
 
 
-    def updateNode(orig:List[Sym[_]], f: Tx): Seq[Exp[_]] = {
+    def updateNode(orig: Seq[Sym[_]], f: Tx): Seq[Exp[_]] = {
       try {
         mutate(f)
         orig
@@ -87,7 +87,7 @@ trait Definitions extends Blocks { self: Staging =>
         fatMirror(f)
       }
     }
-    def mirrorNode(orig: List[Sym[_]], f: Tx): Seq[Exp[_]] = fatMirror(f)
+    def mirrorNode(orig: Seq[Sym[_]], f: Tx): Seq[Exp[_]] = fatMirror(f)
 
     implicit val src: SrcCtx = EmptyContext
   }

@@ -37,7 +37,7 @@ trait IRPrinter extends Traversal {
     if (rhs.blocks.nonEmpty) dbgs(c"} // End of $lhs")
   }
 
-  override def visitFat(lhs: List[Sym[_]], rhs: Def) = {
+  override def visitFat(lhs: Seq[Sym[_]], rhs: Def) = {
     if (rhs.blocks.nonEmpty)
       dbgs(c"$lhs = $rhs {")
     else

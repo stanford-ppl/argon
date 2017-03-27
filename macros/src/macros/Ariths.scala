@@ -25,7 +25,7 @@ object Ariths extends TypeclassMacro {
           q"$term: Arith[$tp]"
         }
         val stgEvidenceParams = distinctTypes.zip(stgEvidence).map { case (tp, term) =>
-          q"$term: Staged[$tp]"
+          q"$term: Type[$tp]"
         }
         val implicits = arithEvidenceParams ++ stgEvidenceParams
         val fieldAriths = typeMapping.map { i => arithEvidence(i) }
@@ -85,7 +85,7 @@ object Ariths extends TypeclassMacro {
             """
         /**
           * Type class "lookup"
-          * hack to get type class evidence from Staged[T]
+          * hack to get type class evidence from Type[T]
           */
         // Not needed for now
 

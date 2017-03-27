@@ -23,8 +23,8 @@ trait CppGenHashMap extends CppGenArrayExt {
     case _ => super.emitNode(lhs, rhs)
   }
 
-  override protected def emitFat(lhs: List[Sym[_]], rhs: Def) = rhs match {
-    case e @ ArgonBuildHashMap(in, apply, keyFunc, valFunc, reduce, rV, i) =>
+  override protected def emitFat(lhs: Seq[Sym[_]], rhs: Def) = rhs match {
+    case e @ BuildHashMap(in, apply, keyFunc, valFunc, reduce, rV, i) =>
       emit(src"vector<${e.mK}>* ${lhs(0)} = new vector<${e.mK}>((*${in}).size()); // Keys")
       emit(src"vector<${e.mV}>* ${lhs(1)} = new vector<${e.mV}>((*${in}).size()); // Values")
       emit(src"vector<${e.mK}>* ${lhs(2)} = ${lhs(0)}; // TODO: Probably totally wrong.  lhs2 appears to be the scala hashmap, but it seems like we only use it to lookup index of a key")

@@ -5,44 +5,41 @@ trait IfThenElseApi extends IfThenElseExp with BoolApi {
   this: TextApi =>
 }
 
-//hack around https://github.com/scalameta/scalameta/issues/667
-object Fun0{
-  def apply[T](e:T): () => T = () => e
-}
-
-trait IfThenElseExp extends Staging with BoolExp with VoidExp {
+trait IfThenElseExp extends Staging with BoolExp with VoidExp with OverloadHack {
   this: TextExp =>
 
   /** Virtualized Methods **/
-  def __ifThenElse[A, B, T](cond: Bool, thenp: => A, elsep: => B)(implicit ctx: SrcCtx, liftA: Lift[A,T], liftB: Lift[B,T]): T = {
+  def __ifThenElse[A, B, T<:MetaAny[T]](cond: Bool, thenp: => A, elsep: => B)(implicit ctx: SrcCtx, liftA: Lift[A,T], liftB: Lift[B,T]): T = {
     implicit val staged: Meta[T] = liftB.staged
-    val unwrapThen = Fun0(liftA(thenp).s) // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse = Fun0(liftB(elsep).s) // wrapping it as a Function0 allows it to be delayed
+    val unwrapThen = () => liftA(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = () => liftB(elsep).s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse[T](cond.s, unwrapThen(), unwrapElse()))
   }
 
-  def __ifThenElse[A, T:Meta](cond: Bool, thenp: => A, elsep: => T)(implicit ctx: SrcCtx, lift: Lift[A, T]): T = {
-    val unwrapThen = Fun0(lift(thenp).s) // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse = Fun0(elsep.s) // wrapping it as a Function0 allows it to be delayed
+  def __ifThenElse[A, T<:MetaAny[T]](cond: Bool, thenp: => A, elsep: => T)(implicit ctx: SrcCtx, lift: Cast[A, T], x1: Overload1): T = {
+    implicit val staged: Meta[T] = lift.staged
+    val unwrapThen = () => lift(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = () => elsep.s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 
-  def __ifThenElse[A, T:Meta](cond: Bool, thenp: => T, elsep: => A)(implicit ctx: SrcCtx, lift: Lift[A,T]): T = {
-    val unwrapThen = Fun0(thenp.s) // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse = Fun0(lift(elsep).s) // wrapping it as a Function0 allows it to be delayed
+  def __ifThenElse[A, T<:MetaAny[T]](cond: Bool, thenp: => T, elsep: => A)(implicit ctx: SrcCtx, lift: Cast[A,T], x2: Overload2): T = {
+    implicit val staged: Meta[T] = lift.staged
+    val unwrapThen = () => thenp.s // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = () => lift(elsep).s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 
-  def __ifThenElse[T:Meta](cond: Bool, thenp: => T, elsep: => T)(implicit ctx: SrcCtx): T = {
-    val unwrapThen: () => Exp[T] = Fun0(thenp.s) // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse: () => Exp[T] = Fun0(elsep.s) // wrapping it as a Function0 allows it to be delayed
+  def __ifThenElse[T<:MetaAny[T]:Meta](cond: Bool, thenp: => T, elsep: => T)(implicit ctx: SrcCtx): T = {
+    val unwrapThen: () => Exp[T] = () => thenp.s // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse: () => Exp[T] = () => elsep.s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 
   // special hack for "if (x) { thing }"
   // TODO: Still needed?
   def __ifThenElse(cond: Bool, thenp: => Void, elsep: => Unit)(implicit ctx: SrcCtx): Void = {
-    val elseBlk = Fun0(lift(elsep))
+    val elseBlk = () => lift(elsep)
     __ifThenElse(cond, thenp, elseBlk())
   }
 

@@ -17,7 +17,7 @@ trait ChiselGenHashMap extends ChiselCodegen {
     case _ => super.emitNode(lhs, rhs)
   }
 
-  override protected def emitFat(lhs: List[Sym[_]], rhs: Def) = rhs match {
+  override protected def emitFat(lhs: Seq[Sym[_]], rhs: Def) = rhs match {
     case e @ BuildHashMap(in, apply, keyFunc, valFunc, reduce, rV, i) =>
 
     case _ => super.emitFat(lhs, rhs)

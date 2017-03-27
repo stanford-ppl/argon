@@ -56,7 +56,6 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   // --- Staged
   class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Meta[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] {
     override def wrapped(s: Exp[FixPt[S,I,F]]): FixPt[S,I,F] = FixPt[S,I,F](s)(mS,mI,mF)
-    override def typeArguments = Nil
     override def stagedClass = classOf[FixPt[S,I,F]]
     override def isPrimitive = true
 
@@ -69,7 +68,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
       case _ => false
     }
     override def hashCode() = (mS,mI,mF).##
-    protected def getBits(children: Seq[Type[_]]) = Some(__fixPtNum[S,I,F])
+    protected def getBits(children: Seq[Type[_]]) = Some(__fixPtNum[S,I,F](mS,mI,mF))
   }
   implicit def fixPtType[S:BOOL,I:INT,F:INT]: Type[FixPt[S,I,F]] = new FixPtType[S,I,F](BOOL[S],INT[I],INT[F])
 
@@ -118,17 +117,15 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   implicit def __fixPtNum[S:BOOL,I:INT,F:INT]: Num[FixPt[S,I,F]] = new FixPtNum[S,I,F]()
 
   // --- Lift
-  implicit object Int2FixPt extends Lift[Int,Int32] {
-    val staged = fixPtType[TRUE,_32,_0]
+
+  /** Constant lifting **/
+  implicit object LiftInt extends Lift[Int,Int32] {
     def apply(x: Int)(implicit ctx: SrcCtx): Int32 = int2fixpt(x)
   }
-  implicit object Long2FixPt extends Lift[Long,Int64] {
-    val staged = fixPtType[TRUE,_64,_0]
+  implicit object LiftLong extends Lift[Long,Int64] {
     def apply(x: Long)(implicit ctx: SrcCtx): Int64 = long2fixpt(x)
   }
 
-
-  /** Constant lifting **/
   private def literalToBigDecimal[S:BOOL,I:INT,F:INT](x: Any, enWarn: Boolean = true)(implicit ctx: SrcCtx): BigDecimal = {
     val sign = BOOL[S].v
     val ibits = INT[I].v
@@ -172,14 +169,20 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   def fixpt[S:BOOL,I:INT,F:INT](x: BigDecimal)(implicit ctx: SrcCtx): Const[FixPt[S,I,F]] = createConstant[S,I,F](x, enWarn=false)
   def int32(x: BigDecimal)(implicit ctx: SrcCtx): Const[Int32] = createConstant[TRUE,_32,_0](x, enWarn = true)
 
-
   implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
   implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
   def string2fixpt[S:BOOL,I:INT,F:INT](x: String)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
 
   def intParam(c: Int)(implicit ctx: SrcCtx): Param[Int32] = parameter[Int32](literalToBigDecimal[TRUE,_32,_0](c))
 
+
   /** Casting **/
+  implicit def int_cast_fixpt[S:BOOL,I:INT,F:INT]: Cast[Int,FixPt[S,I,F]] = new Cast[Int,FixPt[S,I,F]] {
+    def apply(x: Int)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x, enWarn=false))
+  }
+  implicit def long_cast_fixpt[S:BOOL,I:INT,F:INT]: Cast[Long,FixPt[S,I,F]] = new Cast[Long,FixPt[S,I,F]] {
+    def apply(x: Long)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x, enWarn=false))
+  }
   implicit def fixpt2fixpt[S:BOOL,I:INT,F:INT, S2:BOOL,I2:INT,F2:INT] = new Cast[FixPt[S,I,F],FixPt[S2,I2,F2]] {
     def apply(x: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S2,I2,F2] = wrap(fix_convert[S,I,F,S2,I2,F2](x.s))
   }

@@ -3,15 +3,15 @@ package argon.ops
 import argon.core.Staging
 import org.virtualized.EmptyContext
 
-trait ArrayApi extends ArrayExp with FixPtApi with VoidApi with TextApi {
-  type Array[T <: MetaAny[T]] = MetaArray[T]
+trait ArrayApi extends ArrayExp with FixPtApi with VoidApi with TextApi with FltPtApi {
+  type Array[T] = MetaArray[T]
 
   // TODO: Change this - different than Scala syntax
   // Same as Array.empty[T](size)
   // def Array[T:Meta](size: Int32)(implicit ctx: SrcCtx): MetaArray[T] = MetaArray(array_new[T](size.s))
 }
 
-trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp with BoolExp {
+trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp with BoolExp with FltPtExp {
   /** Infix methods **/
   case class MetaArray[T:Meta](s: Exp[MetaArray[T]]) extends MetaAny[MetaArray[T]] {
     def apply(i: Int32)(implicit ctx: SrcCtx): T = wrap(array_apply(s, i.s))
@@ -19,11 +19,11 @@ trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp with Bool
 
     def ===(that: MetaArray[T])(implicit ctx: SrcCtx): Bool = {
       val eqs = array_infix_zip(this,that,{(x: T,y: T) => x === y})
-      array_infix_reduce(eqs, {(a,b) => a && b})
+      array_infix_reduce(eqs, {(a:Bool,b:Bool) => a && b})
     }
     def =!=(that: MetaArray[T])(implicit ctx: SrcCtx): Bool = {
       val neqs = array_infix_zip(this,that, {(x: T, y: T) => x =!= y})
-      array_infix_reduce(neqs, {(a,b) => a || b})
+      array_infix_reduce(neqs, {(a:Bool,b:Bool) => a || b})
     }
     def toText(implicit ctx: SrcCtx) = textify(this)
   }
@@ -33,7 +33,7 @@ trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp with Bool
   }
   private[argon] def array_from_function[T:Meta](size: Index, func: Index => T)(implicit ctx: SrcCtx): MetaArray[T] = {
     val i = fresh[Index]
-    val fBlk = Fun0(func(wrap(i)).s)
+    val fBlk = () => func(wrap(i)).s
     MetaArray( array_mapindices(size.s, fBlk(), i) )
   }
   private[argon] def array_infix_foreach[T:Meta](array: MetaArray[T], func: T => Void)(implicit ctx: SrcCtx): Void = {
@@ -96,7 +96,7 @@ trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp with Bool
     override def stagedClass = classOf[MetaArray[T]]
     override def isPrimitive = false
   }
-  implicit def arrayType[T:Meta]: Type[MetaArray[T]] = ArrayType(meta[T])
+  implicit def arrayType[T:Meta]: Meta[MetaArray[T]] = ArrayType(meta[T])
 
   /** IR Nodes **/
   case class InputArguments() extends Op[MetaArray[Text]] {
@@ -126,7 +126,7 @@ trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp with Bool
     def mirror(f:Tx) = array_mapindices(f(size),f(func),i)
     override def inputs = dyns(size) ++ dyns(func)
     override def freqs  = normal(size) ++ hot(func)
-    override def binds = i +: super.binds
+    override def binds  = i +: super.binds
 
     override def aliases = Nil
 

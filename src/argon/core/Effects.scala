@@ -58,7 +58,7 @@ trait Effects extends Symbols { this: Staging =>
     def update(s: Sym[_], e: Effects) = metadata.add(s, e)
   }
   object Effectful {
-    def unapply(x: Sym[_]): Option[(Effects,List[Exp[_]])] = {
+    def unapply(x: Sym[_]): Option[(Effects,Seq[Exp[_]])] = {
       val deps = depsOf(x)
       val effects = effectsOf(x)
       if (effects.isPure && deps.isEmpty) None else Some((effects,deps))
@@ -75,7 +75,7 @@ trait Effects extends Symbols { this: Staging =>
     * simple - include the *most recent* previous simple effect as a scheduling dependency of a simple effect
     * global - include ALL global effects as scheduling dependencies of a global effect
     */
-  final def effectDependencies(effects: Effects): List[Sym[_]] = if (effects.global) context else {
+  final def effectDependencies(effects: Effects): Seq[Sym[_]] = if (effects.global) context else {
     val read = effects.reads
     val write = effects.writes
     val accesses = read ++ write  // Cannot read/write prior to allocation

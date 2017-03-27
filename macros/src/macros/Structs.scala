@@ -59,11 +59,7 @@ object StagedStructsMacro {
 
         val cls =
           q"""
-<<<<<<< HEAD
-            case class $className(s: Exp[$className]) extends Struct[$className] {
-=======
-            case class $className(s: Exp[$className]) extends Struct[$className] with StageAny[$className] {
->>>>>>> meta-merge
+            case class $className(s: Exp[$className]) extends MetaStruct[$className] {
               ..$fieldList
             }
            """
@@ -91,27 +87,17 @@ object StagedStructsMacro {
           q"""
             object ${TermName(className.toString + "Type")} extends StructType[$className] with $parent {
               override def wrapped(x: Exp[$className]) = ${className.toTermName}(x)
-<<<<<<< HEAD
-              override def unwrapped(x: $className) = x.s
-=======
->>>>>>> meta-merge
               override def typeArguments = Nil
               override def stagedClass = classOf[$className]
               override def fields = Seq(..$childList)
             }
            """
-<<<<<<< HEAD
-=======
-        // override def unwrapped(x: $className) = x.s
-
->>>>>>> meta-merge
-
         /**
           * Staged Evidence
           */
         val ev =
           q"""
-            implicit def ${TermName(className.toString + "Staged")}: StructType[$className] = ${TermName(className.toString + "Type")}
+            implicit def ${TermName(className.toString + "TypeEvidence")}: StructType[$className] = ${TermName(className.toString + "Type")}
           """
 
         /**
@@ -123,11 +109,7 @@ object StagedStructsMacro {
         }
         val body = fields.map{
           case ValDef(_, termName, typeIdent, rhs) =>
-<<<<<<< HEAD
-            q"${Literal(Constant(termName.toString))} -> unwrap($termName)"
-=======
             q"${Literal(Constant(termName.toString))} -> $termName.s"
->>>>>>> meta-merge
         }
 
         // TODO: We assume for now that struct annotation is always used within a trait - any way to be more general?
@@ -135,10 +117,10 @@ object StagedStructsMacro {
         val mdef = q"def ${className.toTermName}(..$args): $className = struct[$className]( ..$body )"
 
         // Implicit object must come before class definition
-        val cc = q"$cls ; $mdef ; ..$evidences ; $stg ; $ev  "
+        val cc = q"$stg ; $ev ; $cls ; $mdef ; ..$evidences"
 
         // Debugging
-        //c.info(tree.pos, showCode(cc), force = true)
+        c.info(tree.pos, showCode(cc), force = true)
         //c.info(tree.pos, showRaw(cc), force = true)
         cc
 

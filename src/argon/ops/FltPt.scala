@@ -52,7 +52,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
 
     def sigBits: Int = mG.v
     def expBits: Int = mE.v
-    protected def getBits(children: Seq[Type[_]]) = Some(__fltPtNum[G,E])
+    protected def getBits(children: Seq[Type[_]]) = Some(__fltPtNum[G,E](mG,mE))
   }
   implicit def fltPtType[G:INT,E:INT]: Type[FltPt[G,E]] = new FltPtType(INT[G],INT[E])
 
@@ -103,11 +103,9 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
 
   // --- Lift
   implicit object Float2FltPt extends Lift[Float,Float32] {
-    val staged = fltPtType[_24,_8]
     def apply(x: Float)(implicit ctx: SrcCtx): Float32 = float2fltpt(x)
   }
   implicit object Double2FltPt extends Lift[Double,Float64] {
-    val staged = fltPtType[_53,_11]
     def apply(x: Double)(implicit ctx: SrcCtx): Float64 = double2fltpt(x)
   }
 
@@ -146,6 +144,19 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
   def fltpt[G:INT,E:INT](x: BigDecimal)(implicit ctx: SrcCtx): Const[FltPt[G,E]] = createConstant[G,E](x, enWarn=false)
 
   /** Casting **/
+  implicit def int_cast_fltpt[G:INT,E:INT]: Cast[Int,FltPt[G,E]] = new Cast[Int,FltPt[G,E]] {
+    def apply(x: Int)(implicit ctx: SrcCtx): FltPt[G,E] = int2fltpt[G,E](x)
+  }
+  implicit def long_cast_fltpt[G:INT,E:INT]: Cast[Long,FltPt[G,E]] = new Cast[Long,FltPt[G,E]] {
+    def apply(x: Long)(implicit ctx: SrcCtx): FltPt[G,E] = long2fltpt[G,E](x)
+  }
+  implicit def float_cast_fltpt[G:INT,E:INT]: Cast[Float,FltPt[G,E]] = new Cast[Float,FltPt[G,E]] {
+    def apply(x: Float)(implicit ctx: SrcCtx): FltPt[G,E] = float2fltpt[G,E](x)
+  }
+  implicit def double_cast_fltpt[G:INT,E:INT]: Cast[Double,FltPt[G,E]] = new Cast[Double,FltPt[G,E]] {
+    def apply(x: Double)(implicit ctx: SrcCtx): FltPt[G,E] = double2fltpt[G,E](x)
+  }
+
   implicit def fltpt2fltpt[G:INT,E:INT, G2:INT,E2:INT] = new Cast[FltPt[G,E],FltPt[G2,E2]] {
     def apply(x: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G2,E2] = wrap(flt_convert[G,E,G2,E2](x.s))
   }

@@ -11,14 +11,14 @@ trait Staging extends Scheduling {
     bnd
   }
   def constant[T:Type](c: Any)(implicit ctx: SrcCtx): Const[T] = {
-    val cc = new Const[T](c)
+    val cc = new Const[T](c)(typ[T])
     log(c"Making constant ${typ[T]} from ${escapeConst(c)} : ${c.getClass}")
     registerInput(cc)
     cc.setCtx(ctx)
     cc
   }
   def parameter[T:Type](c: Any)(implicit ctx: SrcCtx): Param[T] = {
-    val p = new Param[T](c)
+    val p = new Param[T](c)(typ[T])
     log(c"Making parameter ${typ[T]} from ${escapeConst(p)} : ${c.getClass}")
     registerInput(p)
     p.setCtx(ctx)
@@ -92,7 +92,7 @@ trait Staging extends Scheduling {
       checkContext()
       val deps = effectDependencies(effects)
 
-      def stageEffects(): List[Sym[_]] = {
+      def stageEffects(): Seq[Sym[_]] = {
         val ss = registerDef(d, deps)(ctx)
         ss.foreach { s =>
           effectsOf(s) = effectsOf(s) andAlso effects

@@ -23,15 +23,15 @@ object ArrayAtomicWrite extends Test {
 
 class AtomicWriteTests extends FlatSpec with Matchers with Exceptions {
 
-  "ArrayAtomicWrite" should "compile with atomic writes enabled" in {
-    Config.allowAtomicWrites = true
-    ArrayAtomicWrite.main(Array.empty)
-  }
-
   "Atomic Writes" should "fail when disabled" in {
-    a [TestBenchFailed] should be thrownBy {
+    a[TestBenchFailed] should be thrownBy {
       Config.allowAtomicWrites = false
       ArrayAtomicWrite.main(Array.empty)
     }
+  }
+
+  "ArrayAtomicWrite" should "compile with atomic writes enabled" in {
+    Config.allowAtomicWrites = true
+    ArrayAtomicWrite.main(Array.empty)
   }
 }

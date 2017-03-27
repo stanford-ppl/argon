@@ -5,7 +5,7 @@ import scala.reflect.macros.blackbox
 object Bits extends TypeclassMacro {
   override def generateLookup(c: blackbox.Context)(name: c.TypeName): Option[c.Tree] = {
     import c.universe._
-    Some( Ident(TypeName(name.toString + "BitsLookup")) )
+    Some( Ident(TypeName(name.toString + "CanBits")) )
   }
 
   override def generateImplementation(c: blackbox.Context)(tree: c.Tree) = {
@@ -30,7 +30,7 @@ object Bits extends TypeclassMacro {
           q"$term: Bits[$tp]"
         }
         val stgEvidenceParams = distinctTypes.zip(stgEvidence).map{case (tp,term) =>
-          q"$term: Staged[$tp]"
+          q"$term: Type[$tp]"
         }
         val implicits = bitEvidenceParams ++ stgEvidenceParams
 
@@ -70,17 +70,17 @@ object Bits extends TypeclassMacro {
 
         /**
           * Type class "lookup"
-          * hack to get type class evidence from Staged[T]
+          * hack to get type class evidence from Type[T]
           */
         val bitEvs = distinctTypes.zipWithIndex.map{case (tp,i) => q"bitFields($i).asInstanceOf[Bits[$tp]]" }
-        val stgEvs = distinctTypes.zipWithIndex.map{case (tp,i) => q"distinctFields($i).asInstanceOf[Staged[$tp]]" }
+        val stgEvs = distinctTypes.zipWithIndex.map{case (tp,i) => q"distinctFields($i).asInstanceOf[Type[$tp]]" }
         val evs = bitEvs ++ stgEvs
 
         val lookup =
           q"""
             // Hack 2: The Hackening
-            trait ${TypeName(className.toString + "BitsLookup")} extends BitsLookup[$className] { this: StructType[$className] =>
-              override protected def getBits(children: Seq[Staged[_]]): Option[Bits[$className]] = {
+            trait ${TypeName(className.toString + "CanBits")} extends CanBits[$className] { this: StructType[$className] =>
+              override protected def getBits(children: Seq[Type[_]]): Option[Bits[$className]] = {
                 val fieldTypes = this.fields.map(_._2)
                 val distinctFields = List(..$typeMapping).map{i => fieldTypes(i) }
                 val distinctBits = distinctFields.map{case Bits(bits) => Some(bits); case _ => None }

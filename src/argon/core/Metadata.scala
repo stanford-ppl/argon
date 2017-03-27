@@ -25,9 +25,7 @@ trait Metadata extends Graph with Lattices { self: Statements =>
     val bottom = None
   }
 
-  object metadata extends GraphMetadata[Metadata[_]] {
-    private def keyOf[M<:Metadata[M]:Manifest] = manifest[M].runtimeClass.asInstanceOf[Class[M]]
-
+  class IRMetadata extends GraphMetadata[Metadata[_]] {
     def add[M<:Metadata[M]:Manifest](edge: Exp[_], m: M): Unit = this.add(edge, Some(m))
     def add[M<:Metadata[M]:Manifest](edge: Exp[_], m: Option[M]): Unit = {
       val k = keyOf[M]
@@ -37,7 +35,6 @@ trait Metadata extends Graph with Lattices { self: Statements =>
       if (entry.isDefined) addMetadata(edge, entry.get)
       else if (prev.isDefined) removeMetadata(edge, prev.get)
     }
-
 
     def apply[M<:Metadata[M]:Manifest](edge: Exp[_]): Option[M] = {
       val k = keyOf[M]
@@ -49,6 +46,8 @@ trait Metadata extends Graph with Lattices { self: Statements =>
 
     def clearAll[M<:Metadata[M]:Manifest] = clearMetadata(keyOf[M])
   }
+
+  object metadata extends IRMetadata
 
   override def reset(): Unit = {
     super.reset()

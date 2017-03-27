@@ -12,7 +12,9 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   type Text
 
   /** Base type class for all staged types **/
-  sealed trait Type[T] {
+  @implicitNotFound(msg = "Type ${T} is not a staged type. Try adding an explicit lift() call?")
+  abstract class Type[T](implicit val ev: T <:< MetaAny[T]) {
+    def unwrapped(x: T): Exp[T] = x.s
     def wrapped(x: Exp[T]): T
     def typeArguments: List[Type[_]] = Nil
     def stagedClass: Class[T]
@@ -30,6 +32,10 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
       }
     }
   }
+  implicit def subTypeEv[T:Meta](x: T): MetaAny[T] = meta[T].ev(x)
+
+  type Meta[T] = Type[T]
+  //abstract class Meta[T] extends Type[T]
 
   /** Base trait for all staged, frontend types **/
   abstract class MetaAny[T:Meta] {
@@ -46,12 +52,6 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   def __unequals[T<:MetaAny[T]](x: T, y: T)(implicit ctx: SrcCtx): Bool = x =!= y
   def __unequals[A, T<:MetaAny[T]](x: A, y: T)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = lift(x) =!= y
   def __unequals[A, T<:MetaAny[T]](x: T, y: A)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = x =!= lift(y)
-
-  @implicitNotFound(msg = "Type ${A} is not a staged type. Try adding an explicit lift() call?")
-  abstract class Meta[T](implicit val ev: T <:< MetaAny[T]) extends Type[T] {
-    def unwrapped(x: T): Exp[T] = x.s
-  }
-  implicit def subTypeEv[T:Meta](x: T): MetaAny[T] = meta[T].ev(x)
 
   def typ[T:Type] = implicitly[Type[T]]
   def mtyp[A,B](x: Type[A]): Type[B] = x.asInstanceOf[Type[B]]
@@ -84,20 +84,23 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     * ambiguity when calling lift(x), since the compiler may attempt to resolve Staged[B] before it resolves Lift[A,B],
     * causing any implicit value or def with result Staged[_] in scope to qualify.
     **/
+  @implicitNotFound(msg = "Cannot find way to cast type ${A} to type ${B}.")
+  abstract class Cast[A,B](implicit mB: Meta[B]) {
+    val staged = mB
+    def apply(x: A)(implicit ctx: SrcCtx): B
+  }
 
   @implicitNotFound(msg = "Cannot find way to lift type ${A} to type ${B}.")
-  trait Lift[A,B] {
-    val staged: Meta[B]
+  abstract class Lift[A,B](implicit mB: Meta[B]) {
+    val staged = mB
     def apply(x: A)(implicit ctx: SrcCtx): B
   }
 
   final def lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l(x)
 
-  implicit def selfLift[T:Type]: Lift[T,T] = new Lift[T,T] {
-    val staged = implicitly[Type[T]]
+  implicit def selfLift[T:Meta]: Lift[T,T] = new Lift[T,T] {
     override def apply(x: T)(implicit ctx: SrcCtx): T = x
   }
-
 }
 
 

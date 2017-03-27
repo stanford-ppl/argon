@@ -156,7 +156,7 @@ trait Codegen extends Traversal {
     }
   }
 
-  protected def emitFat(lhs: List[Sym[_]], rhs: Def): Unit = throw new GenerationFailedException(rhs)
+  protected def emitFat(lhs: Seq[Sym[_]], rhs: Def): Unit = throw new GenerationFailedException(rhs)
 
   protected def emitFileHeader(): Unit = { }
   protected def emitFileFooter(): Unit = { }
@@ -168,5 +168,5 @@ trait Codegen extends Traversal {
   }
 
   final override protected def visit(lhs: Sym[_], rhs: Op[_]) = emitNode(lhs, rhs)
-  final override protected def visitFat(lhs: List[Sym[_]], rhs: Def) = emitFat(lhs, rhs)
+  final override protected def visitFat(lhs: Seq[Sym[_]], rhs: Def) = emitFat(lhs, rhs)
 }

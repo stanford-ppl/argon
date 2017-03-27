@@ -28,7 +28,7 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
     case Const(c) => c"$lhs = $c"
     case b: Bound[_] => c"$lhs [bound]"
   }
-  final def str(lhs: List[Exp[_]]): String = lhs.head match {
+  final def str(lhs: Seq[Exp[_]]): String = lhs.head match {
     case Def(rhs) => c"$lhs = $rhs"
     case syms => c"$syms"
   }

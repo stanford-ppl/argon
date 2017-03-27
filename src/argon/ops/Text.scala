@@ -38,14 +38,16 @@ trait TextExp extends Staging with BoolExp {
   }
 
   // --- Lift
-  implicit object String2Text extends Lift[String,Text] {
-    val staged = typ[Text]
+  implicit object LiftString2Text extends Lift[String,Text] {
+    override def apply(x: String)(implicit ctx: SrcCtx) = Text(text(x))
+  }
+  implicit object CastString2Text extends Cast[String,Text] {
     override def apply(x: String)(implicit ctx: SrcCtx) = Text(text(x))
   }
 
   /** Constant Lifting **/
-  implicit def string2text(x: String): Text = lift(x)
-  protected def text(x: String): Exp[Text] = constant[Text](x)
+  implicit def string2text(x: String)(implicit ctx: SrcCtx): Text = lift(x)
+  protected def text(x: String)(implicit ctx: SrcCtx): Exp[Text] = constant[Text](x)
 
   /** IR Nodes **/
   case class ToString[S:Type](x: Exp[S]) extends Op[Text] { def mirror(f:Tx) = sym_tostring(f(x)) }

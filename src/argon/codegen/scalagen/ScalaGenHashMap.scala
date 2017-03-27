@@ -17,7 +17,7 @@ trait ScalaGenHashMap extends ScalaCodegen {
     case _ => super.emitNode(lhs, rhs)
   }
 
-  override protected def emitFat(lhs: List[Sym[_]], rhs: Def) = rhs match {
+  override protected def emitFat(lhs: Seq[Sym[_]], rhs: Def) = rhs match {
     case e @ BuildHashMap(in, apply, keyFunc, valFunc, reduce, rV, i) =>
       open(src"val (${lhs(0)},${lhs(1)},${lhs(2)}) = {")
         emit(src"val index  = new ${HashIndexType(mmeta(e.mK))}()")

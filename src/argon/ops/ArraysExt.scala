@@ -7,7 +7,7 @@ package argon.ops
 trait ArrayExtApi extends ArrayExtExp with ArrayApi {
   object Array {
     def tabulate[T:Meta](size: Index)(func: Index => T)(implicit ctx: SrcCtx): MetaArray[T] = array_from_function[T](size, func)
-    def fill[T:Meta](size: Index)(func: => T)(implicit ctx: SrcCtx): MetaArray[T] = Array.tabulate(size){_ => func}
+    def fill[T:Meta](size: Index)(func: => T)(implicit ctx: SrcCtx): MetaArray[T] = Array.tabulate(size){i => func}
     def empty[T:Meta](size: Index)(implicit ctx: SrcCtx): MetaArray[T] = MetaArray(array_new[T](size.s))
   }
 
