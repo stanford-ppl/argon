@@ -15,7 +15,7 @@ object ArgonBuild extends Build {
     scalaVersion := compilerVersion,
 
     publishArtifact in (Compile, packageDoc) := false,
-    libraryDependencies += "org.virtualized" %% "virtualized" % "0.1",
+//    libraryDependencies += "org.virtualized" %% "virtualized" % "0.1",
 //    libraryDependencies += "org.virtualized" %% "virtualized" % "0.9-SNAPSHOT",
     libraryDependencies += "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value % "compile",
@@ -62,3 +62,5 @@ object ArgonBuild extends Build {
   lazy val macros = Project("macros", file("macros"), settings = virtBuildSettings)
   lazy val virtualized = Project("virtualized", file("scala-virtualized"), settings = virtBuildSettings)
 }
+
+
