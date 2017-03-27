@@ -57,7 +57,8 @@ trait Codegen extends Traversal {
     }
   } 
 
-  protected def hasFracBits(tp: Staged[_]): Boolean = false
+  protected def needsFPType(tp: Staged[_]): Boolean = false
+  protected def spatialNeedsFPType(tp: Staged[_]): Boolean = false
 
   final protected def toggleEn(): Unit = {
     if (emitEn) {
