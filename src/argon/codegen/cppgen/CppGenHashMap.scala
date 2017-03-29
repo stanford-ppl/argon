@@ -17,9 +17,9 @@ trait CppGenHashMap extends CppGenArrayExt {
     case HashIndexApply(index, key) => 
       emit(src"${lhs.tp} $lhs = -1;")
       open(src"for (int ${lhs}_i = 0; ${lhs}_i < ${index}_size; ${lhs}_i++) {")
-      emit(src"if ((*${index})[${lhs}_i] == ${key}) { $lhs = ${lhs}_i; }")
+        emit(src"if ((*${index})[${lhs}_i] == ${key}) { $lhs = ${lhs}_i; }")
       close("}")
-      emit(src"assert(${lhs} > -1);")
+      emit(src"// assert(${lhs} > -1); // Allow index lookup errors")
     case _ => super.emitNode(lhs, rhs)
   }
 
