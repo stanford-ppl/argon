@@ -12,10 +12,10 @@ trait ChiselGenFltPt extends ChiselCodegen {
     case _ => super.remap(tp)
   }
 
-  override protected def hasFracBits(tp: Type[_]): Boolean = tp match {
+  override protected def needsFPType(tp: Type[_]): Boolean = tp match {
       case FloatType() => true
       case DoubleType() => true
-      case _ => super.hasFracBits(tp)
+      case _ => super.needsFPType(tp)
   }
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {

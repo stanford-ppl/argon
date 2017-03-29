@@ -10,14 +10,7 @@ Argon currently requires the macro project scala-virtualized, although this may 
 
 #Installation
 ```bash
-git clone https://github.com/stanford-ppl/scala-virtualized.git
 git clone https://github.com/stanford-ppl/argon.git
-
-cd scala-virtualized
-git checkout argon
-sbt publishLocal
-cd ..
-
-cd argon
+git submodule update --init
 sbt compile
 ```

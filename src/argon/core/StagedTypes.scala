@@ -77,12 +77,12 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   def infix_!=[A, B, C<:MetaAny[B]](x1:A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro unequalLiftLeftImpl[Bool]
 
 
-  /** Lift[A,B] is used in place of Staged[T] for user-facing type parameters, where the user may either
+  /** Lift[A,B] is used in place of Type[T] for user-facing type parameters, where the user may either
     * give an unStaged constant or a Staged symbol as the return value.
     *
-    * NOTE: Including evidence of Staged[B] as an implicit parameter to Lift instances leads to problems with implicit
-    * ambiguity when calling lift(x), since the compiler may attempt to resolve Staged[B] before it resolves Lift[A,B],
-    * causing any implicit value or def with result Staged[_] in scope to qualify.
+    * NOTE: Including evidence of Type[B] as an implicit parameter to Lift instances leads to problems with implicit
+    * ambiguity when calling lift(x), since the compiler may attempt to resolve Type[B] before it resolves Lift[A,B],
+    * causing any implicit value or def with result Type[_] in scope to qualify.
     **/
   @implicitNotFound(msg = "Cannot find way to cast type ${A} to type ${B}.")
   abstract class Cast[A,B](implicit mB: Meta[B]) {

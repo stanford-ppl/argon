@@ -1,7 +1,6 @@
 package argon.core
 
 import argon.Config
-
 import scala.collection.mutable
 
 trait Statements extends Definitions with ArgonExceptions { this: Staging =>
@@ -16,8 +15,8 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
 
   // "Typed pair" - symbol + an op
   object TP {
-    def unapply[A](x: Stm): Option[(Sym[_],Op[_])] = x match {
-      case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[_]], rhs))
+    def unapply[A](x: Stm): Option[(Sym[_],Op[Any])] = x match {
+      case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[_]], rhs.asInstanceOf[Op[Any]]))
       case _ => None
     }
   }

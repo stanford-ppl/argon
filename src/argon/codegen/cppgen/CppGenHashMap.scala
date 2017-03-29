@@ -7,19 +7,18 @@ trait CppGenHashMap extends CppGenArrayExt {
   val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp
   import IR._
 
-  // override protected def remap(tp: Staged[_]): String = tp match {
+  // override protected def remap(tp: Type[_]): String = tp match {
   //   case HashIndexType(mK) => src"scala.collection.mutable.HashMap[$mK,${typ[Index]}]"
   //   case _ => super.remap(tp)
   // }
-
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
     case HashIndexApply(index, key) => 
       emit(src"${lhs.tp} $lhs = -1;")
       open(src"for (int ${lhs}_i = 0; ${lhs}_i < ${index}_size; ${lhs}_i++) {")
-      emit(src"if ((*${index})[${lhs}_i] == ${key}) { $lhs = ${lhs}_i; }")
+        emit(src"if ((*${index})[${lhs}_i] == ${key}) { $lhs = ${lhs}_i; }")
       close("}")
-      emit(src"assert(${lhs} > -1);")
+      emit(src"// assert(${lhs} > -1); // Allow index lookup errors")
     case _ => super.emitNode(lhs, rhs)
   }
 

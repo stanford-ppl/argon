@@ -57,8 +57,8 @@ trait Codegen extends Traversal {
     }
   } 
 
-  // TODO: Why is this here?
-  protected def hasFracBits(tp: Type[_]): Boolean = false
+  protected def needsFPType(tp: Type[_]): Boolean = false
+  protected def spatialNeedsFPType(tp: Type[_]): Boolean = false  // TODO: Spatial specific!
 
   final protected def toggleEn(): Unit = {
     if (emitEn) {

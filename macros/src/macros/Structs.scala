@@ -120,7 +120,7 @@ object StagedStructsMacro {
         val cc = q"$stg ; $ev ; $cls ; $mdef ; ..$evidences"
 
         // Debugging
-        c.info(tree.pos, showCode(cc), force = true)
+        //c.info(tree.pos, showCode(cc), force = true)
         //c.info(tree.pos, showRaw(cc), force = true)
         cc
 

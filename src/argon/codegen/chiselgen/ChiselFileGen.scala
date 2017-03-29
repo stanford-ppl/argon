@@ -39,6 +39,7 @@ trait ChiselFileGen extends FileGen {
       emit(s"""package accel
 import chisel3._
 import templates._
+import templates.ops._
 import chisel3.util._
 import fringe._
 import types._""")
@@ -51,6 +52,7 @@ import types._""")
     withStream(getStream("BufferControlCxns")) {
       emit(s"""package accel
 import templates._
+import templates.ops._
 import fringe._
 import chisel3._""")
       open(s"""trait BufferControlCxns extends RootController {""")
@@ -59,6 +61,7 @@ import chisel3._""")
     withStream(getStream("RootController")) {
       emit(s"""package accel
 import templates._
+import templates.ops._
 import fringe._
 import types._
 import chisel3._""")
@@ -70,6 +73,7 @@ import chisel3._""")
     withStream(getStream("GlobalWires")) {
       emit(s"""package accel
 import templates._
+import templates.ops._
 import chisel3._
 import types._
 trait GlobalWires extends IOModule{""")
@@ -98,13 +102,6 @@ trait GlobalWires extends IOModule{""")
       open("object Instantiator extends CommonMain {")
         emit("type DUTType = Top")
         emit("")
-        open("def supportedTarget(t: String) = t match {")
-          emit("""case "aws" => true""")
-          emit("""case "zynq" => true""")
-          emit("""case "verilator" => true""")
-          emit("case _ => false")
-        close("}")
-        emit("")
         open("def dut = () => {")
 
     }
@@ -120,8 +117,6 @@ trait GlobalWires extends IOModule{""")
           emit("val w = 32")
           emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
           emit("val numArgOuts = numArgOuts_reg")
-          emit("""val target = if (args.size > 0) args(0) else "verilator" """)
-          emit("""Predef.assert(supportedTarget(target), s"ERROR: Unsupported Fringe target '$target'")""")
           emit("new Top(w, numArgIns, numArgOuts, numMemoryStreams, target)")
         close("}")
         emit("def tester = { c: DUTType => new TopUnitTester(c) }")
@@ -168,7 +163,7 @@ trait GlobalWires extends IOModule{""")
       close("}")
     }
 
-    if (Config.multifile == 4) {
+    if (Config.multifile >= 3 ) {
       val traits = streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
       }.toSet - "AccelTop" - "GlobalWires" - "Instantiator"
