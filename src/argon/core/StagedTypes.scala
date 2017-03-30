@@ -1,5 +1,7 @@
 package argon.core
 
+import forge._
+
 import scala.annotation.implicitNotFound
 import org.virtualized.{EmbeddedControls, SourceContext}
 
@@ -40,9 +42,9 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   /** Base trait for all staged, frontend types **/
   abstract class MetaAny[T:Meta] {
     def s: Exp[T]
-    def ===(x: T)(implicit ctx: SrcCtx): Bool
-    def =!=(x: T)(implicit ctx: SrcCtx): Bool
-    def toText(implicit ctx: SrcCtx): Text
+    @api def ===(x: T): Bool
+    @api def =!=(x: T): Bool
+    @api def toText: Text
   }
 
   def infix_toString[T<:MetaAny[T]](x: T) = x.toText

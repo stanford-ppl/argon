@@ -1,6 +1,15 @@
 package argon.ops
 
+import forge._
+
 trait OverloadHack {
+  /*
+  @generate
+  class OverloadI$I$0to63
+  @generate
+  implicit val overloadI$I$0to63 = new OverloadI
+  */
+
   class Overload0
   class Overload1
   class Overload2

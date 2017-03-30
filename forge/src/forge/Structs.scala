@@ -1,4 +1,4 @@
-package macros
+package forge
 
 import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros

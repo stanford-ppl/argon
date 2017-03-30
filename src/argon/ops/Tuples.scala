@@ -2,6 +2,7 @@ package argon.ops
 
 import argon.core.Staging
 import argon.typeclasses._
+import forge._
 
 trait TupleApi extends TupleExp with StructApi with BitsApi with ArithApi {
   this: TextApi =>
@@ -12,14 +13,14 @@ trait TupleExp extends Staging with StructExp with ArithExp with BitsExp {
 
   /** Infix methods **/
   case class Tup2[A:Meta,B:Meta](s: Exp[Tup2[A,B]]) extends MetaStruct[Tup2[A,B]] {
-    def _1(implicit ctx: SrcCtx): A = field[A]("_1")
-    def _2(implicit ctx: SrcCtx): B = field[B]("_2")
+    @api def _1: A = field[A]("_1")
+    @api def _2: B = field[B]("_2")
   }
 
   /** Direct methods **/
-  def pack[A:Meta,B:Meta](a: A, b: B)(implicit ctx: SrcCtx): Tup2[A,B] = struct[Tup2[A,B]]("_1" -> a.s, "_2" -> b.s)
-  def pack[A:Meta,B:Meta](t: (A, B))(implicit ctx: SrcCtx): Tup2[A,B] = struct[Tup2[A,B]]("_1" -> t._1.s, "_2" -> t._2.s)
-  def unpack[A:Meta,B:Meta](t: Tup2[A,B])(implicit ctx: SrcCtx): (A,B) = (t._1, t._2)
+  @api def pack[A:Meta,B:Meta](a: A, b: B): Tup2[A,B] = struct[Tup2[A,B]]("_1" -> a.s, "_2" -> b.s)
+  @api def pack[A:Meta,B:Meta](t: (A, B)): Tup2[A,B] = struct[Tup2[A,B]]("_1" -> t._1.s, "_2" -> t._2.s)
+  @api def unpack[A:Meta,B:Meta](t: Tup2[A,B]): (A,B) = (t._1, t._2)
 
   /** Type classes **/
   // --- Staged

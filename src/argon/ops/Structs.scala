@@ -2,6 +2,7 @@ package argon.ops
 
 import argon.Config
 import argon.core.Staging
+import forge._
 
 trait StructApi extends StructExp with VoidApi{
   self: TextApi =>
@@ -9,15 +10,18 @@ trait StructApi extends StructExp with VoidApi{
 
 trait StructExp extends Staging with VoidExp with TextExp {
 
+  /**
+    * Parent class for all staged Structs
+    */
   abstract class MetaStruct[T:StructType] extends MetaAny[T]{ self =>
-    def field[R:Meta](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](self.s, name))
+    protected def tp = implicitly[StructType[T]]
+    protected def field[R:Meta](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](self.s, name))
+    protected def fieldToText[T](name: String, tp: Meta[T])(implicit ctx: SrcCtx) = tp.ev(field(name)(mtyp(tp), ctx)).toText
 
-    def =!=(that: T)(implicit ctx: SrcCtx): Bool = struct_unequals(this.asInstanceOf[T],that)
-    def ===(that: T)(implicit ctx: SrcCtx): Bool = struct_equals(this.asInstanceOf[T],that)
-
-    def toText(implicit ctx: SrcCtx) = {
-      val tp = implicitly[StructType[T]]
-      val fields = tp.fields.map{case (name,fieldTyp) => textify(field(name)(fieldTyp, ctx))(mmeta(fieldTyp),ctx) }
+    @api def =!=(that: T): Bool = struct_unequals(this.asInstanceOf[T],that)
+    @api def ===(that: T): Bool = struct_equals(this.asInstanceOf[T],that)
+    @api def toText = {
+      val fields = tp.fields.map{case (name,fieldTyp) => fieldToText(name,fieldTyp) }
       lift[String,Text](tp.prefix + "(") + fields.reduceLeft{(a,b) => a + "," + b } + ")"
     }
   }

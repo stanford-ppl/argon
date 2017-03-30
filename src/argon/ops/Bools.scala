@@ -2,6 +2,7 @@ package argon.ops
 
 import argon.core.Staging
 import argon.typeclasses._
+import forge._
 
 trait BoolApi extends BoolExp with BitsApi { this: TextApi =>
   type Boolean = Bool
@@ -11,14 +12,14 @@ trait BoolExp extends Staging with BitsExp with CastExp { this: TextExp =>
 
   /** Infix methods **/
   case class Bool(s: Exp[Bool]) extends MetaAny[Bool] {
-    def unary_!(implicit ctx: SrcCtx): Bool = Bool(bool_not(this.s)(ctx))
-    def &&(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_and(this.s, that.s)(ctx))
-    def ||(that: Bool)(implicit ctx: SrcCtx): Bool = Bool( bool_or(this.s, that.s)(ctx))
-    def ^ (that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(this.s, that.s)(ctx))
+    @api def unary_!(): Bool = Bool(bool_not(this.s))
+    @api def &&(that: Bool): Bool = Bool(bool_and(this.s, that.s))
+    @api def ||(that: Bool): Bool = Bool( bool_or(this.s, that.s))
+    @api def ^ (that: Bool): Bool = Bool(bool_xor(this.s, that.s))
 
-    def ===(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xnor(this.s, that.s)(ctx))
-    def =!=(that: Bool)(implicit ctx: SrcCtx): Bool = Bool(bool_xor(this.s, that.s)(ctx))
-    override def toText(implicit ctx: SrcCtx) = textify(this)
+    @api def ===(that: Bool): Bool = Bool(bool_xnor(this.s, that.s))
+    @api def =!=(that: Bool): Bool = Bool(bool_xor(this.s, that.s))
+    @api def toText = textify(this)
   }
 
   /** Type classes **/

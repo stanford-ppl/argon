@@ -25,9 +25,9 @@ object ArgonBuild extends Build {
     excludeFilter in unmanagedSources := "*template-level*" || "*app-level*" || "*resources*",
 
     // More strict error/warning checking
-    scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
+    scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings", "-language:experimental.macros"),
     // It would be very annoying to have to import these everywhere in this project
-    scalacOptions ++= Seq("-language:higherKinds", "-language:implicitConversions", "-language:experimental.macros"),
+    scalacOptions ++= Seq("-language:higherKinds", "-language:implicitConversions"),
 
     scalacOptions in (Compile, doc) ++= Seq(
       "-doc-root-content",
@@ -67,16 +67,7 @@ object ArgonBuild extends Build {
     concurrentRestrictions in Global += Tags.limitAll(1) // we need tests to run in isolation across all projects
   )
 
-  lazy val argonSettings = buildSettings ++ Seq(
-    name := "argon",
-    version := "1.0",
-    isSnapshot := true
-  )
-
-  lazy val forge = Project("forge", file("forge"), settings = buildSettings)
-  lazy val virtualized = Project("virtualized", file("scala-virtualized"), settings = buildSettings)
-
-  lazy val argon = Project("argon", file("."), settings = argonSettings) dependsOn (forge, virtualized)
+  lazy val macros = Project("macros", file("."), settings = buildSettings)
 }
 
 

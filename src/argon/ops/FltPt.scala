@@ -2,6 +2,7 @@ package argon.ops
 
 import argon.core.{ArgonExceptions, Staging}
 import argon.typeclasses._
+import forge._
 
 trait FltPtApi extends FltPtExp with BoolApi with BitsApi with NumApi with OrderApi with CastApi {
   this: TextApi with FixPtExp =>
@@ -21,19 +22,19 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
 
   /** Infix methods **/
   case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) extends MetaAny[FltPt[G,E]] {
-    def unary_-(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_neg(this.s))
-    def + (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_add(this.s,that.s))
-    def - (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_sub(this.s,that.s))
-    def * (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_mul(this.s,that.s))
-    def / (that: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(flt_div(this.s,that.s))
-    def < (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool( flt_lt(this.s,that.s))
-    def <=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(this.s,that.s))
-    def > (that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool( flt_lt(that.s,this.s))
-    def >=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_leq(that.s,this.s))
-    def ===(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_eql(that.s,this.s))
-    def =!=(that: FltPt[G,E])(implicit ctx: SrcCtx): Bool       = Bool(flt_eql(that.s,this.s))
+    @api def unary_-(): FltPt[G,E] = FltPt(flt_neg(this.s))
+    @api def + (that: FltPt[G,E]): FltPt[G,E] = FltPt(flt_add(this.s,that.s))
+    @api def - (that: FltPt[G,E]): FltPt[G,E] = FltPt(flt_sub(this.s,that.s))
+    @api def * (that: FltPt[G,E]): FltPt[G,E] = FltPt(flt_mul(this.s,that.s))
+    @api def / (that: FltPt[G,E]): FltPt[G,E] = FltPt(flt_div(this.s,that.s))
+    @api def < (that: FltPt[G,E]): Bool       = Bool( flt_lt(this.s,that.s))
+    @api def <=(that: FltPt[G,E]): Bool       = Bool(flt_leq(this.s,that.s))
+    @api def > (that: FltPt[G,E]): Bool       = Bool( flt_lt(that.s,this.s))
+    @api def >=(that: FltPt[G,E]): Bool       = Bool(flt_leq(that.s,this.s))
+    @api def ===(that: FltPt[G,E]): Bool      = Bool(flt_eql(this.s,that.s))
+    @api def =!=(that: FltPt[G,E]): Bool      = Bool(flt_neq(this.s,that.s))
 
-    override def toText(implicit ctx: SrcCtx) = textify(this)
+    @api override def toText = textify(this)
   }
 
 

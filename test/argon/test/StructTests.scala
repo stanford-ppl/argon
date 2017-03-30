@@ -1,6 +1,6 @@
 package argon.test
 import org.scalatest.{FlatSpec, Matchers}
-import macros._
+import forge._
 import org.virtualized._
 import argon.Config
 

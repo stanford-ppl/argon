@@ -2,9 +2,11 @@ package argon.ops
 
 import argon.core.Staging
 
+import forge._
+
 trait AssertApi extends AssertExp with BoolApi with TextApi with VoidApi {
-  def assert(cond: Bool, msg: Text)(implicit ctx: SrcCtx): Void = Void(stage_assert(cond.s, Some(msg.s)))
-  def assert(cond: Bool)(implicit ctx: SrcCtx): Void = Void(stage_assert(cond.s, None))
+  @api def assert(cond: Bool, msg: Text): Void = Void(stage_assert(cond.s, Some(msg.s)))
+  @api def assert(cond: Bool): Void = Void(stage_assert(cond.s, None))
 }
 
 trait AssertExp extends Staging with BoolExp with TextExp with VoidExp {

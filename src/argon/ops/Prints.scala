@@ -2,15 +2,17 @@ package argon.ops
 
 import argon.core.Staging
 
+import forge._
+
 trait PrintApi extends PrintExp with TextApi with VoidApi {
   /** Direct methods **/
-  def println()(implicit ctx: SrcCtx): Void = println("")
+  @api def println(): Void = println("")
 
-  def print[T:Type](x: T)(implicit ctx: SrcCtx): Void = Void(misc_print(textify(x).s))
-  def println[T:Type](x: T)(implicit ctx: SrcCtx): Void = Void(misc_println(textify(x).s))
+  @api def print[T:Meta](x: T): Void = Void(misc_print(textify(x).s))
+  @api def println[T:Meta](x: T): Void = Void(misc_println(textify(x).s))
 
-  def print(x: java.lang.String)(implicit ctx: SrcCtx): Void = print(string2text(x))
-  def println(x: java.lang.String)(implicit ctx: SrcCtx): Void = println(string2text(x))
+  @api def print(x: java.lang.String): Void = print(string2text(x))
+  @api def println(x: java.lang.String): Void = println(string2text(x))
 }
 
 trait PrintExp extends Staging with TextExp with VoidExp {

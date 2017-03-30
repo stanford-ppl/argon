@@ -2,6 +2,7 @@ package argon.ops
 
 import argon.core.Staging
 import argon.typeclasses._
+import forge._
 
 trait FixPtApi extends FixPtExp with BitsApi with NumApi with OrderApi with CastApi with BoolApi {
   this: TextApi with FltPtExp =>
@@ -25,31 +26,30 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
 
   /** Infix Methods **/
   case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt[S,I,F]] {
-    def unary_-(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_neg(this.s))
-    def unary_~(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_inv(this.s))
-    def + (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_add(this.s,that.s))
-    def - (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_sub(this.s,that.s))
-    def * (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_mul(this.s,that.s))
-    def / (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_div(this.s,that.s))
-    def & (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(fix_and(this.s,that.s))
-    def | (that: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt( fix_or(this.s,that.s))
-    def < (that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool( fix_lt(this.s,that.s))
-    def <=(that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool(fix_leq(this.s,that.s))
-    def > (that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool( fix_lt(that.s,this.s))
-    def >=(that: FixPt[S,I,F])(implicit ctx: SrcCtx): Bool         = Bool(fix_leq(that.s,this.s))
+    @api def unary_-(): FixPt[S,I,F] = FixPt(fix_neg(this.s))
+    @api def unary_~(): FixPt[S,I,F] = FixPt(fix_inv(this.s))
+    @api def + (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_add(this.s,that.s))
+    @api def - (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_sub(this.s,that.s))
+    @api def * (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_mul(this.s,that.s))
+    @api def / (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_div(this.s,that.s))
+    @api def & (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_and(this.s,that.s))
+    @api def | (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt( fix_or(this.s,that.s))
+    @api def < (that: FixPt[S,I,F]): Bool         = Bool( fix_lt(this.s,that.s))
+    @api def <=(that: FixPt[S,I,F]): Bool         = Bool(fix_leq(this.s,that.s))
+    @api def > (that: FixPt[S,I,F]): Bool         = Bool( fix_lt(that.s,this.s))
+    @api def >=(that: FixPt[S,I,F]): Bool         = Bool(fix_leq(that.s,this.s))
 
-    def ===(that: FixPt[S,I,F])(implicit ctx: SrcCtx) = Bool(fix_eql(this.s, that.s))
-    def =!=(that: FixPt[S,I,F])(implicit ctx: SrcCtx) = Bool(fix_neq(this.s, that.s))
-
-    override def toText(implicit ctx: SrcCtx) = textify(this)
+    @api def ===(that: FixPt[S,I,F]) = Bool(fix_eql(this.s, that.s))
+    @api def =!=(that: FixPt[S,I,F]) = Bool(fix_neq(this.s, that.s))
+    @api override def toText = textify(this)
   }
 
   implicit class FixPtIntLikeOps[S:BOOL,I:INT](x: FixPt[S,I,_0]) {
-    def %(y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = mod(x, y)
+    @api def %(y: FixPt[S,I,_0]): FixPt[S,I,_0] = mod(x, y)
   }
 
   /** Direct methods **/
-  def mod[S:BOOL,I:INT](x: FixPt[S,I,_0], y: FixPt[S,I,_0])(implicit ctx: SrcCtx): FixPt[S,I,_0] = FixPt[S,I,_0](fix_mod(x.s, y.s))
+  @api def mod[S:BOOL,I:INT](x: FixPt[S,I,_0], y: FixPt[S,I,_0]): FixPt[S,I,_0] = FixPt[S,I,_0](fix_mod(x.s, y.s))
 
 
   /** Type classes **/

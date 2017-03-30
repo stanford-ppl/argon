@@ -1,6 +1,7 @@
 package argon.ops
 
 import argon.core.Staging
+import forge._
 
 trait TextApi extends TextExp with BoolApi {
   type String = Text
@@ -9,15 +10,15 @@ trait TextApi extends TextExp with BoolApi {
 trait TextExp extends Staging with BoolExp {
   /** Infix methods **/
   case class Text(s: Exp[Text]) extends MetaAny[Text] {
-    def +(that: String)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, string2text(that).s))
-    def +[T:Meta](that: T)(implicit ctx: SrcCtx): Text = Text(text_concat(this.s, textify(that).s))
-    def !=(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_differ(this.s, that.s))
-    def ==(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
+    @api def +(that: String): Text = Text(text_concat(this.s, string2text(that).s))
+    @api def +[T:Meta](that: T): Text = Text(text_concat(this.s, textify(that).s))
+    @api def !=(that: Text): Bool = Bool(text_differ(this.s, that.s))
+    @api def ==(that: Text): Bool = Bool(text_equals(this.s, that.s))
 
-    def =!=(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_differ(this.s, that.s))
-    def ===(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
-    def equals(that: Text)(implicit ctx: SrcCtx): Bool = Bool(text_equals(this.s, that.s))
-    def toText(implicit ctx: SrcCtx) = this
+    @api def =!=(that: Text): Bool = Bool(text_differ(this.s, that.s))
+    @api def ===(that: Text): Bool = Bool(text_equals(this.s, that.s))
+    @api def equals(that: Text): Bool = Bool(text_equals(this.s, that.s))
+    @api def toText = this
   }
 
   /** Direct methods **/
@@ -25,9 +26,9 @@ trait TextExp extends Staging with BoolExp {
 
 
   /** Virtualized methods **/
-  def infix_toString[S:Type](x: S)(implicit ctx: SrcCtx): Text = textify(x)
-  def infix_+[R:Type](x1: String, x2: R)(implicit ctx: SrcCtx): Text = string2text(x1) + textify(x2)
-  def infix_+[R:Type](x1: R, x2: String)(implicit ctx: SrcCtx): Text = textify(x1) + string2text(x2)
+  @util def infix_toString[S:Type](x: S): Text = textify(x)
+  @util def infix_+[R:Type](x1: String, x2: R): Text = string2text(x1) + textify(x2)
+  @util def infix_+[R:Type](x1: R, x2: String): Text = textify(x1) + string2text(x2)
 
   /** Type classes **/
   // --- Staged

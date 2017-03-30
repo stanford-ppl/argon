@@ -2,6 +2,7 @@ package argon.ops
 
 import argon.core.Staging
 import org.virtualized.EmptyContext
+import forge._
 
 trait ArrayApi extends ArrayExp with FixPtApi with VoidApi with TextApi with FltPtApi {
   type Array[T] = MetaArray[T]
@@ -10,18 +11,18 @@ trait ArrayApi extends ArrayExp with FixPtApi with VoidApi with TextApi with Flt
 trait ArrayExp extends Staging with FixPtExp with VoidExp with TextExp with BoolExp with FltPtExp {
   /** Infix methods **/
   case class MetaArray[T:Meta](s: Exp[MetaArray[T]]) extends MetaAny[MetaArray[T]] {
-    def apply(i: Int32)(implicit ctx: SrcCtx): T = wrap(array_apply(s, i.s))
-    def length(implicit ctx: SrcCtx): Int32 = wrap(array_length(s))
+    @api def apply(i: Int32): T = wrap(array_apply(s, i.s))
+    @api def length: Int32 = wrap(array_length(s))
 
-    def ===(that: MetaArray[T])(implicit ctx: SrcCtx): Bool = {
+    @api def ===(that: MetaArray[T]): Bool = {
       val eqs = array_infix_zip(this,that,{(x: T,y: T) => x === y})
       array_infix_reduce(eqs, {(a:Bool,b:Bool) => a && b})
     }
-    def =!=(that: MetaArray[T])(implicit ctx: SrcCtx): Bool = {
+    @api def =!=(that: MetaArray[T]): Bool = {
       val neqs = array_infix_zip(this,that, {(x: T, y: T) => x =!= y})
       array_infix_reduce(neqs, {(a:Bool,b:Bool) => a || b})
     }
-    def toText(implicit ctx: SrcCtx) = textify(this)
+    @api def toText = textify(this)
   }
 
   private[argon] def array_infix_update[T:Meta](array: MetaArray[T], i: Index, data: T)(implicit ctx: SrcCtx): Void = {

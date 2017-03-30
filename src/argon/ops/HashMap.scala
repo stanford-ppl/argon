@@ -1,14 +1,15 @@
 package argon.ops
 
 import argon.core.Staging
+import forge._
 
 trait HashMapApi extends HashMapExp with ArrayApi with StructApi {
 
-  implicit class ArrayGroupByOps[A:Meta](array: MetaArray[A]) {
-    def groupByReduce[K:Meta,V:Meta](key: A => K)(value: A => V)(reduce: (V,V) => V)(implicit ctx: SrcCtx): MetaHashMap[K,V] = {
+  implicit class ArrayGroupByOps[A](array: MetaArray[A]) {
+    @api def groupByReduce[K:Meta,V:Meta](key: A => K)(value: A => V)(reduce: (V,V) => V)(implicit ctx: SrcCtx, mA: Meta[A]): MetaHashMap[K,V] = {
       val i = fresh[Index]
       val rV = (fresh[V],fresh[V])
-      val aBlk = stageLambda(array.s) { array.apply(wrap(i)).s : Exp[A] }
+      val aBlk = stageLambda(array.s) { array.apply(wrap(i)).s }
       val kBlk = stageLambda(aBlk.result){ key(wrap(aBlk.result)).s }
       val vBlk = stageLambda(aBlk.result){ value(wrap(aBlk.result)).s }
       val rBlk = stageBlock { reduce(wrap(rV._1),wrap(rV._2)).s }
@@ -27,21 +28,21 @@ trait HashMapExp extends Staging with ArrayExp with StructExp {
   /** Infix methods **/
 
   case class HashIndex[K:Meta](s: Exp[HashIndex[K]]) extends MetaAny[HashIndex[K]] {
-    def =!=(x: HashIndex[K])(implicit ctx: SrcCtx): Bool = ???
-    def ===(x: HashIndex[K])(implicit ctx: SrcCtx): Bool = ???
-    def toText(implicit ctx: SrcCtx): Text = textify(this)
+    @api def =!=(x: HashIndex[K]): Bool = ??? // TODO! but never seen by user currently
+    @api def ===(x: HashIndex[K]): Bool = ??? // TODO! but never seen by user currently
+    @api def toText: Text = textify(this)
   }
 
   case class MetaHashMap[K:Meta,V:Meta](s: Exp[MetaHashMap[K,V]]) extends MetaStruct[MetaHashMap[K,V]] {
-    def keys(implicit ctx: SrcCtx): MetaArray[K]   = field[MetaArray[K]]("keys")
-    def values(implicit ctx: SrcCtx): MetaArray[V] = field[MetaArray[V]]("values")
-    def size(implicit ctx: SrcCtx): Index          = field[Index]("size")
+    @api def keys: MetaArray[K]   = field[MetaArray[K]]("keys")
+    @api def values: MetaArray[V] = field[MetaArray[V]]("values")
+    @api def size: Index          = field[Index]("size")
 
     private def index(implicit ctx: SrcCtx) = field[HashIndex[K]]("index")
-    private def get(key: K)(implicit ctx: SrcCtx): Index = wrap(hash_index_apply(this.index.s, key.s))
+    private def getIndex(key: K)(implicit ctx: SrcCtx): Index = wrap(hash_index_apply(this.index.s, key.s))
 
-    def apply(key: K)(implicit ctx: SrcCtx): V = this.values.apply(this.get(key))
-    def contains(key: K)(implicit ctx: SrcCtx): Bool = this.get(key) =!= -1
+    @api def apply(key: K): V = this.values.apply(this.getIndex(key))
+    @api def contains(key: K): Bool = this.getIndex(key) =!= -1
   }
 
   /** Type classes **/

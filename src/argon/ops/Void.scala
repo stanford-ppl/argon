@@ -1,5 +1,7 @@
 package argon.ops
+
 import argon.core.Staging
+import forge._
 
 trait VoidApi extends VoidExp {
   self: TextExp =>
@@ -10,9 +12,9 @@ trait VoidExp extends Staging {
   self: TextExp =>
 
   case class Void(s: Exp[Void]) extends MetaAny[Void] {
-    def ===(that: Void)(implicit ctx: SrcCtx) = true
-    def =!=(that: Void)(implicit ctx: SrcCtx) = false
-    override def toText(implicit ctx: SrcCtx) = textify(this)
+    @api def ===(that: Void) = true
+    @api def =!=(that: Void) = false
+    @api def toText = textify(this)
   }
 
   /** Type classes **/
