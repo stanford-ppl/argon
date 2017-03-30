@@ -47,13 +47,13 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     @api def toText: Text
   }
 
-  def infix_toString[T<:MetaAny[T]](x: T) = x.toText
-  def __equals[T<:MetaAny[T]](x: T, y: T)(implicit ctx: SrcCtx): Bool = x === y
-  def __equals[A, T<:MetaAny[T]](x: A, y: T)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = lift(x) === y
-  def __equals[A, T<:MetaAny[T]](x: T, y: A)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = x === lift(y)
-  def __unequals[T<:MetaAny[T]](x: T, y: T)(implicit ctx: SrcCtx): Bool = x =!= y
-  def __unequals[A, T<:MetaAny[T]](x: A, y: T)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = lift(x) =!= y
-  def __unequals[A, T<:MetaAny[T]](x: T, y: A)(implicit ctx: SrcCtx, l: Lift[A, T]): Bool = x =!= lift(y)
+  @util def infix_toString[T<:MetaAny[T]](x: T) = x.toText
+  @util def __equals[T<:MetaAny[T]](x: T, y: T): Bool = x === y
+  @util def __equals[A, T<:MetaAny[T]](x: A, y: T)(implicit lift: Lift[A, T]): Bool = lift(x) === y
+  @util def __equals[A, T<:MetaAny[T]](x: T, y: A)(implicit lift: Lift[A, T]): Bool = x === lift(y)
+  @util def __unequals[T<:MetaAny[T]](x: T, y: T): Bool = x =!= y
+  @util def __unequals[A, T<:MetaAny[T]](x: A, y: T)(implicit lift: Lift[A, T]): Bool = lift(x) =!= y
+  @util def __unequals[A, T<:MetaAny[T]](x: T, y: A)(implicit lift: Lift[A, T]): Bool = x =!= lift(y)
 
   def typ[T:Type] = implicitly[Type[T]]
   def mtyp[A,B](x: Type[A]): Type[B] = x.asInstanceOf[Type[B]]
