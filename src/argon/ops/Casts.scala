@@ -12,7 +12,7 @@ trait CastApi extends CastExp {
   }
 
   implicit class LiftOps[A](x: A) {
-    @api def as[B:Meta:Num](implicit lift: Cast[A,B]): B = lift(x)
+    @api def as[B:Meta](implicit cast: Cast[A,B]): B = cast(x)
   }
 }
 

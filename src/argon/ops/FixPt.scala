@@ -113,6 +113,11 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
 
     def toFixPt[S2:BOOL,I2:INT,F2:INT](x: FixPt[S,I,F])(implicit ctx: SrcCtx): FixPt[S2,I2,F2] = FixPt(fix_convert[S,I,F,S2,I2,F2](x.s))
     def toFltPt[G:INT,E:INT](x: FixPt[S,I,F])(implicit ctx: SrcCtx): FltPt[G,E] = FltPt(fix_to_flt[S,I,F,G,E](x.s))
+
+    def fromInt(x: Int, force: Boolean = true)(implicit ctx: SrcCtx) = FixPt(createConstant(x, !force))
+    def fromLong(x: Long, force: Boolean = true)(implicit ctx: SrcCtx) = FixPt(createConstant(x, !force))
+    def fromFloat(x: Float, force: Boolean = true)(implicit ctx: SrcCtx) = FixPt(createConstant(x, !force))
+    def fromDouble(x: Double, force: Boolean = true)(implicit ctx: SrcCtx) = FixPt(createConstant(x, !force))
   }
   implicit def __fixPtNum[S:BOOL,I:INT,F:INT]: Num[FixPt[S,I,F]] = new FixPtNum[S,I,F]()
 

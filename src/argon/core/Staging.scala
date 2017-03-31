@@ -1,7 +1,6 @@
 package argon.core
-import argon.utils.escapeConst
 
-import scala.collection.mutable
+import argon.utils.escapeConst
 
 trait Staging extends Scheduling {
 

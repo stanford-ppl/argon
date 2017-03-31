@@ -98,6 +98,11 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
 
     def toFixPt[S:BOOL,I:INT,F:INT](x: FltPt[G,E])(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(flt_to_fix[G,E,S,I,F](x.s))
     def toFltPt[G2:INT,E2:INT](x: FltPt[G,E])(implicit ctx: SrcCtx): FltPt[G2,E2] = FltPt(flt_convert[G,E,G2,E2](x.s))
+
+    def fromInt(x: Int, force: Boolean = true)(implicit ctx: SrcCtx) = FltPt(createConstant(x, !force))
+    def fromLong(x: Long, force: Boolean = true)(implicit ctx: SrcCtx) = FltPt(createConstant(x, !force))
+    def fromFloat(x: Float, force: Boolean = true)(implicit ctx: SrcCtx) = FltPt(createConstant(x, !force))
+    def fromDouble(x: Double, force: Boolean = true)(implicit ctx: SrcCtx) = FltPt(createConstant(x, !force))
   }
   implicit def __fltPtNum[G:INT,E:INT]: Num[FltPt[G,E]] = new FltPtNum[G,E]
 

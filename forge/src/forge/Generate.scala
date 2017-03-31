@@ -37,7 +37,7 @@ object GenerateAnnotation extends StaticAnnotation {
         x
     }*/
 
-    c.info(c.enclosingPosition, showCode(out), true)
+    // c.info(c.enclosingPosition, showCode(out), true)
     out
   }
 

@@ -10,11 +10,6 @@ trait TextApi extends TextExp with BoolApi {
 trait TextExp extends Staging with BoolExp {
   /** Infix methods **/
   case class Text(s: Exp[Text]) extends MetaAny[Text] {
-    @api def +(that: String): Text = Text(text_concat(this.s, string2text(that).s))
-    @api def +[T:Meta](that: T): Text = Text(text_concat(this.s, textify(that).s))
-    @api def !=(that: Text): Bool = Bool(text_differ(this.s, that.s))
-    @api def ==(that: Text): Bool = Bool(text_equals(this.s, that.s))
-
     @api def =!=(that: Text): Bool = Bool(text_differ(this.s, that.s))
     @api def ===(that: Text): Bool = Bool(text_equals(this.s, that.s))
     @api def equals(that: Text): Bool = Bool(text_equals(this.s, that.s))
@@ -23,12 +18,14 @@ trait TextExp extends Staging with BoolExp {
 
   /** Direct methods **/
   def textify[T:Meta](x: T)(implicit ctx: SrcCtx): Text = Text(sym_tostring(x.s))
-
+  def liftString(x: String)(implicit ctx: SrcCtx): Text = string2text(x)
+  def concat(x: Text, y: Text)(implicit ctx: SrcCtx): Text = Text(text_concat(x.s, y.s))
 
   /** Virtualized methods **/
-  @util def infix_toString[S:Type](x: S): Text = textify(x)
-  @util def infix_+[R:Type](x1: String, x2: R): Text = string2text(x1) + textify(x2)
-  @util def infix_+[R:Type](x1: R, x2: String): Text = textify(x1) + string2text(x2)
+  @util def infix_+[R<:MetaAny[R]](x1: String, x2: R): Text = string2text(x1) + x2.toText
+
+  // Never created
+  //@util def infix_+[R<:MetaAny[R]](x1: R, x2: String): Text = textify(x1) + string2text(x2)
 
   /** Type classes **/
   // --- Staged

@@ -39,13 +39,25 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   type Meta[T] = Type[T]
   //abstract class Meta[T] extends Type[T]
 
+  // Has to be an implicit class to not conflict with higher priority implicits on +
+  implicit class ConcatOps[T<:MetaAny[T]](lhs: T) {
+    @api def +(rhs: String): Text = concat(lhs.toText, liftString(rhs))
+    @api def +(rhs: Text): Text = concat(lhs.toText, rhs)
+    @api def +[R](rhs: MetaAny[R]): Text = concat(lhs.toText, rhs.toText)
+  }
+
   /** Base trait for all staged, frontend types **/
   abstract class MetaAny[T:Meta] {
     def s: Exp[T]
-    @api def ===(x: T): Bool
-    @api def =!=(x: T): Bool
+    @api def !=(that: T): Bool = this =!= that
+    @api def ==(that: T): Bool = this === that
+    @api def ===(that: T): Bool
+    @api def =!=(that: T): Bool
     @api def toText: Text
   }
+
+  def liftString(x: String)(implicit ctx: SrcCtx): Text
+  def concat(x: Text, y: Text)(implicit ctx: SrcCtx): Text
 
   @util def infix_toString[T<:MetaAny[T]](x: T) = x.toText
   @util def __equals[T<:MetaAny[T]](x: T, y: T): Bool = x === y
