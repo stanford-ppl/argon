@@ -117,7 +117,7 @@ trait GlobalWires extends IOModule{""")
           emit("val w = 32")
           emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
           emit("val numArgOuts = numArgOuts_reg")
-          emit("new Top(w, numArgIns, numArgOuts, numMemoryStreams, target)")
+          emit("new Top(w, numArgIns, numArgOuts, loadStreamInfo, storeStreamInfo, target)")
         close("}")
         emit("def tester = { c: DUTType => new TopUnitTester(c) }")
       close("}")
@@ -145,7 +145,7 @@ trait GlobalWires extends IOModule{""")
         emit("val done = Output(Bool())")
         emit("")
         emit("// Tile Load")
-        emit("val memStreams = Vec(io_numMemoryStreams, Flipped(new MemoryStream(io_w, io_v)))")
+        emit("val memStreams = Flipped(new AppStreams(io_loadStreamInfo, io_storeStreamInfo))")
         emit("")
         emit("// Scalars")
         emit("val argIns = Input(Vec(io_numArgIns, UInt(io_w.W)))")
@@ -174,7 +174,13 @@ import templates._
 import fringe._
 import chisel3._
 import chisel3.util._
-class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+class AccelTop(
+  val top_w: Int,
+  val numArgIns: Int,
+  val numArgOuts: Int,
+  val loadStreamInfo: List[StreamParInfo],
+  val storeStreamInfo: List[StreamParInfo]
+) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
   // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
 
@@ -192,7 +198,13 @@ import fringe._
 import chisel3._
 import chisel3.util._
 
-class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+class AccelTop(
+  val top_w: Int,
+  val numArgIns: Int,
+  val numArgOuts: Int,
+  val loadStreamInfo: List[StreamParInfo],
+  val storeStreamInfo: List[StreamParInfo]
+) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
 }
   // AccelTop class mixes in all the other traits and is instantiated by tester""")

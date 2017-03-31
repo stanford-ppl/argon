@@ -2,7 +2,6 @@ package argon.test
 import org.scalatest.{FlatSpec, Matchers}
 import forge._
 import org.virtualized._
-import argon.Config
 
 class StructTests extends FlatSpec with Matchers {
 

@@ -4,7 +4,6 @@ import scala.annotation.StaticAnnotation
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox //TODO: should be whitebox?
 
-
 /** Annotation class for @struct macro annotation. */
 final class struct extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro StagedStructsMacro.impl
