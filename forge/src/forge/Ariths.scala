@@ -1,4 +1,4 @@
-package macros
+package forge
 import scala.reflect.macros.blackbox
 
 object Ariths extends TypeclassMacro {
