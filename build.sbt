@@ -1,45 +1,48 @@
-organization := "ppl-stanford"
-
 scalaVersion in ThisBuild := "2.12.1"
 
 //publish
 val suffix = ""
 val versionNumber = "1.0"
-version := versionNumber + suffix
-isSnapshot := true
 
 //dependencies versions
 val virtualizedVersion = "0.2" + suffix
 val paradiseVersion = "2.1.0"
 val scalatestVersion = "3.0.1"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % scalatestVersion % "test"
 
+lazy val commonSettings = Seq(
+  organization := "ppl-stanford",
+  version := versionNumber + suffix,
+  isSnapshot := true,
 
-//paradise
-resolvers += Resolver.sonatypeRepo("snapshots")
-resolvers += Resolver.sonatypeRepo("releases")
-addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
+  libraryDependencies += "org.scalatest" %% "scalatest" % scalatestVersion % "test",
 
-lazy val forgeSettings = Seq(
-  libraryDependencies += "org.virtualized" %% "virtualized" % virtualizedVersion,
+  //paradise
+  resolvers += Resolver.sonatypeRepo("snapshots"),
+  resolvers += Resolver.sonatypeRepo("releases"),
+  addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
+
   //paths
   scalaSource in Compile := baseDirectory(_/ "src").value,
-  scalaSource in Test := baseDirectory(_/"test").value,
+  scalaSource in Test := baseDirectory(_/"test").value  
+
+)
+
+lazy val forgeSettings = commonSettings ++ Seq(
+
+  libraryDependencies += "org.virtualized" %% "virtualized" % virtualizedVersion,
+
   scalacOptions += "-language:experimental.macros"
 )
 
-lazy val argonSettings = Seq(
+lazy val argonSettings = commonSettings ++ Seq(
   name := "argon",
-  libraryDependencies += "org.virtualized" %% "virtualized" % virtualizedVersion,
   libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.3.2",
 
-  //paths
-  scalaSource in Compile := baseDirectory(_/ "src").value,
-  scalaSource in Test := baseDirectory(_/"test").value,
 
   /** Scalac Options **/
   scalacOptions += "-Yno-generic-signatures",
+  //  scalacOptions += "-Ymacro-debug-lite",
   // More strict error/warning checking
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warnings"),
   // It would be very annoying to have to import these everywhere in this project
@@ -60,7 +63,7 @@ lazy val argonSettings = Seq(
 
 )
 
-lazy val forge = (project in file("forge"))
+lazy val forge = (project)
   .settings(forgeSettings)
 
 lazy val root = (project in file("."))

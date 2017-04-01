@@ -34,6 +34,7 @@ object UtilAnnotation {
 object FrontendAnnotation {
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
     import c.universe._
+
     val srcCtx = q"ctx: org.virtualized.SourceContext"
 
     val tree = annottees.head match {
@@ -59,7 +60,6 @@ object FrontendAnnotation {
       case _ =>
         c.abort(c.enclosingPosition, "API annotation can only be used on Def")
     }
-    //c.echo(c.enclosingPosition, showCode(tree))
     tree
   }
 
