@@ -39,18 +39,20 @@ trait ChiselFileGen extends FileGen {
       emit(s"""package accel
 import chisel3._
 import templates._
+import templates.ops._
 import chisel3.util._
 import fringe._
 import types._""")
       open("trait IOModule extends Module {")
       emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
-      emit("val io_w = 32 // TODO: How to generate these properly?")
+      emit("val io_w = 64 // TODO: How to generate these properly?")
       emit("val io_v = 16 // TODO: How to generate these properly?")
     }
 
     withStream(getStream("BufferControlCxns")) {
       emit(s"""package accel
 import templates._
+import templates.ops._
 import fringe._
 import chisel3._""")
       open(s"""trait BufferControlCxns extends RootController {""")
@@ -59,6 +61,7 @@ import chisel3._""")
     withStream(getStream("RootController")) {
       emit(s"""package accel
 import templates._
+import templates.ops._
 import fringe._
 import types._
 import chisel3._""")
@@ -70,6 +73,7 @@ import chisel3._""")
     withStream(getStream("GlobalWires")) {
       emit(s"""package accel
 import templates._
+import templates.ops._
 import chisel3._
 import types._
 trait GlobalWires extends IOModule{""")
@@ -107,7 +111,6 @@ trait GlobalWires extends IOModule{""")
         close("}")
         emit("")
         open("def dut = () => {")
-
     }
 
 
@@ -121,9 +124,7 @@ trait GlobalWires extends IOModule{""")
           emit("val w = 32")
           emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
           emit("val numArgOuts = numArgOuts_reg")
-          emit("""val target = if (args.size > 0) args(0) else "verilator" """)
-          emit("""Predef.assert(supportedTarget(target), s"ERROR: Unsupported Fringe target '$target'")""")
-          emit("new Top(w, numArgIns, numArgOuts, numMemoryStreams, target)")
+          emit("new Top(w, numArgIns, numArgOuts, loadStreamInfo, storeStreamInfo, target)")
         close("}")
         emit("def tester = { c: DUTType => new TopUnitTester(c) }")
       close("}")
@@ -151,9 +152,10 @@ trait GlobalWires extends IOModule{""")
         emit("val done = Output(Bool())")
         emit("")
         emit("// Tile Load")
-        emit("val memStreams = Vec(io_numMemoryStreams, Flipped(new MemoryStream(io_w, io_v)))")
+        emit("val memStreams = Flipped(new AppStreams(io_loadStreamInfo, io_storeStreamInfo))")
         emit("")
         emit("// Scalars")
+<<<<<<< HEAD
         emit("val argIns = Input(Vec(io_numArgIns, UInt(io_w.W)))")
         emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(io_w.W))))")
 
@@ -172,6 +174,10 @@ trait GlobalWires extends IOModule{""")
         emit("val stream_out_endofpacket    = Output(Bool())")
         emit("val stream_out_empty          = Output(UInt(1.W))")
         emit("val stream_out_valid          = Output(Bool())")
+=======
+        emit("val argIns = Input(Vec(io_numArgIns, UInt(64.W)))")
+        emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(64.W))))")
+>>>>>>> 6ae0384e68100b09960d84aebb5540958b93e1e9
         emit("")
       close("})")
       close("}")
@@ -185,7 +191,7 @@ trait GlobalWires extends IOModule{""")
       close("}")
     }
 
-    if (Config.multifile == 4) {
+    if (Config.multifile >= 3 ) {
       val traits = streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
       }.toSet - "AccelTop" - "GlobalWires" - "Instantiator"
@@ -196,7 +202,13 @@ import templates._
 import fringe._
 import chisel3._
 import chisel3.util._
-class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+class AccelTop(
+  val top_w: Int,
+  val numArgIns: Int,
+  val numArgOuts: Int,
+  val loadStreamInfo: List[StreamParInfo],
+  val storeStreamInfo: List[StreamParInfo]
+) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
   // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
 
@@ -214,7 +226,13 @@ import fringe._
 import chisel3._
 import chisel3.util._
 
-class AccelTop(val top_w: Int, val numArgIns: Int, val numArgOuts: Int, val numMemoryStreams: Int = 1) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+class AccelTop(
+  val top_w: Int,
+  val numArgIns: Int,
+  val numArgOuts: Int,
+  val loadStreamInfo: List[StreamParInfo],
+  val storeStreamInfo: List[StreamParInfo]
+) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
 }
   // AccelTop class mixes in all the other traits and is instantiated by tester""")

@@ -52,7 +52,8 @@ using std::vector;
 
   open(s"void Application(int numThreads, cppDeliteArraystring * args) {")
   emit("// Create an execution context.")
-  emit("FringeContext *c1 = new FringeContext();")
+  emit("""FringeContext *c1 = new FringeContext("./verilog/accel.bit.bin");""")
+  emit("""c1->load();""")
 
 
     withStream(getStream("cpptypes","h")) {
@@ -88,7 +89,8 @@ using std::vector;
     super.emitFileHeader()
   }
 
-  override protected def emitFileFooter() {  
+  override protected def emitFileFooter() {
+    emit("delete c1;")
     close("}")
     emit(s"""
 int main(int argc, char *argv[]) {

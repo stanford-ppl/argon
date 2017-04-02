@@ -84,9 +84,11 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/fringeHW""")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/fringeZynq""")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/fringeDE1SoC""")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/fringeVCS""")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/Makefile""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/verilator.mk""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/zynq.mk""", "..")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/vcs.mk""", "..")
     // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/direct-test.sh""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/build.sbt""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/run.sh""","..")
@@ -102,6 +104,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       withStream(newStream(name)) {
           emit("""package accel
 import templates._
+import templates.ops._
 import types._
 import chisel3._""")
           open(src"""trait ${name} extends ${parent.replace("AccelController","RootController")} {""")
@@ -114,13 +117,12 @@ import chisel3._""")
         withStream(newStream(name)) {
             emit("""package accel
   import templates._
+  import templates.ops._
   import types._
   import chisel3._""")
             open(src"""trait ${name} extends RootController {""")
-            open(s"""def create_${name}() {""")
             try { body } 
             finally { 
-              close("}")
               close("}")
             }
         }

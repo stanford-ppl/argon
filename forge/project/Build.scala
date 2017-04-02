@@ -67,29 +67,14 @@ object ArgonBuild extends Build {
     concurrentRestrictions in Global += Tags.limitAll(1) // we need tests to run in isolation across all projects
   )
 
-  lazy val argonSettings = buildSettings ++ Seq(
-    name := "argon",
-    organization := "stanford-ppl",
-    version := "1.0",
-    isSnapshot := true
-  )
   lazy val forgeSettings = buildSettings ++ Seq(
     name := "forge",
     organization := "stanford-ppl",
     version := "1.0",
     isSnapshot := true
   )
-  lazy val virtualizedSettings = buildSettings ++ Seq(
-    name := "virtualized",
-    organization := "org.virtualized",
-    version := "0.2",
-    isSnapshot := true
-  )
 
-  lazy val forge = Project("forge", file("forge"), settings = forgeSettings)
-  lazy val virtualized = Project("virtualized", file("scala-virtualized"), settings = virtualizedSettings)
-
-  lazy val argon = Project("argon", file("."), settings = argonSettings) dependsOn (forge, virtualized)
+  lazy val forge = Project("forge", file("."), settings = forgeSettings)
 }
 
 

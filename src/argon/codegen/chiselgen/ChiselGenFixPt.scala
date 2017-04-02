@@ -27,6 +27,12 @@ trait ChiselGenFixPt extends ChiselCodegen {
   }
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
+    case (FixPtType(s,d,f), Const(cc: BigDecimal)) => 
+      if (s) {
+        cc.toInt.toString + src".FP(true, $d, $f)"
+      } else {
+        cc.toInt.toString + ".U(32.W)"        
+      }
     case (IntType(), Const(cc: BigDecimal)) => 
       if (cc >= 0) {
         cc.toInt.toString + ".U(32.W)"  
