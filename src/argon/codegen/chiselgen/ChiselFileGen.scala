@@ -102,14 +102,6 @@ trait GlobalWires extends IOModule{""")
       open("object Instantiator extends CommonMain {")
         emit("type DUTType = Top")
         emit("")
-        open("def supportedTarget(t: String) = t match {")
-          emit("""case "aws" => true""")
-          emit("""case "zynq" => true""")
-          emit("""case "verilator" => true""")
-          emit("""case "de1soc" => true""")
-          emit("case _ => false")
-        close("}")
-        emit("")
         open("def dut = () => {")
     }
 
@@ -155,9 +147,8 @@ trait GlobalWires extends IOModule{""")
         emit("val memStreams = Flipped(new AppStreams(io_loadStreamInfo, io_storeStreamInfo))")
         emit("")
         emit("// Scalars")
-<<<<<<< HEAD
-        emit("val argIns = Input(Vec(io_numArgIns, UInt(io_w.W)))")
-        emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(io_w.W))))")
+//        emit("val argIns = Input(Vec(io_numArgIns, UInt(io_w.W)))")
+//        emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(io_w.W))))")
 
         emit("// Video Stream Inputs ")
         emit("val stream_in_data            = Input(UInt(24.W))")
@@ -174,10 +165,10 @@ trait GlobalWires extends IOModule{""")
         emit("val stream_out_endofpacket    = Output(Bool())")
         emit("val stream_out_empty          = Output(UInt(1.W))")
         emit("val stream_out_valid          = Output(Bool())")
-=======
+
         emit("val argIns = Input(Vec(io_numArgIns, UInt(64.W)))")
         emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(64.W))))")
->>>>>>> 6ae0384e68100b09960d84aebb5540958b93e1e9
+
         emit("")
       close("})")
       close("}")
