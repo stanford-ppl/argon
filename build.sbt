@@ -66,7 +66,7 @@ lazy val argonSettings = commonSettings ++ Seq(
 lazy val forge = (project)
   .settings(forgeSettings)
 
-lazy val root = (project in file("."))
+lazy val root = (project in file("core"))
   .settings(argonSettings)
   .dependsOn(forge)
 
