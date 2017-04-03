@@ -28,6 +28,8 @@ trait Symbols extends StagedTypes with Metadata with Graph { self: Staging =>
     def apply(x: Exp[_]): Option[String] = ctxsOf(x).headOption.flatMap(_.assignedVariable)
   }
 
+  def ctx(implicit context: SrcCtx): SrcCtx = context
+
 
   /** Any staged symbol **/
   sealed abstract class Exp[+T] private[core](staged: Type[T]) extends EdgeLike {

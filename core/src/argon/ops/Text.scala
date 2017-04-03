@@ -10,6 +10,10 @@ trait TextApi extends TextExp with BoolApi {
 trait TextExp extends Staging with BoolExp {
   /** Infix methods **/
   case class Text(s: Exp[Text]) extends MetaAny[Text] {
+    @api def +(rhs: String): Text = concat(this, liftString(rhs))
+    @api def +(rhs: Text): Text = concat(this, rhs)
+    @api def +[R](rhs: MetaAny[R]): Text = concat(this, rhs.toText)
+
     @api def =!=(that: Text): Bool = Bool(text_differ(this.s, that.s))
     @api def ===(that: Text): Bool = Bool(text_equals(this.s, that.s))
     @api def equals(that: Text): Bool = Bool(text_equals(this.s, that.s))
@@ -48,7 +52,10 @@ trait TextExp extends Staging with BoolExp {
   protected def text(x: String)(implicit ctx: SrcCtx): Exp[Text] = constant[Text](x)
 
   /** IR Nodes **/
-  case class ToString[S:Type](x: Exp[S]) extends Op[Text] { def mirror(f:Tx) = sym_tostring(f(x)) }
+  case class ToString[S:Type](x: Exp[S]) extends Op[Text] {
+    def mirror(f:Tx) = sym_tostring(f(x))
+    val mT = typ[S]
+  }
   case class TextConcat(x: Exp[Text], y: Exp[Text]) extends Op[Text] { def mirror(f:Tx) = text_concat(f(x),f(y)) }
   case class TextEquals(x: Exp[Text], y: Exp[Text]) extends Op[Bool] { def mirror(f:Tx) = text_equals(f(x),f(y)) }
   case class TextDiffer(x: Exp[Text], y: Exp[Text]) extends Op[Bool] { def mirror(f:Tx) = text_differ(f(x),f(y)) }

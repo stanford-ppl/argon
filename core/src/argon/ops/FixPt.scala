@@ -70,7 +70,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     override def hashCode() = (mS,mI,mF).##
     protected def getBits(children: Seq[Type[_]]) = Some(__fixPtNum[S,I,F](mS,mI,mF))
   }
-  implicit def fixPtType[S:BOOL,I:INT,F:INT]: Type[FixPt[S,I,F]] = new FixPtType[S,I,F](BOOL[S],INT[I],INT[F])
+  implicit def fixPtType[S:BOOL,I:INT,F:INT]: Meta[FixPt[S,I,F]] = new FixPtType[S,I,F](BOOL[S],INT[I],INT[F])
 
   object FixPtType {
     def unapply(x:Type[_]):Option[(Boolean, Int, Int)] = x match {
@@ -132,6 +132,8 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   }
 
   private def literalToBigDecimal[S:BOOL,I:INT,F:INT](x: Any, enWarn: Boolean = true)(implicit ctx: SrcCtx): BigDecimal = {
+    log(c"Creating fixed point constant for $x")
+
     val sign = BOOL[S].v
     val ibits = INT[I].v
     val fbits = INT[F].v

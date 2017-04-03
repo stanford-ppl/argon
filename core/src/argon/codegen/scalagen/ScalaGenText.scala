@@ -17,8 +17,12 @@ trait ScalaGenText extends ScalaCodegen {
     case _ => super.quoteConst(c)
   }
 
+  def emitToString(lhs: Sym[_], x: Exp[_], tp: Type[_]) = tp match {
+    case _ => emit(src"val $lhs = $x.toString")
+  }
+
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case ToString(x) => emit(src"val $lhs = $x.toString")
+    case e@ToString(x) => emitToString(lhs, x, e.mT)
     case TextConcat(x,y) => emit(src"val $lhs = $x + $y")
     case TextEquals(x,y) => emit(src"val $lhs = $x == $y")
     case TextDiffer(x,y) => emit(src"val $lhs = $x != $y")

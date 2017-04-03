@@ -19,6 +19,10 @@ final class util extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro UtilAnnotation.impl
 }
 
+final class internal extends StaticAnnotation {
+  def macroTransform(annottees: Any*): Any = macro InternalAnnotation.impl
+}
+
 object APIAnnotation {
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
     FrontendAnnotation.impl(c)(annottees:_*)
@@ -30,6 +34,21 @@ object UtilAnnotation {
     FrontendAnnotation.impl(c)(annottees:_*)
   }
 }
+
+object InternalAnnotation {
+  def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
+    import c.universe._
+
+    val withCtx = FrontendAnnotation.impl(c)(annottees:_*)
+    withCtx match {
+      case DefDef(mods,name,tparams,vparamss,tpt,rhs) =>
+        val flags = mods.flags | Flag.PROTECTED
+        DefDef(Modifiers(flags),name,tparams,vparamss,tpt,rhs)
+      case _ => withCtx
+    }
+  }
+}
+
 
 object FrontendAnnotation {
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
@@ -62,7 +81,5 @@ object FrontendAnnotation {
     }
     tree
   }
-
 }
-
 

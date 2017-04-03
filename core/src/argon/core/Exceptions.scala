@@ -180,12 +180,12 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
 
   class LiftOverflowError(tp: Type[_], c: Any)(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, u"Loss of precision detected in implicit lift: $tp cannot represent value ${escapeConst(c)}.")
-    error(u"""Use the explicit annotation "${escapeConst(c)}.as[$tp]" to ignore this error.""")
+    error(u"""Use the explicit annotation "${escapeConst(c)}.to[$tp]" to ignore this error.""")
   })
 
   class LiftUnderflowError(tp: Type[_], c: Any)(ctx: SrcCtx) extends UserError(ctx, {
     error(ctx, u"Loss of precision detected in implicit lift: $tp cannot represent value ${escapeConst(c)}.")
-    error(u"""Use the explicit annotation "${escapeConst(c)}.as[$tp]" to ignore this error.""")
+    error(u"""Use the explicit annotation "${escapeConst(c)}.to[$tp]" to ignore this error.""")
   })
 
   class UnsupportedTextCastError(tp: Type[_])(implicit ctx: SrcCtx) extends UserError(ctx, {

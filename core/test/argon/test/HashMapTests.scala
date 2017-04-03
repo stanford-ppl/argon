@@ -10,7 +10,7 @@ object GroupByReduceTest extends Test {
   def main() {
     val array = Array.tabulate(50){i => random[Int](50) }
 
-    val map = array.groupByReduce{x => x % 10.as[Int] }{x => 1.as[Int]}{_+_}
+    val map = array.groupByReduce{x => x % 10.to[Int] }{x => 1.to[Int]}{_+_}
     val max = map.values.reduce{(a,b) => if (a > b) a else b}
 
     array.foreach{x => print("" + x + " ") }

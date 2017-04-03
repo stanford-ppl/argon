@@ -81,11 +81,12 @@ class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
   private class Check extends Traverser {
     var needsUnroll: Boolean = false
     override def traverse(tree: Tree): Unit = tree match {
-      case x: ValDef if willUnroll(x.name)   => needsUnroll = true
-      case x: ClassDef if willUnroll(x.name) => needsUnroll = true
-      case x: DefDef if willUnroll(x.name)   => needsUnroll = true
-      case x: TypeDef if willUnroll(x.name)  => needsUnroll = true
-      case Ident(name) if willUnroll(name)   => needsUnroll = true
+      case x: ValDef if willUnroll(x.name)    => needsUnroll = true
+      case x: ClassDef if willUnroll(x.name)  => needsUnroll = true
+      case x: ModuleDef if willUnroll(x.name) => needsUnroll = true
+      case x: DefDef if willUnroll(x.name)    => needsUnroll = true
+      case x: TypeDef if willUnroll(x.name)   => needsUnroll = true
+      case Ident(name) if willUnroll(name)    => needsUnroll = true
       case Bind(name,body) if willUnroll(name) => needsUnroll = true
       //case CaseDef(Ident(Ranged(name,p,range)), guard, body) => needsUnroll = true
       //case CaseDef(Bind(Ranged(name,p,range), Typed(expr, tpt)), guard, body) => needsUnroll = true
@@ -162,6 +163,9 @@ class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
     def unroll[T<:Tree](tree: T): List[T] = tree match {
       case ValDef(mods, Ranged(name,p,range), tp, rhs) =>
         range.tx(p){i => ValDef(mods, f(name), f(tp), f(rhs)).asInstanceOf[T] }
+
+      case ModuleDef(mods,Ranged(name,p,range),template) =>
+        range.tx(p){i => ModuleDef(mods, f(name), f(template)).asInstanceOf[T] }
 
       case ClassDef(mods, Ranged(name,p,range), tparams, template) =>
         range.tx(p){i =>
