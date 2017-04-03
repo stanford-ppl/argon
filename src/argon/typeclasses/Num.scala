@@ -6,7 +6,7 @@ trait NumApi extends NumExp { this: BoolExp with FixPtExp with FltPtExp with Cas
 
 trait LowPriorityNumImplicits { this: NumExp with FixPtExp with FltPtExp =>
 
-  // FIXME: Users may want to write x.as[T], where T is a generic type with evidence of Num
+  // FIXME: Users may want to write x.to[T], where T is a generic type with evidence of Num
   // Should this be allowed? Better way to support in general?
   implicit def num2num[T:Meta:Num,R:Meta:Num] = new Cast[T,R] {
     def apply(x: T)(implicit ctx: SrcCtx): R = typ[R] match {

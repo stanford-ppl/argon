@@ -18,6 +18,10 @@ trait StructExp extends Staging with VoidExp with TextExp {
     protected def field[R:Meta](name: String)(implicit ctx: SrcCtx): R = wrap(field_apply[T,R](self.s, name))
     protected def fieldToText[T](name: String, tp: Meta[T])(implicit ctx: SrcCtx) = tp.ev(field(name)(mtyp(tp), ctx)).toText
 
+    def fields(implicit ctx: SrcCtx): Seq[(String,MetaAny[_])] = {
+      tp.fields.map{case (name,fieldTyp) => name -> fieldTyp.ev(field(name)(mtyp(fieldTyp),ctx)) }
+    }
+
     @api def =!=(that: T): Bool = struct_unequals(this.asInstanceOf[T],that)
     @api def ===(that: T): Bool = struct_equals(this.asInstanceOf[T],that)
     @api def toText = {
@@ -51,7 +55,7 @@ trait StructExp extends Staging with VoidExp with TextExp {
 
 
 
-  abstract class StructType[T](implicit ev: T <:< MetaStruct[T]) extends Meta[T] {
+  abstract class StructType[T](override implicit val ev: T <:< MetaStruct[T]) extends Meta[T] {
     override def isPrimitive = false
     def fields: Seq[(String, Meta[_])]
     def prefix: String = this.stagedClass.getSimpleName

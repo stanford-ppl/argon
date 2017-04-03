@@ -190,7 +190,7 @@ object IgnoreOverflowTest extends Test {
   @virtualize
   def main() {
     val c = 2147483648L
-    val x = random[Int] + c.as[Int]
+    val x = random[Int] + c.to[Int]
     println(x)
   }
 }

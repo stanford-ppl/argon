@@ -55,7 +55,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
     def expBits: Int = mE.v
     protected def getBits(children: Seq[Type[_]]) = Some(__fltPtNum[G,E](mG,mE))
   }
-  implicit def fltPtType[G:INT,E:INT]: Type[FltPt[G,E]] = new FltPtType(INT[G],INT[E])
+  implicit def fltPtType[G:INT,E:INT]: Meta[FltPt[G,E]] = new FltPtType(INT[G],INT[E])
 
   def isFltPtType(x: Type[_]) = FltPtType.unapply(x).isDefined
 

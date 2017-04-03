@@ -13,16 +13,18 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   type Bool
   type Text
 
-  /** Base type class for all staged types **/
+  /** Type evidence for staged types **/
   @implicitNotFound(msg = "Type ${T} is not a staged type. Try adding an explicit lift() call?")
   abstract class Type[T](implicit val ev: T <:< MetaAny[T]) {
+    // TODO: In the future we may want to refactor these two methods out
     def unwrapped(x: T): Exp[T] = x.s
     def wrapped(x: Exp[T]): T
+
     def typeArguments: List[Type[_]] = Nil
     def stagedClass: Class[T]
     def isPrimitive: Boolean
 
-    def <:<(that: Type[_]) = isSubtype(this.stagedClass, that.stagedClass)
+    final def <:<(that: Type[_]) = isSubtype(this.stagedClass, that.stagedClass)
 
     /** Stolen from Delite utils **/
     private def isSubtype(x: java.lang.Class[_], cls: java.lang.Class[_]): Boolean = {
@@ -36,8 +38,13 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   }
   implicit def subTypeEv[T:Meta](x: T): MetaAny[T] = meta[T].ev(x)
 
+  /** Frontend staged type evidence **/
+  // TODO: Ideally Type and Meta these would be different, or somehow separated.
+  /*abstract class Meta[T](implicit val ev: T <:< MetaAny[T]) extends Type[T] {
+    def unwrapped(x: T): Exp[T] = x.s
+    def wrapped(x: Exp[T]): T
+  }*/
   type Meta[T] = Type[T]
-  //abstract class Meta[T] extends Type[T]
 
   // Has to be an implicit class to not conflict with higher priority implicits on +
   implicit class ConcatOps[T<:MetaAny[T]](lhs: T) {
@@ -73,38 +80,50 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   def meta[T:Meta] = implicitly[Meta[T]]
   def mmeta[A,B](x: Meta[A]): Meta[B] = x.asInstanceOf[Meta[B]]
 
-  def wrap[T:Type](s: Exp[T]): T = typ[T].wrapped(s)
-  def wrap[T:Type](xs: List[Exp[T]]): List[T] = xs.map{t => typ[T].wrapped(t) }
-  def wrap[T:Type](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => typ[T].wrapped(t) }
+  def wrap[T:Meta](s: Exp[T]): T = meta[T].wrapped(s)
+  def wrap[T:Meta](xs: List[Exp[T]]): List[T] = xs.map{t => meta[T].wrapped(t) }
+  def wrap[T:Meta](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => meta[T].wrapped(t) }
 
   def unwrap[T:Meta](x: T): Exp[T] = meta[T].unwrapped(x)
   def unwrap[T:Meta](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => meta[T].unwrapped(t) }
   def unwrap[T:Meta](xs: List[T]): List[Exp[T]] = xs.map{t => meta[T].unwrapped(t) }
 
   import StagedTypes._
-  def infix_==[A,B](x1: MetaAny[A], x2: MetaAny[B]): Bool = macro equalImpl[Bool]
-  def infix_==[A, B, C <:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro equalLiftRightImpl[Bool]
-  def infix_==[A, B, C <:MetaAny[B]](x1: A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro equalLiftLeftImpl[Bool]
+  //def infix_==[A,B](x1: MetaAny[A], x2: MetaAny[B]): Bool = macro equalImpl[Bool]
+  //def infix_==[A, B, C <:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro equalLiftRightImpl[Bool]
+  //def infix_==[A, B, C <:MetaAny[B]](x1: A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro equalLiftLeftImpl[Bool]
 
-  def infix_!=[A, B](x1: MetaAny[A], x2: MetaAny[B]): Bool = macro unequalImpl[Bool]
-  def infix_!=[A, B, C<:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro unequalLiftRightImpl[Bool]
-  def infix_!=[A, B, C<:MetaAny[B]](x1:A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro unequalLiftLeftImpl[Bool]
+  //def infix_!=[A, B](x1: MetaAny[A], x2: MetaAny[B]): Bool = macro unequalImpl[Bool]
+  //def infix_!=[A, B, C<:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro unequalLiftRightImpl[Bool]
+  //def infix_!=[A, B, C<:MetaAny[B]](x1:A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro unequalLiftLeftImpl[Bool]
 
+  // TODO: Should these lifts be casts?
+  def infix_==[A<:MetaAny[A], B<:MetaAny[B]](x1: A, x2: B): Bool = macro equalImpl[Bool]
+  def infix_==[A, B<:MetaAny[B]](x1: B, x2: A)(implicit l: Lift[A,B]): Bool = x1 === lift(x2)
+  def infix_==[A, B<:MetaAny[B]](x1: A, x2: B)(implicit l: Lift[A,B]): Bool = lift(x1) === x2
 
-  /** Lift[A,B] is used in place of Type[T] for user-facing type parameters, where the user may either
-    * give an unStaged constant or a Staged symbol as the return value.
-    *
-    * NOTE: Including evidence of Type[B] as an implicit parameter to Lift instances leads to problems with implicit
-    * ambiguity when calling lift(x), since the compiler may attempt to resolve Type[B] before it resolves Lift[A,B],
-    * causing any implicit value or def with result Type[_] in scope to qualify.
-    **/
+  def infix_!=[A<:MetaAny[A], B<:MetaAny[B]](x1: A, x2: B): Bool = macro unequalImpl[Bool]
+  def infix_!=[A, B<:MetaAny[B]](x1: B, x2: A)(implicit l: Lift[A,B]): Bool = x1 =!= lift(x2)
+  def infix_!=[A, B<:MetaAny[B]](x1: A, x2: B)(implicit l: Lift[A,B]): Bool = lift(x1) =!= x2
+
+  // TODO: Should casts be implicit or explicit? Should have subtypes?
+
   @implicitNotFound(msg = "Cannot find way to cast type ${A} to type ${B}.")
   abstract class Cast[A,B](implicit mB: Meta[B]) {
     val staged = mB
     def apply(x: A)(implicit ctx: SrcCtx): B
   }
 
-  @implicitNotFound(msg = "Cannot find way to lift type ${A} to type ${B}.")
+  final def cast[A,B](x: A)(implicit ctx: SrcCtx, c: Cast[A,B]): B = c(x)
+
+  /** Lift[A,B] is used in place of Type[T] for user-facing type parameters, where the user may either
+    * give an unstaged constant or a staged symbol as the return value.
+    *
+    * NOTE: Including evidence of Type[B] as an implicit parameter to Lift instances leads to problems with implicit
+    * ambiguity when calling lift(x), since the compiler may attempt to resolve Type[B] before it resolves Lift[A,B],
+    * causing any implicit value or def with result Type[_] in scope to qualify.
+    **/
+  @implicitNotFound(msg = "Cannot find way to lift type ${A} to type ${B}. Try adding an explicit cast using .to[${B}].")
   abstract class Lift[A,B](implicit mB: Meta[B]) {
     val staged = mB
     def apply(x: A)(implicit ctx: SrcCtx): B
@@ -141,11 +160,11 @@ private object StagedTypes {
 
   def unequalLiftRightImpl[T](c: whitebox.Context)(x1: c.Expr[Any], x2: c.Expr[Any])(l: c.Tree): c.Expr[T] = {
     import c.universe._
-    c.Expr(q"$x1 === lift($x2)")
+    c.Expr(q"$x1 =!= lift($x2)")
   }
 
   def unequalLiftLeftImpl[T](c: whitebox.Context)(x1: c.Expr[Any], x2: c.Expr[Any])(l: c.Tree): c.Expr[T] = {
     import c.universe._
-    c.Expr(q"lift($x1) === $x2")
+    c.Expr(q"lift($x1) =!= $x2")
   }
 }
