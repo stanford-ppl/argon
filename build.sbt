@@ -21,9 +21,7 @@ val commonSettings = Seq(
   addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
 )
     
-
-
-publishArtifact := false
+publishArtifact := fales
 
 lazy val forge: Project = project
   .settings(commonSettings)
