@@ -52,9 +52,9 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     case lhs: Sym[_] => s"x${lhs.id}"
   }
 
-  final protected def emitGlobal(x: String): Unit = { 
+  final protected def emitGlobal(x: String, forceful: Boolean = false): Unit = { 
     withStream(getStream("GlobalWires")) {
-      emit(x) 
+      emit(x, forceful) 
     }
   }
 
