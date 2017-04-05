@@ -4,9 +4,7 @@ import sys.process._
 import scala.language.postfixOps
 import org.apache.commons.io._
 import java.io.File
-import java.nio.charset.StandardCharsets
 import java.util.zip.ZipInputStream
-import scala.collection.JavaConverters
 
 trait FileDependencies extends Codegen {
   import IR._
@@ -22,21 +20,19 @@ trait FileDependencies extends Codegen {
       val from = getClass.getResource("/" + folder +"/" + name)
       val dest = new File(out+name)
       new File(out).mkdirs()
-      println(folder + " " + out + " " + name + " " + dest)
-      //println(from.toString, dest)
+      // println(folder + " " + out + " " + name + " " + dest)
       FileUtils.copyURLToFile(from, dest)
     }
   }
 
   case class DirDep(folder: String, name: String) extends CodegenDep {
     override def copy(out: String) = {
-      //val paths = IOUtils.readLines(getClass.getResourceAsStream("/" + folder + "/" + name), StandardCharsets.UTF_8)
-      val dir = "/" + folder + "/" + name
-      println("Looking at " + dir)
+      // val dir = "/" + folder + "/" + name
+      // println("Looking at " + dir)
 
-      val src = getClass.getProtectionDomain().getCodeSource()
+      val src = getClass.getProtectionDomain.getCodeSource
       if (src != null) {
-        val jar = src.getLocation()
+        val jar = src.getLocation
         val zip = new ZipInputStream(jar.openStream())
 
         Stream.continually(zip.getNextEntry)
