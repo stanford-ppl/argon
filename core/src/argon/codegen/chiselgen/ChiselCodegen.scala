@@ -80,18 +80,19 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     // }}
     val resourcesPath = s"chiselgen"
 
-    dependencies ::= AlwaysDep(resourcesPath, "template-level/templates")
-    dependencies ::= AlwaysDep(resourcesPath, "template-level/fringeHW")
-    dependencies ::= AlwaysDep(resourcesPath, "template-level/fringeZynq")
-    dependencies ::= AlwaysDep(resourcesPath, "template-level/fringeVCS")
-    dependencies ::= AlwaysDep(resourcesPath, "app-level/Makefile")
-    dependencies ::= AlwaysDep(resourcesPath, "app-level/verilator.mk")
-    dependencies ::= AlwaysDep(resourcesPath, "app-level/zynq.mk")
-    dependencies ::= AlwaysDep(resourcesPath, "app-level/vcs.mk")
+    // TODO: Matt
+    dependencies ::= DirDep(resourcesPath, "template-level/templates")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeHW")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeZynq")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeVCS")
+    dependencies ::= FileDep(resourcesPath, "app-level/Makefile")
+    dependencies ::= FileDep(resourcesPath, "app-level/verilator.mk")
+    dependencies ::= FileDep(resourcesPath, "app-level/zynq.mk")
+    dependencies ::= FileDep(resourcesPath, "app-level/vcs.mk")
     // dependencies ::= AlwaysDep(resourcesPath, "/app-level/direct-test.sh")
-    dependencies ::= AlwaysDep(resourcesPath, "app-level/build.sbt")
-    dependencies ::= AlwaysDep(resourcesPath, "app-level/run.sh")
-    dependencies ::= AlwaysDep(resourcesPath, "app-level/Top.scala")
+    dependencies ::= FileDep(resourcesPath, "app-level/build.sbt")
+    dependencies ::= FileDep(resourcesPath, "app-level/run.sh")
+    dependencies ::= FileDep(resourcesPath, "app-level/Top.scala")
     // dependencies ::= AlwaysDep(resourcesPath, "app-level/app-test")
     super.copyDependencies(out)
   }

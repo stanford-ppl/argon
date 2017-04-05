@@ -89,7 +89,8 @@ trait CppGenStructs extends CppCodegen with StructCodegen {
         emit("")
       }
     }
-    moveDependencies ::= AlwaysDep(s"${out}/Structs.h", "datastructures")
+    // TODO: Matt!
+    moveDependencies ::= FileDep(s"${out}/Structs.h", "datastructures")
 
     withStream(newStream("cppDeliteArrayStructs","h")) {
       emit("// Codegenerated types")
@@ -99,7 +100,8 @@ trait CppGenStructs extends CppCodegen with StructCodegen {
         emit("")
       }
     }
-    moveDependencies ::= AlwaysDep(s"${out}/cppDeliteArrayStructs.h", "datastructures")
+    // TODO: Matt!
+    moveDependencies ::= FileDep(s"${out}/cppDeliteArrayStructs.h", "datastructures")
 
   }
 

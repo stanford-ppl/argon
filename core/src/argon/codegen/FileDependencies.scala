@@ -4,24 +4,53 @@ import sys.process._
 import scala.language.postfixOps
 import org.apache.commons.io._
 import java.io.File
+import java.nio.charset.StandardCharsets
+import java.util.zip.ZipInputStream
+import scala.collection.JavaConverters
 
 trait FileDependencies extends Codegen {
   import IR._
 
-  def copyFile(folder:String, in: String, out: String) = {
-    val from = getClass().getResource("/" + folder +"/" + in)
-    val dest = new File(out+in)
-    println(folder + " " + out + " " + in + " " + dest)
-    FileUtils.copyURLToFile(from, dest);
-  }
-
   sealed trait CodegenDep {
     def folder: String
     def name: String
-    def copy(out: String) = copyFile(folder, name, out)
+    def copy(out: String): Unit
   }
 
-  case class AlwaysDep(folder: String, name: String = "") extends CodegenDep
+  case class FileDep(folder: String, name: String) extends CodegenDep {
+    def copy(out: String) = {
+      val from = getClass.getResource("/" + folder +"/" + name)
+      val dest = new File(out+name)
+      new File(out).mkdirs()
+      println(folder + " " + out + " " + name + " " + dest)
+      //println(from.toString, dest)
+      FileUtils.copyURLToFile(from, dest)
+    }
+  }
+
+  case class DirDep(folder: String, name: String) extends CodegenDep {
+    override def copy(out: String) = {
+      //val paths = IOUtils.readLines(getClass.getResourceAsStream("/" + folder + "/" + name), StandardCharsets.UTF_8)
+      val dir = "/" + folder + "/" + name
+      println("Looking at " + dir)
+
+      val src = getClass.getProtectionDomain().getCodeSource()
+      if (src != null) {
+        val jar = src.getLocation()
+        val zip = new ZipInputStream(jar.openStream())
+
+        Stream.continually(zip.getNextEntry)
+          .takeWhile(_ != null)
+          .map(_.getName)
+          .filter(_.startsWith(folder + "/" + name))
+          .filterNot(_.endsWith("/"))
+          .map{e => FileDep(folder, e.split("/").drop(1).mkString("/")) }
+          .foreach(_.copy(out))
+      }
+
+    }
+  }
+
 
   var dependencies: List[CodegenDep] = Nil
   var moveDependencies: List[CodegenDep] = Nil

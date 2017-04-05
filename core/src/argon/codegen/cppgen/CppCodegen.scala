@@ -40,11 +40,12 @@ trait CppCodegen extends Codegen with FileDependencies  {
     // Kill old datastructures
     s"""rm -rf ${out}/datastructures""".! 
     // Register files that are always there for cppgen
-    dependencies ::= AlwaysDep(cppResourcesPath, "datastructures")
-    dependencies ::= AlwaysDep(cppResourcesPath, "fringeSW")
-    dependencies ::= AlwaysDep(cppResourcesPath, "fringeZynq")
-    dependencies ::= AlwaysDep(cppResourcesPath, "fringeVCS")
-    moveDependencies ::= AlwaysDep(s"""${out}/cpptypes.h""", "datastructures")
+    // TODO: Matt
+    dependencies ::= DirDep(cppResourcesPath, "datastructures")
+    dependencies ::= DirDep(cppResourcesPath, "fringeSW")
+    dependencies ::= DirDep(cppResourcesPath, "fringeZynq")
+    dependencies ::= DirDep(cppResourcesPath, "fringeVCS")
+    moveDependencies ::= FileDep(s"""${out}/cpptypes.h""", "datastructures")
     // moveDependencies ::= AlwaysDep(s"""${out}/interface.h""", "datastructures")
     // moveDependencies ::= AlwaysDep(s"""${out}/DRAM.h""", "datastructures")
     super.copyDependencies(out)
