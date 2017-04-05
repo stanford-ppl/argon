@@ -116,7 +116,7 @@ trait GlobalWires extends IOModule{""")
           emit("val w = 32")
           emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
           emit("val numArgOuts = numArgOuts_reg")
-          emit("new Top(w, numArgIns, numArgOuts, loadStreamInfo, storeStreamInfo, target)")
+          emit("new Top(w, numArgIns, numArgOuts, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
         close("}")
         emit("def tester = { c: DUTType => new TopUnitTester(c) }")
       close("}")
@@ -136,14 +136,15 @@ trait GlobalWires extends IOModule{""")
     }
 
     withStream(getStream("IOModule")) {
+      emit("// Combine values")
       emit("val io_numArgIns = io_numArgIns_reg + io_numArgIns_mem")
       emit("val io_numArgOuts = io_numArgOuts_reg")
       open("val io = IO(new Bundle {")
-        emit("// Control")
+        emit("// Control IO")
         emit("val enable = Input(Bool())")
         emit("val done = Output(Bool())")
         emit("")
-        emit("// Tile Load")
+        emit("// DRAM IO")
         emit("val memStreams = Flipped(new AppStreams(io_loadStreamInfo, io_storeStreamInfo))")
         emit("")
         emit("// Scalars")
@@ -169,6 +170,11 @@ trait GlobalWires extends IOModule{""")
         emit("val argIns = Input(Vec(io_numArgIns, UInt(64.W)))")
         emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(64.W))))")
 
+        emit("// Scalar IO")
+        emit("val argIns = Input(Vec(io_numArgIns, UInt(64.W)))")
+        emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(64.W))))")
+//        emit("// Stream IO")
+//        emit("val genericStreams = new GenericStreams(io_streamInsInfo, io_streamOutsInfo)")
         emit("")
       close("})")
       close("}")
@@ -198,7 +204,9 @@ class AccelTop(
   val numArgIns: Int,
   val numArgOuts: Int,
   val loadStreamInfo: List[StreamParInfo],
-  val storeStreamInfo: List[StreamParInfo]
+  val storeStreamInfo: List[StreamParInfo],
+  val streamInsInfo: List[StreamParInfo],
+  val streamOutsInfo: List[StreamParInfo]
 ) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
   // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
@@ -222,7 +230,9 @@ class AccelTop(
   val numArgIns: Int,
   val numArgOuts: Int,
   val loadStreamInfo: List[StreamParInfo],
-  val storeStreamInfo: List[StreamParInfo]
+  val storeStreamInfo: List[StreamParInfo],
+  val numStreamIns: List[StreamParInfo],
+  val numStreamOuts: List[StreamParInfo]
 ) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
 }

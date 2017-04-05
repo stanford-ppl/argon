@@ -52,9 +52,9 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     case lhs: Sym[_] => s"x${lhs.id}"
   }
 
-  final protected def emitGlobal(x: String): Unit = { 
+  final protected def emitGlobal(x: String, forceful: Boolean = false): Unit = { 
     withStream(getStream("GlobalWires")) {
-      emit(x) 
+      emit(x, forceful) 
     }
   }
 
@@ -89,6 +89,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/verilator.mk""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/zynq.mk""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/vcs.mk""", "..")
+    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/in.txt""", "..")
     // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/direct-test.sh""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/build.sbt""", "..")
     dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/run.sh""","..")
