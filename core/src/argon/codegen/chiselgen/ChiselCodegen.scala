@@ -66,7 +66,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
 
   final protected def emitModule(lhs: String, x: String, args: String*): Unit = {
-    // dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources/template-level/templates/$x.scala""")
+    // dependencies ::= AlwaysDep("chiselgen", "template-level/templates/$x.scala")
 
     emit(src"""val $lhs = Module(new ${x}(${args.mkString}))""")
   } 
@@ -78,20 +78,21 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     //   log(s"Copying ${dep.input} to $out")
     //   s"cp ${dep.input} ${out}${java.io.File.separator}templates${java.io.File.separator}${dep.outputPath}" !
     // }}
-    val resourcesPath = s"${sys.env("SPATIAL_HOME")}/src/spatial/codegen/chiselgen/resources"
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/templates""")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/fringeHW""")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/fringeZynq""")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/template-level/fringeVCS""")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/Makefile""", "..")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/verilator.mk""", "..")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/zynq.mk""", "..")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/vcs.mk""", "..")
-    // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/direct-test.sh""", "..")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/build.sbt""", "..")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/run.sh""","..")
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/Top.scala""")
-    // dependencies ::= AlwaysDep(s"""${resourcesPath}/app-level/app-test""")
+    val resourcesPath = s"chiselgen"
+
+    dependencies ::= AlwaysDep(resourcesPath, "template-level/templates")
+    dependencies ::= AlwaysDep(resourcesPath, "template-level/fringeHW")
+    dependencies ::= AlwaysDep(resourcesPath, "template-level/fringeZynq")
+    dependencies ::= AlwaysDep(resourcesPath, "template-level/fringeVCS")
+    dependencies ::= AlwaysDep(resourcesPath, "app-level/Makefile")
+    dependencies ::= AlwaysDep(resourcesPath, "app-level/verilator.mk")
+    dependencies ::= AlwaysDep(resourcesPath, "app-level/zynq.mk")
+    dependencies ::= AlwaysDep(resourcesPath, "app-level/vcs.mk")
+    // dependencies ::= AlwaysDep(resourcesPath, "/app-level/direct-test.sh")
+    dependencies ::= AlwaysDep(resourcesPath, "app-level/build.sbt")
+    dependencies ::= AlwaysDep(resourcesPath, "app-level/run.sh")
+    dependencies ::= AlwaysDep(resourcesPath, "app-level/Top.scala")
+    // dependencies ::= AlwaysDep(resourcesPath, "app-level/app-test")
     super.copyDependencies(out)
   }
 

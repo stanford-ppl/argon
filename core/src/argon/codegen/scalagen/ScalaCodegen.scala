@@ -20,18 +20,11 @@ trait ScalaCodegen extends Codegen with FileDependencies{
     emit(src"${b.result}")
   }
 
-  
-  def copyFile(name: String, out: String) = {
-    val from = getClass().getResource("scalagen/"+name)
-    val dest = new File(out+name)
-    println(dest)
-    FileUtils.copyURLToFile(from, dest);
-  }
 
   override def copyDependencies(out: String): Unit = {
-    copyFile("Makefile", out)
-    copyFile("run.sh", out)
-    copyFile("build.sbt", out)
+    copyFile("scalagen", "Makefile", out)
+    copyFile("scalagen", "run.sh", out)
+    copyFile("scalagen", "build.sbt", out)
     super.copyDependencies(out)
   }
 

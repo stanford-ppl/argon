@@ -33,7 +33,7 @@ trait PIRCodegen extends Codegen with FileDependencies { // FileDependencies ext
   }
 
   final protected def emitModule(lhs: String, x: String, args: String*): Unit = {
-    // dependencies ::= AlwaysDep(s"""${sys.env("SPATIAL_HOME")}/src/spatial/codegen/pirgen/resources/template-level/templates/$x.scala""")
+    // dependencies ::= AlwaysDep(s"""/pirgen/template-level/templates/$x.scala""")
 
     emit(src"""val $lhs = Module(new ${x}(${args.mkString}))""")
   } 

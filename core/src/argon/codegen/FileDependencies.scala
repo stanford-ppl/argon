@@ -2,45 +2,49 @@ package argon.codegen
 
 import sys.process._
 import scala.language.postfixOps
+import org.apache.commons.io._
+import java.io.File
 
 trait FileDependencies extends Codegen {
   import IR._
 
-  sealed abstract class CodegenDep {
-    def input: String
-    def outputPath: String
-    def needsCopy: Boolean
+  def copyFile(folder:String, in: String, out: String) = {
+    val from = getClass().getResource("/" + folder +"/" + in)
+    val dest = new File(out+in)
+    println(folder + " " + out + " " + in + " " + dest)
+    FileUtils.copyURLToFile(from, dest);
   }
 
-  case class AlwaysDep(input: String, outputPath: String = "") extends CodegenDep { def needsCopy = true }
+  sealed trait CodegenDep {
+    def folder: String
+    def name: String
+    def copy(out: String) = copyFile(folder, name, out)
+  }
 
-  case class CondDep(input: String, outputPath: String = "", add: () => Boolean) extends CodegenDep { def needsCopy = add() }
+  case class AlwaysDep(folder: String, name: String = "") extends CodegenDep
 
   var dependencies: List[CodegenDep] = Nil
   var moveDependencies: List[CodegenDep] = Nil
-  var patchDependencies: List[CodegenDep] = Nil
 
   // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
   def copyDependencies(out: String): Unit = {
     // Files that need to cp
-    dependencies.foreach{dep => if (dep.needsCopy) {
-      s"mkdir -p ${out}${java.io.File.separator}${dep.outputPath}" !
-    }}
-    dependencies.foreach{dep => if (dep.needsCopy) {
-      log(s"cp -r ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}")
-      s"cp -r ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}" !
-    }}
+    dependencies.foreach{dep => 
+      s"mkdir -p ${out}${java.io.File.separator}" !
+    }
+    dependencies.foreach{dep =>
+      log("copy: " + dep )
+      dep.copy(out)
+    }
     // Files that need to mv
-    moveDependencies.foreach{dep => if (dep.needsCopy) {
-      s"mkdir -p ${out}${java.io.File.separator}${dep.outputPath}" !
-    }}
-    moveDependencies.foreach{dep => if (dep.needsCopy) {
-      log(s"mv ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}")
-      s"mv ${dep.input} ${out}${java.io.File.separator}${dep.outputPath}" !
-    }}
-    patchDependencies.foreach{dep => if (dep.needsCopy) {
-      s"${dep.input}" !
-    }}
+    moveDependencies.foreach{dep => 
+      s"mkdir -p ${out}${java.io.File.separator}" !
+    }
+    moveDependencies.foreach{dep => 
+      log(s"mv ${dep.folder} ${out}${java.io.File.separator}${dep.name}")
+      s"mv ${dep.folder} ${out}${java.io.File.separator}${dep.name}" !
+    }
+
   }
   override protected def postprocess[S:Type](b: Block[S]) = {
     copyDependencies(out)
