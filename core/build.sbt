@@ -1,6 +1,7 @@
 name := "argon"
 
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.3.2"
+libraryDependencies += "commons-io" % "commons-io" % "2.5"
 
 scalaSource in Compile := baseDirectory(_/ "src").value
 scalaSource in Test := baseDirectory(_/"test").value
@@ -25,3 +26,4 @@ scalacOptions in (Compile, doc) ++= Seq(
 
 parallelExecution in Test := false
 concurrentRestrictions in Global += Tags.limitAll(1) // we need tests to run in isolation across all projects
+resourceDirectory in Compile :=  baseDirectory(_/ "resources").value

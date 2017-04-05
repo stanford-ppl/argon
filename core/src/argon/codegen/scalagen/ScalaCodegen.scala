@@ -4,6 +4,9 @@ import argon.codegen.Codegen
 import sys.process._
 import scala.language.postfixOps
 import argon.codegen.FileDependencies
+import scala.io.Source
+import java.io.File
+import org.apache.commons.io._
 
 trait ScalaCodegen extends Codegen with FileDependencies{
 
@@ -17,11 +20,18 @@ trait ScalaCodegen extends Codegen with FileDependencies{
     emit(src"${b.result}")
   }
 
+  
+  def copyFile(name: String, out: String) = {
+    val from = getClass().getResource("scalagen/"+name)
+    val dest = new File(out+name)
+    println(dest)
+    FileUtils.copyURLToFile(from, dest);
+  }
+
   override def copyDependencies(out: String): Unit = {
-    // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
-    s"""cp ${sys.env("SPATIAL_HOME")}/spatial/src/spatial/codegen/scalagen/resources/Makefile ${out}/..""".!
-    s"""cp ${sys.env("SPATIAL_HOME")}/spatial/src/spatial/codegen/scalagen/resources/run.sh ${out}/..""".!
-    s"""cp ${sys.env("SPATIAL_HOME")}/spatial/src/spatial/codegen/scalagen/resources/build.sbt ${out}/..""".!
+    copyFile("Makefile", out)
+    copyFile("run.sh", out)
+    copyFile("build.sbt", out)
     super.copyDependencies(out)
   }
 
