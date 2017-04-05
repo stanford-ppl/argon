@@ -134,13 +134,18 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
     })
 
   class NDArrayException(array: Exp[_], name: String) extends
-    CompilerException(20, c"Array ${array} ($name) has no good codegen for CPP", {
+    CompilerException(21, c"Array ${array} ($name) has no good codegen for CPP", {
       error(c"Array ${array} ($name) has no good codegen for CPP")
     })
 
   class OuterLevelInnerStyleException(name: String) extends
-    CompilerException(20, c"Controller ${name} claims to be an outer level controller but has style of an innerpipe", {
+    CompilerException(22, c"Controller ${name} claims to be an outer level controller but has style of an innerpipe", {
       error(c"Controller ${name} claims to be an outer level controller but has style of an innerpipe")
+    })
+
+  class DoublyUsedDRAMException(dram: Exp[_], name: String) extends
+    CompilerException(23, c"DRAM $dram is used twice as a $name.  Please only load from a DRAM once, or else stream signals will interfere", {
+      error(c"DRAM $dram is used twice as a $name.  Please only load from a DRAM once, or else stream signals will interfere")
     })
 
   // --- User errors
