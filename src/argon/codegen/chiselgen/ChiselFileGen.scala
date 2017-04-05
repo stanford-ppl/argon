@@ -117,7 +117,7 @@ trait GlobalWires extends IOModule{""")
           emit("val w = 32")
           emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
           emit("val numArgOuts = numArgOuts_reg")
-          emit("new Top(w, numArgIns, numArgOuts, loadStreamInfo, storeStreamInfo, target)")
+          emit("new Top(w, numArgIns, numArgOuts, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
         close("}")
         emit("def tester = { c: DUTType => new TopUnitTester(c) }")
       close("}")
@@ -137,6 +137,7 @@ trait GlobalWires extends IOModule{""")
     }
 
     withStream(getStream("IOModule")) {
+      emit("// Combine values")
       emit("val io_numArgIns = io_numArgIns_reg + io_numArgIns_mem")
       emit("val io_numArgOuts = io_numArgOuts_reg")
       open("val io = IO(new Bundle {")
@@ -153,6 +154,9 @@ trait GlobalWires extends IOModule{""")
         emit("// Stream IO")
         emit("val streamIns = StreamIn(io_w)")
         emit("val streamOuts = StreamOut(io_w)")
+        emit("")
+        emit("// Streams")
+        emit("val genericStreams = Flipped(new GenericStreams(io_streamInsInfo, io_streamOutsInfo))")
         emit("")
       close("})")
       close("}")
@@ -182,7 +186,9 @@ class AccelTop(
   val numArgIns: Int,
   val numArgOuts: Int,
   val loadStreamInfo: List[StreamParInfo],
-  val storeStreamInfo: List[StreamParInfo]
+  val storeStreamInfo: List[StreamParInfo],
+  val streamInsInfo: List[StreamParInfo],
+  val streamOutsInfo: List[StreamParInfo]
 ) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
   // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
@@ -206,7 +212,9 @@ class AccelTop(
   val numArgIns: Int,
   val numArgOuts: Int,
   val loadStreamInfo: List[StreamParInfo],
-  val storeStreamInfo: List[StreamParInfo]
+  val storeStreamInfo: List[StreamParInfo],
+  val numStreamIns: List[StreamParInfo],
+  val numStreamOuts: List[StreamParInfo]
 ) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
 
 }
