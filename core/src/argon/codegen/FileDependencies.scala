@@ -20,15 +20,15 @@ trait FileDependencies extends Codegen {
       val from = getClass.getResource("/" + folder +"/" + name)
       val dest = new File(out+name)
       new File(out).mkdirs()
-      // println(folder + " " + out + " " + name + " " + dest)
+      Console.println(folder + " " + out + " " + name + " " + dest)
       FileUtils.copyURLToFile(from, dest)
     }
   }
 
   case class DirDep(folder: String, name: String) extends CodegenDep {
     override def copy(out: String) = {
-      // val dir = "/" + folder + "/" + name
-      // println("Looking at " + dir)
+      val dir = "/" + folder + "/" + name
+      Console.println("Looking at " + dir)
 
       val src = getClass.getProtectionDomain.getCodeSource
       if (src != null) {
