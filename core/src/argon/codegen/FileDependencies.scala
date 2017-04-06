@@ -13,19 +13,21 @@ trait FileDependencies extends Codegen {
     def folder: String
     def name: String
     def copy(out: String): Unit
+    def outputPath: Option[String]
   }
 
-  case class FileDep(folder: String, name: String) extends CodegenDep {
+  case class FileDep(folder: String, name: String, outputPath: Option[String] = None) extends CodegenDep {
     def copy(out: String) = {
       val from = getClass.getResource("/" + folder +"/" + name)
-      val dest = new File(out+name)
+      val outPath = outputPath.getOrElse(name)
+      val dest = new File(out+outPath)
       new File(out).mkdirs()
       Console.println(folder + " " + out + " " + name + " " + dest)
       FileUtils.copyURLToFile(from, dest)
     }
   }
 
-  case class DirDep(folder: String, name: String) extends CodegenDep {
+  case class DirDep(folder: String, name: String, outputPath: Option[String] = None) extends CodegenDep {
     override def copy(out: String) = {
       val dir = "/" + folder + "/" + name
       Console.println("Looking at " + dir)
@@ -40,7 +42,7 @@ trait FileDependencies extends Codegen {
           .map(_.getName)
           .filter(_.startsWith(folder + "/" + name))
           .filterNot(_.endsWith("/"))
-          .map{e => FileDep(folder, e.split("/").drop(1).mkString("/")) }
+          .map{e => FileDep(folder, e.split("/").drop(1).mkString("/"), outputPath) }
           .foreach(_.copy(out))
       }
 
