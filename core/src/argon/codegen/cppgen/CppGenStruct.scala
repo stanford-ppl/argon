@@ -101,7 +101,7 @@ trait CppGenStructs extends CppCodegen with StructCodegen {
       }
     }
     // TODO: Matt!
-    dependencies ::= FileDep("cppgen", "cppDeliteArrayStructs.h")
+    // dependencies ::= FileDep("cppgen", "cppDeliteArrayStructs.h")
 
   }
 
