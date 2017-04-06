@@ -81,7 +81,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     val resourcesPath = s"chiselgen"
 
     dependencies ::= DirDep(resourcesPath, "template-level/templates")
-    dependencies ::= DirDep(resourcesPath, "template-level/fringeHW")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeHW") 
     dependencies ::= DirDep(resourcesPath, "template-level/fringeZynq")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeVCS")
     dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile")) 
