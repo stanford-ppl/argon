@@ -30,6 +30,10 @@ trait Symbols extends StagedTypes with Metadata with Graph { self: Staging =>
 
   def ctx(implicit context: SrcCtx): SrcCtx = context
 
+  def __valDef[T<:MetaAny[T]](init: T, name: String): Unit = {
+    init.s.ctx
+  }
+
 
   /** Any staged symbol **/
   sealed abstract class Exp[+T] private[core](staged: Type[T]) extends EdgeLike {

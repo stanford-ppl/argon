@@ -8,16 +8,40 @@ import argon.traversal.IRPrinter
 import argon.codegen.scalagen._
 import argon.core.Staging
 import argon.transform.ForwardTransformer
+import forge._
+
+import scala.runtime._
 
 trait TestExp extends Staging
   with ArrayExp with ArrayExtExp with AssertExp with BoolExp with CastExp with FixPtExp with FltPtExp
   with HashMapExp with IfThenElseExp with PrintExp with StructExp
   with TextExp with TupleExp with VoidExp
 
+trait LowPriorityImplicits {
+  implicit def int2RichInt(x: Int): RichInt = new RichInt(x)
+  implicit def long2RichLong(x: Long): RichLong = new RichLong(x)
+  implicit def float2RichFloat(x: Float): RichFloat = new RichFloat(x)
+  implicit def double2RichDouble(x: Double): RichDouble = new RichDouble(x)
+}
+
 trait TestApi extends TestExp
   with ArrayApi with ArrayExtApi with AssertApi with BoolApi with CastApi with FixPtApi with FltPtApi
   with HashMapApi with IfThenElseApi with PrintApi with StructApi
-  with TextApi with TupleApi with VoidApi
+  with TextApi with TupleApi with VoidApi with LowPriorityImplicits {
+
+  implicit class intWrapper(x: scala.Int) extends {
+    @api def to[B:Meta](implicit cast: Cast[scala.Int,B]): B = cast(x)
+  }
+  implicit class longWrapper(x: scala.Long) {
+    @api def to[B:Meta](implicit cast: Cast[scala.Long,B]): B = cast(x)
+  }
+  implicit class floatWrapper(x: scala.Float) {
+    @api def to[B:Meta](implicit cast: Cast[scala.Float,B]): B = cast(x)
+  }
+  implicit class doubleWrapper(x: scala.Double) {
+    @api def to[B:Meta](implicit cast: Cast[scala.Double,B]): B = cast(x)
+  }
+}
 
 trait ScalaGen extends ScalaCodegen with ScalaFileGen
   with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert with ScalaGenBool with ScalaGenFixPt with ScalaGenFltPt
