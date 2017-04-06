@@ -19,10 +19,23 @@ trait FileDependencies extends Codegen {
       val outPathApp = outputPath.getOrElse(name)
       val relPathApp = relPath + outPathApp
       val dest = new File(out+relPathApp)
-      new File(out).mkdirs()
-      Console.println(folder + " " + out + " " + name + " " + dest)
-      Console.println(from)
-      FileUtils.copyURLToFile(from, dest)
+      Console.println("source: /" + folder + "/" + name)
+      Console.println("from: " + from)
+      Console.println("dest: " + out + relPathApp)
+
+      //Console.println(folder + " " + out + " " + name + " " + dest)
+      //Console.println(from)
+      try {
+        val outPath = (out+relPathApp).split("/").dropRight(1).mkString("/")
+        new File(outPath).mkdirs()
+        FileUtils.copyURLToFile(from, dest)
+      }
+      catch {case e: NullPointerException =>
+        error(s"Cannot copy file dependency $this: ")
+        error("  src: " + folder + "/" + name)
+        error("  dst: " + out + relPathApp)
+        sys.exit(1)
+      }
     }
   }
 
@@ -38,7 +51,15 @@ trait FileDependencies extends Codegen {
 
         def rename(e:String) = {
           val path = e.split("/").drop(1)
-          outputPath.map(_+path.last).getOrElse(path.mkString("/"))
+          if (outputPath.isDefined) {
+            val sourceName = folder + "/" + path.dropRight(1).mkString("/")
+            val outputName = outputPath.get + path.last
+            FileDep(sourceName, path.last, relPath, Some(outputName))
+          }
+          else {
+            val outputName = path.mkString("/")
+            FileDep(folder, outputName, relPath)
+          }
         }
 
         Stream.continually(zip.getNextEntry)
@@ -47,7 +68,7 @@ trait FileDependencies extends Codegen {
           .filter(_.startsWith(folder + "/" + name))
           .filterNot(_.endsWith("/"))
           .map(rename)
-          .map(e => FileDep(folder, e, relPath) )
+          //.map(e => FileDep(folder, e, relPath) )
           .foreach(_.copy(out))
       }
 
