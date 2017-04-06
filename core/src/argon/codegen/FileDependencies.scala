@@ -10,39 +10,44 @@ trait FileDependencies extends Codegen {
   import IR._
 
   sealed trait CodegenDep {
-    def folder: String
-    def name: String
     def copy(out: String): Unit
-    def outputPath: Option[String]
   }
 
-  case class FileDep(folder: String, name: String, outputPath: Option[String] = None) extends CodegenDep {
+  case class FileDep(folder: String, name: String, relPath: String = "", outputPath:Option[String] = None) extends CodegenDep {
     def copy(out: String) = {
       val from = getClass.getResource("/" + folder +"/" + name)
-      val outPath = outputPath.getOrElse(name)
-      val dest = new File(out+outPath)
+      val outPathApp = outputPath.getOrElse(name)
+      val relPathApp = relPath + outPathApp
+      val dest = new File(out+relPathApp)
       new File(out).mkdirs()
       Console.println(folder + " " + out + " " + name + " " + dest)
+      Console.println(from)
       FileUtils.copyURLToFile(from, dest)
     }
   }
 
-  case class DirDep(folder: String, name: String, outputPath: Option[String] = None) extends CodegenDep {
+  case class DirDep(folder: String, name: String, relPath: String = "", outputPath:Option[String] = None) extends CodegenDep {
     override def copy(out: String) = {
       val dir = "/" + folder + "/" + name
-      Console.println("Looking at " + dir)
+      // Console.println("Looking at " + dir)
 
       val src = getClass.getProtectionDomain.getCodeSource
       if (src != null) {
         val jar = src.getLocation
         val zip = new ZipInputStream(jar.openStream())
 
+        def rename(e:String) = {
+          val path = e.split("/").drop(1)
+          outputPath.map(_+path.last).getOrElse(path.mkString("/"))
+        }
+
         Stream.continually(zip.getNextEntry)
           .takeWhile(_ != null)
           .map(_.getName)
           .filter(_.startsWith(folder + "/" + name))
           .filterNot(_.endsWith("/"))
-          .map{e => FileDep(folder, e.split("/").drop(1).mkString("/"), outputPath) }
+          .map(rename)
+          .map(e => FileDep(folder, e, relPath) )
           .foreach(_.copy(out))
       }
 
@@ -51,7 +56,6 @@ trait FileDependencies extends Codegen {
 
 
   var dependencies: List[CodegenDep] = Nil
-  var moveDependencies: List[CodegenDep] = Nil
 
   // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
   def copyDependencies(out: String): Unit = {
@@ -64,13 +68,7 @@ trait FileDependencies extends Codegen {
       dep.copy(out)
     }
     // Files that need to mv
-    moveDependencies.foreach{dep => 
-      s"mkdir -p ${out}${java.io.File.separator}" !
-    }
-    moveDependencies.foreach{dep => 
-      log(s"mv ${dep.folder} ${out}${java.io.File.separator}${dep.name}")
-      s"mv ${dep.folder} ${out}${java.io.File.separator}${dep.name}" !
-    }
+
 
   }
   override protected def postprocess[S:Type](b: Block[S]) = {
