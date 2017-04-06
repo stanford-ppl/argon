@@ -80,18 +80,17 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     // }}
     val resourcesPath = s"chiselgen"
 
-    // TODO: Matt
-    dependencies ::= DirDep(resourcesPath, "template-level/templates", "", Some(""))
-    dependencies ::= DirDep(resourcesPath, "template-level/fringeHW", "", Some(""))
-    dependencies ::= DirDep(resourcesPath, "template-level/fringeZynq", "", Some(""))
-    dependencies ::= DirDep(resourcesPath, "template-level/fringeVCS", "", Some(""))
-    dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../") 
-    dependencies ::= FileDep(resourcesPath, "app-level/verilator.mk", "../")
-    dependencies ::= FileDep(resourcesPath, "app-level/zynq.mk", "../")
-    dependencies ::= FileDep(resourcesPath, "app-level/vcs.mk", "../")
-    dependencies ::= FileDep(resourcesPath, "app-level/build.sbt", "../")
-    dependencies ::= FileDep(resourcesPath, "app-level/run.sh", "../")
-    dependencies ::= FileDep(resourcesPath, "app-level/Top.scala") 
+    dependencies ::= DirDep(resourcesPath, "template-level/templates", outputPath=Some("templates/"))
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeHW", outputPath=Some("fringeHW/"))
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeZynq", outputPath=Some("fringeZynq/"))
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeVCS", outputPath=Some("fringeVCS/"))
+    dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile")) 
+    dependencies ::= FileDep(resourcesPath, "app-level/verilator.mk", "../", Some("verilator.mk"))
+    dependencies ::= FileDep(resourcesPath, "app-level/zynq.mk", "../", Some("zynq.mk"))
+    dependencies ::= FileDep(resourcesPath, "app-level/vcs.mk", "../", Some("vcs.mk"))
+    dependencies ::= FileDep(resourcesPath, "app-level/build.sbt", "../", Some("build.sbt"))
+    dependencies ::= FileDep(resourcesPath, "app-level/run.sh", "../", Some("run.sh"))
+    dependencies ::= FileDep(resourcesPath, "app-level/Top.scala", outputPath = Some("Top.scala")) 
     super.copyDependencies(out)
   }
 

@@ -19,9 +19,9 @@ trait FileDependencies extends Codegen {
       val outPathApp = outputPath.getOrElse(name)
       val relPathApp = relPath + outPathApp
       val dest = new File(out+relPathApp)
-      Console.println("source: /" + folder + "/" + name)
-      Console.println("from: " + from)
-      Console.println("dest: " + out + relPathApp)
+      // Console.println("source: /" + folder + "/" + name)
+      // Console.println("from: " + from)
+      // Console.println("dest: " + out + relPathApp)
 
       //Console.println(folder + " " + out + " " + name + " " + dest)
       //Console.println(from)
