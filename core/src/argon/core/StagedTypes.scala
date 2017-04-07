@@ -66,9 +66,12 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   def liftString(x: String)(implicit ctx: SrcCtx): Text
   def concat(x: Text, y: Text)(implicit ctx: SrcCtx): Text
 
-  //@util def infix_toString[T<:MetaAny[T]](x: T): Text = x.toText
-  @util def infix_toString[A](x: MetaAny[A]): Text = x.toText
-  @util def infix_toString[A:Meta](x: A): Text = x.toText
+  @util def infix_toString[T<:MetaAny[T]](x: T): Text = x.toText
+
+  def __valDef[T<:MetaAny[T]](init: T, name: String): Unit = {
+    log(c"Setting name of ${init.s} to $name")
+    init.s.ctx.lhsName = Some(name)
+  }
 
   @util def __equals[T<:MetaAny[T]](x: T, y: T): Bool = x === y
   @util def __equals[A, T<:MetaAny[T]](x: A, y: T)(implicit lift: Lift[A, T]): Bool = lift(x) === y
