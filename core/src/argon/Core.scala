@@ -14,7 +14,7 @@ trait AppCore { self =>
   private var __stagingArgs: scala.Array[java.lang.String] = _
   def stagingArgs: Array[String] = __stagingArgs
 
-  def main(): scala.Unit
+  def main(): Unit
 
   def main(sargs: Array[String]): Unit = {
     __stagingArgs = sargs

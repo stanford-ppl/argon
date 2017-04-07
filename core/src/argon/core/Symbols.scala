@@ -25,14 +25,12 @@ trait Symbols extends StagedTypes with Metadata with Graph { self: Staging =>
   }
 
   object nameOf {
-    def apply(x: Exp[_]): Option[String] = ctxsOf(x).headOption.flatMap(_.assignedVariable)
+    def apply(x: Exp[_]): Option[String] = ctxsOf(x).find(_.lhsName.isDefined).flatMap(_.lhsName)
   }
 
   def ctx(implicit context: SrcCtx): SrcCtx = context
 
-  def __valDef[T<:MetaAny[T]](init: T, name: String): Unit = {
-    init.s.ctx
-  }
+  def __valDef[T](init: MetaAny[T], name: String): Unit = { init.s.ctx.lhsName = Some(name) }
 
 
   /** Any staged symbol **/
