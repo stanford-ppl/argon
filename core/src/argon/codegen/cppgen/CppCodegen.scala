@@ -42,10 +42,10 @@ trait CppCodegen extends Codegen with FileDependencies  {
     // Register files that are always there for cppgen
     // TODO: Matt
     dependencies ::= DirDep(cppResourcesPath, "datastructures")
-    dependencies ::= DirDep(cppResourcesPath, "fringeSW")
+    // dependencies ::= DirDep(cppResourcesPath, "fringeSW")
     dependencies ::= DirDep(cppResourcesPath, "fringeZynq")
     dependencies ::= DirDep(cppResourcesPath, "fringeVCS")
-    moveDependencies ::= FileDep(s"""${out}/cpptypes.h""", "datastructures")
+    // dependencies ::= FileDep(cppResourcesPath, "cpptypes.h")
     // moveDependencies ::= AlwaysDep(s"""${out}/interface.h""", "datastructures")
     // moveDependencies ::= AlwaysDep(s"""${out}/DRAM.h""", "datastructures")
     super.copyDependencies(out)
