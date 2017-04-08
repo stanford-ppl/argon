@@ -2,17 +2,29 @@ package argon
 
 import argon.util.ArgParser
 
+import scopt._
+
 class ArgonArgParser extends ArgParser("argon") {
-  addArg(Switch('q', "disable background logging"){Config.verbosity = 0})
-  addArg(Switch('v', "enable verbose printout"){Config.verbosity = 2})
+  //not sur yet if we must optional()
+  parser.opt[Unit]('q', "quiet").action( (_,_) =>
+    Config.verbosity = 0
+  ).text("disable background logging")
 
-  addArg(LongSwitch("clean", "Reset output directory"){Config.clearGen = true})
+  parser.opt[Unit]('v', "verbose").action( (_,_) =>
+    Config.verbosity = 2
+  ).text("enable verbose printout")
 
-  addArg(Named("emission", "conservativeness when emitting nodes.\n0 = crash on undefined generation rule (release mode)\n1 = warn when undefined,\n2 = warn when undefined and report when node matched but is outside backend rules"){
-    arg => Config.emitDevel = arg.toInt})
-  addArg(Named("multifile", "aggressiveness for splitting generated code files\n0 = no splitting or scoping\n1 = no splitting but yes scoping on inner pipes\n2 = no splitting but yes scoping everywhere\n3 <DEPRECATED> = splitting for inner pipes only\n4 = all blocks"){
-    arg => Config.multifile = arg.toInt})
-  addArg(Named("outdir", "location of output directory. Default is ./gen/<appname>"){
-    arg => Config.genDir = arg})
+  parser.opt[Unit]('c', "clean").action( (x,_) =>
+    Config.clearGen = true
+  ).text("Reset output directory")
 
+
+  parser.opt[Int]('m', "multifile").action( (x,_) =>
+    Config.multifile = x
+  ).text("aggressiveness for splitting generated code files\n0 = no splitting or scoping\n1 = no splitting but yes scoping on inner pipes\n2 = no splitting but yes scoping everywhere\n3 <DEPRECATED> = splitting for inner pipes only\n4 = all blocks")
+
+  parser.opt[String]('o', "out").action( (x,_) =>
+    Config.genDir = x
+  ).text("location of output directory. Default is ./gen/<appname>")
+  
 }

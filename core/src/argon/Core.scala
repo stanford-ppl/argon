@@ -8,6 +8,7 @@ import scala.collection.mutable.ArrayBuffer
 import org.virtualized.{EmptyContext, SourceContext}
 
 trait AppCore { self =>
+
   val IR: CompilerCore
   val Lib: LibCore
 
@@ -16,15 +17,13 @@ trait AppCore { self =>
   // Allows @virtualize def main(): Unit = { } and [@virtualize] def main() { }
   def main(): Unit
 
-  def parseArguments(args: List[String]): Unit = {
+  def parseArguments(args: Seq[String]): Unit = {
     val parser = new ArgonArgParser
-    val (hadErrors, unmatched) = parser.parseArgs(args, Nil)
-    __stagingArgs = unmatched.toArray
-    if (hadErrors) sys.exit(1)
+    parser.parse(args)
   }
 
   def main(sargs: Array[String]): Unit = {
-    parseArguments(sargs.toList)
+    parseArguments(sargs.toSeq)
     IR.__stagingArgs = this.__stagingArgs
     Lib.__args = this.__stagingArgs
 
