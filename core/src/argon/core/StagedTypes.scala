@@ -112,7 +112,8 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
 
   def __valDef[T<:MetaAny[T]](init: T, name: String): Unit = {
     log(c"Setting name of ${init.s} to $name")
-    init.s.ctx.lhsName = Some(name)
+    //init.s.ctx.lhsName = Some(name)
+    nameOf(init.s) = name
   }
 
   @util def __equals[T<:MetaAny[T]](x: T, y: T): Bool = x === y

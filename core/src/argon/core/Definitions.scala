@@ -129,7 +129,7 @@ trait Definitions extends Blocks { self: Staging =>
 
   private val __dyns: PartialFunction[Any,Seq[Dyn[_]]] = {
     case s: Dyn[_] => Seq(s)
-    case b: Block[_]  => dyns(b.result)
+    case b: Block[_]  => dyns(b.result) ++ dyns(b.effectful)
     case d: Def       => d.inputs
     case l: Iterable[_] => recursive.collectSeqs(__dyns)(l.iterator)
   }

@@ -20,12 +20,15 @@ trait Symbols extends StagedTypes with Metadata with Graph { self: Staging =>
   implicit class SrcCtxOps(x: Exp[_]) {
     def ctx: SrcCtx = ctxsOf(x).headOption.getOrElse(EmptyContext)
     def ctxOrElse(els: SrcCtx) = ctxsOf(x).headOption.getOrElse(els)
-    def addCtx(ctx: SrcCtx) { ctxsOf(x) = ctx +: ctxsOf(x) }
-    def setCtx(ctx: SrcCtx) { ctxsOf(x) = List(ctx) }
+    def addCtx(ctx: SrcCtx) { if (ctx != EmptyContext || ctxsOf(x).isEmpty) ctxsOf(x) = ctxsOf(x) :+ ctx }
+    def setCtx(ctx: SrcCtx) { if (ctx != EmptyContext || ctxsOf(x).isEmpty) ctxsOf(x) = List(ctx) }
   }
 
+  case class CtxName(name: String) extends Metadata[CtxName] { def mirror(f:Tx) = this }
+
   object nameOf {
-    def apply(x: Exp[_]): Option[String] = ctxsOf(x).find(_.lhsName.isDefined).flatMap(_.lhsName)
+    def apply(x: Exp[_]): Option[String] = metadata[CtxName](x).map(_.name)
+    def update(x: Exp[_], name: String) = metadata.add(x, CtxName(name))
   }
 
   def ctx(implicit context: SrcCtx): SrcCtx = context
