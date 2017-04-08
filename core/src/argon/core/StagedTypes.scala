@@ -8,6 +8,8 @@ import org.virtualized.{EmbeddedControls, SourceContext}
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
 
+import argon.State
+
 trait StagedTypes extends EmbeddedControls { this: Staging =>
   type SrcCtx = SourceContext
   type Bool
@@ -53,9 +55,49 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     @api def +[R](rhs: MetaAny[R]): Text = concat(lhs.toText, rhs.toText)
   }
 
+  private def unstagedWarning(op: String)(implicit ctx: SrcCtx): Unit = {
+    warn(ctx, s"Unstaged method $op was used here on a staged type during staging.")
+    warn("Add @virtualize annotation to an enclosing scope to prevent this.")
+    warn(ctx)
+  }
+  private def unstagedWarningNoCtx(op: String)(ctx: SrcCtx): Unit = {
+    val name = ctx.lhsName.getOrElse("the value")
+    warn(ctx, s"Unstaged method $op was used on $name defined here during staging.")
+    warn("Add @virtualize annotation to an enclosing scope to prevent this.")
+    warn(ctx)
+  }
+
+
   /** Base trait for all staged, frontend types **/
-  abstract class MetaAny[T:Meta] {
+  abstract class MetaAny[T:Meta] extends Product {
     def s: Exp[T]
+
+    private def isEqual(that: Any): Boolean = that match {
+      case x: MetaAny[_] => this.s == x.s
+      case _ => false
+    }
+
+    /*final def ==(that: Any)(implicit ctx: SrcCtx): Boolean = {
+      if (State.staging) unstagedWarning("==")
+      this.isEqual(that)
+    }
+    final def !=(that: Any)(implicit ctx: SrcCtx): Boolean = {
+      if (State.staging) unstagedWarning("!=")
+      !this.isEqual(that)
+    }
+    final def toString(implicit ctx: SrcCtx): String = {
+      if (State.staging) unstagedWarning("toString")
+      this.productPrefix + this.productIterator.mkString("(", ", ", ")")
+    }*/
+    final override def toString(): String = {
+      if (State.staging) unstagedWarningNoCtx("toString()")(s.ctx)
+      this.productPrefix + this.productIterator.mkString("(", ", ", ")")
+    }
+    final override def equals(that: Any): Boolean = {
+      if (State.staging) unstagedWarningNoCtx("equals")(s.ctx)
+      this.isEqual(that)
+    }
+
     @api def !=(that: T): Bool = this =!= that
     @api def ==(that: T): Bool = this === that
     @api def ===(that: T): Bool

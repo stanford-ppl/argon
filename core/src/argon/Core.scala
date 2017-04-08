@@ -9,15 +9,25 @@ import org.virtualized.{EmptyContext, SourceContext}
 
 trait AppCore { self =>
   val IR: CompilerCore
-  val Lib: LibCore // Should define "def args: Array[String] = self.stagingArgs"
+  val Lib: LibCore
 
   private var __stagingArgs: scala.Array[java.lang.String] = _
-  def stagingArgs: Array[String] = __stagingArgs
 
+  // Allows @virtualize def main(): Unit = { } and [@virtualize] def main() { }
   def main(): Unit
 
+  def parseArguments(args: List[String]): Unit = {
+    val parser = new ArgonArgParser
+    val (hadErrors, unmatched) = parser.parseArgs(args, Nil)
+    __stagingArgs = unmatched.toArray
+    if (hadErrors) sys.exit(1)
+  }
+
   def main(sargs: Array[String]): Unit = {
-    __stagingArgs = sargs
+    parseArguments(sargs.toList)
+    IR.__stagingArgs = this.__stagingArgs
+    Lib.__args = this.__stagingArgs
+
     Config.name = self.getClass.getName.replace("class ", "").replace('.','-').replace("$","") //.split('$').head
     Config.logDir =  Config.cwd + Config.sep + "logs" + Config.sep + Config.name
     IR.compileOrRun( main() )
@@ -25,7 +35,9 @@ trait AppCore { self =>
 }
 
 trait LibCore {
-  // Nothing here for now
+  private[argon] var __args: scala.Array[java.lang.String] = _
+  def stagingArgs = __args
+  def args = __args
 }
 
 trait CompilerCore extends Staging with ArrayExp { self =>
@@ -33,7 +45,8 @@ trait CompilerCore extends Staging with ArrayExp { self =>
   val testbench: Boolean = false
 
   lazy val args: MetaArray[Text] = input_arguments()(EmptyContext)
-  var stagingArgs: scala.Array[java.lang.String] = _
+  private[argon] var __stagingArgs: scala.Array[java.lang.String] = _
+  def stagingArgs = __stagingArgs
 
   lazy val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
 
@@ -51,6 +64,7 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     warn(s"""$nWarns ${plural(nWarns, "warning","warnings")} found""")
   }
 
+
   def compileOrRun(blk: => Unit): Unit = {
     reset() // Reset global state
     settings()
@@ -58,7 +72,9 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     if (Config.clearLogs) deleteExts(Config.logDir, ".log")
 
     val start = System.currentTimeMillis()
+    State.staging = true
     var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(blk).s } }
+    State.staging = false
 
     if (curEdgeId == 0) return  // Nothing was Staged -- likely running in library mode (or empty program)
 

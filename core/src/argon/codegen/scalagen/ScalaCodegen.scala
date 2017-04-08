@@ -20,12 +20,4 @@ trait ScalaCodegen extends Codegen with FileDependencies{
     emit(src"${b.result}")
   }
 
-
-  override def copyDependencies(out: String): Unit = {
-    dependencies ::= FileDep("scalagen", "Makefile", "../")
-    dependencies ::= FileDep("scalagen", "run.sh", "../")
-    dependencies ::= FileDep("scalagen", "build.sbt", "../")
-    super.copyDependencies(out)
-  }
-
 }

@@ -68,7 +68,7 @@ trait CompilerBase extends RunnerCore with TestApi { self =>
   passes += printer
 
   override def settings() {
-    Config.verbosity = 3
+    //Config.verbosity = 3
     super.settings()
   }
 }
@@ -80,7 +80,7 @@ trait TestLib extends LibCore
 
 trait Test extends AppCore {
   val IR: TestIR = new TestIR { }
-  val Lib: TestLib = new TestLib { def args: Array[String] = stagingArgs }
+  val Lib: TestLib = new TestLib { }
 }
 
 
