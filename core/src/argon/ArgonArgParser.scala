@@ -4,7 +4,10 @@ import argon.util.ArgParser
 
 import scopt._
 
-class ArgonArgParser extends ArgParser("argon") {
+class ArgonArgParser extends ArgParser {
+
+  val scriptName = "argon"
+  val description = "CLI for argon"
   //not sur yet if we must optional()
   parser.opt[Unit]('q', "quiet").action( (_,_) =>
     Config.verbosity = 0
