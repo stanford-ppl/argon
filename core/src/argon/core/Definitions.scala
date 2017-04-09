@@ -135,7 +135,7 @@ trait Definitions extends Blocks { self: Staging =>
   }
   private val __exps: PartialFunction[Any,Seq[Exp[_]]] = {
     case e: Exp[_]   => Seq(e)
-    case b: Block[_] => Seq(b.result)
+    case b: Block[_] => Seq(b.result) ++ b.effectful
     case d: Def      => d.expInputs
     case l: Iterable[_] => recursive.collectSeqs(__exps)(l.iterator)
   }
@@ -146,7 +146,7 @@ trait Definitions extends Blocks { self: Staging =>
 
   private def symsFreq(a: Any*): Seq[(Dyn[_],Float)] = recursive.collectSeqs {
     case s: Dyn[_] => Iterable((s, 1.0f))
-    case b: Block[_]  => symsFreq(b.result)
+    case b: Block[_]  => symsFreq(b.result) ++ symsFreq(b.effectful)
     case d: Def       => d.freqs
   }(a)
 
