@@ -1,11 +1,18 @@
 package argon.graphs
 
+import java.io.PrintStream
+
+import argon.Config
 import argon.core.Exceptions
+
 import scala.collection.mutable
 
 trait Graph extends Exceptions {
   type EdgeId = Int
   type NodeId = Int
+  final val VERBOSE_SCHEDULING = false
+  var graphLog: PrintStream = if (VERBOSE_SCHEDULING) createLog(Config.logDir + "/sched/", "0000 Staging.log") else null
+  @inline private def xlog(x: String) = if (VERBOSE_SCHEDULING) withLog(graphLog){ log(x) }
 
   implicit class EdgeIdToInt(x: EdgeId) { @inline def toInt: Int = x.asInstanceOf[Int] }
   implicit class NodeIdToInt(x: NodeId) { @inline def toInt: Int = x.asInstanceOf[Int] }
@@ -35,7 +42,7 @@ trait Graph extends Exceptions {
 
   object NodeData {
     val value   = mutable.ArrayBuffer[Node]()
-    val outputs = mutable.ArrayBuffer[EdgeId](0.toEdgeId)             // nodeId :: nodeId+1 ==> edges for this node
+    val outputs = mutable.ArrayBuffer[EdgeId](0.toEdgeId)            // nodeId :: nodeId+1 ==> edges for this node
     val inputs  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Dataflow edges (reverse) -- per node
     val bounds  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Edges bound by this node
     val tunnels = mutable.ArrayBuffer[Seq[(EdgeId,Seq[EdgeId])]]()   // Edges bound by this node, defined elsewhere
@@ -73,7 +80,9 @@ trait Graph extends Exceptions {
   def triple(id: NodeId): Triple = (nodeOutputs(id).map(edgeOf), nodeOf(id), nodeInputs(id).map(edgeOf))
 
   def removeEdge(in: EdgeLike): Unit = {
-    EdgeData.dependents(in._id) = Nil
+    // TODO: What is the safe/sensible thing to do here?
+    //EdgeData.dependents(in._id) = Nil
+    xlog(c"REMOVING EDGE $in")
   }
 
     /** Add an edge with no node or scheduling dependencies **/
@@ -97,7 +106,20 @@ trait Graph extends Exceptions {
       curEdgeId = (curEdgeId.toInt + 1).toEdgeId
       out
     }
-    ins.foreach { in => EdgeData.dependents(in.id) ::= curNodeId }
+
+    xlog(c"Registering node $outs = $node")
+    xlog(c"  Inputs: $ins")
+    xlog(c"  Freqs:  $freqs")
+    xlog(c"  Binds:  $binds")
+
+    ins.foreach { in =>
+      val deps = EdgeData.dependents(in.id)
+      if (!deps.contains(curNodeId)) {
+        EdgeData.dependents(in.id) = curNodeId +: deps
+        xlog(c"  Adding dependency to input $in = ${nodeOf(producerOf(in.id))}")
+        xlog(c"  Dependencies: ${EdgeData.dependents(in.id)}")
+      }
+    }
 
     if (node != null) node.id = curNodeId.toInt
     NodeData.value += node
@@ -155,17 +177,18 @@ trait Graph extends Exceptions {
   }
 
   /** Linearize graph using DFS - assumes graph is a DAG **/
-  def dfs(start: Iterable[NodeId], verbose: Boolean = false)(succ: NodeId => Iterable[NodeId]): List[NodeId] = {
+  def dfs(start: Iterable[NodeId])(succ: NodeId => Iterable[NodeId]): List[NodeId] = {
     val visit = mutable.HashSet[NodeId]()
     val res = mutable.ListBuffer[NodeId]()
     start.foreach{node => traverse(node) }
 
-    def traverse(node: NodeId) {
+    def traverse(node: NodeId, tab: Int = 0) {
       if (!visit.contains(node)) {
-        //if (verbose) log(c"  [DFS] ${triple(node)}")
+        val successors = succ(node)
+        xlog(c"[DFS]" + "  "*tab + s"${triple(node)} -> " + successors.flatMap(nodeOutputs).mkString(", "))
 
         visit += node
-        succ(node).foreach{node => traverse(node) }
+        successors.foreach{node => traverse(node, tab+1) }
         res += node
       }
     }
@@ -252,10 +275,14 @@ trait Graph extends Exceptions {
     def getDependents(root: NodeId) = {
       val rootEdges = nodeOutputs(root)
 
-      // Get dependents of this node, stopping at nodes which bind the root
-      def uses(node: NodeId) = forward(node,scope) filterNot {next => nodeBounds(next) exists (rootEdges contains _) }
+      // All nodes that depend on this node except nodes which bind the given root
+      def uses(node: NodeId) = {
+        if (VERBOSE_SCHEDULING) {
+          forward(node, scope).foreach{next => xlog(c"[USES] ${triple(next)} (bounds = " + nodeBounds(next).mkString(",") + ")") }
+        }
 
-      //log(c"    [root = ${triple(root)}]")
+        forward(node,scope) filterNot {next => nodeBounds(next) exists (rootEdges contains _) }
+      }
 
       dfs(List(root))(uses)
     }
@@ -264,19 +291,23 @@ trait Graph extends Exceptions {
       val bounds = nodeBounds(node).map(producerOf)
       val sched = bounds.flatMap(getDependents)
 
-//      if (bounds.nonEmpty) {
-//        log(c"  [Bounds] node: ${triple(node)}")
-//        log(c"  [Bounds] bounds:")
-//        bounds.foreach{bnd => log(c"  [Bounds]  ${triple(bnd)}")}
-//        log(c"  [Bounds] binded: ")
-//        sched.foreach{s => log(c"  [Bounds]  ${triple(s)}") }
-//      }
+      if (VERBOSE_SCHEDULING) {
+        if (bounds.nonEmpty) {
+          xlog(c"  [Bounds] node: ${triple(node)}")
+          xlog(c"  [Bounds] bounds:")
+          bounds.foreach{bnd => xlog(c"  [Bounds]  ${triple(bnd)}")}
+          xlog(c"  [Bounds] binded: ")
+          sched.foreach{s => xlog(c"  [Bounds]  ${triple(s)}") }
+        }
+      }
+
       sched
     }
 
     val tunnelDependents = scope.flatMap{node =>
-//      if (nodeTunnels(node).nonEmpty)
-//        log(c"  [Tunnel] node: ${triple(node)}: ")
+      if (VERBOSE_SCHEDULING) {
+        if (nodeTunnels(node).nonEmpty) xlog(c"  [Tunnel] node: ${triple(node)}: ")
+      }
 
       nodeTunnels(node).flatMap{case (tun,res) =>
         val tunnel = producerOf(tun)
@@ -286,12 +317,14 @@ trait Graph extends Exceptions {
         val schedule = dfs(results){node => reverse(node,scope) }
         val forward  = getDependents(tunnel) filterNot (_ == tunnel)
 
-//        log(c"  [Tunnel] tunnel: ")
-//        log(c"  [Tunnel]  ${triple(tunnel)}")
-//        log(c"  [Tunnel] schedule: ")
-//        schedule.foreach{stm => log(c"  [Tunnel]  ${triple(stm)}")}
-//        log(c"  [Tunnel] dependents: ")
-//        forward.foreach{stm => log(c"  [Tunnel]  ${triple(stm)}")}
+        if (VERBOSE_SCHEDULING) {
+          xlog(c"  [Tunnel] tunnel: ")
+          xlog(c"  [Tunnel]  ${triple(tunnel)}")
+          xlog(c"  [Tunnel] schedule: ")
+          schedule.foreach { stm => xlog(c"  [Tunnel]  ${triple(stm)}") }
+          xlog(c"  [Tunnel] dependents: ")
+          forward.foreach { stm => xlog(c"  [Tunnel]  ${triple(stm)}") }
+        }
 
         schedule intersect forward
       }
@@ -299,18 +332,6 @@ trait Graph extends Exceptions {
     boundDependents ++ tunnelDependents
   }
 
-  /**
-    * ISSUE #5: Major difference between LMS and Argon
-    *
-    * In both LMS and Argon, a Def containing a Block has a dependency on the block's result
-    * If the block's result is a Reify node in LMS, it will have anti-dependencies on ALL effects in the block
-    * However, if we are scheduling the Def with that block, these anti-dependencies should never be in the local scope
-    * Instead, they should be delayed until traversing the block itself (since they are bound to that block)
-    * In Argon, those anti-dependencies are properties of the block, not of the result symbol.
-    * This means we will never even attempt to schedule anything but dataflow order from the result
-    * until we actually are traversing that block.
-    * The one drawback of this is that we cannot code motion non-effectful dependencies of block effects
-    */
 
   def getLocalScope(currentScope: Seq[NodeId], result: Seq[EdgeId], localCache: OrderCache): Seq[NodeId] = {
     val scope = currentScope.toSet
@@ -325,9 +346,9 @@ trait Graph extends Exceptions {
     val fringe = mustInside.flatMap(reverse) intersect mayOutside
 
     // 2. Statements that can be reached without following any cold/hot inputs, respectively
-    // log("Computing reachableWarm: ")
+    // xlog("Computing reachableWarm: ")
     val reachableWarm = dfs(roots)(node => noCold(node,scope)).toSet
-    // log("Computing reachableCold: ")
+    // xlog("Computing reachableCold: ")
     val reachableCold = dfs(roots)(node => noHot(node,scope)).toSet
 
     // 3. All symbols s such that all paths from results to s are hot paths
@@ -354,31 +375,33 @@ trait Graph extends Exceptions {
 
     val levelScope = currentScope.filter(canOutside)
 
-// These log statements are VERY expensive - use only when debugging
-//    log("Getting scope level within scope: ")
-//    scope.foreach{stm => log(c"  ${triple(stm)}") }
-//    log("For result: ")
-//    result.foreach{s => log(c"  ${triple(producerOf(s))}") }
-//    log("Must inside: ")
-//    mustInside.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("May outside: ")
-//    mayOutside.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("Fringe: ")
-//    fringe.foreach{stm => log(c"  ${triple(stm)}") }
-//    log("Reachable [Warm]: ")
-//    reachableWarm.foreach{stm => log(c"  ${triple(stm)}") }
-//    log("Reachable [Cold]: ")
-//    reachableCold.foreach{stm => log(c"  ${triple(stm)}")}
-//    log(s"Hot paths: ")
-//    hotPathsOnly.foreach{stm => log(c"  ${triple(stm)}")}
-//    log(s"Hot dependencies: ")
-//    hotDeps.foreach{stm => log(c"  ${triple(stm)}")}
-//    log(s"Hot fringe: ")
-//    hotFringe.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("Hot fringe dependencies: ")
-//    hotFringeDeps.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("levelScope: ")
-//    levelScope.foreach{stm => log(c"  ${triple(stm)}")}
+// These xlog statements are VERY expensive - use only when debugging
+    if (VERBOSE_SCHEDULING) {
+      xlog("Getting scope level within scope: ")
+      scope.foreach{stm => xlog(c"  ${triple(stm)}"); xlog(c"    dependents = ${nodeOutputs(stm).flatMap(dependentsOf)}") }
+      xlog("For result: ")
+      result.foreach{s => xlog(c"  ${triple(producerOf(s))}") }
+      xlog("Must inside: ")
+      mustInside.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog("May outside: ")
+      mayOutside.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog("Fringe: ")
+      fringe.foreach{stm => xlog(c"  ${triple(stm)}") }
+      xlog("Reachable [Warm]: ")
+      reachableWarm.foreach{stm => xlog(c"  ${triple(stm)}") }
+      xlog("Reachable [Cold]: ")
+      reachableCold.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog(s"Hot paths: ")
+      hotPathsOnly.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog(s"Hot dependencies: ")
+      hotDeps.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog(s"Hot fringe: ")
+      hotFringe.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog("Hot fringe dependencies: ")
+      hotFringeDeps.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog("levelScope: ")
+      levelScope.foreach{stm => xlog(c"  ${triple(stm)}")}
+    }
 
     levelScope
   }
@@ -394,19 +417,21 @@ trait Graph extends Exceptions {
     val localRoots = scheduleDepsWithIndex(result, localCache)
     val localSchedule = getSchedule(localRoots, localCache, checkAcyclic = false) filter (localScope contains _)
 
-// These log statements are VERY expensive - use only when debugging
-//    log("avail nodes: ")
-//    availableNodes.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("avail roots:")
-//    availRoots.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("local nodes:")
-//    localNodes.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("local scope: ")
-//    localScope.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("local roots:")
-//    localRoots.foreach{stm => log(c"  ${triple(stm)}")}
-//    log("local schedule:")
-//    localSchedule.foreach{stm => log(c"  ${triple(stm)}")}
+// These xlog statements are VERY expensive - use only when debugging
+    if (VERBOSE_SCHEDULING) {
+      xlog("avail nodes: ")
+      availableNodes.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog("avail roots:")
+      availRoots.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog("local nodes:")
+      localNodes.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog("local scope: ")
+      localScope.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog("local roots:")
+      localRoots.foreach{stm => xlog(c"  ${triple(stm)}")}
+      xlog("local schedule:")
+      localSchedule.foreach{stm => xlog(c"  ${triple(stm)}")}
+    }
 
     localSchedule
   }

@@ -9,6 +9,12 @@ trait TextApi extends TextExp with BoolApi {
 
 trait TextExp extends Staging with BoolExp {
   /** Infix methods **/
+  implicit object TextType extends Meta[Text] {
+    def wrapped(x: Exp[Text]) = Text(x)
+    def stagedClass = classOf[Text]
+    def isPrimitive = true
+  }
+
   case class Text(s: Exp[Text]) extends MetaAny[Text] {
     @api def +(rhs: String): Text = concat(this, liftString(rhs))
     @api def +(rhs: Text): Text = concat(this, rhs)
@@ -33,11 +39,6 @@ trait TextExp extends Staging with BoolExp {
 
   /** Type classes **/
   // --- Staged
-  implicit object TextType extends Meta[Text] {
-    def wrapped(x: Exp[Text]) = Text(x)
-    def stagedClass = classOf[Text]
-    def isPrimitive = true
-  }
 
   // --- Lift
   implicit object LiftString2Text extends Lift[String,Text] {
@@ -52,16 +53,16 @@ trait TextExp extends Staging with BoolExp {
   protected def text(x: String)(implicit ctx: SrcCtx): Exp[Text] = constant[Text](x)
 
   /** IR Nodes **/
-  case class ToString[S:Type](x: Exp[S]) extends Op[Text] {
+  case class ToString[T:Type](x: Exp[T]) extends Op[Text] {
     def mirror(f:Tx) = sym_tostring(f(x))
-    val mT = typ[S]
+    val mT = typ[T]
   }
   case class TextConcat(x: Exp[Text], y: Exp[Text]) extends Op[Text] { def mirror(f:Tx) = text_concat(f(x),f(y)) }
   case class TextEquals(x: Exp[Text], y: Exp[Text]) extends Op[Bool] { def mirror(f:Tx) = text_equals(f(x),f(y)) }
   case class TextDiffer(x: Exp[Text], y: Exp[Text]) extends Op[Bool] { def mirror(f:Tx) = text_differ(f(x),f(y)) }
 
   /** Constructors **/
-  def sym_tostring[S:Type](x: Exp[S])(implicit ctx: SrcCtx): Exp[Text] = x match {
+  def sym_tostring[T:Type](x: Exp[T])(implicit ctx: SrcCtx): Exp[Text] = x match {
     case Const(c: String) => text(c)
     case a if a.tp == TextType => a.asInstanceOf[Exp[Text]]
     case _ => stage(ToString(x))(ctx)

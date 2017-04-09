@@ -85,6 +85,15 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     report(c"Compiling ${Config.name} to ${Config.genDir}")
 
     for (t <- passes) {
+      if (VERBOSE_SCHEDULING) {
+        graphLog.close()
+        graphLog = createLog(Config.logDir + "/sched/", State.paddedPass + " " + t.name + ".log")
+        withLog(graphLog) {
+          log(s"${State.pass} ${t.name}")
+          log(s"===============================================")
+        }
+      }
+
       block = t.run(block)
       // After each traversal, check whether there were any reported errors
       checkErrors(start, t.name)
@@ -100,9 +109,10 @@ trait CompilerCore extends Staging with ArrayExp { self =>
         scopeCache.clear()
       }
     }
+    if (VERBOSE_SCHEDULING) graphLog.close()
+
 
     val time = (System.currentTimeMillis - start).toFloat
-
 
     if (Config.verbosity >= 1) {
       withLog(timingLog) {

@@ -122,7 +122,12 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
       //if (!allowPretransform) throw new PretransformException(name, lhs, f(lhs))
       val lhs2: Exp[T] = f(lhs)
       val lhs3 = mirrorExp(lhs2)
-      if (lhs3 != lhs2 && lhs != lhs2 && lhs2.isInstanceOf[Sym[_]]) scrubSym(lhs2.asInstanceOf[Sym[_]])
+
+      // Only remove if lhs2 has no existing dependents
+      if (lhs3 != lhs2 && lhs != lhs2) lhs2 match {
+        case sym2: Sym[_] => scrubSym(lhs2.asInstanceOf[Sym[_]])
+        case _ =>
+      }
       lhs3
     }
 
