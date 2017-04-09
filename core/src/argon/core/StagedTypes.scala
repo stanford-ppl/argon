@@ -61,7 +61,8 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     warn(ctx)
   }
   private def unstagedWarningNoCtx(op: String)(ctx: SrcCtx): Unit = {
-    val name = ctx.lhsName.getOrElse("the value")
+    // val name = ctx.lhsName.getOrElse("the value")
+    val name = "the value"
     warn(ctx, s"Unstaged method $op was used on $name defined here during staging.")
     warn("Add @virtualize annotation to an enclosing scope to prevent this.")
     warn(ctx)
