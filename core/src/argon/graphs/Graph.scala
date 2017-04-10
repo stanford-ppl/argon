@@ -10,7 +10,7 @@ import scala.collection.mutable
 trait Graph extends Exceptions {
   type EdgeId = Int
   type NodeId = Int
-  final val VERBOSE_SCHEDULING = false
+  final val VERBOSE_SCHEDULING = true
   var graphLog: PrintStream = if (VERBOSE_SCHEDULING) createLog(Config.logDir + "/sched/", "0000 Staging.log") else null
   @inline private def xlog(x: String) = if (VERBOSE_SCHEDULING) withLog(graphLog){ log(x) }
 
@@ -33,6 +33,20 @@ trait Graph extends Exceptions {
     }
   }
 
+  sealed abstract class UseFreq
+  object Freq {
+    case object Cold extends UseFreq
+    case object Hot  extends UseFreq
+    case object Normal extends UseFreq
+  }
+
+  def combine(a: UseFreq, b: UseFreq): UseFreq = (a,b) match {
+    case (Freq.Cold, _) => Freq.Cold
+    case (_, Freq.Cold) => Freq.Cold
+    case (Freq.Hot, _)  => Freq.Hot
+    case (_, Freq.Hot)  => Freq.Hot
+    case _              => Freq.Normal
+  }
 
   object EdgeData {
     val value = mutable.ArrayBuffer[Edge]()
@@ -46,7 +60,7 @@ trait Graph extends Exceptions {
     val inputs  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Dataflow edges (reverse) -- per node
     val bounds  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Edges bound by this node
     val tunnels = mutable.ArrayBuffer[Seq[(EdgeId,Seq[EdgeId])]]()   // Edges bound by this node, defined elsewhere
-    val freqs   = mutable.ArrayBuffer[Seq[Float]]()                  // Frequency hints for code motion
+    val freqs   = mutable.ArrayBuffer[Seq[UseFreq]]()                // Frequency hints for code motion
   }
 
   override def reset(): Unit = {
@@ -72,7 +86,7 @@ trait Graph extends Exceptions {
   def nodeInputs(node: NodeId): Seq[EdgeId] = NodeData.inputs(node.toInt)
   def nodeBounds(node: NodeId): Seq[EdgeId] = NodeData.bounds(node.toInt)
   def nodeTunnels(node: NodeId): Seq[(EdgeId,Seq[EdgeId])] = NodeData.tunnels(node.toInt)
-  def nodeFreqs(node: NodeId): Seq[Float] = NodeData.freqs(node.toInt)
+  def nodeFreqs(node: NodeId): Seq[UseFreq] = NodeData.freqs(node.toInt)
   def nodeOf(node: NodeId): Node = NodeData.value(node.toInt)
   def edgeOf(edge: EdgeId): Edge = EdgeData.value(edge.toInt)
   def dependentsOf(edge: EdgeId): Seq[NodeId] = EdgeData.dependents(edge.toInt)
@@ -95,7 +109,7 @@ trait Graph extends Exceptions {
   final def addBound(out: Edge) = addNode(Nil, Seq(out), Nil, Nil, Nil, null).head
 
   /** Add output edge(s) with corresponding node **/
-  final def addNode(ins: Seq[Edge], outs: Seq[Edge], binds: Seq[Edge], tunnel: Seq[(Edge,Seq[Edge])], freqs: Seq[Float], node: Node) = {
+  final def addNode(ins: Seq[Edge], outs: Seq[Edge], binds: Seq[Edge], tunnel: Seq[(Edge,Seq[Edge])], freqs: Seq[UseFreq], node: Node) = {
     outs.foreach { out =>
       out.id = curEdgeId.toInt
 
@@ -242,10 +256,10 @@ trait Graph extends Exceptions {
   def reverse(node: NodeId, scope: Set[NodeId]): Iterable[NodeId] = nodeInputs(node).map(producerOf) filter scope.contains
   def forward(node: NodeId, scope: Set[NodeId]): Iterable[NodeId] = nodeOutputs(node).flatMap(dependentsOf) filter scope.contains
   def noCold(node: NodeId, scope: Set[NodeId]): Iterable[NodeId] = {
-    nodeInputs(node).zip(nodeFreqs(node)).filter(_._2 > 0.75f).map(x => producerOf(x._1)) filter scope.contains
+    nodeInputs(node).zip(nodeFreqs(node)).filter(_._2 != Freq.Cold).map(x => producerOf(x._1)) filter scope.contains
   }
   def noHot(node: NodeId, scope: Set[NodeId]): Iterable[NodeId] = {
-    nodeInputs(node).zip(nodeFreqs(node)).filter(_._2 < 100f).map(x => producerOf(x._1)) filter scope.contains
+    nodeInputs(node).zip(nodeFreqs(node)).filter(_._2 != Freq.Hot).map(x => producerOf(x._1)) filter scope.contains
   }
 
 

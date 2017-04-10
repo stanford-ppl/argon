@@ -29,7 +29,7 @@ trait Definitions extends Blocks { self: Staging =>
     // Freqs: symbol frequency hints used in code motion - less than 0.75f is "cold", while greater than 100f is "hot"
     // Code motion makes an attempt to schedule unbound "hot" symbols early (move out of blocks)
     // Default: All symbol inputs have a frequency of 1.0f ("normal")
-    def freqs: Seq[(Dyn[_],Float)] = Nil
+    def freqs: Seq[(Dyn[_],UseFreq)] = Nil
 
     // Scopes: scopes associated with this Def
     // Default: All blocks and lambdas in the Def's case class constructor
@@ -144,15 +144,15 @@ trait Definitions extends Blocks { self: Staging =>
   final def dyns(a: Any*): Seq[Dyn[_]] = if (__dyns.isDefinedAt(a)) __dyns(a) else Nil
   final def syms(a: Any*): Seq[Sym[_]] = dyns(a).collect{case s: Sym[_] => s}
 
-  private def symsFreq(a: Any*): Seq[(Dyn[_],Float)] = recursive.collectSeqs {
-    case s: Dyn[_] => Iterable((s, 1.0f))
+  private def symsFreq(a: Any*): Seq[(Dyn[_],UseFreq)] = recursive.collectSeqs {
+    case s: Dyn[_] => Iterable((s, Freq.Normal))
     case b: Block[_]  => symsFreq(b.result) ++ symsFreq(b.effectful)
     case d: Def       => d.freqs
   }(a)
 
   final def normal(e: Any*) = symsFreq(e:_*)
-  final def hot(e: Any*) = symsFreq(e:_*).map{case (s,f) => (s,f*1000.0f) }
-  final def cold(e: Any*) = symsFreq(e:_*).map{case (s,f) => (s, f*0.5f) }
+  final def hot(e: Any*) = symsFreq(e:_*).map{case (s,f) => (s, combine(f,Freq.Hot)) }
+  final def cold(e: Any*) = symsFreq(e:_*).map{case (s,f) => (s, combine(f,Freq.Cold)) }
 
   final def aliasSyms(a: Any): Set[Dyn[_]]   = recursive.collectSets{case s: Dyn[_] => Set(s) case d: Def => d.aliases }(a)
   final def containSyms(a: Any): Set[Dyn[_]] = recursive.collectSets{case d: Def => d.contains}(a)
