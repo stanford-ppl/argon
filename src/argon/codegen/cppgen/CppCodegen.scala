@@ -42,6 +42,7 @@ trait CppCodegen extends Codegen with FileDependencies  {
     // Register files that are always there for cppgen
     dependencies ::= AlwaysDep(s"""${cppResourcesPath}/datastructures""")
     dependencies ::= AlwaysDep(s"""${cppResourcesPath}/fringeSW""")
+    dependencies ::= AlwaysDep(s"""${cppResourcesPath}/fringeDE1SoC""")
     dependencies ::= AlwaysDep(s"""${cppResourcesPath}/fringeZynq""")
     dependencies ::= AlwaysDep(s"""${cppResourcesPath}/fringeVCS""")
     moveDependencies ::= AlwaysDep(s"""${out}/cpptypes.h""", "datastructures")
