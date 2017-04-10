@@ -50,7 +50,7 @@ using std::vector;
 
 """)
 
-  open(s"void Application(int numThreads, cppDeliteArraystring * args) {")
+  open(s"void Application(int numThreads, vector<string> * args) {")
   emit("// Create an execution context.")
   emit("""FringeContext *c1 = new FringeContext("./verilog/accel.bit.bin");""")
   emit("""c1->load();""")
@@ -94,9 +94,9 @@ using std::vector;
     close("}")
     emit(s"""
 int main(int argc, char *argv[]) {
-  cppDeliteArraystring *args = new cppDeliteArraystring(argc-1);
+  vector<string> *args = new vector<string>(argc-1);
   for (int i=1; i<argc; i++) {
-    args->update(i-1, *(new string(argv[i])));
+    (*args)[i-1] = std::string(argv[i]);
   }
   int numThreads = 1;
   char *env_threads = getenv("DELITE_NUM_THREADS");
