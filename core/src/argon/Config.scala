@@ -1,32 +1,63 @@
 package argon
 
+import com.typesafe.config.ConfigFactory
+import pureconfig._
+
 object Config {
-  def getProperty(prop: String, default: String) = {
-    val p1 = System.getProperty(prop)
-    val p2 = System.getProperty(prop.substring(1))
-    if (p1 != null && p2 != null) {
-      assert(p1 == p2, "ERROR: conflicting properties")
-      p1
-    }
-    else if (p1 != null) p1 else if (p2 != null) p2 else default
-  }
 
-  val cwd = System.getProperty("user.dir")
-  def sep = java.io.File.separator
+  val default = ConfigFactory.parseString("""
+argon {
+  cwd = ${user.dir}
+  verbosity = 1
+  unsafe = false
+  lib = true
+  name = "app"
+  log = ${argon.cwd}"/logs/"${argon.name}
+  out = ${argon.cwd}"/gen/"${argon.name}
+  clear-logs = true
+  clear-gen = false
+  multifile = 4
+  unwrap = true
+  emission = 0
+  atomicw = true
+}
+""")
 
-  var verbosity: Int = getProperty("argon.verbosity", "1").toInt
+  val mergedConf = ConfigFactory.load().withFallback(default).resolve()
+
+  case class ArgonConf(
+    cwd: String,
+    verbosity:Int,
+    unsafe: Boolean,
+    lib: Boolean,
+    name: String,
+    log: String,
+    out: String,
+    clearLogs: Boolean,
+    clearGen: Boolean,
+    multifile: Int,
+    unwrap: Boolean,
+    emission: Int,
+    atomicw: Boolean
+  )
+
+  val conf = loadConfig[ArgonConf](mergedConf, "argon").right.get
+
+  def sep = "/"
+  var cwd = conf.cwd
+
+  var verbosity: Int = conf.verbosity
   var showWarn: Boolean = true
 
-  var unsafe: Boolean = getProperty("argon.unsafe", "false").toBoolean
-  var lib:  Boolean = getProperty("argon.lib", "false").toBoolean
-  var name: String = getProperty("argon.name", "app")
-  var logDir: String = getProperty("argon.logs", s"$cwd${sep}logs${sep}$name")
-  var genDir: String = getProperty("argon.out", s"$cwd${sep}gen${sep}$name")
-  var clearLogs: Boolean = getProperty("argon.clearLogs", "true").toBoolean
-  var clearGen: Boolean = getProperty("argon.clearGen", "false").toBoolean
-  var multifile: Int = getProperty("argon.multifile", "4").toInt
-  var unwrapStructs: Boolean = getProperty("argon.unwrap", "true").toBoolean
-  var emitDevel: Int = getProperty("argon.emission", "0").toInt // level of conservativeness and debug printing when emitting nodes
-
-  var allowAtomicWrites: Boolean = getProperty("argon.atomicw", "true").toBoolean
+  var unsafe: Boolean = conf.unsafe
+  var lib:  Boolean = conf.lib
+  var name: String = conf.name
+  var logDir: String = conf.log
+  var genDir: String = conf.out
+  var clearLogs: Boolean = conf.clearLogs
+  var clearGen: Boolean = conf.clearGen
+  var multifile: Int = conf.multifile
+  var unwrapStructs: Boolean = conf.unwrap
+  var emitDevel: Int = conf.emission// level of conservativeness and debug printing when emitting nodes
+  var allowAtomicWrites: Boolean = conf.atomicw
 }

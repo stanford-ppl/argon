@@ -2,17 +2,52 @@ package argon
 
 import argon.util.ArgParser
 
-class ArgonArgParser extends ArgParser("argon") {
-  addArg(Switch('q', "disable background logging"){Config.verbosity = 0})
-  addArg(Switch('v', "enable verbose printout"){Config.verbosity = 2})
+import scopt._
 
-  addArg(LongSwitch("clean", "Reset output directory"){Config.clearGen = true})
+class ArgonArgParser extends ArgParser {
 
-  addArg(Named("emission", "conservativeness when emitting nodes.\n0 = crash on undefined generation rule (release mode)\n1 = warn when undefined,\n2 = warn when undefined and report when node matched but is outside backend rules"){
-    arg => Config.emitDevel = arg.toInt})
-  addArg(Named("multifile", "aggressiveness for splitting generated code files\n0 = no splitting or scoping\n1 = no splitting but yes scoping on inner pipes\n2 = no splitting but yes scoping everywhere\n3 <DEPRECATED> = splitting for inner pipes only\n4 = all blocks"){
-    arg => Config.multifile = arg.toInt})
-  addArg(Named("outdir", "location of output directory. Default is ./gen/<appname>"){
-    arg => Config.genDir = arg})
+  def scriptName = "argon"
+  def description = "CLI for argon"
+  //not sur yet if we must optional()
+
+  parser.opt[String]('n', "name").action( (x,_) =>
+    Config.name = x
+  ).text("name of the app [app]")
+
+  parser.opt[Unit]('q', "quiet").action( (_,_) =>
+    Config.verbosity = 0
+  ).text("disable background logging")
+
+  parser.opt[Unit]('v', "verbose").action( (_,_) =>
+    Config.verbosity = 2
+  ).text("enable verbose printout")
+
+  parser.opt[Unit]('c', "clean").action( (x,_) => {
+      Config.clearGen = true
+      Config.clearLogs = true
+    }
+  ).text("Reset output directory")
+
+  parser.opt[Int]('m', "multifile").action( (x,_) =>
+    Config.multifile = x
+  ).text("""aggressiveness for splitting generated code files
+      0 = no splitting or scoping
+      1 = no splitting but yes scoping on inner pipes
+      2 = no splitting but yes scoping everywhere
+      3 <DEPRECATED> = splitting for inner pipes only
+      4 = all blocks""")
+
+  parser.opt[String]('o', "out").action( (x,_) =>
+    Config.genDir = x
+  ).text("location of output directory. Default is ./gen/<appname>")
+
+  parser.opt[Int]('e', "emission").action( (x,_) =>
+    Config.emitDevel = x
+  ).text(
+    """Conservativeness when emitting nodes.
+      0 = crash when emitNode is undefined (release mode)
+      1 = warn when undefined
+      2 = warn when undefined and report when node matched but outside backend rules""")
+
 
 }

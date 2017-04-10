@@ -1,5 +1,7 @@
 name := "argon"
 
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0"
+libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.7.0"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.3.2"
 libraryDependencies += "commons-io" % "commons-io" % "2.5"
 
