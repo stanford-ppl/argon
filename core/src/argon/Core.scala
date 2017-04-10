@@ -19,7 +19,13 @@ trait AppCore { self =>
 
   def parseArguments(args: Seq[String]): Unit = {
     val parser = new ArgonArgParser
-    parser.parse(args)
+    parser.parse(args) match {
+      case None =>
+        println("Nothing generated")
+        sys.exit(0)
+      case _ =>
+        println("Starting generation")
+    }
   }
 
   def main(sargs: Array[String]): Unit = {

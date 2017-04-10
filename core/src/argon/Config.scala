@@ -12,7 +12,7 @@ argon {
   unsafe = false
   lib = true
   name = "app"
-  logs = ${argon.cwd}"/logs/"${argon.name}
+  log = ${argon.cwd}"/logs/"${argon.name}
   out = ${argon.cwd}"/gen/"${argon.name}
   clear-logs = true
   clear-gen = false
@@ -31,10 +31,10 @@ argon {
     unsafe: Boolean,
     lib: Boolean,
     name: String,
-    logs: String,
+    log: String,
     out: String,
     clearLogs: Boolean,
-    clearGen: Boolean,    
+    clearGen: Boolean,
     multifile: Int,
     unwrap: Boolean,
     emission: Int,
@@ -52,8 +52,7 @@ argon {
   var unsafe: Boolean = conf.unsafe
   var lib:  Boolean = conf.lib
   var name: String = conf.name
-  var logDir: String = conf.logs
-//  println("LOOK HERE: " + logDir)
+  var logDir: String = conf.log
   var genDir: String = conf.out
   var clearLogs: Boolean = conf.clearLogs
   var clearGen: Boolean = conf.clearGen
