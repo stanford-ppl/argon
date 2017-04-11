@@ -29,12 +29,16 @@ trait AppCore { self =>
   }
 
   def main(sargs: Array[String]): Unit = {
+    val defaultName = self.getClass.getName.replace("class ", "").replace('.','-').replace("$","") //.split('$').head
+    System.setProperty("argon.name", defaultName)
+    Config.name = defaultName
+    Config.init()
+
     parseArguments(sargs.toSeq)
+
     IR.__stagingArgs = this.__stagingArgs
     Lib.__args = this.__stagingArgs
 
-    Config.name = self.getClass.getName.replace("class ", "").replace('.','-').replace("$","") //.split('$').head
-    Config.logDir =  Config.cwd + Config.sep + "logs" + Config.sep + Config.name
     IR.compileOrRun( main() )
   }
 }
@@ -69,10 +73,13 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     warn(s"""$nWarns ${plural(nWarns, "warning","warnings")} found""")
   }
 
+  def createTraversalSchedule(): Unit = { }
+
 
   def compileOrRun(blk: => Unit): Unit = {
     reset() // Reset global state
     settings()
+    createTraversalSchedule()
 
     if (Config.clearLogs) deleteExts(Config.logDir, ".log")
 

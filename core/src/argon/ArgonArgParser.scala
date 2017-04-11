@@ -10,9 +10,9 @@ class ArgonArgParser extends ArgParser {
   def description = "CLI for argon"
   //not sur yet if we must optional()
 
-  parser.opt[String]('n', "name").action( (x,_) =>
+  /*parser.opt[String]('n', "name").action( (x,_) =>
     Config.name = x
-  ).text("name of the app [app]")
+  ).text("name of the app [app]")*/
 
   parser.opt[Unit]('q', "quiet").action( (_,_) =>
     Config.verbosity = 0

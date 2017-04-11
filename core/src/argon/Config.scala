@@ -5,15 +5,16 @@ import pureconfig._
 
 object Config {
 
-  val default = ConfigFactory.parseString("""
+  def init() {
+
+    val default = ConfigFactory.parseString(s"""
 argon {
-  cwd = ${user.dir}
+  cwd = $${user.dir}
   verbosity = 1
   unsafe = false
   lib = true
-  name = "app"
-  log = ${argon.cwd}"/logs/"${argon.name}
-  out = ${argon.cwd}"/gen/"${argon.name}
+  log = $${argon.cwd}"/logs/"${name}
+  out = $${argon.cwd}"/gen/"${name}
   clear-logs = true
   clear-gen = false
   multifile = 4
@@ -23,41 +24,60 @@ argon {
 }
 """)
 
-  val mergedConf = ConfigFactory.load().withFallback(default).resolve()
+    val mergedConf = ConfigFactory.load().withFallback(default).resolve()
 
-  case class ArgonConf(
-    cwd: String,
-    verbosity:Int,
-    unsafe: Boolean,
-    lib: Boolean,
-    name: String,
-    log: String,
-    out: String,
-    clearLogs: Boolean,
-    clearGen: Boolean,
-    multifile: Int,
-    unwrap: Boolean,
-    emission: Int,
-    atomicw: Boolean
-  )
+    case class ArgonConf(
+      cwd: String,
+      verbosity:Int,
+      unsafe: Boolean,
+      lib: Boolean,
+      //name: String,
+      log: String,
+      out: String,
+      clearLogs: Boolean,
+      clearGen: Boolean,
+      multifile: Int,
+      unwrap: Boolean,
+      emission: Int,
+      atomicw: Boolean
+    )
 
-  val conf = loadConfig[ArgonConf](mergedConf, "argon").right.get
+    val conf = loadConfig[ArgonConf](mergedConf, "argon").right.get
+
+    cwd = conf.cwd
+
+    verbosity = conf.verbosity
+    showWarn = true
+
+    unsafe = conf.unsafe
+    lib    = conf.lib
+    //name = conf.name
+    logDir = conf.log
+    genDir = conf.out
+    clearLogs = conf.clearLogs
+    clearGen = conf.clearGen
+    multifile = conf.multifile
+    unwrapStructs = conf.unwrap
+    emitDevel = conf.emission// level of conservativeness and debug printing when emitting nodes
+    allowAtomicWrites = conf.atomicw
+
+  }
 
   def sep = "/"
-  var cwd = conf.cwd
+  var cwd: String = _
 
-  var verbosity: Int = conf.verbosity
+  var verbosity: Int = _
   var showWarn: Boolean = true
 
-  var unsafe: Boolean = conf.unsafe
-  var lib:  Boolean = conf.lib
-  var name: String = conf.name
-  var logDir: String = conf.log
-  var genDir: String = conf.out
-  var clearLogs: Boolean = conf.clearLogs
-  var clearGen: Boolean = conf.clearGen
-  var multifile: Int = conf.multifile
-  var unwrapStructs: Boolean = conf.unwrap
-  var emitDevel: Int = conf.emission// level of conservativeness and debug printing when emitting nodes
-  var allowAtomicWrites: Boolean = conf.atomicw
+  var unsafe: Boolean = _
+  var lib:  Boolean = _
+  var name: String = _
+  var logDir: String = _
+  var genDir: String = _
+  var clearLogs: Boolean = _
+  var clearGen: Boolean = _
+  var multifile: Int = _
+  var unwrapStructs: Boolean = _
+  var emitDevel: Int = _
+  var allowAtomicWrites: Boolean = _
 }
