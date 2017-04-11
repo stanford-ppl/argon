@@ -83,10 +83,13 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= DirDep(resourcesPath, "template-level/templates")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeHW") 
     dependencies ::= DirDep(resourcesPath, "template-level/fringeZynq")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeDE1SoC")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeVCS")
+    
     dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile")) 
     dependencies ::= FileDep(resourcesPath, "app-level/verilator.mk", "../", Some("verilator.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/zynq.mk", "../", Some("zynq.mk"))
+    dependencies ::= FileDep(resourcesPath, "app-level/de1soc.mk", "../", Some("de1soc.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/vcs.mk", "../", Some("vcs.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/build.sbt", "../", Some("build.sbt"))
     dependencies ::= FileDep(resourcesPath, "app-level/run.sh", "../", Some("run.sh"))

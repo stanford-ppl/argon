@@ -44,6 +44,7 @@ trait CppCodegen extends Codegen with FileDependencies  {
     dependencies ::= DirDep(cppResourcesPath, "datastructures")
     // dependencies ::= DirDep(cppResourcesPath, "fringeSW")
     dependencies ::= DirDep(cppResourcesPath, "fringeZynq")
+    dependencies ::= DirDep(cppResourcesPath, "fringeDE1SoC")
     dependencies ::= DirDep(cppResourcesPath, "fringeVCS")
     // dependencies ::= FileDep(cppResourcesPath, "cpptypes.h")
     // moveDependencies ::= AlwaysDep(s"""${out}/interface.h""", "datastructures")
