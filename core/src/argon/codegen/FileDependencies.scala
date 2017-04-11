@@ -4,7 +4,7 @@ import sys.process._
 import scala.language.postfixOps
 import org.apache.commons.io._
 import java.io.File
-import java.util.zip.ZipInputStream
+
 
 trait FileDependencies extends Codegen {
   import IR._
@@ -41,26 +41,11 @@ trait FileDependencies extends Codegen {
 
   case class DirDep(folder: String, name: String, relPath: String = "", outputPath:Option[String] = None) extends CodegenDep {
     override def copy(out: String) = {
-      val dir = "/" + folder + "/" + name
+      val dir = folder + "/" + name
       // Console.println("Looking at " + dir)
 
-      def explore(path: String): List[FileDep] = {
-        val rpath = getClass.getResource(path)
-        val file = new File(rpath.getPath)
-        if (file.exists()) {
-          if (file.isFile())
-            List(rename(path))
-          else if (file.isDirectory)
-            file
-              .listFiles
-              .flatMap(x => explore(path+"/"+x.getName)
-          else
-            List()
-        }
-      }
-
       def rename(e:String) = {
-        val path = e.split("/").drop(1)
+        val path = e.split("/").drop(2)
         if (outputPath.isDefined) {
           val sourceName = folder + "/" + path.dropRight(1).mkString("/")
           val outputName = outputPath.get + path.last
@@ -71,7 +56,14 @@ trait FileDependencies extends Codegen {
           FileDep(folder, outputName, relPath)
         }
       }
-      explore(dir).foreach(_.copy(out))
+
+      io.Source.fromURL(getClass.getResource("/files_list")).mkString("")
+        .split("\n")
+        .filter(_.startsWith("./"+dir))
+        .map(rename)
+        .foreach(_.copy(out))
+
+
 
     }
   }
