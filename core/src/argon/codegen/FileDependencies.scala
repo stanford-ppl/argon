@@ -44,33 +44,34 @@ trait FileDependencies extends Codegen {
       val dir = "/" + folder + "/" + name
       // Console.println("Looking at " + dir)
 
-      val src = getClass.getProtectionDomain.getCodeSource
-      if (src != null) {
-        val jar = src.getLocation
-        val zip = new ZipInputStream(jar.openStream())
-
-        def rename(e:String) = {
-          val path = e.split("/").drop(1)
-          if (outputPath.isDefined) {
-            val sourceName = folder + "/" + path.dropRight(1).mkString("/")
-            val outputName = outputPath.get + path.last
-            FileDep(sourceName, path.last, relPath, Some(outputName))
-          }
-          else {
-            val outputName = path.mkString("/")
-            FileDep(folder, outputName, relPath)
-          }
+      def explore(path: String): List[FileDep] = {
+        val rpath = getClass.getResource(path)
+        val file = new File(rpath.getPath)
+        if (file.exists()) {
+          if (file.isFile())
+            List(rename(path))
+          else if (file.isDirectory)
+            file
+              .listFiles
+              .flatMap(x => explore(path+"/"+x.getName)
+          else
+            List()
         }
-
-        Stream.continually(zip.getNextEntry)
-          .takeWhile(_ != null)
-          .map(_.getName)
-          .filter(_.startsWith(folder + "/" + name))
-          .filterNot(_.endsWith("/"))
-          .map(rename)
-          //.map(e => FileDep(folder, e, relPath) )
-          .foreach(_.copy(out))
       }
+
+      def rename(e:String) = {
+        val path = e.split("/").drop(1)
+        if (outputPath.isDefined) {
+          val sourceName = folder + "/" + path.dropRight(1).mkString("/")
+          val outputName = outputPath.get + path.last
+          FileDep(sourceName, path.last, relPath, Some(outputName))
+        }
+        else {
+          val outputName = path.mkString("/")
+          FileDep(folder, outputName, relPath)
+        }
+      }
+      explore(dir).foreach(_.copy(out))
 
     }
   }
