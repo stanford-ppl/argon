@@ -17,14 +17,14 @@ scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warning
 scalacOptions ++= Seq("-language:higherKinds", "-language:implicitConversions")
 
 // Options for auto-documentation
-scalacOptions in (Compile, doc) ++= Seq(
+/*scalacOptions in (Compile, doc) ++= Seq(
   "-doc-root-content",
   baseDirectory.value+"/root-doc.txt",
   "-diagrams",
   "-diagrams-debug",
   //"-diagrams-dot-timeout", "20", "-diagrams-debug",
   "-doc-title", name.value
-)
+)*/
 
 parallelExecution in Test := false
 concurrentRestrictions in Global += Tags.limitAll(1) // we need tests to run in isolation across all projects

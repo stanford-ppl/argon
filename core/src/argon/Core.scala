@@ -59,8 +59,6 @@ trait CompilerCore extends Staging with ArrayExp { self =>
 
   lazy val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
 
-  def settings(): Unit = { }
-
   def checkErrors(start: Long, stageName: String): Unit = if (hadErrors) {
     val time = (System.currentTimeMillis - start).toFloat
     checkWarnings()
@@ -73,15 +71,22 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     warn(s"""$nWarns ${plural(nWarns, "warning","warnings")} found""")
   }
 
+  def settings(): Unit = { }
   def createTraversalSchedule(): Unit = { }
 
 
   def compileOrRun(blk: => Unit): Unit = {
+    // --- Setup
     reset() // Reset global state
     settings()
     createTraversalSchedule()
 
     if (Config.clearLogs) deleteExts(Config.logDir, ".log")
+    report(c"Compiling ${Config.name} to ${Config.genDir}")
+    if (Config.verbosity >= 2) report(c"Logging ${Config.name} to ${Config.logDir}")
+
+
+    // --- Staging
 
     val start = System.currentTimeMillis()
     State.staging = true
@@ -93,8 +98,8 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     // Exit now if errors were found during staging
     checkErrors(start, "staging")
 
-    if (testbench) { Config.genDir = Config.cwd + Config.sep + "gen" + Config.sep + Config.name }
-    report(c"Compiling ${Config.name} to ${Config.genDir}")
+
+    // --- Traversals
 
     for (t <- passes) {
       if (VERBOSE_SCHEDULING) {

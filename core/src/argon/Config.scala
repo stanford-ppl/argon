@@ -60,7 +60,6 @@ argon {
     unwrapStructs = conf.unwrap
     emitDevel = conf.emission// level of conservativeness and debug printing when emitting nodes
     allowAtomicWrites = conf.atomicw
-
   }
 
   def sep = "/"

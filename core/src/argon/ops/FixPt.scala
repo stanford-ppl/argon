@@ -241,7 +241,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   }
 
   case class StringToFixPt[S:BOOL,I:INT,F:INT](x: Exp[Text]) extends FixPtOp[S,I,F] {
-    def mirror(f:Tx) = text_to_fixpt[S,I,F](x)
+    def mirror(f:Tx) = text_to_fixpt[S,I,F](f(x))
   }
 
 
