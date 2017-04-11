@@ -64,8 +64,12 @@ trait ScalaGenLambda extends ScalaCodegen {
 trait ScalaGenLambdaTest extends ScalaGen with ScalaGenLambda { override val IR: TestExp with SimpleLambdaExp }
 
 trait LambdaTestIR extends CompilerBase with SimpleLambdaApi { self =>
-  val scalagen = new ScalaGenLambdaTest{val IR: self.type = self }
-  passes += scalagen
+  lazy val scalagen = new ScalaGenLambdaTest{val IR: self.type = self }
+
+  override def createTraversalSchedule() = {
+    super.createTraversalSchedule()
+    passes += scalagen
+  }
 }
 
 trait LambdaTestLib extends LibCore
