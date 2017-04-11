@@ -10,7 +10,7 @@ import scala.collection.mutable
 trait Graph extends Exceptions {
   type EdgeId = Int
   type NodeId = Int
-  final val VERBOSE_SCHEDULING = true
+  final val VERBOSE_SCHEDULING = false
   var graphLog: PrintStream = if (VERBOSE_SCHEDULING) createLog(Config.logDir + "/sched/", "0000 Staging.log") else null
   @inline private def xlog(x: String) = if (VERBOSE_SCHEDULING) withLog(graphLog){ log(x) }
 
