@@ -46,21 +46,22 @@ trait FileDependencies extends Codegen {
 
       def explore(path: String): List[FileDep] = {
         val rpath = getClass.getResource(path)
-        val file = new File(rpath.getPath)
+        val file = FileUtils.toFile(rpath)
         if (file.exists()) {
           if (file.isFile())
             List(rename(path))
           else if (file.isDirectory)
             file
-              .listFiles
-              .flatMap(x => explore(path+"/"+x.getName)
+              .listFiles.toList
+              .flatMap(x => explore(path+"/"+x.getName))
           else
             List()
-        }
+        } else { List() }
       }
 
       def rename(e:String) = {
-        val path = e.split("/").drop(1)
+        val path = e.split("/").drop(2)
+        // Console.println(s"   printing $e and ${path.toList} and ${e.split("/").toList}")
         if (outputPath.isDefined) {
           val sourceName = folder + "/" + path.dropRight(1).mkString("/")
           val outputName = outputPath.get + path.last
