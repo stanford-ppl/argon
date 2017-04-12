@@ -76,7 +76,7 @@ trait CompilerBase extends RunnerCore with TestApi { self =>
 trait TestIR extends CompilerBase { self =>
   lazy val scalagen = new ScalaGen { override val IR: self.type = self }
 
-  override def createTraversalSchedule(): Unit = {
+  override def createTraversalSchedule() = {
     super.createTraversalSchedule()
     passes += scalagen
   }
