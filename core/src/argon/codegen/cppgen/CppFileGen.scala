@@ -52,7 +52,7 @@ using std::vector;
 
   open(s"void Application(int numThreads, cppDeliteArraystring * args) {")
   emit("// Create an execution context.")
-  emit("""FringeContext *c1 = new FringeContext("./sp.rbf");""")
+  emit("""FringeContext *c1 = new FringeContext("./verilog/accel.bit.bin");""")
   emit("""c1->load();""")
 
 
