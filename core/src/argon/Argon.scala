@@ -17,4 +17,4 @@ trait ArgonApi extends ArgonExp
   with HashMapApi with IfThenElseApi with StructApi
   with TextApi with TupleApi with VoidApi
   with BitsApi with ArithApi with OrderApi
-  with NumApi
+  with NumApi with LowPriorityNumImplicits
