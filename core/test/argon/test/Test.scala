@@ -69,7 +69,7 @@ trait CompilerBase extends RunnerCore with TestApi { self =>
   }
 
   override def settings() {
-    //Config.verbosity = 3
+    Config.verbosity = 3
     super.settings()
   }
 }

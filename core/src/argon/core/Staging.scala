@@ -48,7 +48,7 @@ trait Staging extends Scheduling {
       case Some(ss) => ss.foreach(_.addCtx(ctx)); ss
       case None => registerDef(d, Nil)(ctx)
     }
-    defCache(d) = syms
+    defCache += d -> syms
     syms
   }
 
@@ -115,7 +115,7 @@ trait Staging extends Scheduling {
 
         if (symsWithSameEffects.isEmpty) {
           val syms = stageEffects()
-          defCache(d) = syms
+          defCache += d -> syms
           syms
         }
         else {
