@@ -1,10 +1,11 @@
 package argon.ops
 
+import argon.{ArgonApi, ArgonExp}
 import argon.core.Staging
 import forge._
 
-trait HashMapApi extends HashMapExp with ArrayApi with StructApi {
-
+trait HashMapApi extends HashMapExp {
+  self: ArgonApi =>
   type HashMap[K,V] = MetaHashMap[K,V]
 
   implicit class ArrayGroupByOps[A](array: MetaArray[A]) {
@@ -26,7 +27,8 @@ trait HashMapApi extends HashMapExp with ArrayApi with StructApi {
   }
 }
 
-trait HashMapExp extends Staging with ArrayExp with StructExp {
+trait HashMapExp {
+  self: ArgonExp =>
   /** Infix methods **/
 
   case class HashIndex[K:Meta](s: Exp[HashIndex[K]]) extends MetaAny[HashIndex[K]] {

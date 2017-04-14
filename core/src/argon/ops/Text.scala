@@ -1,13 +1,16 @@
 package argon.ops
 
+import argon.{ArgonApi, ArgonExp}
 import argon.core.Staging
 import forge._
 
-trait TextApi extends TextExp with BoolApi {
+trait TextApi extends TextExp {
+  self: ArgonApi =>
   type String = Text
 }
 
-trait TextExp extends Staging with BoolExp {
+trait TextExp extends BoolExp {
+  self: ArgonExp =>
   /** Infix methods **/
   implicit object TextType extends Meta[Text] {
     def wrapped(x: Exp[Text]) = Text(x)

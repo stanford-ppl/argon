@@ -1,9 +1,10 @@
 package argon.codegen.chiselgen
 
+import argon.core.Staging
 import argon.ops.{FixPtExp, FltPtExp}
 
 trait ChiselGenFixPt extends ChiselCodegen {
-  val IR: FixPtExp with FltPtExp
+  val IR: FixPtExp with FltPtExp with Staging
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {

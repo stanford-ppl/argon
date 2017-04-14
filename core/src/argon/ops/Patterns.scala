@@ -1,7 +1,7 @@
 package argon.ops
 
 import argon.core.Staging
-
+/*
 trait PatternApi extends PatternExp
 trait PatternExp extends Staging with FltPtExp with FixPtExp with VoidExp with TextExp /*{
 
@@ -100,4 +100,4 @@ trait PatternExp extends Staging with FltPtExp with FixPtExp with VoidExp with T
     stageEffectful(CollectElem[A,I,CA](buffer,iBlk,unknownSize,chunks,j,sizeBlk,applyBlk), effects)(ctx)
   }
 }*/
-
+*/

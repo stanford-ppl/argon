@@ -1,9 +1,10 @@
 package argon.codegen.cppgen
 
-import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, IfThenElseExp, StructExp, TupleExp, HashMapExp}
+import argon.core.Staging
+import argon.ops.{ArrayExtExp, BoolExp, FixPtExp, FltPtExp, HashMapExp, IfThenElseExp, StructExp, TextExp, TupleExp}
 
 trait CppGenArray extends CppCodegen {
-  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp
+  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp with Staging
   import IR._
 
 

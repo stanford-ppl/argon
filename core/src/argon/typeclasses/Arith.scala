@@ -1,12 +1,15 @@
 package argon.typeclasses
 
+import argon.{ArgonApi, ArgonExp}
 import argon.core.Staging
 
 trait ArithApi extends ArithExp {
+  self: ArgonApi =>
 
 }
 
-trait ArithExp extends Staging {
+trait ArithExp {
+  self: ArgonExp =>
 
   trait Arith[T] {
     def negate(x: T)(implicit ctx: SrcCtx): T

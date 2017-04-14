@@ -1,11 +1,12 @@
 package argon.ops
 
-import argon.core.Staging
+import argon.{ArgonApi, ArgonExp}
+import argon.core.{Reporting, Staging}
 import argon.typeclasses._
 import forge._
 
-trait FixPtApi extends FixPtExp with BitsApi with NumApi with OrderApi with CastApi with BoolApi {
-  this: TextApi with FltPtExp =>
+trait FixPtApi extends FixPtExp {
+  self: ArgonApi =>
 
   type Long  = Int64
   type Int   = Int32
@@ -13,8 +14,8 @@ trait FixPtApi extends FixPtExp with BitsApi with NumApi with OrderApi with Cast
   type Char  = Int8
 }
 
-trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with CustomBitWidths with CastExp with BoolExp {
-  this: TextExp with FltPtExp =>
+trait FixPtExp extends BoolExp with Reporting {
+  self: ArgonExp =>
 
   /** Type Aliases **/
   type Int64 = FixPt[TRUE,_64,_0]

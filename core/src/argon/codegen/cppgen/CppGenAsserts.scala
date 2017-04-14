@@ -1,9 +1,10 @@
 package argon.codegen.cppgen
 
+import argon.core.Staging
 import argon.ops.AssertExp
 
 trait CppGenAsserts extends CppCodegen {
-  val IR: AssertExp
+  val IR: AssertExp with Staging
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {

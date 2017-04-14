@@ -1,9 +1,10 @@
 package argon.codegen.cppgen
 
+import argon.core.Staging
 import argon.ops.PrintExp
 
 trait CppGenPrint extends CppCodegen {
-  val IR: PrintExp
+  val IR: PrintExp with Staging
   import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {

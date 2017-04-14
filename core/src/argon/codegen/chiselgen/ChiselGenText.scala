@@ -1,10 +1,11 @@
 package argon.codegen.chiselgen
 
+import argon.core.Staging
 import argon.ops.TextExp
 import argon.utils.escapeString
 
 trait ChiselGenText extends ChiselCodegen {
-  val IR: TextExp
+  val IR: TextExp with Staging
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
