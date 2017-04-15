@@ -169,6 +169,8 @@ trait GlobalWires extends IOModule{""")
         emit("val stream_out_empty          = Output(UInt(1.W))")
         emit("val stream_out_valid          = Output(Bool())")
         emit("")
+        emit("// LED Stream Outputs ")
+        emit("val led_stream_out_data       = Output(UInt(32.W))")
       close("})")
       close("}")
     }
