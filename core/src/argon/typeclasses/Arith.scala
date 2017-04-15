@@ -19,7 +19,7 @@ trait ArithExp {
     def divide(x: T, y: T)(implicit ctx: SrcCtx): T
   }
 
-  implicit class Ops[T:Arith](lhs: T) {
+  implicit class ArithOps[T:Arith](lhs: T) {
     def unary_-(implicit ctx: SrcCtx): T = arith[T].negate(lhs)
     def +(rhs: T)(implicit ctx: SrcCtx): T = arith[T].plus(lhs, rhs)
     def -(rhs: T)(implicit ctx: SrcCtx): T = arith[T].minus(lhs, rhs)

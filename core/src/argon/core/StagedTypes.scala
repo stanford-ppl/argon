@@ -47,14 +47,7 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     def wrapped(x: Exp[T]): T
   }*/
   type Meta[T] = Type[T]
-
-  // Has to be an implicit class to not conflict with higher priority implicits on +
-  implicit class ConcatOps[T<:MetaAny[T]](lhs: T) {
-    @api def +(rhs: String): Text = concat(lhs.toText, liftString(rhs))
-    @api def +(rhs: Text): Text = concat(lhs.toText, rhs)
-    @api def +[R](rhs: MetaAny[R]): Text = concat(lhs.toText, rhs.toText)
-  }
-
+ 
   private def unstagedWarning(op: String)(implicit ctx: SrcCtx): Unit = {
     warn(ctx, s"Unstaged method $op was used here on a staged type during staging.")
     warn("Add @virtualize annotation to an enclosing scope to prevent this.")

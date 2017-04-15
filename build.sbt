@@ -1,8 +1,8 @@
-organization in ThisBuild  := "stanford-ppl"
+organization in ThisBuild := "stanford-ppl"
 
 scalaVersion in ThisBuild := "2.12.1"
 
-version in ThisBuild   := "1.0"
+version in ThisBuild := "1.0"
 
 isSnapshot in ThisBuild := true
 
@@ -20,7 +20,7 @@ val commonSettings = Seq(
   resolvers += Resolver.sonatypeRepo("releases"),
   addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
 )
-    
+
 publishArtifact := false
 
 lazy val forge: Project = project
