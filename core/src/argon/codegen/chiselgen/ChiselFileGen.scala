@@ -115,9 +115,10 @@ trait GlobalWires extends IOModule{""")
 
     withStream(getStream("Instantiator")) {
           emit("val w = 32")
-          emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
-          emit("val numArgOuts = numArgOuts_reg")
-          emit("new Top(w, numArgIns, numArgOuts, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
+          emit("val numArgIns = numArgIns_mem  + numArgIns_reg + numArgIOs_reg")
+          emit("val numArgOuts = numArgOuts_reg + numArgIOs_reg")
+          emit("val numArgIOs = numArgIOs_reg")
+          emit("new Top(w, numArgIns, numArgOuts, numArgIOs, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
         close("}")
         emit("def tester = { c: DUTType => new TopUnitTester(c) }")
       close("}")
@@ -138,8 +139,9 @@ trait GlobalWires extends IOModule{""")
 
     withStream(getStream("IOModule")) {
       emit("// Combine values")
-      emit("val io_numArgIns = io_numArgIns_reg + io_numArgIns_mem")
-      emit("val io_numArgOuts = io_numArgOuts_reg")
+      emit("val io_numArgIns = io_numArgIns_reg + io_numArgIns_mem + io_numArgIOs_reg")
+      emit("val io_numArgOuts = io_numArgOuts_reg + io_numArgIOs_reg")
+      emit("val io_numArgIOs = io_numArgIOs_reg")
       open("val io = IO(new Bundle {")
         emit("// Control IO")
         emit("val enable = Input(Bool())")
@@ -151,6 +153,7 @@ trait GlobalWires extends IOModule{""")
         emit("// Scalar IO")
         emit("val argIns = Input(Vec(io_numArgIns, UInt(64.W)))")
         emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(64.W))))")
+        emit("")
         emit("// Stream IO")
         emit("val genericStreams = new GenericStreams(io_streamInsInfo, io_streamOutsInfo)")
         emit("")
@@ -181,6 +184,7 @@ class AccelTop(
   val top_w: Int,
   val numArgIns: Int,
   val numArgOuts: Int,
+  val numArgIOs: Int,
   val loadStreamInfo: List[StreamParInfo],
   val storeStreamInfo: List[StreamParInfo],
   val streamInsInfo: List[StreamParInfo],
@@ -207,6 +211,7 @@ class AccelTop(
   val top_w: Int,
   val numArgIns: Int,
   val numArgOuts: Int,
+  val numArgIOs: Int,
   val loadStreamInfo: List[StreamParInfo],
   val storeStreamInfo: List[StreamParInfo],
   val numStreamIns: List[StreamParInfo],
