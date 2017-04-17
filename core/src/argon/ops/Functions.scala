@@ -19,7 +19,7 @@ trait FunctionExp {
 
   def fun_apply[T:Type, R:Type](f: Exp[ArgonFunction1[T,R]], arg: Exp[T])(implicit ctx: SrcCtx): Exp[R] = stage(Apply(f, arg))(ctx)
 
-  case class ArgonFunction1[T:Type, R:Type](s: Exp[ArgonFunction1[T, R]]) extends MetaAny[ArgonFunction1[T,R]] with (T => R) {
+  case class ArgonFunction1[T:Type, R:Type](s: Exp[ArgonFunction1[T, R]], arg: Bound[T], block: Block[R]) extends MetaAny[ArgonFunction1[T,R]] with (T => R) {
     @api def ===(that: ArgonFunction1[T, R]) = ???
     @api def =!=(that: ArgonFunction1[T, R]) = ???
     @api def toText = textify(this)
@@ -32,12 +32,12 @@ trait FunctionExp {
   @internal def fun[T:Type, R:Type](f: T => R): ArgonFunction1[T,R] = {
     val arg1 = fresh[T]
     val bodyBlock: Block[R] = stageBlock(f(wrap(arg1)).s)
-    ArgonFunction1(constant[ArgonFunction1[T,R]]((arg1, bodyBlock)))
+    ArgonFunction1(constant[ArgonFunction1[T,R]](f), arg1, bodyBlock)
   }
 
   /** Type classes **/
   case class ArgonFunction1Type[T, R](childT: Meta[T], childR: Meta[R]) extends Meta[ArgonFunction1[T, R]] {
-    override def wrapped(x: Exp[ArgonFunction1[T,R]]) = ArgonFunction1(x)(childT, childR)
+    override def wrapped(x: Exp[ArgonFunction1[T,R]]) = fun(x.asInstanceOf[Const[_]].c.asInstanceOf[T => R])(childT, childR, EmptyContext)
     override def unwrapped(x: ArgonFunction1[T,R]) = x.s
     override def stagedClass = classOf[ArgonFunction1[T,R]]
     override def typeArguments = List(childT, childR)
