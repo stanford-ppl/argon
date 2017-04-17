@@ -5,7 +5,7 @@ import scala.collection.mutable
 
 trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   // -- State
-  val defCache = new mutable.HashMap[Def, Seq[Sym[_]]]
+  var defCache: Map[Def, Seq[Sym[_]]] = Map.empty
   protected val shallowAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
   protected val deepAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
   protected val aliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
@@ -97,7 +97,7 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
 
   override def reset(): Unit = {
     super.reset()
-    defCache.clear()
+    defCache = Map.empty
     shallowAliasCache.clear()
     deepAliasCache.clear()
     aliasCache.clear()

@@ -7,7 +7,7 @@ trait Blocks extends Effects { self: Staging =>
   type Pass = CompilerPass{ val IR: self.type }
 
   /** Class representing the result of a staged scope. */
-  case class Block[+T](result: Exp[T], summary: Effects, effectful: Seq[Sym[_]], inputs: Seq[Sym[_]]) {
+  case class Block[+T](result: Exp[T], summary: Effects, effectful: Seq[Sym[_]], inputs: Seq[Sym[_]], temp: UseFreq) {
     def tp: Type[_] = result.tp
   }
 
@@ -26,24 +26,36 @@ trait Blocks extends Effects { self: Staging =>
     effects
   }
 
-  private def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]]): Block[T] = {
+  def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]], temp: UseFreq): Block[T] = {
     val saveContext = context
+    val saveCache = defCache
     context = Nil
 
     val result = block
     val deps = context
     context = saveContext
 
+    // Reset contents of defCache when staging cold blocks
+    // Reasoning here is that statements can't move out of cold blocks, so it makes no sense to CSE across them
+    if (temp == Freq.Cold) defCache = saveCache
+
     val effects = summarizeScope(deps)
-    Block[T](result, effects, deps, inputs)
+    Block[T](result, effects, deps, inputs, temp)
   }
 
   /**
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
     */
-  def stageBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil)
-  def stageLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs))
+  def stageBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Normal)
+  def stageLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Normal)
+
+  def stageColdBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Cold)
+  def stageColdLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Cold)
+
+  def stageHotBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Hot)
+  def stageHotLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Hot)
+
 
   /**
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
@@ -64,7 +76,7 @@ trait Blocks extends Effects { self: Staging =>
     val effects = summarizeScope(deps)
     context = saveContext
 
-    Block[T](result, effects, deps, Nil)
+    Block[T](result, effects, deps, Nil, Freq.Normal)
   }
 
   /** Compiler debugging **/
