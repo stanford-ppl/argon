@@ -32,8 +32,8 @@ trait IfThenElseExp extends Staging with BoolExp with VoidExp with OverloadHack 
   }
 
   @util def __ifThenElse[T<:MetaAny[T]:Meta](cond: Bool, thenp: => T, elsep: => T): T = {
-    val unwrapThen: () => Exp[T] = () => thenp.s // directly calling unwrap(thenp) forces thenp to be evaluated here
-    val unwrapElse: () => Exp[T] = () => elsep.s // wrapping it as a Function0 allows it to be delayed
+    val unwrapThen = () => thenp.s // directly calling unwrap(thenp) forces thenp to be evaluated here
+    val unwrapElse = () => elsep.s // wrapping it as a Function0 allows it to be delayed
     wrap(ifThenElse(cond.s, unwrapThen(), unwrapElse()))
   }
 
@@ -47,8 +47,6 @@ trait IfThenElseExp extends Staging with BoolExp with VoidExp with OverloadHack 
   /** IR Nodes **/
   case class IfThenElse[T:Type](cond: Exp[Bool], thenp: Block[T], elsep: Block[T]) extends Op[T] {
     def mirror(f:Tx) = ifThenElse[T](f(cond), f(thenp), f(elsep))
-
-    override def freqs   = normal(cond) ++ cold(thenp) ++ cold(elsep)
     override def aliases = dyns(thenp.result, elsep.result)
   }
 
@@ -58,8 +56,8 @@ trait IfThenElseExp extends Staging with BoolExp with VoidExp with OverloadHack 
     case Const(false) if context != null => elsep
     case Op(Not(x)) => ifThenElse(x, elsep, thenp)
     case _ =>
-      val thenBlk = stageBlock(thenp)
-      val elseBlk = stageBlock(elsep)
+      val thenBlk = stageColdBlock(thenp)
+      val elseBlk = stageColdBlock(elsep)
       val effects = thenBlk.summary orElse elseBlk.summary
       stageEffectful(IfThenElse(cond, thenBlk, elseBlk), effects)(ctx)
   }

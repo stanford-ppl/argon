@@ -107,7 +107,7 @@ import templates._
 import templates.ops._
 import types._
 import chisel3._""")
-          open(src"""trait ${name} extends ${parent.replace("AccelController","RootController")} {""")
+          open(src"""trait ${name} extends ${parent} {""")
           try { body } 
           finally { 
             close("}")

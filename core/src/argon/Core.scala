@@ -8,24 +8,45 @@ import scala.collection.mutable.ArrayBuffer
 import org.virtualized.{EmptyContext, SourceContext}
 
 trait AppCore { self =>
+
   val IR: CompilerCore
-  val Lib: LibCore // Should define "def args: Array[String] = self.stagingArgs"
+  val Lib: LibCore
 
   private var __stagingArgs: scala.Array[java.lang.String] = _
-  def stagingArgs: Array[String] = __stagingArgs
 
+  // Allows @virtualize def main(): Unit = { } and [@virtualize] def main() { }
   def main(): Unit
 
+  def parseArguments(args: Seq[String]): Unit = {
+    val parser = new ArgonArgParser
+    parser.parse(args) match {
+      case None =>
+        println("Nothing generated")
+        sys.exit(0)
+      case _ =>
+        println("Starting generation")
+    }
+  }
+
   def main(sargs: Array[String]): Unit = {
-    __stagingArgs = sargs
-    Config.name = self.getClass.getName.replace("class ", "").replace('.','-').replace("$","") //.split('$').head
-    Config.logDir =  Config.cwd + Config.sep + "logs" + Config.sep + Config.name
+    val defaultName = self.getClass.getName.replace("class ", "").replace('.','-').replace("$","") //.split('$').head
+    System.setProperty("argon.name", defaultName)
+    Config.name = defaultName
+    Config.init()
+
+    parseArguments(sargs.toSeq)
+
+    IR.__stagingArgs = this.__stagingArgs
+    Lib.__args = this.__stagingArgs
+
     IR.compileOrRun( main() )
   }
 }
 
 trait LibCore {
-  // Nothing here for now
+  private[argon] var __args: scala.Array[java.lang.String] = _
+  def stagingArgs = __args
+  def args = __args
 }
 
 trait CompilerCore extends Staging with ArrayExp { self =>
@@ -33,11 +54,10 @@ trait CompilerCore extends Staging with ArrayExp { self =>
   val testbench: Boolean = false
 
   lazy val args: MetaArray[Text] = input_arguments()(EmptyContext)
-  var stagingArgs: scala.Array[java.lang.String] = _
+  private[argon] var __stagingArgs: scala.Array[java.lang.String] = _
+  def stagingArgs = __stagingArgs
 
   lazy val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
-
-  def settings(): Unit = { }
 
   def checkErrors(start: Long, stageName: String): Unit = if (hadErrors) {
     val time = (System.currentTimeMillis - start).toFloat
@@ -51,24 +71,46 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     warn(s"""$nWarns ${plural(nWarns, "warning","warnings")} found""")
   }
 
+  def settings(): Unit = { }
+  def createTraversalSchedule(): Unit = { }
+
+
   def compileOrRun(blk: => Unit): Unit = {
+    // --- Setup
     reset() // Reset global state
     settings()
+    createTraversalSchedule()
 
     if (Config.clearLogs) deleteExts(Config.logDir, ".log")
+    report(c"Compiling ${Config.name} to ${Config.genDir}")
+    if (Config.verbosity >= 2) report(c"Logging ${Config.name} to ${Config.logDir}")
+
+
+    // --- Staging
 
     val start = System.currentTimeMillis()
+    State.staging = true
     var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(blk).s } }
+    State.staging = false
 
     if (curEdgeId == 0) return  // Nothing was Staged -- likely running in library mode (or empty program)
 
     // Exit now if errors were found during staging
     checkErrors(start, "staging")
 
-    if (testbench) { Config.genDir = Config.cwd + Config.sep + "gen" + Config.sep + Config.name }
-    report(c"Compiling ${Config.name} to ${Config.genDir}")
+
+    // --- Traversals
 
     for (t <- passes) {
+      if (VERBOSE_SCHEDULING) {
+        graphLog.close()
+        graphLog = createLog(Config.logDir + "/sched/", State.paddedPass + " " + t.name + ".log")
+        withLog(graphLog) {
+          log(s"${State.pass} ${t.name}")
+          log(s"===============================================")
+        }
+      }
+
       block = t.run(block)
       // After each traversal, check whether there were any reported errors
       checkErrors(start, t.name)
@@ -84,9 +126,10 @@ trait CompilerCore extends Staging with ArrayExp { self =>
         scopeCache.clear()
       }
     }
+    if (VERBOSE_SCHEDULING) graphLog.close()
+
 
     val time = (System.currentTimeMillis - start).toFloat
-
 
     if (Config.verbosity >= 1) {
       withLog(timingLog) {

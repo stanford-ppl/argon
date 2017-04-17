@@ -206,7 +206,7 @@ trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderE
     def mirror(f:Tx) = flt_to_fix[G,E,S,I,F](f(x))
   }
   case class StringToFltPt[G:INT,E:INT](x: Exp[Text]) extends FltPtOp[G,E] {
-    def mirror(f:Tx) = text_to_fltpt[G,E](x)
+    def mirror(f:Tx) = text_to_fltpt[G,E](f(x))
   }
 
   /** Constructors **/

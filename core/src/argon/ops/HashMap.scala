@@ -5,6 +5,8 @@ import forge._
 
 trait HashMapApi extends HashMapExp with ArrayApi with StructApi {
 
+  type HashMap[K,V] = MetaHashMap[K,V]
+
   implicit class ArrayGroupByOps[A](array: MetaArray[A]) {
     @api def groupByReduce[K:Meta,V:Meta](key: A => K)(value: A => V)(reduce: (V,V) => V)(implicit ctx: SrcCtx, mA: Meta[A]): MetaHashMap[K,V] = {
       val i = fresh[Index]

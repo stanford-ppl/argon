@@ -61,11 +61,12 @@ trait CompilerBase extends RunnerCore with TestApi { self =>
   lazy val printer  = new IRPrinter { override val IR: self.type = self }
   lazy val identity = new IdentityTransformer { override val IR: self.type = self }
 
-  printer.verbosity = 3
-
-  passes += printer
-  passes += identity
-  passes += printer
+  override def createTraversalSchedule() = {
+    printer.verbosity = 3
+    passes += printer
+    passes += identity
+    passes += printer
+  }
 
   override def settings() {
     Config.verbosity = 3
@@ -74,13 +75,18 @@ trait CompilerBase extends RunnerCore with TestApi { self =>
 }
 trait TestIR extends CompilerBase { self =>
   lazy val scalagen = new ScalaGen { override val IR: self.type = self }
-  passes += scalagen
+
+  override def createTraversalSchedule() = {
+    super.createTraversalSchedule()
+    passes += scalagen
+  }
+
 }
 trait TestLib extends LibCore
 
 trait Test extends AppCore {
   val IR: TestIR = new TestIR { }
-  val Lib: TestLib = new TestLib { def args: Array[String] = stagingArgs }
+  val Lib: TestLib = new TestLib { }
 }
 
 

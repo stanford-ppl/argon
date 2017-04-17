@@ -62,13 +62,13 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   }
 
   /**
-    * Visit and perform some transformation `func` over all statements in the block, returning a new Staged
+    * Visit and perform some transformation `func` over all statements in the block, returning a new staged
     * block with the resulting transformed statements. The return Exp[T] of func will be the result symbol of the
     * new block.
     */
   final protected def transformBlock[T:Type](b: Block[T], func: Seq[Stm] => Exp[T]): Block[T] = {
     val inputs = syms(f.tx(b.inputs))
-    stageLambda(inputs:_*){ inlineBlock(b, func) }
+    createBlock({ inlineBlock(b,func) }, inputs, b.temp)
   }
 
   /**
@@ -122,7 +122,12 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
       //if (!allowPretransform) throw new PretransformException(name, lhs, f(lhs))
       val lhs2: Exp[T] = f(lhs)
       val lhs3 = mirrorExp(lhs2)
-      if (lhs3 != lhs2 && lhs != lhs2 && lhs2.isInstanceOf[Sym[_]]) scrubSym(lhs2.asInstanceOf[Sym[_]])
+
+      // Only remove if lhs2 has no existing dependents
+      if (lhs3 != lhs2 && lhs != lhs2) lhs2 match {
+        case sym2: Sym[_] => scrubSym(lhs2.asInstanceOf[Sym[_]])
+        case _ =>
+      }
       lhs3
     }
 

@@ -38,13 +38,13 @@ abstract class Transformer { self =>
 
   // FIXME: Hack: only mirror metadata if the symbol is new (did not exist before starting mirroring)
   // Assumption: If the symbol we get back from cloning/mirroring had already been created by this
-  // point, the mirrored symbol underwent a rewrite rule or CSE. The correct thing to do here is
+  // transformer, the mirrored symbol underwent a rewrite rule or CSE. The correct thing to do here is
   // to keep the previously created symbol's metadata, not the mirrored version of lhs's.
   final protected def transferMetadataIfNew(lhs: Seq[Exp[_]])(tx: => Seq[Exp[_]]): (Seq[Exp[_]], Seq[Boolean]) = {
     val id = IR.curEdgeId
     val lhs2 = tx
     val out = lhs.zip(lhs2).map{
-      case (sym: Exp[_], sym2: Sym[_]) if sym2.id >= id =>
+      case (sym: Exp[_], sym2: Sym[_]) if sym2.id >= id || sym == sym2 =>
         transferMetadata(sym, sym2)
         (sym2, true)
       case (sym, sym2) =>
@@ -56,7 +56,7 @@ abstract class Transformer { self =>
     val id = IR.curEdgeId
     val lhs2 = tx
     (lhs, lhs2) match {
-      case (sym: Exp[_], sym2: Sym[_]) if sym2.id >= id =>
+      case (sym: Exp[_], sym2: Sym[_]) if sym2.id >= id || sym == sym2 =>
         transferMetadata(sym, sym2)
         (lhs2, true)
       case _ =>

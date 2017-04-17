@@ -24,27 +24,26 @@ trait CppGenArray extends CppCodegen {
   }
 
   protected def emitApply(dst: Exp[_], array: Exp[_], i: String, isDef: Boolean = true): Unit = {
-    val get = if (src"${array.tp}" == "cppDeliteArraystring") {
+    // val get = if (src"${array.tp}" == "cppDeliteArraystring") {
+    //   if (isDef) {
+    //     emit(src"${dst.tp} $dst = ${array}->apply($i);")  
+    //   } else {
+    //     emit(src"$dst = ${array}->apply($i);")  
+    //   }
+    // } else {
+    if (isArrayType(dst.tp)) {
+      val iterator = if ("^[0-9].*".r.findFirstIn(src"$i").isDefined) {src"${array}_applier"} else {src"$i"}
       if (isDef) {
-        emit(src"${dst.tp} $dst = ${array}->apply($i);")  
+        emit(src"""${dst.tp}* $dst = new ${dst.tp}(${getSize(array, src"[$i]")}); //cannot apply a vector from 2D vector, so make new vec and fill it, eventually copy the vector in the constructor here""")
+        emit(src"for (int ${iterator}_sub = 0; ${iterator}_sub < (*${array})[${i}].size(); ${iterator}_sub++) { (*$dst)[${iterator}_sub] = (*${array})[$i][${iterator}_sub]; }")          
       } else {
-        emit(src"$dst = ${array}->apply($i);")  
+        emit(src"for (int ${iterator}_sub = 0; ${iterator}_sub < (*${array})[${i}].size(); ${iterator}_sub++) { (*$dst)[${iterator}_sub] = (*${array})[$i][${iterator}_sub]; }")          
       }
     } else {
-      if (isArrayType(dst.tp)) {
-        val iterator = if ("^[0-9].*".r.findFirstIn(src"$i").isDefined) {src"${array}_applier"} else {src"$i"}
-        if (isDef) {
-          emit(src"""${dst.tp}* $dst = new ${dst.tp}(${getSize(array, src"[$i]")}); //cannot apply a vector from 2D vector, so make new vec and fill it, eventually copy the vector in the constructor here""")
-          emit(src"for (int ${iterator}_sub = 0; ${iterator}_sub < (*${array})[${i}].size(); ${iterator}_sub++) { (*$dst)[${iterator}_sub] = (*${array})[$i][${iterator}_sub]; }")          
-        } else {
-          emit(src"for (int ${iterator}_sub = 0; ${iterator}_sub < (*${array})[${i}].size(); ${iterator}_sub++) { (*$dst)[${iterator}_sub] = (*${array})[$i][${iterator}_sub]; }")          
-        }
+      if (isDef) {
+        emit(src"${dst.tp} $dst = (*${array})[$i];")  
       } else {
-        if (isDef) {
-          emit(src"${dst.tp} $dst = (*${array})[$i];")  
-        } else {
-          emit(src"$dst = (*${array})[$i];")
-        }
+        emit(src"$dst = (*${array})[$i];")
       }
     }
   }
@@ -55,7 +54,7 @@ trait CppGenArray extends CppCodegen {
         case FloatType() => "vector<double>"
         case IntType() => "vector<int32_t>"
         case LongType() => "vector<int32_t>"
-        case TextType => "cppDeliteArraystring"
+        case TextType => "vector<string>"
         case BoolType => "vector<bool>"
         case fp: FixPtType[_,_,_] => 
           fp.fracBits match {

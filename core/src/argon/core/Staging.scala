@@ -48,15 +48,15 @@ trait Staging extends Scheduling {
       case Some(ss) => ss.foreach(_.addCtx(ctx)); ss
       case None => registerDef(d, Nil)(ctx)
     }
-    defCache(d) = syms
+    defCache += d -> syms
     syms
   }
 
   private def registerDef(d: Def, extraDeps: Seq[Sym[_]])(ctx: SrcCtx): Seq[Sym[Any]] = {
     val bounds = d.binds
     val tunnels = d.tunnels
-    val dfreqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).sum)
-    val freqs = d.inputs.map { in => dfreqs.getOrElse(in, 1.0f) } ++ extraDeps.distinct.map { d => 1.0f }
+    val dfreqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).fold(Freq.Normal){combine})
+    val freqs = d.inputs.map { in => dfreqs.getOrElse(in, Freq.Normal) } ++ extraDeps.distinct.map { d => Freq.Normal }
 
     val inputs = d.inputs
     val outputs = d.outputTypes.map{tp => new Sym(tp) }
@@ -115,7 +115,7 @@ trait Staging extends Scheduling {
 
         if (symsWithSameEffects.isEmpty) {
           val syms = stageEffects()
-          defCache(d) = syms
+          defCache += d -> syms
           syms
         }
         else {

@@ -1,5 +1,7 @@
 name := "argon"
 
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0"
+libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.7.0"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.3.2"
 libraryDependencies += "commons-io" % "commons-io" % "2.5"
 
@@ -15,14 +17,14 @@ scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Xfatal-warning
 scalacOptions ++= Seq("-language:higherKinds", "-language:implicitConversions")
 
 // Options for auto-documentation
-scalacOptions in (Compile, doc) ++= Seq(
+/*scalacOptions in (Compile, doc) ++= Seq(
   "-doc-root-content",
   baseDirectory.value+"/root-doc.txt",
   "-diagrams",
   "-diagrams-debug",
   //"-diagrams-dot-timeout", "20", "-diagrams-debug",
   "-doc-title", name.value
-)
+)*/
 
 parallelExecution in Test := false
 concurrentRestrictions in Global += Tags.limitAll(1) // we need tests to run in isolation across all projects

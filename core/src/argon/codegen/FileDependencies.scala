@@ -4,7 +4,7 @@ import sys.process._
 import scala.language.postfixOps
 import org.apache.commons.io._
 import java.io.File
-import java.util.zip.ZipInputStream
+
 
 trait FileDependencies extends Codegen {
   import IR._
@@ -41,36 +41,29 @@ trait FileDependencies extends Codegen {
 
   case class DirDep(folder: String, name: String, relPath: String = "", outputPath:Option[String] = None) extends CodegenDep {
     override def copy(out: String) = {
-      val dir = "/" + folder + "/" + name
+      val dir = folder + "/" + name
       // Console.println("Looking at " + dir)
 
-      val src = getClass.getProtectionDomain.getCodeSource
-      if (src != null) {
-        val jar = src.getLocation
-        val zip = new ZipInputStream(jar.openStream())
-
-        def rename(e:String) = {
-          val path = e.split("/").drop(1)
-          if (outputPath.isDefined) {
-            val sourceName = folder + "/" + path.dropRight(1).mkString("/")
-            val outputName = outputPath.get + path.last
-            FileDep(sourceName, path.last, relPath, Some(outputName))
-          }
-          else {
-            val outputName = path.mkString("/")
-            FileDep(folder, outputName, relPath)
-          }
+      def rename(e:String) = {
+        val path = e.split("/").drop(2)
+        if (outputPath.isDefined) {
+          val sourceName = folder + "/" + path.dropRight(1).mkString("/")
+          val outputName = outputPath.get + path.last
+          FileDep(sourceName, path.last, relPath, Some(outputName))
         }
-
-        Stream.continually(zip.getNextEntry)
-          .takeWhile(_ != null)
-          .map(_.getName)
-          .filter(_.startsWith(folder + "/" + name))
-          .filterNot(_.endsWith("/"))
-          .map(rename)
-          //.map(e => FileDep(folder, e, relPath) )
-          .foreach(_.copy(out))
+        else {
+          val outputName = path.mkString("/")
+          FileDep(folder, outputName, relPath)
+        }
       }
+
+      io.Source.fromURL(getClass.getResource("/files_list")).mkString("")
+        .split("\n")
+        .filter(_.startsWith("./"+dir))
+        .map(rename)
+        .foreach(_.copy(out))
+
+
 
     }
   }

@@ -39,6 +39,10 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     @api def > (that: FixPt[S,I,F]): Bool         = Bool( fix_lt(that.s,this.s))
     @api def >=(that: FixPt[S,I,F]): Bool         = Bool(fix_leq(that.s,this.s))
 
+    @api def <<(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix_lsh(this.s, that.s))  // Left shift
+    @api def >>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix_rsh(this.s, that.s))  // Right shift (signed)
+    @api def >>>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix_ursh(this.s, that.s)) // Right shift (unsigned)
+
     @api def ===(that: FixPt[S,I,F]) = Bool(fix_eql(this.s, that.s))
     @api def =!=(that: FixPt[S,I,F]) = Bool(fix_neq(this.s, that.s))
     @api override def toText = textify(this)
@@ -230,6 +234,10 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   case class FixEql[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = fix_eql(f(x), f(y)) }
   case class FixMod[S:BOOL,I:INT](x: Exp[FixPt[S,I,_0]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp[S,I,_0] { def mirror(f:Tx) = fix_mod(f(x), f(y)) }
 
+  case class FixLsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_lsh(f(x), f(y)) }
+  case class FixRsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_rsh(f(x), f(y)) }
+  case class FixURsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_ursh(f(x), f(y)) }
+
   case class FixRandom[S:BOOL,I:INT,F:INT](max: Option[Exp[FixPt[S,I,F]]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_random[S,I,F](f(max)) }
 
   case class FixConvert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp[S2,I2,F2] {
@@ -241,7 +249,7 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
   }
 
   case class StringToFixPt[S:BOOL,I:INT,F:INT](x: Exp[Text]) extends FixPtOp[S,I,F] {
-    def mirror(f:Tx) = text_to_fixpt[S,I,F](x)
+    def mirror(f:Tx) = text_to_fixpt[S,I,F](f(x))
   }
 
 
@@ -324,6 +332,24 @@ trait FixPtExp extends Staging with BitsExp with NumExp with OrderExp with Custo
     case (a, Const(1)) => fixpt[S,I,_0](0)
     case _ => stage(FixMod(x,y))(ctx)
   }
+
+  @internal def fix_lsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isValidInt => fixpt[S,I,F](BigDecimal(a.toBigInt << b.toInt))
+    case (a, Const(0)) => a
+    case _ => stage(FixLsh(x,y))(ctx)
+  }
+  @internal def fix_rsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isValidInt => fixpt[S,I,F](BigDecimal(a.toBigInt >> b.toInt))
+    case (a, Const(0)) => a
+    case _ => stage(FixRsh(x,y))(ctx)
+  }
+  @internal def fix_ursh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isValidLong && b.isValidInt => fixpt[S,I,F](BigDecimal(a.toLong >>> b.toInt))
+    case (a, Const(0)) => a
+    case _ => stage(FixURsh(x,y))(ctx)
+  }
+
+
   def fix_random[S:BOOL,I:INT,F:INT](max: Option[Exp[FixPt[S,I,F]]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = {
     stageSimple(FixRandom[S,I,F](max))(ctx)
   }

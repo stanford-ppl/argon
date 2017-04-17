@@ -26,10 +26,10 @@ trait Definitions extends Blocks { self: Staging =>
     // Default: All symbol inputs
     def reads: Seq[Dyn[_]] = inputs
 
-    // Freqs: symbol frequency hints used in code motion - less than 0.75f is "cold", while greater than 100f is "hot"
+    // Freqs: symbol frequency hints used in code motion - frequency is either Freq.Hot, Freq.Cold, or Freq.Normal
     // Code motion makes an attempt to schedule unbound "hot" symbols early (move out of blocks)
-    // Default: All symbol inputs have a frequency of 1.0f ("normal")
-    def freqs: Seq[(Dyn[_],Float)] = Nil
+    // Default: All symbol inputs have a frequency of Freq.Normal, block dependencies depend on Block temp
+    def freqs: Seq[(Dyn[_],UseFreq)] = blocks.flatMap{blk => dyns(blk).map(_ -> blk.temp)}
 
     // Scopes: scopes associated with this Def
     // Default: All blocks and lambdas in the Def's case class constructor
@@ -38,6 +38,7 @@ trait Definitions extends Blocks { self: Staging =>
     // Binds: symbols "bound" by this Def
     // Bound symbols define the start of scopes. Effectful symbols in a scope typically must be bound.
     // All dependents of bound syms up until but not including the binding Def make up the majority of a scope
+    // NOTE: Tempting to use productIterator here too, but note that Bound values can be inputs
     // Default: All effects included in all scopes associated with this Def
     def binds: Seq[Dyn[_]] = blocks.flatMap(_.effectful)
 
@@ -129,13 +130,13 @@ trait Definitions extends Blocks { self: Staging =>
 
   private val __dyns: PartialFunction[Any,Seq[Dyn[_]]] = {
     case s: Dyn[_] => Seq(s)
-    case b: Block[_]  => dyns(b.result)
+    case b: Block[_]  => dyns(b.result) ++ dyns(b.effectful)
     case d: Def       => d.inputs
     case l: Iterable[_] => recursive.collectSeqs(__dyns)(l.iterator)
   }
   private val __exps: PartialFunction[Any,Seq[Exp[_]]] = {
     case e: Exp[_]   => Seq(e)
-    case b: Block[_] => Seq(b.result)
+    case b: Block[_] => Seq(b.result) ++ b.effectful
     case d: Def      => d.expInputs
     case l: Iterable[_] => recursive.collectSeqs(__exps)(l.iterator)
   }
@@ -144,15 +145,15 @@ trait Definitions extends Blocks { self: Staging =>
   final def dyns(a: Any*): Seq[Dyn[_]] = if (__dyns.isDefinedAt(a)) __dyns(a) else Nil
   final def syms(a: Any*): Seq[Sym[_]] = dyns(a).collect{case s: Sym[_] => s}
 
-  private def symsFreq(a: Any*): Seq[(Dyn[_],Float)] = recursive.collectSeqs {
-    case s: Dyn[_] => Iterable((s, 1.0f))
-    case b: Block[_]  => symsFreq(b.result)
+  private def symsFreq(a: Any*): Seq[(Dyn[_],UseFreq)] = recursive.collectSeqs {
+    case s: Dyn[_] => Iterable((s, Freq.Normal))
+    case b: Block[_]  => symsFreq(b.result) ++ symsFreq(b.effectful)
     case d: Def       => d.freqs
   }(a)
 
   final def normal(e: Any*) = symsFreq(e:_*)
-  final def hot(e: Any*) = symsFreq(e:_*).map{case (s,f) => (s,f*1000.0f) }
-  final def cold(e: Any*) = symsFreq(e:_*).map{case (s,f) => (s, f*0.5f) }
+  final def hot(e: Any*) = symsFreq(e:_*).map{case (s,f) => (s, combine(f,Freq.Hot)) }
+  final def cold(e: Any*) = symsFreq(e:_*).map{case (s,f) => (s, combine(f,Freq.Cold)) }
 
   final def aliasSyms(a: Any): Set[Dyn[_]]   = recursive.collectSets{case s: Dyn[_] => Set(s) case d: Def => d.aliases }(a)
   final def containSyms(a: Any): Set[Dyn[_]] = recursive.collectSets{case d: Def => d.contains}(a)
