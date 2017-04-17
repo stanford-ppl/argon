@@ -1,7 +1,7 @@
 package argon.typeclasses
 
-import argon.{ArgonApi, ArgonExp}
-import argon.core.{StagedTypes, Staging}
+import argon._
+import argon.core.StagedTypes
 
 trait ArithApi extends ArithExp { self: ArgonApi => }
 
