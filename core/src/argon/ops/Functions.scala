@@ -17,7 +17,7 @@ trait FunctionExp {
     def mirror(f: Tx): Exp[R] = fun_apply(f(fun), f(arg))
   }
   case class FunDecl[T:Type, R:Type](arg: Exp[T], block: Block[R]) extends Op[ArgonFunction1[T,R]] {
-    def mirror(f: Tx) = stage(FunDecl(f(arg), stageBlock { f(block) }))(ctx)
+    def mirror(f: Tx) = stageCold(FunDecl(f(arg), stageBlock { f(block) }))(ctx)
   }
 
   def fun_apply[T:Type, R:Type](f: Exp[ArgonFunction1[T,R]], arg: Exp[T])(implicit ctx: SrcCtx): Exp[R] = stage(Apply(f, arg))(ctx)
@@ -31,10 +31,10 @@ trait FunctionExp {
     @api def applyArg(x: T): R = wrap(fun_apply(s, x.s))
   }
 
-  @internal def fun[T:Type, R:Type](f: T => R): ArgonFunction1[T,R] = {
+  def fun[T:Type, R:Type](f: T => R)(implicit ctx: SrcCtx): ArgonFunction1[T,R] = {
     val arg1 = fresh[T]
-    val bodyBlock = stageBlock(f(wrap(arg1)).s)
-    val sym = stage(FunDecl(arg1, bodyBlock))(ctx)
+    val bodyBlock = f(wrap(arg1)).s
+    val sym = stageCold(FunDecl(arg1, stageBlock(bodyBlock)))(ctx)
     wrap(sym)
   }
 
