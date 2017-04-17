@@ -6,9 +6,9 @@ import argon.codegen.FileDependencies
 
 trait PIRCodegen extends Codegen with FileDependencies { // FileDependencies extends Codegen already
   import IR._
-  override val name = "PIR Codegen"
+  override val name         = "PIR Codegen"
   override val lang: String = "pir"
-  override val ext: String = "scala"
+  override val ext: String  = "scala"
 
   override protected def emitBlock(b: Block[_]): Unit = {
     visitBlock(b)
@@ -26,9 +26,9 @@ trait PIRCodegen extends Codegen with FileDependencies { // FileDependencies ext
     case lhs: Sym[_] => s"x${lhs.id}"
   }
 
-  final protected def emitGlobal(x: String): Unit = { 
+  final protected def emitGlobal(x: String): Unit = {
     withStream(getStream("GlobalWires")) {
-      emit(x) 
+      emit(x)
     }
   }
 
@@ -36,6 +36,6 @@ trait PIRCodegen extends Codegen with FileDependencies { // FileDependencies ext
     // dependencies ::= AlwaysDep(s"""/pirgen/template-level/templates/$x.scala""")
 
     emit(src"""val $lhs = Module(new ${x}(${args.mkString}))""")
-  } 
+  }
 
 }

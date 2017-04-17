@@ -6,13 +6,11 @@ import argon.codegen.FileDependencies
 import sys.process._
 import scala.language.postfixOps
 
-
-
-trait CppCodegen extends Codegen with FileDependencies  {
+trait CppCodegen extends Codegen with FileDependencies {
   import IR._
-  override val name = "Cpp Codegen"
+  override val name         = "Cpp Codegen"
   override val lang: String = "cpp"
-  override val ext: String = "cpp"
+  override val ext: String  = "cpp"
 
   var setMems = List[String]()
   var getMems = List[String]()
@@ -38,7 +36,7 @@ trait CppCodegen extends Codegen with FileDependencies  {
 
     // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
     // Kill old datastructures
-    s"""rm -rf ${out}/datastructures""".! 
+    s"""rm -rf ${out}/datastructures""".!
     // Register files that are always there for cppgen
     // TODO: Matt
     dependencies ::= DirDep(cppResourcesPath, "datastructures")
@@ -50,9 +48,5 @@ trait CppCodegen extends Codegen with FileDependencies  {
     // moveDependencies ::= AlwaysDep(s"""${out}/DRAM.h""", "datastructures")
     super.copyDependencies(out)
   }
-
-
-
-
 
 }

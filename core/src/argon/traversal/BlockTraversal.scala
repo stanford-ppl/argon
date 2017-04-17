@@ -15,7 +15,8 @@ trait BlockTraversal {
     innerScope = innerScope.filterNot(_ == s.id)
   }
 
-  private def availableStms = if (innerScope ne null) innerScope else 0 until IR.curNodeId
+  private def availableStms =
+    if (innerScope ne null) innerScope else 0 until IR.curNodeId
 
   // Statement versions of the above
   protected def innerStms: Seq[Stm] = innerScope.flatMap(stmFromNodeId)
@@ -31,7 +32,7 @@ trait BlockTraversal {
 
   protected def withInnerStms[A](scope: Seq[Stm])(body: => A): A = {
     val ids = scope.map(_.rhs.id)
-    withInnerScope(ids){ body }
+    withInnerScope(ids) { body }
   }
 
   final protected def visitStms(stms: Seq[Stm]): Unit = stms.foreach(visitStm)
@@ -41,40 +42,56 @@ trait BlockTraversal {
     * Only returns statements within a single level (i.e. doesn't give contents of blocks within this block)
     * Statements are returned in the same order that they would be traversed in.
     */
-  final protected def blockContents(block: Block[_]): Seq[Stm] = traverseStmsInBlock(block, {stms => stms})
+  final protected def blockContents(block: Block[_]): Seq[Stm] =
+    traverseStmsInBlock(block, { stms =>
+      stms
+    })
 
   /**
     * Gives a list of symbols which are used in this block and defined outside this block
     * Also gives a list of all statements defined in this block, including all nested scopes
     * NOTE: This is likely somewhat expensive, should be used sparingly
     */
-  final protected def blockInputsAndNestedContents(block: Block[_]): (Seq[Exp[_]], Seq[Stm]) = {
+  final protected def blockInputsAndNestedContents(
+      block: Block[_]): (Seq[Exp[_]], Seq[Stm]) = {
 
     // NOTE: Can't use repeated blockContents calls here, as getting schedule relies on innerScope being updated
     def definedInBlock(x: Block[_]): Seq[Stm] = {
-      traverseStmsInBlock(x, {stms => stms ++ stms.flatMap{_.rhs.blocks.flatMap(definedInBlock)} })
+      traverseStmsInBlock(x, { stms =>
+        stms ++ stms.flatMap { _.rhs.blocks.flatMap(definedInBlock) }
+      })
     }
 
     val stms = definedInBlock(block)
     val used = stms.flatMap(_.rhs.inputs) ++ block.inputs
-    val made = stms.flatMap{stm => stm.lhs ++ stm.rhs.binds }.toSet
+    val made = stms.flatMap { stm =>
+      stm.lhs ++ stm.rhs.binds
+    }.toSet
 
     val inputs = used filterNot (made contains _)
 
     if (Config.verbosity > 1) {
       log(c"Used:")
-      used.foreach{s => log(c"  ${str(s)}")}
+      used.foreach { s =>
+        log(c"  ${str(s)}")
+      }
       log(c"Made:")
-      made.foreach{s => log(c"  ${str(s)}")}
+      made.foreach { s =>
+        log(c"  ${str(s)}")
+      }
       log(c"Inputs:")
-      inputs.foreach{s => log(c"  ${str(s)}")}
+      inputs.foreach { s =>
+        log(c"  ${str(s)}")
+      }
     }
 
     (inputs, stms)
   }
 
-  final protected def traverseStmsInBlock(block: Block[_]): Unit = traverseStmsInBlock(block, visitStms)
-  final protected def traverseStmsInBlock[A](block: Block[_], func: Seq[Stm] => A): A = {
+  final protected def traverseStmsInBlock(block: Block[_]): Unit =
+    traverseStmsInBlock(block, visitStms)
+  final protected def traverseStmsInBlock[A](block: Block[_],
+                                             func: Seq[Stm] => A): A = {
     val inputs = block.inputs.map(defOf).map(_.id)
     withInnerScope(availableStms diff inputs) {
       val schedule = IR.scheduleBlock(availableStms, block)
@@ -85,10 +102,16 @@ trait BlockTraversal {
     }
   }
 
-  protected def visitStm(stm: Stm): Unit = stm.rhs.blocks.foreach {blk => visitBlock(blk) }
-  protected def visitBlock[S](block: Block[S]): Block[S] = { traverseStmsInBlock(block); block }
+  protected def visitStm(stm: Stm): Unit = stm.rhs.blocks.foreach { blk =>
+    visitBlock(blk)
+  }
+  protected def visitBlock[S](block: Block[S]): Block[S] = {
+    traverseStmsInBlock(block); block
+  }
 
-  protected def getCustomSchedule(scope: Seq[Stm], result: Seq[Exp[_]]): Seq[Stm] = {
-    IR.getLocalSchedule(scope.map(_.rhs.id), dyns(result).map(_.id)).flatMap(stmFromNodeId)
+  protected def getCustomSchedule(scope: Seq[Stm],
+                                  result: Seq[Exp[_]]): Seq[Stm] = {
+    IR.getLocalSchedule(scope.map(_.rhs.id), dyns(result).map(_.id))
+      .flatMap(stmFromNodeId)
   }
 }

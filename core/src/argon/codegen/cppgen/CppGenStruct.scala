@@ -5,7 +5,6 @@ import argon.ops.StructExp
 import scala.language.postfixOps
 import sys.process._
 
-
 trait CppGenStructs extends CppCodegen with StructCodegen {
   val IR: StructExp
   import IR._
@@ -16,25 +15,40 @@ trait CppGenStructs extends CppCodegen with StructCodegen {
     // Create struct
     open(src"class $name {")
     open("public:")
-    val argarray = tp.fields.map{case (field, t) => src"$t $field"}
-    argarray.foreach{ line => emit(src"$line;") }
-    open(src"""$name(${argarray.map{arg => src"${arg}_in"}.mkString(",")}) {""")
-    tp.fields.foreach{case (field, t) => emit(src"this->$field = ${field}_in;")}
+    val argarray = tp.fields.map { case (field, t) => src"$t $field" }
+    argarray.foreach { line =>
+      emit(src"$line;")
+    }
+    open(src"""$name(${argarray
+      .map { arg =>
+        src"${arg}_in"
+      }
+      .mkString(",")}) {""")
+    tp.fields.foreach {
+      case (field, t) => emit(src"this->$field = ${field}_in;")
+    }
     close("}")
     open(src"""$name() { } // For creating empty array """)
-    tp.fields.foreach{case (field, t) => emit(src"void set$field($t num) {this->$field = num;}")}
-    tp.fields.foreach{case (field, t) => emit(src"$t get$field() {return this->$field;}")}
+    tp.fields.foreach {
+      case (field, t) =>
+        emit(src"void set$field($t num) {this->$field = num;}")
+    }
+    tp.fields.foreach {
+      case (field, t) => emit(src"$t get$field() {return this->$field;}")
+    }
     close("")
     close("};")
   }
 
-  protected def emitArrayStructDeclaration(name: String, tp: StructType[_]): Unit = {
+  protected def emitArrayStructDeclaration(name: String,
+                                           tp: StructType[_]): Unit = {
     open(src"class cppDeliteArray$name {")
     open("public:")
     emit(src"""${name} *data;""")
     emit(src"""int length;""")
     emit(src"""""")
-    emit(src"""cppDeliteArray${name}(int _length): data((${name}  *)(new ${name} [_length])), length(_length) { }""")
+    emit(
+      src"""cppDeliteArray${name}(int _length): data((${name}  *)(new ${name} [_length])), length(_length) { }""")
     emit(src"""""")
     open(src"""cppDeliteArray${name}(${name}  *_data, int _length) {""")
     emit(src"""data = _data;""")
@@ -76,14 +90,15 @@ trait CppGenStructs extends CppCodegen with StructCodegen {
     close("};")
   }
 
-
   protected def emitDataStructures(): Unit = if (encounteredStructs.nonEmpty) {
     withStream(newStream("Structs", "h")) {
       emit("// Codegenerated types")
       emit(s"#include <stdint.h>")
       emit(s"#include <vector>")
       emit(s"#include <iostream>")
-      withStream(getStream("cpptypes","h")) {emit(src"#include <Structs.h>")}
+      withStream(getStream("cpptypes", "h")) {
+        emit(src"#include <Structs.h>")
+      }
       for ((tp, name) <- encounteredStructs) {
         emitStructDeclaration(name, tp)
         emit("")
@@ -92,9 +107,11 @@ trait CppGenStructs extends CppCodegen with StructCodegen {
     // // TODO: Matt!
     // dependencies ::= FileDep("cppgen", "Structs.h")
 
-    withStream(newStream("cppDeliteArrayStructs","h")) {
+    withStream(newStream("cppDeliteArrayStructs", "h")) {
       emit("// Codegenerated types")
-      withStream(getStream("cpptypes","h")) {emit(src"#include <cppDeliteArrayStructs.h>")}
+      withStream(getStream("cpptypes", "h")) {
+        emit(src"#include <cppDeliteArrayStructs.h>")
+      }
       for ((tp, name) <- encounteredStructs) {
         emitArrayStructDeclaration(name, tp)
         emit("")
@@ -112,16 +129,19 @@ trait CppGenStructs extends CppCodegen with StructCodegen {
     case _ => super.remap(tp)
   }
 
-
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
     case e: StructAlloc[_] =>
-      emit(src"${lhs.tp} $lhs = *(new ${e.mR}( " + e.elems.map(x => quote(x._2)).mkString(", ") + " ));")
+      emit(
+        src"${lhs.tp} $lhs = *(new ${e.mR}( " + e.elems
+          .map(x => quote(x._2))
+          .mkString(", ") + " ));")
 
-    case FieldUpdate(struct, field, value) => emit(src"${lhs.tp} $lhs = $struct.set$field($value);")
-    case FieldApply(struct, field)         => emit(src"${lhs.tp} $lhs = $struct.get$field();")
+    case FieldUpdate(struct, field, value) =>
+      emit(src"${lhs.tp} $lhs = $struct.set$field($value);")
+    case FieldApply(struct, field) =>
+      emit(src"${lhs.tp} $lhs = $struct.get$field();")
 
     case _ => super.emitNode(lhs, rhs)
   }
-
 
 }

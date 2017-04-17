@@ -2,9 +2,7 @@ package argon.typeclasses
 
 import argon.core.Staging
 
-trait ArithApi extends ArithExp {
-
-}
+trait ArithApi extends ArithExp {}
 
 trait ArithExp extends Staging {
 
@@ -16,14 +14,13 @@ trait ArithExp extends Staging {
     def divide(x: T, y: T)(implicit ctx: SrcCtx): T
   }
 
-  implicit class Ops[T:Arith](lhs: T) {
-    def unary_-(implicit ctx: SrcCtx): T = arith[T].negate(lhs)
+  implicit class Ops[T: Arith](lhs: T) {
+    def unary_-(implicit ctx: SrcCtx): T   = arith[T].negate(lhs)
     def +(rhs: T)(implicit ctx: SrcCtx): T = arith[T].plus(lhs, rhs)
     def -(rhs: T)(implicit ctx: SrcCtx): T = arith[T].minus(lhs, rhs)
     def *(rhs: T)(implicit ctx: SrcCtx): T = arith[T].times(lhs, rhs)
     def /(rhs: T)(implicit ctx: SrcCtx): T = arith[T].divide(lhs, rhs)
   }
 
-  def arith[T:Arith] = implicitly[Arith[T]]
+  def arith[T: Arith] = implicitly[Arith[T]]
 }
-

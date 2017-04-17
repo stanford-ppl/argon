@@ -6,8 +6,6 @@ import org.virtualized.SourceContext
 /**
   * Created by david on 1/30/17.
   */
-
-
 object MirroringTest extends Test { self =>
   import IR._
 
@@ -30,12 +28,16 @@ object MirroringTest extends Test { self =>
 
         System.out.println("INSIDE: ")
         System.out.println(str(y2))
-        metadata.get(y2).foreach { case (k, m) => System.out.println(c"  $k : $m") }
+        metadata.get(y2).foreach {
+          case (k, m) => System.out.println(c"  $k : $m")
+        }
         y2
       }
       System.out.println("OUTSIDE: ")
       System.out.println(str(y2))
-      metadata.get(y2).foreach { case (k, m) => System.out.println(c"  $k : $m") }
+      metadata.get(y2).foreach {
+        case (k, m) => System.out.println(c"  $k : $m")
+      }
     }
   }
 }

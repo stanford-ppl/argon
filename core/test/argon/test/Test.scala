@@ -12,41 +12,77 @@ import forge._
 
 import scala.runtime._
 
-trait TestExp extends Staging
-  with ArrayExp with ArrayExtExp with AssertExp with BoolExp with CastExp with FixPtExp with FltPtExp
-  with HashMapExp with IfThenElseExp with PrintExp with StructExp
-  with TextExp with TupleExp with VoidExp
+trait TestExp
+    extends Staging
+    with ArrayExp
+    with ArrayExtExp
+    with AssertExp
+    with BoolExp
+    with CastExp
+    with FixPtExp
+    with FltPtExp
+    with HashMapExp
+    with IfThenElseExp
+    with PrintExp
+    with StructExp
+    with TextExp
+    with TupleExp
+    with VoidExp
 
 trait LowPriorityImplicits {
-  implicit def int2RichInt(x: Int): RichInt = new RichInt(x)
-  implicit def long2RichLong(x: Long): RichLong = new RichLong(x)
-  implicit def float2RichFloat(x: Float): RichFloat = new RichFloat(x)
+  implicit def int2RichInt(x: Int): RichInt             = new RichInt(x)
+  implicit def long2RichLong(x: Long): RichLong         = new RichLong(x)
+  implicit def float2RichFloat(x: Float): RichFloat     = new RichFloat(x)
   implicit def double2RichDouble(x: Double): RichDouble = new RichDouble(x)
 }
 
-trait TestApi extends TestExp
-  with ArrayApi with ArrayExtApi with AssertApi with BoolApi with CastApi with FixPtApi with FltPtApi
-  with HashMapApi with IfThenElseApi with PrintApi with StructApi
-  with TextApi with TupleApi with VoidApi with LowPriorityImplicits {
+trait TestApi
+    extends TestExp
+    with ArrayApi
+    with ArrayExtApi
+    with AssertApi
+    with BoolApi
+    with CastApi
+    with FixPtApi
+    with FltPtApi
+    with HashMapApi
+    with IfThenElseApi
+    with PrintApi
+    with StructApi
+    with TextApi
+    with TupleApi
+    with VoidApi
+    with LowPriorityImplicits {
 
   implicit class intWrapper(x: scala.Int) extends {
-    @api def to[B:Meta](implicit cast: Cast[scala.Int,B]): B = cast(x)
+    @api def to[B: Meta](implicit cast: Cast[scala.Int, B]): B = cast(x)
   }
   implicit class longWrapper(x: scala.Long) {
-    @api def to[B:Meta](implicit cast: Cast[scala.Long,B]): B = cast(x)
+    @api def to[B: Meta](implicit cast: Cast[scala.Long, B]): B = cast(x)
   }
   implicit class floatWrapper(x: scala.Float) {
-    @api def to[B:Meta](implicit cast: Cast[scala.Float,B]): B = cast(x)
+    @api def to[B: Meta](implicit cast: Cast[scala.Float, B]): B = cast(x)
   }
   implicit class doubleWrapper(x: scala.Double) {
-    @api def to[B:Meta](implicit cast: Cast[scala.Double,B]): B = cast(x)
+    @api def to[B: Meta](implicit cast: Cast[scala.Double, B]): B = cast(x)
   }
 }
 
-trait ScalaGen extends ScalaCodegen with ScalaFileGen
-  with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert with ScalaGenBool with ScalaGenFixPt with ScalaGenFltPt
-  with ScalaGenHashMap with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenStructs
-  with ScalaGenText with ScalaGenVoid {
+trait ScalaGen
+    extends ScalaCodegen
+    with ScalaFileGen
+    with ScalaGenArray
+    with ScalaGenArrayExt
+    with ScalaGenAssert
+    with ScalaGenBool
+    with ScalaGenFixPt
+    with ScalaGenFltPt
+    with ScalaGenHashMap
+    with ScalaGenIfThenElse
+    with ScalaGenPrint
+    with ScalaGenStructs
+    with ScalaGenText
+    with ScalaGenVoid {
   override val IR: TestExp
 }
 
@@ -58,8 +94,10 @@ trait CompilerBase extends RunnerCore with TestApi { self =>
 
   override val testbench = true
 
-  lazy val printer  = new IRPrinter { override val IR: self.type = self }
-  lazy val identity = new IdentityTransformer { override val IR: self.type = self }
+  lazy val printer = new IRPrinter { override val IR: self.type = self }
+  lazy val identity = new IdentityTransformer {
+    override val IR: self.type = self
+  }
 
   override def createTraversalSchedule() = {
     printer.verbosity = 3
@@ -85,10 +123,9 @@ trait TestIR extends CompilerBase { self =>
 trait TestLib extends LibCore
 
 trait Test extends AppCore {
-  val IR: TestIR = new TestIR { }
-  val Lib: TestLib = new TestLib { }
+  val IR: TestIR   = new TestIR  {}
+  val Lib: TestLib = new TestLib {}
 }
-
 
 object Test1 extends Test {
   import IR._
@@ -161,8 +198,7 @@ object Test7 extends Test {
         if (x && y) random[Boolean]
         else if (x || y) random[Boolean]
         else random[Boolean]
-      }
-      else true
+      } else true
     }
 
     println(z)
@@ -197,7 +233,7 @@ object OverflowLiftTest extends Test {
   import IR._
   @virtualize
   def main() {
-    type Nibble = FixPt[TRUE,_4,_0]
+    type Nibble = FixPt[TRUE, _4, _0]
 
     val c = 100
     val x = random[Nibble] + c
@@ -208,7 +244,7 @@ object UnderflowLiftTest extends Test {
   import IR._
   @virtualize
   def main() {
-    type Nibble = FixPt[TRUE,_4,_0]
+    type Nibble = FixPt[TRUE, _4, _0]
     val c = -100
     val x = random[Nibble] + c
     println(x)
@@ -251,7 +287,6 @@ object UnstagedToStringTest extends Test {
   }
 }
 
-
 class Testbench extends FlatSpec with Matchers with argon.core.Exceptions {
   val noargs = Array[String]()
   "Test1" should "compile" in { Test1.main(noargs) }
@@ -264,11 +299,13 @@ class Testbench extends FlatSpec with Matchers with argon.core.Exceptions {
   "Test8" should "compile" in { Test8.main(noargs) }
   "Test9" should "compile" in { Test9.main(noargs) }
   "SimpleCaseTest" should "compile" in { SimpleCastTest.main(noargs) }
-  a [TestBenchFailed] should be thrownBy { OverflowLiftTest.main(noargs) }
-  a [TestBenchFailed] should be thrownBy { UnderflowLiftTest.main(noargs) }
+  a[TestBenchFailed] should be thrownBy { OverflowLiftTest.main(noargs) }
+  a[TestBenchFailed] should be thrownBy { UnderflowLiftTest.main(noargs) }
   "IgnoreOverflowTest" should "compile" in { IgnoreOverflowTest.main(noargs) }
 
-  "UnstagedToStringTest" should "compile" in { UnstagedToStringTest.main(noargs) }
+  "UnstagedToStringTest" should "compile" in {
+    UnstagedToStringTest.main(noargs)
+  }
 
   "SimpleMap2" should "compile" in { SimpleMap2.main(noargs) }
 }

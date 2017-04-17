@@ -4,19 +4,19 @@ import argon.utils.escapeConst
 
 trait Staging extends Scheduling {
 
-  def fresh[T:Type]: Bound[T] = {
+  def fresh[T: Type]: Bound[T] = {
     val bnd = new Bound(typ[T])
     addBound(bnd)
     bnd
   }
-  def constant[T:Type](c: Any)(implicit ctx: SrcCtx): Const[T] = {
+  def constant[T: Type](c: Any)(implicit ctx: SrcCtx): Const[T] = {
     val cc = new Const[T](c)(typ[T])
     log(c"Making constant ${typ[T]} from ${escapeConst(c)} : ${c.getClass}")
     registerInput(cc)
     cc.setCtx(ctx)
     cc
   }
-  def parameter[T:Type](c: Any)(implicit ctx: SrcCtx): Param[T] = {
+  def parameter[T: Type](c: Any)(implicit ctx: SrcCtx): Param[T] = {
     val p = new Param[T](c)(typ[T])
     log(c"Making parameter ${typ[T]} from ${escapeConst(p)} : ${c.getClass}")
     registerInput(p)
@@ -24,42 +24,65 @@ trait Staging extends Scheduling {
     p
   }
 
-  def stageDef(d: Def)(ctx: SrcCtx): Seq[Sym[_]]                   = stageDefPure(d)(ctx)
-  def stageDefPure(d: Def)(ctx: SrcCtx): Seq[Sym[_]]               = stageDefEffectful(d, Pure)(ctx)
-  def stageDefCold(d: Def)(ctx: SrcCtx): Seq[Sym[_]]               = stageDefEffectful(d, Cold)(ctx)
-  def stageDefWrite(ss: Exp[_]*)(d: Def)(ctx: SrcCtx): Seq[Sym[_]] = stageDefEffectful(d, Write(ss:_*))(ctx)
-  def stageDefSimple(d: Def)(ctx: SrcCtx): Seq[Sym[_]]             = stageDefEffectful(d, Simple)(ctx)
-  def stageDefGlobal(d: Def)(ctx: SrcCtx): Seq[Sym[_]]             = stageDefEffectful(d, Global)(ctx)
-  def stageDefMutable(d: Def)(ctx: SrcCtx): Seq[Sym[_]]            = stageDefEffectful(d, Mutable)(ctx)
+  def stageDef(d: Def)(ctx: SrcCtx): Seq[Sym[_]] = stageDefPure(d)(ctx)
+  def stageDefPure(d: Def)(ctx: SrcCtx): Seq[Sym[_]] =
+    stageDefEffectful(d, Pure)(ctx)
+  def stageDefCold(d: Def)(ctx: SrcCtx): Seq[Sym[_]] =
+    stageDefEffectful(d, Cold)(ctx)
+  def stageDefWrite(ss: Exp[_]*)(d: Def)(ctx: SrcCtx): Seq[Sym[_]] =
+    stageDefEffectful(d, Write(ss: _*))(ctx)
+  def stageDefSimple(d: Def)(ctx: SrcCtx): Seq[Sym[_]] =
+    stageDefEffectful(d, Simple)(ctx)
+  def stageDefGlobal(d: Def)(ctx: SrcCtx): Seq[Sym[_]] =
+    stageDefEffectful(d, Global)(ctx)
+  def stageDefMutable(d: Def)(ctx: SrcCtx): Seq[Sym[_]] =
+    stageDefEffectful(d, Mutable)(ctx)
 
-  def stage[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                      = single[T](stageDef(op)(ctx))
-  def stagePure[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stageDefPure(op)(ctx))
-  def stageCold[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stageDefCold(op)(ctx))
-  def stageWrite[T:Type](ss: Exp[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T]    = single[T](stageDefWrite(ss:_*)(op)(ctx))
-  def stageSimple[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefSimple(op)(ctx))
-  def stageGlobal[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefGlobal(op)(ctx))
-  def stageMutable[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]               = single[T](stageDefMutable(op)(ctx))
-  def stageEffectful[T:Type](op: Op[T], u: Effects)(ctx: SrcCtx): Sym[T] = single[T](stageDefEffectful(op, u)(ctx))
+  def stage[T: Type](op: Op[T])(ctx: SrcCtx): Sym[T] =
+    single[T](stageDef(op)(ctx))
+  def stagePure[T: Type](op: Op[T])(ctx: SrcCtx): Sym[T] =
+    single[T](stageDefPure(op)(ctx))
+  def stageCold[T: Type](op: Op[T])(ctx: SrcCtx): Sym[T] =
+    single[T](stageDefCold(op)(ctx))
+  def stageWrite[T: Type](ss: Exp[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T] =
+    single[T](stageDefWrite(ss: _*)(op)(ctx))
+  def stageSimple[T: Type](op: Op[T])(ctx: SrcCtx): Sym[T] =
+    single[T](stageDefSimple(op)(ctx))
+  def stageGlobal[T: Type](op: Op[T])(ctx: SrcCtx): Sym[T] =
+    single[T](stageDefGlobal(op)(ctx))
+  def stageMutable[T: Type](op: Op[T])(ctx: SrcCtx): Sym[T] =
+    single[T](stageDefMutable(op)(ctx))
+  def stageEffectful[T: Type](op: Op[T], u: Effects)(ctx: SrcCtx): Sym[T] =
+    single[T](stageDefEffectful(op, u)(ctx))
 
   private def registerDefWithCSE(d: Def)(ctx: SrcCtx): Seq[Sym[_]] = {
     // log(c"Checking defCache for $d")
     // log(c"Def cache: " + defCache.map{case (d,ss) => c"$d -> $ss"}.mkString("\n"))
     val syms = defCache.get(d) match {
       case Some(ss) => ss.foreach(_.addCtx(ctx)); ss
-      case None => registerDef(d, Nil)(ctx)
+      case None     => registerDef(d, Nil)(ctx)
     }
     defCache(d) = syms
     syms
   }
 
-  private def registerDef(d: Def, extraDeps: Seq[Sym[_]])(ctx: SrcCtx): Seq[Sym[Any]] = {
-    val bounds = d.binds
+  private def registerDef(d: Def, extraDeps: Seq[Sym[_]])(
+      ctx: SrcCtx): Seq[Sym[Any]] = {
+    val bounds  = d.binds
     val tunnels = d.tunnels
-    val dfreqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).fold(Freq.Normal){combine})
-    val freqs = d.inputs.map { in => dfreqs.getOrElse(in, Freq.Normal) } ++ extraDeps.distinct.map { d => Freq.Normal }
+    val dfreqs = d.freqs
+      .groupBy(_._1)
+      .mapValues(_.map(_._2).fold(Freq.Normal) { combine })
+    val freqs = d.inputs.map { in =>
+      dfreqs.getOrElse(in, Freq.Normal)
+    } ++ extraDeps.distinct.map { d =>
+      Freq.Normal
+    }
 
     val inputs = d.inputs
-    val outputs = d.outputTypes.map{tp => new Sym(tp) }
+    val outputs = d.outputTypes.map { tp =>
+      new Sym(tp)
+    }
 
     addNode(inputs, outputs, bounds, tunnels, freqs, d)
 
@@ -100,10 +123,12 @@ trait Staging extends Scheduling {
 
         // Correctness checks -- cannot have mutable aliases, cannot mutate immutable symbols
         val immutables = effects.writes.filterNot(isMutable)
-        val aliases = mutableAliases(d) diff effects.writes
+        val aliases    = mutableAliases(d) diff effects.writes
 
-        if (aliases.nonEmpty) new IllegalMutableSharingError(ss.head, aliases)(ctx)
-        if (immutables.nonEmpty) new IllegalMutationError(ss.head, immutables)(ctx)
+        if (aliases.nonEmpty)
+          new IllegalMutableSharingError(ss.head, aliases)(ctx)
+        if (immutables.nonEmpty)
+          new IllegalMutationError(ss.head, immutables)(ctx)
 
         ss
       }
@@ -111,23 +136,24 @@ trait Staging extends Scheduling {
       if (effects.isIdempotent) {
         // CSE statements which are idempotent and have identical effect summaries (e.g. repeated reads w/o writes)
         val symsWithSameDef = defCache.getOrElse(d, Nil) intersect context
-        val symsWithSameEffects = symsWithSameDef.filter { case Effectful(u2, es) => u2 == effects && es == deps }
+        val symsWithSameEffects = symsWithSameDef.filter {
+          case Effectful(u2, es) => u2 == effects && es == deps
+        }
 
         if (symsWithSameEffects.isEmpty) {
           val syms = stageEffects()
           defCache(d) = syms
           syms
-        }
-        else {
+        } else {
           symsWithSameEffects.foreach(_.addCtx(ctx))
           symsWithSameEffects
         }
-      }
-      else stageEffects()
+      } else stageEffects()
     }
   }
 
-  private def single[T:Type](xx: Seq[Sym[_]]): Sym[T] = xx.head.asInstanceOf[Sym[T]]
+  private def single[T: Type](xx: Seq[Sym[_]]): Sym[T] =
+    xx.head.asInstanceOf[Sym[T]]
 
   /**
     * DANGER ZONE

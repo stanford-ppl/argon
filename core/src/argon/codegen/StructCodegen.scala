@@ -8,11 +8,13 @@ trait StructCodegen extends Codegen {
   import IR._
 
   val encounteredStructs = mutable.HashMap[StructType[_], String]()
-  var structNumber: Int = 0
+  var structNumber: Int  = 0
 
   override protected def remap(tp: Type[_]) = tp match {
     case t: StructType[_] =>
-      encounteredStructs.getOrElseUpdate(t, { structNumber += 1; structName(t, structNumber) })
+      encounteredStructs.getOrElseUpdate(t, {
+        structNumber += 1; structName(t, structNumber)
+      })
 
     case _ => super.remap(tp)
   }
@@ -24,6 +26,5 @@ trait StructCodegen extends Codegen {
     emitDataStructures()
     super.postprocess(block)
   }
-
 
 }

@@ -6,12 +6,11 @@ import argon.Config
 trait ChiselFileGen extends FileGen {
   import IR._
 
-
-  override protected def emitMain[S:Type](b: Block[S]): Unit = {
+  override protected def emitMain[S: Type](b: Block[S]): Unit = {
     emitBlock(b)
   }
 
-  override protected def process[S:Type](b: Block[S]): Block[S] = {
+  override protected def process[S: Type](b: Block[S]): Block[S] = {
 
     // // Forcefully create the following streams
     // val baseStream = getStream("GlobalWires")
@@ -21,17 +20,20 @@ trait ChiselFileGen extends FileGen {
     // val RootController = getStream("RootController")
 
     withStream(getStream("RootController")) {
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Begin!")}
+      if (Config.emitDevel > 0) {
+        Console.println(s"[ ${lang}gen-NOTE ] Begin!")
+      }
       preprocess(b)
       toggleEn() // Turn off
       emitMain(b)
       toggleEn() // Turn on
       postprocess(b)
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Complete!")}
+      if (Config.emitDevel > 0) {
+        Console.println(s"[ ${lang}gen-NOTE ] Complete!")
+      }
       b
     }
   }
-
 
   override protected def emitFileHeader() {
 
@@ -44,7 +46,8 @@ import chisel3.util._
 import fringe._
 import types._""")
       open("trait IOModule extends Module {")
-      emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
+      emit(
+        """val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
       emit("val io_w = 64 // TODO: How to generate these properly?")
       emit("val io_v = 16 // TODO: How to generate these properly?")
     }
@@ -96,16 +99,16 @@ trait GlobalWires extends IOModule{""")
       emit("/**")
       emit(" * Top test harness")
       emit(" */")
-      open("class TopUnitTester(c: Top)(implicit args: Array[String]) extends ArgsTester(c) {")
+      open(
+        "class TopUnitTester(c: Top)(implicit args: Array[String]) extends ArgsTester(c) {")
       close("}")
       emit("")
       open("object Instantiator extends CommonMain {")
-        emit("type DUTType = Top")
-        emit("")
-        open("def dut = () => {")
+      emit("type DUTType = Top")
+      emit("")
+      open("def dut = () => {")
 
     }
-
 
     super.emitFileHeader()
   }
@@ -114,18 +117,19 @@ trait GlobalWires extends IOModule{""")
     // emitBufferControlCxns()
 
     withStream(getStream("Instantiator")) {
-          emit("val w = 32")
-          emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
-          emit("val numArgOuts = numArgOuts_reg")
-          emit("new Top(w, numArgIns, numArgOuts, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
-        close("}")
-        emit("def tester = { c: DUTType => new TopUnitTester(c) }")
+      emit("val w = 32")
+      emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
+      emit("val numArgOuts = numArgOuts_reg")
+      emit(
+        "new Top(w, numArgIns, numArgOuts, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
+      close("}")
+      emit("def tester = { c: DUTType => new TopUnitTester(c) }")
       close("}")
 
     }
     withStream(getStream("GlobalWires")) {
       // // Get each all unique reg strings
-      // emitted_argins.toList.map{a=>a._2}.distinct.foreach{ a => 
+      // emitted_argins.toList.map{a=>a._2}.distinct.foreach{ a =>
       //   emit(s"""val ${a} = io.ArgIn.ports(${argInsByName.indexOf(a)})""")
       // }
 
@@ -141,19 +145,21 @@ trait GlobalWires extends IOModule{""")
       emit("val io_numArgIns = io_numArgIns_reg + io_numArgIns_mem")
       emit("val io_numArgOuts = io_numArgOuts_reg")
       open("val io = IO(new Bundle {")
-        emit("// Control IO")
-        emit("val enable = Input(Bool())")
-        emit("val done = Output(Bool())")
-        emit("")
-        emit("// DRAM IO")
-        emit("val memStreams = Flipped(new AppStreams(io_loadStreamInfo, io_storeStreamInfo))")
-        emit("")
-        emit("// Scalar IO")
-        emit("val argIns = Input(Vec(io_numArgIns, UInt(64.W)))")
-        emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(64.W))))")
-        emit("// Stream IO")
-        emit("val genericStreams = new GenericStreams(io_streamInsInfo, io_streamOutsInfo)")
-        emit("")
+      emit("// Control IO")
+      emit("val enable = Input(Bool())")
+      emit("val done = Output(Bool())")
+      emit("")
+      emit("// DRAM IO")
+      emit(
+        "val memStreams = Flipped(new AppStreams(io_loadStreamInfo, io_storeStreamInfo))")
+      emit("")
+      emit("// Scalar IO")
+      emit("val argIns = Input(Vec(io_numArgIns, UInt(64.W)))")
+      emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(64.W))))")
+      emit("// Stream IO")
+      emit(
+        "val genericStreams = new GenericStreams(io_streamInsInfo, io_streamOutsInfo)")
+      emit("")
       close("})")
       close("}")
     }
@@ -166,9 +172,9 @@ trait GlobalWires extends IOModule{""")
       close("}")
     }
 
-    if (Config.multifile >= 3 ) {
-      val traits = streamMapReverse.keySet.toSet.map{
-        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+    if (Config.multifile >= 3) {
+      val traits = streamMapReverse.keySet.toSet.map { f: String =>
+        f.split('.').dropRight(1).mkString(".") /*strip extension */
       }.toSet - "AccelTop" - "GlobalWires" - "Instantiator"
 
       withStream(getStream("AccelTop")) {
@@ -185,16 +191,17 @@ class AccelTop(
   val storeStreamInfo: List[StreamParInfo],
   val streamInsInfo: List[StreamParInfo],
   val streamOutsInfo: List[StreamParInfo]
-) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+) extends GlobalWires with ${(traits ++ Set("RootController"))
+          .mkString("\n with ")} {
 
   // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
 
 }""")
       }
     } else {
-    // Get traits that need to be mixed in
-      val traits = streamMapReverse.keySet.toSet.map{
-        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+      // Get traits that need to be mixed in
+      val traits = streamMapReverse.keySet.toSet.map { f: String =>
+        f.split('.').dropRight(1).mkString(".") /*strip extension */
       }.toSet - "AccelTop" - "GlobalWires" - "RootController" - "Instantiator"
       withStream(getStream("AccelTop")) {
         emit(s"""package accel
@@ -211,14 +218,14 @@ class AccelTop(
   val storeStreamInfo: List[StreamParInfo],
   val numStreamIns: List[StreamParInfo],
   val numStreamOuts: List[StreamParInfo]
-) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+) extends GlobalWires with ${(traits ++ Set("RootController"))
+          .mkString("\n with ")} {
 
 }
   // AccelTop class mixes in all the other traits and is instantiated by tester""")
       }
-        
-    }
 
+    }
 
     super.emitFileFooter()
   }

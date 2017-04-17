@@ -12,7 +12,9 @@ object ArrayAtomicWrite extends Test {
   def main() {
     val x = Array.empty[Array[Int]](32)
 
-    Array.tabulate(32){i => x(i) = Array.fill(16){ 0.to[Int] } }
+    Array.tabulate(32) { i =>
+      x(i) = Array.fill(16) { 0.to[Int] }
+    }
 
     x(0)(1) = 3
 
@@ -30,14 +32,15 @@ object ArrayNoAtomicWrite extends Test {
 
     val x = Array.empty[Array[Int]](32)
 
-    Array.tabulate(32){i => x(i) = Array.fill(16){ 0.to[Int] } }
+    Array.tabulate(32) { i =>
+      x(i) = Array.fill(16) { 0.to[Int] }
+    }
 
     x(0)(1) = 3
 
     println("" + x(0).apply(1))
   }
 }
-
 
 class AtomicWriteTests extends FlatSpec with Matchers with Exceptions {
 

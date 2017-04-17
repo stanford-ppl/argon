@@ -2,8 +2,8 @@ package argon
 
 object State {
   var staging: Boolean = false
-  var flex: Boolean = false
-  var EVAL: Boolean = false
+  var flex: Boolean    = false
+  var EVAL: Boolean    = false
 
   def inFlex[T](x: => T): T = {
     val save = State.flex
@@ -15,7 +15,7 @@ object State {
   def inLib[T](x: => T): T = {
     val save = State.EVAL
     State.EVAL = true
-    val result = inFlex{ x }
+    val result = inFlex { x }
     State.EVAL = save
     result
   }
@@ -24,6 +24,6 @@ object State {
 
   def paddedPass: String = {
     val p = pass.toString
-    "0"*(4-p.length) + p
+    "0" * (4 - p.length) + p
   }
 }

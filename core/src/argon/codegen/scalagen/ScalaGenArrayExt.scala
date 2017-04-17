@@ -7,19 +7,20 @@ trait ScalaGenArrayExt extends ScalaGenArray {
   import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case ArrayUpdate(array, i, data) => emit(src"val $lhs = $array.update($i, $data)")
-    case MapIndices(size, func, i)   =>
+    case ArrayUpdate(array, i, data) =>
+      emit(src"val $lhs = $array.update($i, $data)")
+    case MapIndices(size, func, i) =>
       open(src"val $lhs = Array.tabulate($size){$i => ")
       emitBlock(func)
       close("}")
 
-    case ArrayForeach(array,apply,func,i) =>
+    case ArrayForeach(array, apply, func, i) =>
       open(src"val $lhs = $array.indices.foreach{$i => ")
       visitBlock(apply)
       emitBlock(func)
       close("}")
 
-    case ArrayMap(array,apply,func,i) =>
+    case ArrayMap(array, apply, func, i) =>
       open(src"val $lhs = Array.tabulate($array.length){$i => ")
       visitBlock(apply)
       emitBlock(func)

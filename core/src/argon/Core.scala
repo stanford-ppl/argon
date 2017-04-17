@@ -29,7 +29,10 @@ trait AppCore { self =>
   }
 
   def main(sargs: Array[String]): Unit = {
-    val defaultName = self.getClass.getName.replace("class ", "").replace('.','-').replace("$","") //.split('$').head
+    val defaultName = self.getClass.getName
+      .replace("class ", "")
+      .replace('.', '-')
+      .replace("$", "") //.split('$').head
     System.setProperty("argon.name", defaultName)
     Config.name = defaultName
     Config.init()
@@ -39,41 +42,41 @@ trait AppCore { self =>
     IR.__stagingArgs = this.__stagingArgs
     Lib.__args = this.__stagingArgs
 
-    IR.compileOrRun( main() )
+    IR.compileOrRun(main())
   }
 }
 
 trait LibCore {
   private[argon] var __args: scala.Array[java.lang.String] = _
-  def stagingArgs = __args
-  def args = __args
+  def stagingArgs                                          = __args
+  def args                                                 = __args
 }
 
 trait CompilerCore extends Staging with ArrayExp { self =>
   val passes: ArrayBuffer[Pass] = ArrayBuffer.empty[Pass]
-  val testbench: Boolean = false
+  val testbench: Boolean        = false
 
-  lazy val args: MetaArray[Text] = input_arguments()(EmptyContext)
+  lazy val args: MetaArray[Text]                                  = input_arguments()(EmptyContext)
   private[argon] var __stagingArgs: scala.Array[java.lang.String] = _
-  def stagingArgs = __stagingArgs
+  def stagingArgs                                                 = __stagingArgs
 
   lazy val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
 
   def checkErrors(start: Long, stageName: String): Unit = if (hadErrors) {
     val time = (System.currentTimeMillis - start).toFloat
     checkWarnings()
-    error(s"""$nErrors ${plural(nErrors,"error","errors")} found during $stageName""")
-    error(s"Total time: " + "%.4f".format(time/1000) + " seconds")
+    error(
+      s"""$nErrors ${plural(nErrors, "error", "errors")} found during $stageName""")
+    error(s"Total time: " + "%.4f".format(time / 1000) + " seconds")
     if (testbench) throw new TestBenchFailed(nErrors)
     else System.exit(nErrors)
   }
   def checkWarnings(): Unit = if (hadWarns) {
-    warn(s"""$nWarns ${plural(nWarns, "warning","warnings")} found""")
+    warn(s"""$nWarns ${plural(nWarns, "warning", "warnings")} found""")
   }
 
-  def settings(): Unit = { }
-  def createTraversalSchedule(): Unit = { }
-
+  def settings(): Unit                = {}
+  def createTraversalSchedule(): Unit = {}
 
   def compileOrRun(blk: => Unit): Unit = {
     // --- Setup
@@ -83,28 +86,30 @@ trait CompilerCore extends Staging with ArrayExp { self =>
 
     if (Config.clearLogs) deleteExts(Config.logDir, ".log")
     report(c"Compiling ${Config.name} to ${Config.genDir}")
-    if (Config.verbosity >= 2) report(c"Logging ${Config.name} to ${Config.logDir}")
-
+    if (Config.verbosity >= 2)
+      report(c"Logging ${Config.name} to ${Config.logDir}")
 
     // --- Staging
 
     val start = System.currentTimeMillis()
     State.staging = true
-    var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(blk).s } }
+    var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") {
+      stageBlock { unit2void(blk).s }
+    }
     State.staging = false
 
-    if (curEdgeId == 0) return  // Nothing was Staged -- likely running in library mode (or empty program)
+    if (curEdgeId == 0) return // Nothing was Staged -- likely running in library mode (or empty program)
 
     // Exit now if errors were found during staging
     checkErrors(start, "staging")
-
 
     // --- Traversals
 
     for (t <- passes) {
       if (VERBOSE_SCHEDULING) {
         graphLog.close()
-        graphLog = createLog(Config.logDir + "/sched/", State.paddedPass + " " + t.name + ".log")
+        graphLog = createLog(Config.logDir + "/sched/",
+                             State.paddedPass + " " + t.name + ".log")
         withLog(graphLog) {
           log(s"${State.pass} ${t.name}")
           log(s"===============================================")
@@ -128,14 +133,19 @@ trait CompilerCore extends Staging with ArrayExp { self =>
     }
     if (VERBOSE_SCHEDULING) graphLog.close()
 
-
     val time = (System.currentTimeMillis - start).toFloat
 
     if (Config.verbosity >= 1) {
       withLog(timingLog) {
         msg(s"  Total: " + "%.4f".format(time / 1000))
         msg(s"")
-        val totalTimes = passes.distinct.groupBy(_.name).mapValues{pass => pass.map(_.totalTime).sum }.toList.sortBy(_._2)
+        val totalTimes = passes.distinct
+          .groupBy(_.name)
+          .mapValues { pass =>
+            pass.map(_.totalTime).sum
+          }
+          .toList
+          .sortBy(_._2)
         for (t <- totalTimes) {
           msg(s"  ${t._1}: " + "%.4f".format(t._2 / 1000))
         }
@@ -143,17 +153,14 @@ trait CompilerCore extends Staging with ArrayExp { self =>
       timingLog.close()
     }
 
-
     checkWarnings()
-    report(s"[\u001B[32mcompleted\u001B[0m] Total time: " + "%.4f".format(time/1000) + " seconds")
+    report(
+      s"[\u001B[32mcompleted\u001B[0m] Total time: " + "%.4f".format(
+        time / 1000) + " seconds")
   }
-
 
   override def readable(x: Any): String = x match {
-    case x: Tuple3[_,_,_] => c"${x._1} = ${x._2} [inputs = ${x._3}]"
-    case _ => super.readable(x)
+    case x: Tuple3[_, _, _] => c"${x._1} = ${x._2} [inputs = ${x._3}]"
+    case _                  => super.readable(x)
   }
 }
-
-
-

@@ -12,7 +12,8 @@ trait SimpleLambdaApi extends SimpleLambdaExp with FixPtApi {
 
   // Contrived example - unfused map which only returns the first value
   // Keep both blocks without having to introduce extra bound variable
-  def map[T:Meta](n: Int32)(map: Int32 => T)(map2: T => T)(implicit ctx: SrcCtx): T = {
+  def map[T: Meta](n: Int32)(map: Int32 => T)(map2: T => T)(
+      implicit ctx: SrcCtx): T = {
     val i = fresh[Int32]
     val m1Blk = stageBlock {
       map(wrap(i)).s
@@ -25,16 +26,24 @@ trait SimpleLambdaApi extends SimpleLambdaExp with FixPtApi {
   }
 }
 
-trait SimpleLambdaExp extends Staging with FixPtExp { this: TextExp with FltPtExp =>
+trait SimpleLambdaExp extends Staging with FixPtExp {
+  this: TextExp with FltPtExp =>
 
   /** IR Nodes **/
-  case class Map2[T: Type](n: Exp[Int32], map1: Block[T], map2: Block[T], i: Bound[Int32]) extends Op[T] {
-    def mirror(f: Tx) = op_map2(f(n), f(map1), f(map2), i)
+  case class Map2[T: Type](n: Exp[Int32],
+                           map1: Block[T],
+                           map2: Block[T],
+                           i: Bound[Int32])
+      extends Op[T] {
+    def mirror(f: Tx)  = op_map2(f(n), f(map1), f(map2), i)
     override def binds = super.binds :+ i
   }
 
   /** Constructors **/
-  def op_map2[T: Type](n: Exp[Int32], map1: => Exp[T], map2: => Exp[T], i: Bound[Int32])(implicit ctx: SrcCtx): Sym[T] = {
+  def op_map2[T: Type](n: Exp[Int32],
+                       map1: => Exp[T],
+                       map2: => Exp[T],
+                       i: Bound[Int32])(implicit ctx: SrcCtx): Sym[T] = {
     val m1Blk = stageBlock {
       map1
     }
@@ -45,7 +54,6 @@ trait SimpleLambdaExp extends Staging with FixPtExp { this: TextExp with FltPtEx
     stageEffectful(Map2(n, m1Blk, m2Blk, i), effects.star)(ctx)
   }
 }
-
 
 trait ScalaGenLambda extends ScalaCodegen {
   val IR: SimpleLambdaExp
@@ -61,10 +69,12 @@ trait ScalaGenLambda extends ScalaCodegen {
   }
 }
 
-trait ScalaGenLambdaTest extends ScalaGen with ScalaGenLambda { override val IR: TestExp with SimpleLambdaExp }
+trait ScalaGenLambdaTest extends ScalaGen with ScalaGenLambda {
+  override val IR: TestExp with SimpleLambdaExp
+}
 
 trait LambdaTestIR extends CompilerBase with SimpleLambdaApi { self =>
-  lazy val scalagen = new ScalaGenLambdaTest{val IR: self.type = self }
+  lazy val scalagen = new ScalaGenLambdaTest { val IR: self.type = self }
 
   override def createTraversalSchedule() = {
     super.createTraversalSchedule()
@@ -75,14 +85,18 @@ trait LambdaTestIR extends CompilerBase with SimpleLambdaApi { self =>
 trait LambdaTestLib extends LibCore
 
 trait LambdaTest extends AppCore {
-  val IR: LambdaTestIR = new LambdaTestIR { }
-  val Lib: LambdaTestLib = new LambdaTestLib { }
+  val IR: LambdaTestIR   = new LambdaTestIR  {}
+  val Lib: LambdaTestLib = new LambdaTestLib {}
 }
 
 object SimpleMap2 extends LambdaTest {
   import IR._
   def main() {
-    val x = map(32){i => 5*i + 1}{x => x * 2}
+    val x = map(32) { i =>
+      5 * i + 1
+    } { x =>
+      x * 2
+    }
     println(x)
   }
 }

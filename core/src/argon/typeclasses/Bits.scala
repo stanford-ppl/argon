@@ -3,9 +3,7 @@ package argon.typeclasses
 import argon.core.Staging
 
 /** Types which are represented by a static number of bits **/
-trait BitsApi extends BitsExp {
-
-}
+trait BitsApi extends BitsExp {}
 
 trait BitsExp extends Staging {
 
@@ -24,16 +22,17 @@ trait BitsExp extends Staging {
   object Bits {
     def unapply[T](x: Type[T]): Option[Bits[T]] = x match {
       case lookup: CanBits[_] => lookup.getBits.asInstanceOf[Option[Bits[T]]]
-      case _ => None
+      case _                  => None
     }
   }
 
-  def zero[T:Bits](implicit ctx: SrcCtx): T = implicitly[Bits[T]].zero
-  def one[T:Bits](implicit ctx: SrcCtx): T = implicitly[Bits[T]].one
-  def random[T:Bits](implicit ctx: SrcCtx): T = implicitly[Bits[T]].random(None)
-  def random[T:Bits](max: T)(implicit ctx: SrcCtx): T = implicitly[Bits[T]].random(Some(max))
+  def zero[T: Bits](implicit ctx: SrcCtx): T = implicitly[Bits[T]].zero
+  def one[T: Bits](implicit ctx: SrcCtx): T  = implicitly[Bits[T]].one
+  def random[T: Bits](implicit ctx: SrcCtx): T =
+    implicitly[Bits[T]].random(None)
+  def random[T: Bits](max: T)(implicit ctx: SrcCtx): T =
+    implicitly[Bits[T]].random(Some(max))
 
-  def bits[T:Bits] = implicitly[Bits[T]]
-  def mbits[T,R](s: Bits[T]): Bits[R] = s.asInstanceOf[Bits[R]]
+  def bits[T: Bits]                    = implicitly[Bits[T]]
+  def mbits[T, R](s: Bits[T]): Bits[R] = s.asInstanceOf[Bits[R]]
 }
-

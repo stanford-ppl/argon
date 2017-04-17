@@ -19,8 +19,8 @@ object FillTest extends Test {
   import IR._
   @virtualize
   def main() {
-    val array = Array.fill(10){ random[Int] }
-    assert(array(0) != array(1) || array(0) != array(2))  // Very unlikely to have duplicate (but still possible..)
+    val array = Array.fill(10) { random[Int] }
+    assert(array(0) != array(1) || array(0) != array(2)) // Very unlikely to have duplicate (but still possible..)
     println("Array tabulate appears to be working")
   }
 }
@@ -29,7 +29,9 @@ object TabulateTest extends Test {
   import IR._
   @virtualize
   def main() {
-    val array = Array.tabulate(16){i => i + 1 }
+    val array = Array.tabulate(16) { i =>
+      i + 1
+    }
 
     // Unstaged loop
     for (i <- 0 until 15) {
@@ -43,9 +45,15 @@ object ForeachTest extends Test {
   import IR._
   @virtualize
   def main() {
-    val array = Array.tabulate(16){i => random[Int](10) }
-    array.foreach{x => println(x) }
-    array.foreach{x => assert(x < 10 && x > -10) }
+    val array = Array.tabulate(16) { i =>
+      random[Int](10)
+    }
+    array.foreach { x =>
+      println(x)
+    }
+    array.foreach { x =>
+      assert(x < 10 && x > -10)
+    }
     println("Foreach appears to be working")
   }
 }
@@ -54,8 +62,12 @@ object MapTest extends Test {
   import IR._
   @virtualize
   def main() {
-    val array = Array.tabulate(16){i => random[Int](10) }
-    val array2 = array.map{x => x + 5 }
+    val array = Array.tabulate(16) { i =>
+      random[Int](10)
+    }
+    val array2 = array.map { x =>
+      x + 5
+    }
 
     for (i <- 0 until 16) {
       assert(array2(i) - array(i) == 5)
@@ -68,9 +80,15 @@ object ZipTest extends Test {
   import IR._
   @virtualize
   def main() {
-    val a = Array.tabulate(16){i => random[Int](10) }
-    val b = Array.tabulate(16){i => random[Int](10) }
-    val c = a.zip(b){(x,y) => x + y}
+    val a = Array.tabulate(16) { i =>
+      random[Int](10)
+    }
+    val b = Array.tabulate(16) { i =>
+      random[Int](10)
+    }
+    val c = a.zip(b) { (x, y) =>
+      x + y
+    }
     for (i <- 0 until 10) {
       assert(a(i) + b(i) == c(i))
     }
@@ -82,8 +100,12 @@ object ReduceTest extends Test {
   import IR._
   @virtualize
   def main() {
-    val a = Array.tabulate(16){i => i}
-    val sum = a.reduce{(x,y) => x + y}
+    val a = Array.tabulate(16) { i =>
+      i
+    }
+    val sum = a.reduce { (x, y) =>
+      x + y
+    }
     assert(sum == 120)
     println("Reduce appears to be working")
   }
@@ -93,10 +115,16 @@ object FilterTest extends Test {
   import IR._
   @virtualize
   def main() {
-    val a = Array.tabulate(16){i => i}
-    val b = a.filter{x => x % 2 == 0}
+    val a = Array.tabulate(16) { i =>
+      i
+    }
+    val b = a.filter { x =>
+      x % 2 == 0
+    }
 
-    b.foreach{x => assert(x % 2 == 0) }
+    b.foreach { x =>
+      assert(x % 2 == 0)
+    }
     println("Filter appears to be working")
   }
 }
@@ -105,8 +133,12 @@ object FlatMapTest extends Test {
   import IR._
   @virtualize
   def main() {
-    val a = Array.tabulate(16){i => i}
-    val b = a.flatMap{x => Array.empty[Int](x) }
+    val a = Array.tabulate(16) { i =>
+      i
+    }
+    val b = a.flatMap { x =>
+      Array.empty[Int](x)
+    }
     assert(b.length == 120)
     println("FlatMap appears to be working")
   }

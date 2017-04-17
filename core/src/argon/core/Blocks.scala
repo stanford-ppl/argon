@@ -4,10 +4,13 @@ import argon.traversal.CompilerPass
 import scala.collection.mutable
 
 trait Blocks extends Effects { self: Staging =>
-  type Pass = CompilerPass{ val IR: self.type }
+  type Pass = CompilerPass { val IR: self.type }
 
   /** Class representing the result of a staged scope. */
-  case class Block[+T](result: Exp[T], summary: Effects, effectful: Seq[Sym[_]], inputs: Seq[Sym[_]]) {
+  case class Block[+T](result: Exp[T],
+                       summary: Effects,
+                       effectful: Seq[Sym[_]],
+                       inputs: Seq[Sym[_]]) {
     def tp: Type[_] = result.tp
   }
 
@@ -16,22 +19,24 @@ trait Blocks extends Effects { self: Staging =>
     * (Ignores reads/writes on data allocated within the scope)
     */
   def summarizeScope(context: Seq[Sym[_]]): Effects = {
-    var effects = Pure
-    val allocs = new mutable.HashSet[Sym[_]]
+    var effects                = Pure
+    val allocs                 = new mutable.HashSet[Sym[_]]
     def clean(xs: Set[Sym[_]]) = xs diff allocs
-    for (s@Effectful(u2, _) <- context) {
+    for (s @ Effectful(u2, _) <- context) {
       if (u2.isMutable) allocs += s
-      effects = effects andThen u2.copy(reads = clean(u2.reads), writes = clean(u2.writes))
+      effects = effects andThen u2.copy(reads = clean(u2.reads),
+                                        writes = clean(u2.writes))
     }
     effects
   }
 
-  private def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]]): Block[T] = {
+  private def createBlock[T: Type](block: => Exp[T],
+                                   inputs: Seq[Sym[_]]): Block[T] = {
     val saveContext = context
     context = Nil
 
     val result = block
-    val deps = context
+    val deps   = context
     context = saveContext
 
     val effects = summarizeScope(deps)
@@ -42,14 +47,16 @@ trait Blocks extends Effects { self: Staging =>
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
     */
-  def stageBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil)
-  def stageLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs))
+  def stageBlock[T: Type](block: => Exp[T]): Block[T] =
+    createBlock[T](block, Nil)
+  def stageLambda[T: Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] =
+    createBlock[T](block, syms(inputs))
 
   /**
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
     * All assumptions about the current context carry over unchanged.
     */
-  def stageBlockInline[T:Type](block: => Exp[T]): Block[T] = {
+  def stageBlockInline[T: Type](block: => Exp[T]): Block[T] = {
     val saveContext = context
     if (saveContext eq null) context = Nil
 
@@ -70,7 +77,8 @@ trait Blocks extends Effects { self: Staging =>
   /** Compiler debugging **/
   override def readable(x: Any) = x match {
     case b: Block[_] if b.inputs.isEmpty => c"Block(${b.result})"
-    case b: Block[_] => c"""Block(${b.inputs.mkString("(",",",")")} => ${b.result})"""
+    case b: Block[_] =>
+      c"""Block(${b.inputs.mkString("(", ",", ")")} => ${b.result})"""
     case _ => super.readable(x)
   }
 }

@@ -16,7 +16,9 @@ object TextVirtualization extends Test {
 
     val q = println(y + " ")
 
-    context.foreach{s => System.out.println(s"${str(s)}")}
+    context.foreach { s =>
+      System.out.println(s"${str(s)}")
+    }
   }
 
 }

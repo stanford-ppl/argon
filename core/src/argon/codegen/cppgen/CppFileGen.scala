@@ -6,24 +6,24 @@ import argon.Config
 trait CppFileGen extends FileGen {
   import IR._
 
-
-  override protected def emitMain[S:Type](b: Block[S]): Unit = {
+  override protected def emitMain[S: Type](b: Block[S]): Unit = {
     emitBlock(b)
   }
 
-  override protected def process[S:Type](b: Block[S]): Block[S] = {
+  override protected def process[S: Type](b: Block[S]): Block[S] = {
 
     // Forcefully create the following streams
     withStream(getStream("TopHost")) {
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Begin!")}
+      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Begin!") }
       preprocess(b)
       emitMain(b)
       postprocess(b)
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Complete!")}
+      if (Config.emitDevel > 0) {
+        Console.println(s"[ ${lang}gen ] Complete!")
+      }
       b
     }
   }
-
 
   override protected def emitFileHeader() {
     emit(s"""#include <stdint.h>
@@ -50,13 +50,13 @@ using std::vector;
 
 """)
 
-  open(s"void Application(int numThreads, vector<string> * args) {")
-  emit("// Create an execution context.")
-  emit("""FringeContext *c1 = new FringeContext("./verilog/accel.bit.bin");""")
-  emit("""c1->load();""")
+    open(s"void Application(int numThreads, vector<string> * args) {")
+    emit("// Create an execution context.")
+    emit(
+      """FringeContext *c1 = new FringeContext("./verilog/accel.bit.bin");""")
+    emit("""c1->load();""")
 
-
-    withStream(getStream("cpptypes","h")) {
+    withStream(getStream("cpptypes", "h")) {
       emit("""#ifndef __CPPTYPES_H__
 #define __CPPTYPES_H__
 #endif""")
@@ -110,7 +110,6 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 """)
-
 
     super.emitFileFooter()
   }

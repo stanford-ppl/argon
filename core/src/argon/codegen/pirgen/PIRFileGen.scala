@@ -6,8 +6,7 @@ import argon.Config
 trait PIRFileGen extends FileGen {
   import IR._
 
-
-  override protected def emitMain[S:Type](b: Block[S]): Unit = {
+  override protected def emitMain[S: Type](b: Block[S]): Unit = {
     emitBlock(b)
   }
 

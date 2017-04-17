@@ -24,7 +24,7 @@ object GenerateAnnotation extends StaticAnnotation {
 
     val ranges = allRanges*/
 
-    val tx = new GenerateTransformer[c.type](c)
+    val tx  = new GenerateTransformer[c.type](c)
     val out = q"..${tx(annottees.head)}"
 
     /*annottees.head match {

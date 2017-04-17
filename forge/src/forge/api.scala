@@ -25,13 +25,13 @@ final class internal extends StaticAnnotation {
 
 object APIAnnotation {
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
-    FrontendAnnotation.impl(c)(annottees:_*)
+    FrontendAnnotation.impl(c)(annottees: _*)
   }
 }
 
 object UtilAnnotation {
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
-    FrontendAnnotation.impl(c)(annottees:_*)
+    FrontendAnnotation.impl(c)(annottees: _*)
   }
 }
 
@@ -39,16 +39,15 @@ object InternalAnnotation {
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
     import c.universe._
 
-    val withCtx = FrontendAnnotation.impl(c)(annottees:_*)
+    val withCtx = FrontendAnnotation.impl(c)(annottees: _*)
     withCtx match {
-      case DefDef(mods,name,tparams,vparamss,tpt,rhs) =>
+      case DefDef(mods, name, tparams, vparamss, tpt, rhs) =>
         val flags = mods.flags | Flag.PROTECTED
-        DefDef(Modifiers(flags),name,tparams,vparamss,tpt,rhs)
+        DefDef(Modifiers(flags), name, tparams, vparamss, tpt, rhs)
       case _ => withCtx
     }
   }
 }
-
 
 object FrontendAnnotation {
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
@@ -57,21 +56,21 @@ object FrontendAnnotation {
     val srcCtx = q"ctx: org.virtualized.SourceContext"
 
     val tree = annottees.head match {
-      case DefDef(mods,name,tparams,vparamss,tpt,rhs) =>
-        val hasImplicits = vparamss.lastOption.exists(_.exists{
+      case DefDef(mods, name, tparams, vparamss, tpt, rhs) =>
+        val hasImplicits = vparamss.lastOption.exists(_.exists {
           case x: ValDef => x.mods.hasFlag(Flag.IMPLICIT)
         })
         val params = if (hasImplicits) {
-          val hasCtx = vparamss.lastOption.exists(_.exists{
-            case ValDef(_,_,Ident(TypeName(n)),_) => n == "SrcCtx" || n == "SourceContext" || n == "org.virtualized.SourceContext"
+          val hasCtx = vparamss.lastOption.exists(_.exists {
+            case ValDef(_, _, Ident(TypeName(n)), _) =>
+              n == "SrcCtx" || n == "SourceContext" || n == "org.virtualized.SourceContext"
             case _ => false
           })
           if (!hasCtx) {
-            vparamss.dropRight(1) :+ (vparamss.lastOption.getOrElse(Nil) ++ List(srcCtx))
-          }
-          else vparamss
-        }
-        else {
+            vparamss.dropRight(1) :+ (vparamss.lastOption.getOrElse(Nil) ++ List(
+              srcCtx))
+          } else vparamss
+        } else {
           vparamss :+ List(srcCtx)
         }
         q"$mods def $name[..$tparams](...${params.dropRight(1)})(implicit ..${params.last}): $tpt = $rhs"
@@ -82,4 +81,3 @@ object FrontendAnnotation {
     tree
   }
 }
-

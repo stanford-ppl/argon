@@ -3,8 +3,7 @@ package argon
 import argon.codegen.FileGen
 import scala.sys.process._
 
-trait RunnerCore extends CompilerCore {
-  self =>
+trait RunnerCore extends CompilerCore { self =>
 
   var testArgs = List[String]()
 
@@ -14,9 +13,14 @@ trait RunnerCore extends CompilerCore {
     report(c"Executing ${Config.name}")
     //msg(c"in output directory $out")
 
-    val proc = scala.sys.process.Process(Seq("sbt", s"""run ${testArgs.mkString(" ")}"""), new java.io.File(out))
-    val logger = ProcessLogger{str => msg(str)}
-    val exitCode = withLog(Config.logDir, State.paddedPass + " RUN.log") { proc.run(logger).exitValue() }
+    val proc = scala.sys.process.Process(Seq("sbt", s"""run ${testArgs
+      .mkString(" ")}"""), new java.io.File(out))
+    val logger = ProcessLogger { str =>
+      msg(str)
+    }
+    val exitCode = withLog(Config.logDir, State.paddedPass + " RUN.log") {
+      proc.run(logger).exitValue()
+    }
 
     val time = (System.currentTimeMillis - start).toFloat
     if (exitCode != 0)

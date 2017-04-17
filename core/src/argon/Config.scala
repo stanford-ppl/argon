@@ -27,19 +27,19 @@ argon {
     val mergedConf = ConfigFactory.load().withFallback(default).resolve()
 
     case class ArgonConf(
-      cwd: String,
-      verbosity:Int,
-      unsafe: Boolean,
-      lib: Boolean,
-      //name: String,
-      log: String,
-      out: String,
-      clearLogs: Boolean,
-      clearGen: Boolean,
-      multifile: Int,
-      unwrap: Boolean,
-      emission: Int,
-      atomicw: Boolean
+        cwd: String,
+        verbosity: Int,
+        unsafe: Boolean,
+        lib: Boolean,
+        //name: String,
+        log: String,
+        out: String,
+        clearLogs: Boolean,
+        clearGen: Boolean,
+        multifile: Int,
+        unwrap: Boolean,
+        emission: Int,
+        atomicw: Boolean
     )
 
     val conf = loadConfig[ArgonConf](mergedConf, "argon").right.get
@@ -50,7 +50,7 @@ argon {
     showWarn = true
 
     unsafe = conf.unsafe
-    lib    = conf.lib
+    lib = conf.lib
     //name = conf.name
     logDir = conf.log
     genDir = conf.out
@@ -58,25 +58,25 @@ argon {
     clearGen = conf.clearGen
     multifile = conf.multifile
     unwrapStructs = conf.unwrap
-    emitDevel = conf.emission// level of conservativeness and debug printing when emitting nodes
+    emitDevel = conf.emission // level of conservativeness and debug printing when emitting nodes
     allowAtomicWrites = conf.atomicw
   }
 
-  def sep = "/"
+  def sep         = "/"
   var cwd: String = _
 
-  var verbosity: Int = _
+  var verbosity: Int    = _
   var showWarn: Boolean = true
 
-  var unsafe: Boolean = _
-  var lib:  Boolean = _
-  var name: String = _
-  var logDir: String = _
-  var genDir: String = _
-  var clearLogs: Boolean = _
-  var clearGen: Boolean = _
-  var multifile: Int = _
-  var unwrapStructs: Boolean = _
-  var emitDevel: Int = _
+  var unsafe: Boolean            = _
+  var lib: Boolean               = _
+  var name: String               = _
+  var logDir: String             = _
+  var genDir: String             = _
+  var clearLogs: Boolean         = _
+  var clearGen: Boolean          = _
+  var multifile: Int             = _
+  var unwrapStructs: Boolean     = _
+  var emitDevel: Int             = _
   var allowAtomicWrites: Boolean = _
 }

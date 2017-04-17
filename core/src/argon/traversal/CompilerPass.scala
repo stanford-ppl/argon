@@ -1,7 +1,7 @@
 package argon.traversal
 
 import argon.core.Staging
-import argon.{Config,State}
+import argon.{Config, State}
 
 /**
   * Common trait for all passes which can be run by the compiler,
@@ -17,9 +17,9 @@ trait CompilerPass { self =>
   def name: String = readable(self.getClass)
 
   // --- Options
-  var verbosity: Int = Config.verbosity
+  var verbosity: Int      = Config.verbosity
   var shouldWarn: Boolean = true
-  def shouldRun: Boolean = true
+  def shouldRun: Boolean  = true
   def silence() { verbosity = -1; shouldWarn = false }
 
   // --- State
@@ -29,39 +29,39 @@ trait CompilerPass { self =>
   var totalTime = 0.0f
 
   // --- Debugging methods
-  final protected def dbgs(x: => Any) = dbg("  "*tab + x)
-  final protected def logs(x: => Any) = log("  "*tab + x)
-  final protected def msgs(x: => Any) = msg("  "*tab + x)
+  final protected def dbgs(x: => Any) = dbg("  " * tab + x)
+  final protected def logs(x: => Any) = log("  " * tab + x)
+  final protected def msgs(x: => Any) = msg("  " * tab + x)
 
   // --- Methods
   /** External method called by compiler **/
-  final def run[T:Type](b: Block[T]): Block[T] = if (shouldRun) {
+  final def run[T: Type](b: Block[T]): Block[T] =
+    if (shouldRun) {
 
-    val outfile = State.paddedPass + " " + name + ".log"
-    State.pass += 1
+      val outfile = State.paddedPass + " " + name + ".log"
+      State.pass += 1
 
-    withLog(Config.logDir, outfile) {
-      val saveVerbosity = Config.verbosity
-      val saveWarnings  = Config.showWarn
-      Config.verbosity = this.verbosity
-      Config.showWarn  = this.shouldWarn
+      withLog(Config.logDir, outfile) {
+        val saveVerbosity = Config.verbosity
+        val saveWarnings  = Config.showWarn
+        Config.verbosity = this.verbosity
+        Config.showWarn = this.shouldWarn
 
-      log("Starting traversal " + name)
-      val start = System.currentTimeMillis
+        log("Starting traversal " + name)
+        val start = System.currentTimeMillis
 
-      val result = process(b)
+        val result = process(b)
 
-      Config.verbosity = saveVerbosity
-      Config.showWarn = saveWarnings
+        Config.verbosity = saveVerbosity
+        Config.showWarn = saveWarnings
 
-      val time = (System.currentTimeMillis - start).toFloat
-      lastTime = time
-      totalTime += time
-      result
-    }
-  } else b
-
+        val time = (System.currentTimeMillis - start).toFloat
+        lastTime = time
+        totalTime += time
+        result
+      }
+    } else b
 
   /** Called to execute this pass. Override to implement custom IR processing **/
-  protected def process[S:Type](block: Block[S]): Block[S]
+  protected def process[S: Type](block: Block[S]): Block[S]
 }

@@ -12,12 +12,16 @@ class StructTests extends FlatSpec with Matchers {
 
       @virtualize
       def main() {
-        val array = Array.tabulate(32){i => MyStruct(i + 1, i - 1) }
+        val array = Array.tabulate(32) { i =>
+          MyStruct(i + 1, i - 1)
+        }
 
         val x = array(10).x
         val y = random[MyStruct]
 
-        val sum = array.reduce{(a,b) => a + b}
+        val sum = array.reduce { (a, b) =>
+          a + b
+        }
 
         println("Expected: 11")
         println("Value: " + x)

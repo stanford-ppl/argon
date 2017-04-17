@@ -8,7 +8,7 @@ trait OverloadHack {
   class OverloadI$I$0to63
   @generate
   implicit val overloadI$I$0to63 = new OverloadI
-  */
+   */
 
   class Overload0
   class Overload1
@@ -75,16 +75,16 @@ trait OverloadHack {
   class Overload62
   class Overload63
 
-  implicit val overload0 = new Overload0
-  implicit val overload1 = new Overload1
-  implicit val overload2 = new Overload2
-  implicit val overload3 = new Overload3
-  implicit val overload4 = new Overload4
-  implicit val overload5 = new Overload5
-  implicit val overload6 = new Overload6
-  implicit val overload7 = new Overload7
-  implicit val overload8 = new Overload8
-  implicit val overload9 = new Overload9
+  implicit val overload0  = new Overload0
+  implicit val overload1  = new Overload1
+  implicit val overload2  = new Overload2
+  implicit val overload3  = new Overload3
+  implicit val overload4  = new Overload4
+  implicit val overload5  = new Overload5
+  implicit val overload6  = new Overload6
+  implicit val overload7  = new Overload7
+  implicit val overload8  = new Overload8
+  implicit val overload9  = new Overload9
   implicit val overload10 = new Overload10
   implicit val overload11 = new Overload11
   implicit val overload12 = new Overload12
