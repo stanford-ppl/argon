@@ -2,16 +2,14 @@ package argon.ops
 
 import argon._
 import argon.core.Staging
-import org.virtualized.EmptyContext
 import forge._
+import org.virtualized.EmptyContext
 
-trait ArrayApi {
-  this: ArgonApi =>
+trait ArrayApi { this: ArgonApi =>
   type Array[T] = MetaArray[T]
 }
 
-trait ArrayExp extends Staging {
-  this: ArgonExp =>
+trait ArrayExp extends Staging { this: ArgonExp =>
   /** Infix methods **/
   case class MetaArray[T:Meta](s: Exp[MetaArray[T]]) extends MetaAny[MetaArray[T]] {
     @api def apply(i: Int32): T = wrap(array_apply(s, i.s))

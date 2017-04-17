@@ -5,17 +5,13 @@ import argon.core.{ArgonExceptions, Reporting, Staging}
 import argon.typeclasses._
 import forge._
 
-trait FltPtApi extends FltPtExp {
-  self: ArgonApi =>
-
+trait FltPtApi extends FltPtExp { self: ArgonApi =>
   type Double = Float64
   type Float = Float32
   type Half = Float16
 }
 
-trait FltPtExp extends BoolExp with Reporting {
-  self: ArgonExp =>
-
+trait FltPtExp extends BoolExp with Reporting { self: ArgonExp =>
   /** Type aliases **/
   type Float16 = FltPt[_11,_5]
   type Float32 = FltPt[_24,_8]

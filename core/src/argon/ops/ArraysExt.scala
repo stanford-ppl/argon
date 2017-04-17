@@ -7,8 +7,7 @@ import forge._
   * Array operations are separated into two categories. ArrayOps is for use in all DSLs which allow at least the use
   * of command-line arguments. ArrayExtOps is for more complicated operations, including update and parallel patterns.
   */
-trait ArrayExtApi extends ArrayExtExp with ArrayApi {
-  self: ArgonApi =>
+trait ArrayExtApi extends ArrayExtExp with ArrayApi { self: ArgonApi =>
   object Array {
     @api def tabulate[T:Meta](size: Index)(func: Index => T): MetaArray[T] = array_from_function[T](size, func)
     @api def fill[T:Meta](size: Index)(func: => T): MetaArray[T] = Array.tabulate(size){i => func}
@@ -33,7 +32,4 @@ trait ArrayExtApi extends ArrayExtExp with ArrayApi {
   }
 }
 
-trait ArrayExtExp extends ArrayExp {
-  self: ArgonExp =>
-
-}
+trait ArrayExtExp extends ArrayExp { self: ArgonExp => }

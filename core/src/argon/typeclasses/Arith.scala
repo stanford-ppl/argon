@@ -1,7 +1,7 @@
 package argon.typeclasses
 
 import argon._
-import argon.core.StagedTypes
+import argon.core.StagedTypes // Needs to extend StagedTypes to get right implicit ordering
 
 trait ArithApi extends ArithExp { self: ArgonApi => }
 

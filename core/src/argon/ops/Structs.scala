@@ -1,15 +1,12 @@
 package argon.ops
 
-import argon.{ArgonApi, ArgonExp, Config}
+import argon._
 import argon.core.Staging
 import forge._
 
-trait StructApi extends StructExp {
-  self: ArgonApi =>
-}
+trait StructApi extends StructExp { self: ArgonApi => }
 
-trait StructExp extends Staging {
-  self: ArgonExp =>
+trait StructExp extends Staging { self: ArgonExp =>
 
   /**
     * Parent class for all staged Structs

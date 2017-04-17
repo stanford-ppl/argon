@@ -1,14 +1,11 @@
 package argon.typeclasses
 
-import argon.{ArgonApi, ArgonExp}
-import argon.ops.{BoolExp, CastExp, FixPtExp, FltPtExp}
+import argon._
+import argon.ops._
 
-trait NumApi extends NumExp {
-  self: ArgonApi =>
-}
+trait NumApi extends NumExp { self: ArgonApi => }
 
-trait LowPriorityNumImplicits {
-  self: ArgonApi =>
+trait LowPriorityNumImplicits { self: ArgonApi =>
 
   // FIXME: Users may want to write x.to[T], where T is a generic type with evidence of Num
   // Should this be allowed? Better way to support in general?

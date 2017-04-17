@@ -1,16 +1,13 @@
 package argon.ops
 
 import argon._
-import argon.core.Staging
 import forge._
 
-trait VoidApi extends VoidExp {
-  self: ArgonApi =>
+trait VoidApi extends VoidExp { self: ArgonApi =>
   type Unit = Void
 }
 
-trait VoidExp {
-  self: ArgonExp =>
+trait VoidExp { self: ArgonExp =>
 
   // --- Staged
   implicit object VoidType extends Meta[Void] {

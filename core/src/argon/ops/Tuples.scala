@@ -1,17 +1,11 @@
 package argon.ops
 
-import argon.core.Staging
-import argon.typeclasses._
-import forge._
 import argon._
+import forge._
 
+trait TupleApi extends TupleExp { self: ArgonApi => }
 
-trait TupleApi extends TupleExp{
-  self: ArgonApi =>
-}
-
-trait TupleExp {
-  self: ArgonExp =>
+trait TupleExp { self: ArgonExp =>
   /** Infix methods **/
   case class Tup2[A:Meta,B:Meta](s: Exp[Tup2[A,B]]) extends MetaStruct[Tup2[A,B]] {
     @api def _1: A = field[A]("_1")
