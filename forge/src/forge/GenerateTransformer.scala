@@ -12,6 +12,7 @@ class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
     var round = 0
     var level: List[T] = List(x)
     while (level.exists(needsUnroll) && round < 20) {
+      println(level + "///////" + round)
       val nextLevel = level.flatMap{x => if (needsUnroll(x)) transformer.t(x) else List(x) }
       level = nextLevel
       round += 1

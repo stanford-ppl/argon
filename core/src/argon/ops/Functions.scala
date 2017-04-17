@@ -4,49 +4,56 @@ import argon._
 import forge._
 import org.virtualized.EmptyContext
 
+@generate
 trait FunctionApi extends FunctionExp {
   self: ArgonApi =>
 
-  type ArgonFunction1[T, R] <: T => R
+  type ArgonFunctionJJ$JJ$1to22[TII$II$1toJJ, R] <: FunctionJJ[TII$II$1toJJ, R]
+
 }
 
+@generate
 trait FunctionExp {
   self: ArgonExp =>
 
-  case class Apply[T:Type, R:Type](fun: Exp[ArgonFunction1[T,R]], arg: Exp[T]) extends Op[R] {
-    def mirror(f: Tx): Exp[R] = fun_apply(f(fun), f(arg))
-  }
-  case class FunDecl[T:Type, R:Type](arg: Exp[T], block: Block[R]) extends Op[ArgonFunction1[T,R]] {
-    def mirror(f: Tx) = stageCold(FunDecl(f(arg), stageBlock { f(block) }))(ctx)
+  case class FunApplyJJ$JJ$1to22[TII$II$1toJJ:Type, R:Type](fun: Exp[ArgonFunctionJJ[TII$II$1toJJ, R]], argII$II$1toJJ: Exp[TII]) extends Op[R] {
+    def mirror(f: Tx): Exp[R] = fun_applyJJ(f(fun), f$II$1toJJ(argII))
   }
 
-  def fun_apply[T:Type, R:Type](f: Exp[ArgonFunction1[T,R]], arg: Exp[T])(implicit ctx: SrcCtx): Exp[R] = stage(Apply(f, arg))(ctx)
+  case class FunDeclJJ$JJ$1to22[TII$II$1toJJ:Type, R:Type](argII$II$1toJJ: Exp[TII], block: Block[R]) extends Op[ArgonFunctionJJ[TII$II$1toJJ,R]] {
+    def mirror(f: Tx) = stage(FunDeclJJ(f$II$1toJJ(argII), stageBlock { f(block) }))(ctx)
+    override def binds = dyns(argII$II$1toJJ) ++ super.binds
+  }
 
-  case class ArgonFunction1[T:Type, R:Type](s: Exp[ArgonFunction1[T, R]]) extends MetaAny[ArgonFunction1[T,R]] with (T => R) {
-    @api def ===(that: ArgonFunction1[T, R]) = ???
-    @api def =!=(that: ArgonFunction1[T, R]) = ???
+
+  def fun_applyJJ$JJ$1to22[TII$II$1toJJ:Type, R:Type](f: Exp[ArgonFunctionJJ[TII$II$1toJJ,R]], arg: Exp[T1])(implicit ctx: SrcCtx): Exp[R] = stage(FunApplyJJ(f, arg))(ctx)
+
+  case class ArgonFunctionJJ$JJ$1to22[TII$II$1toJJ:Type, R:Type](s: Exp[ArgonFunctionJJ[TII$II$1toJJ, R]]) extends MetaAny[ArgonFunctionJJ[TII$II$1toJJ,R]] with FunctionJJ[TII$II$1toJJ, R] {
+    @api def ===(that: ArgonFunctionJJ[TII$II$1toJJ, R]) = ???
+    @api def =!=(that: ArgonFunctionJJ[TII$II$1toJJ, R]) = ???
     @api def toText = textify(this)
 
-    def apply(x: T): R = applyArg(x)(EmptyContext)
-    @api def applyArg(x: T): R = wrap(fun_apply(s, x.s))
+    def apply(xII$II$1toJJ: TII): R = applyArg(xII$II$1toJJ)(EmptyContext)
+    @api def applyArg(xII$II$1toJJ: TII): R = wrap(fun_applyJJ(s, xII$II$1toJJ.s))
   }
 
-  def fun[T:Type, R:Type](f: T => R)(implicit ctx: SrcCtx): ArgonFunction1[T,R] = {
-    val arg1 = fresh[T]
-    val bodyBlock = f(wrap(arg1)).s
-    val sym = stageCold(FunDecl(arg1, stageBlock(bodyBlock)))(ctx)
+  def fun$JJ$1to22[TII$II$1toJJ:Type, R:Type](f: FunctionJJ[TII$II$1toJJ, R])(implicit ctx: SrcCtx): ArgonFunction1[TII$II$1toJJ,R] = {
+    val argII$II$1toJJ = fresh[TII]
+    val bodyBlock = stageBlock(f(wrap$II$1toJJ(argII)).s)
+    val sym = stage(FunDeclJJ(argII$II$1toJJ, bodyBlock))(ctx)
     wrap(sym)
   }
 
   /** Type classes **/
-  case class ArgonFunction1Type[T, R](childT: Meta[T], childR: Meta[R]) extends Meta[ArgonFunction1[T, R]] {
-    override def wrapped(x: Exp[ArgonFunction1[T,R]]) = ArgonFunction1(x)(childT, childR)
-    override def unwrapped(x: ArgonFunction1[T,R]) = x.s
-    override def stagedClass = classOf[ArgonFunction1[T,R]]
-    override def typeArguments = List(childT, childR)
+  case class ArgonFunctionJJType$JJ$1to22[TII$II$1toJJ, R](childTII$II$1toJJ: Meta[TII], childR: Meta[R]) extends Meta[ArgonFunctionJJ[TII$II$1toJJ, R]] {
+    override def wrapped(x: Exp[ArgonFunctionJJ[TII$II$1toJJ,R]]) = ArgonFunctionJJ(x)(childTII$II$1toJJ, childR)
+    override def unwrapped(x: ArgonFunctionJJ[TII$II$1toJJ,R]) = x.s
+    override def stagedClass = classOf[ArgonFunctionJJ[TII$II$1toJJ,R]]
+    override def typeArguments = List(childTII$II$1toJJ, childR)
     override def isPrimitive: Boolean = false
   }
-  implicit def argonFunction1Type[T:Meta, R:Meta]: ArgonFunction1Type[T,R] = ArgonFunction1Type[T,R](meta[T], meta[R])
+
+  implicit def argonFunctionJJ$JJ$1to22[TII$II$1toJJ:Meta, R:Meta]: ArgonFunctionJJType[TII$II$1toJJ,R] = ArgonFunctionJJType[TII$II$1toJJ,R](meta$II$1toJJ[TII], meta[R])
 
 
 

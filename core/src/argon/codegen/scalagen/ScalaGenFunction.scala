@@ -13,11 +13,11 @@ trait ScalaGenFunction extends ScalaCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case FunDecl(arg, block) =>
+    case FunDecl1(arg, block) =>
       open(src"def $lhs($arg: ${remap(arg.tp)}) = {")
       emitBlock(block)
       close("}")
-    case Apply(fun, arg) =>
+    case FunApply1(fun, arg) =>
       emit(src"val $lhs = $fun($arg)")
     case _ => super.emitNode(lhs, rhs)
   }
