@@ -22,8 +22,7 @@ trait LowPriorityNumImplicits {
 
 }
 
-trait NumExp {
-  self: ArgonExp =>
+trait NumExp { self: ArgonExp =>
 
   trait Num[T] extends Bits[T] with Arith[T] with Order[T] {
     def toFixPt[S:BOOL,I:INT,F:INT](x: T)(implicit ctx: SrcCtx): FixPt[S,I,F]

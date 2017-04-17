@@ -2,20 +2,17 @@ package argon.test
 
 import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized.{SourceContext, virtualize}
-import argon.{AppCore, Config, LibCore, RunnerCore}
+import argon._
 import argon.ops._
 import argon.traversal.IRPrinter
 import argon.codegen.scalagen._
-import argon.core.Staging
 import argon.transform.ForwardTransformer
 import forge._
 
 import scala.runtime._
 
-trait TestExp extends Staging
-  with ArrayExp with ArrayExtExp with AssertExp with BoolExp with CastExp with FixPtExp with FltPtExp
-  with HashMapExp with IfThenElseExp with PrintExp with StructExp
-  with TextExp with TupleExp with VoidExp
+trait TestExp extends ArgonExp
+  with AssertExp with PrintExp
 
 trait LowPriorityImplicits {
   implicit def int2RichInt(x: Int): RichInt = new RichInt(x)
@@ -24,10 +21,8 @@ trait LowPriorityImplicits {
   implicit def double2RichDouble(x: Double): RichDouble = new RichDouble(x)
 }
 
-trait TestApi extends TestExp
-  with ArrayApi with ArrayExtApi with AssertApi with BoolApi with CastApi with FixPtApi with FltPtApi
-  with HashMapApi with IfThenElseApi with PrintApi with StructApi
-  with TextApi with TupleApi with VoidApi with LowPriorityImplicits {
+trait TestApi extends TestExp with ArgonApi with LowPriorityImplicits
+  with AssertApi with PrintApi {
 
   implicit class intWrapper(x: scala.Int) extends {
     @api def to[B:Meta](implicit cast: Cast[scala.Int,B]): B = cast(x)
