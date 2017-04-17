@@ -83,11 +83,12 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
       if (State.staging) unstagedWarning("toString")
       this.productPrefix + this.productIterator.mkString("(", ", ", ")")
     }*/
-    final override def toString(): String = {
+    override def toString(): String = {
       if (State.staging) unstagedWarningNoCtx("toString()")(s.ctx)
       this.productPrefix + this.productIterator.mkString("(", ", ", ")")
     }
-    final override def equals(that: Any): Boolean = {
+
+    override def equals(that: Any): Boolean = {
       if (State.staging) unstagedWarningNoCtx("equals")(s.ctx)
       this.isEqual(that)
     }
