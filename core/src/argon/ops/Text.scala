@@ -21,8 +21,8 @@ trait TextExp extends BoolExp {
   }
 
   case class Text(s: Exp[Text]) extends MetaAny[Text] {
-    @api def +(rhs: String): Text = concat(this, liftString(rhs))
-    @api def +(rhs: Text): Text = concat(this, rhs)
+    @api def +(rhs: String): Text = concat(this.toText, liftString(rhs))
+    @api def +(rhs: Text): Text = concat(this.toText, rhs)
     @api def +[R](rhs: MetaAny[R]): Text = concat(this, rhs.toText)
 
     @api def =!=(that: Text): Bool = Bool(text_differ(this.s, that.s))
