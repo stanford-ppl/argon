@@ -24,15 +24,15 @@ trait FunctionExp {
     @api def =!=(that: ArgonFunction1[T, R]) = ???
     @api def toText = textify(this)
 
+
     def apply(x: T): R = applyArg(x)(EmptyContext)
     @api def applyArg(x: T): R = wrap(fun_apply(s, x.s))
   }
 
   @internal def fun[T:Type, R:Type](f: T => R): ArgonFunction1[T,R] = {
     val arg1 = fresh[T]
-    val warg1:T = wrap(arg1)
-    val body: R = f(warg1)
-    ???
+    val bodyBlock: Block[R] = stageBlock(f(wrap(arg1)).s)
+    ArgonFunction1(constant[ArgonFunction1[T,R]]((arg1, bodyBlock)))
   }
 
   /** Type classes **/
