@@ -1,13 +1,18 @@
 package argon.ops
 
+import argon.{ArgonApi, ArgonExp}
 import argon.core.Staging
 import forge._
 
-trait TextApi extends TextExp with BoolApi {
+trait TextApi extends TextExp {
+  self: ArgonApi =>
+
   type String = Text
+
 }
 
-trait TextExp extends Staging with BoolExp {
+trait TextExp extends BoolExp {
+  self: ArgonExp =>
   /** Infix methods **/
   implicit object TextType extends Meta[Text] {
     def wrapped(x: Exp[Text]) = Text(x)
@@ -33,6 +38,16 @@ trait TextExp extends Staging with BoolExp {
 
   /** Virtualized methods **/
   @util def infix_+[R<:MetaAny[R]](x1: String, x2: R): Text = string2text(x1) + x2.toText
+
+  /*
+    // Has to be an implicit class to not conflict with higher priority implicits on +
+  implicit class ConcatOps[T<:MetaAny[T]](lhs: T) {
+    @api def +(rhs: String): Text = concat(lhs.toText, liftString(rhs))
+    @api def +(rhs: Text): Text = concat(lhs.toText, rhs)
+    @api def +[R](rhs: MetaAny[R]): Text = concat(lhs.toText, rhs.toText)
+  }
+
+  */
 
   // Never created
   //@util def infix_+[R<:MetaAny[R]](x1: R, x2: String): Text = textify(x1) + string2text(x2)

@@ -1,9 +1,10 @@
 package argon.codegen.cppgen
 
+import argon.core.Staging
 import argon.ops.BoolExp
 
 trait CppGenBool extends CppCodegen {
-  val IR: BoolExp
+  val IR: BoolExp with Staging
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {

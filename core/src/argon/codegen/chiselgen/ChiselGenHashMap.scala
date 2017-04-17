@@ -1,10 +1,12 @@
 package argon.codegen.chiselgen
 
-import argon.ops.HashMapExp
+import argon.core.Staging
+import argon.ops.{FixPtExp, HashMapExp}
+import argon.typeclasses.CustomBitWidths
 
 
 trait ChiselGenHashMap extends ChiselCodegen {
-  val IR: HashMapExp
+  val IR: HashMapExp with FixPtExp with Staging with CustomBitWidths
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {

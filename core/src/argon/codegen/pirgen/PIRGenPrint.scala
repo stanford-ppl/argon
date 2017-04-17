@@ -1,9 +1,10 @@
 package argon.codegen.pirgen
 
+import argon.core.Staging
 import argon.ops.PrintExp
 
 trait PIRGenPrint extends PIRCodegen {
-  val IR: PrintExp
+  val IR: PrintExp with Staging
   import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
@@ -12,3 +13,4 @@ trait PIRGenPrint extends PIRCodegen {
     case _ => super.emitNode(lhs, rhs)
   }
 }
+

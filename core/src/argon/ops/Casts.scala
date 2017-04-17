@@ -1,11 +1,12 @@
 package argon.ops
 
+import argon.{ArgonApi, ArgonExp}
 import argon.core.Staging
 import argon.typeclasses._
 import forge._
 
 trait CastApi extends CastExp {
-  this: BoolExp with NumExp =>
+  self: ArgonApi =>
 
   implicit class CastOps[A](x: A) {
     @api def to[B:Meta](implicit cast: Cast[A,B]): B = cast(x)
@@ -20,6 +21,6 @@ trait CastApi extends CastExp {
 }
 
 trait CastExp extends Staging {
-  this: BoolExp =>
+  self: ArgonExp =>
 
 }
