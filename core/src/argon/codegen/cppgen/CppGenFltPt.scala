@@ -8,8 +8,8 @@ trait CppGenFltPt extends CppCodegen {
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
-    case FloatType()  => "Float"
-    case DoubleType() => "Double"
+    case FloatType()  => "double"
+    case DoubleType() => "double"
     case _ => super.remap(tp)
   }
 
@@ -38,8 +38,9 @@ trait CppGenFltPt extends CppCodegen {
       case DoubleType() => emit(src"val $lhs = $x.toDouble")
     }
     case FltPtToFixPt(x) => lhs.tp match {
-      case IntType()  => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
-      case LongType() => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
+      case IntType()  => emit(src"${lhs.tp} $lhs = $x;")
+      case LongType() => emit(src"${lhs.tp} $lhs = $x;")
+      case FixPtType(s,d,f) => emit(src"${lhs.tp} $lhs = $x;")
     }
     case StringToFltPt(x) => lhs.tp match {
       case DoubleType() => emit(src"float $lhs = std::stof($x);")

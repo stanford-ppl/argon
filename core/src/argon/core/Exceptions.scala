@@ -148,6 +148,11 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
       error(c"DRAM $dram is used twice as a $name.  Please only load from a DRAM once, or else stream signals will interfere")
     })
 
+  class TrigInAccelException(lhs: Exp[_]) extends
+    CompilerException(23, c"""Cannot handle trig functions inside of accel block! ${nameOf(lhs).getOrElse("")}""", {
+      error(c"""Cannot handle trig functions inside of accel block! ${nameOf(lhs).getOrElse("")}""")
+    })
+
   // --- User errors
   abstract class UserError(ctx: SrcCtx, console: => Unit) {
     console
