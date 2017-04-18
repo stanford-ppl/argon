@@ -1,13 +1,11 @@
 package argon.typeclasses
 
-import argon.core.Staging
+import argon._
 
 /** Types which are represented by a static number of bits **/
-trait BitsApi extends BitsExp {
+trait BitsApi extends BitsExp { self: ArgonApi => }
 
-}
-
-trait BitsExp extends Staging {
+trait BitsExp { self: ArgonExp =>
 
   trait Bits[T] {
     def zero(implicit ctx: SrcCtx): T

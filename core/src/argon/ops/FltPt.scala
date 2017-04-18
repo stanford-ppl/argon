@@ -1,20 +1,17 @@
 package argon.ops
 
-import argon.core.{ArgonExceptions, Staging}
+import argon.{ArgonApi, ArgonExp}
+import argon.core.{ArgonExceptions, Reporting, Staging}
 import argon.typeclasses._
 import forge._
 
-trait FltPtApi extends FltPtExp with BoolApi with BitsApi with NumApi with OrderApi with CastApi {
-  this: TextApi with FixPtExp =>
-
+trait FltPtApi extends FltPtExp { self: ArgonApi =>
   type Double = Float64
   type Float = Float32
   type Half = Float16
 }
 
-trait FltPtExp extends Staging with BoolExp with BitsExp with NumExp with OrderExp with CastExp with CustomBitWidths with ArgonExceptions {
-  this: TextExp with FixPtExp =>
-
+trait FltPtExp extends BoolExp with Reporting { self: ArgonExp =>
   /** Type aliases **/
   type Float16 = FltPt[_11,_5]
   type Float32 = FltPt[_24,_8]

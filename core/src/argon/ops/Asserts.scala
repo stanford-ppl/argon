@@ -1,15 +1,16 @@
 package argon.ops
 
 import argon.core.Staging
-
 import forge._
 
-trait AssertApi extends AssertExp with BoolApi with TextApi with VoidApi {
+trait AssertApi extends AssertExp  {
+  self: BoolApi with TextApi with VoidApi with Staging =>
   @api def assert(cond: Bool, msg: Text): Void = Void(stage_assert(cond.s, Some(msg.s)))
   @api def assert(cond: Bool): Void = Void(stage_assert(cond.s, None))
 }
 
-trait AssertExp extends Staging with BoolExp with TextExp with VoidExp {
+trait AssertExp {
+  self: Staging with BoolExp with TextExp with VoidExp =>
   /** IR Nodes **/
   case class Assert(cond: Exp[Bool], msg: Option[Exp[Text]]) extends Op[Void] {
     def mirror(f:Tx) = stage_assert(f(cond),f(msg))

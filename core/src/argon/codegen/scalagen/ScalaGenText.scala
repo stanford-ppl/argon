@@ -1,10 +1,11 @@
 package argon.codegen.scalagen
 
+import argon.core.Staging
 import argon.ops.TextExp
 import argon.utils.escapeString
 
 trait ScalaGenText extends ScalaCodegen {
-  val IR: TextExp
+  val IR: TextExp with Staging
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {

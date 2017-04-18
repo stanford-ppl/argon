@@ -28,4 +28,25 @@ class StructTests extends FlatSpec with Matchers {
     (new StructTest).main(Array.empty)
   }
 
+  "StructDefaultArgsTest" should "compile" in {
+    class StructTest extends Test {
+      import IR._
+
+      @struct class MyStruct(x: Int = 13, y: Int = 12)
+
+      @virtualize
+      def main() {
+        val array = Array.tabulate(10){i => MyStruct(x = 25) }
+
+        val m = array(0).x // TODO: Why is this a problem when the val's name is 'x'? Not an issue in normal Scala
+        val y = array(0).y
+
+        println("Expected: 25")
+        println("X value: " + m)
+        println("Y value: " + y)
+      }
+    }
+    (new StructTest).main(Array.empty)
+  }
+
 }

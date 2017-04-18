@@ -1,9 +1,10 @@
 package argon.codegen.chiselgen
 
+import argon.core.Staging
 import argon.ops.ArrayExp
 
 trait ChiselGenArray extends ChiselCodegen {
-  val IR: ArrayExp
+  val IR: ArrayExp with Staging
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {

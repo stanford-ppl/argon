@@ -1,13 +1,11 @@
 package argon.ops
-import argon.core.Staging
+
+import argon._
 import forge._
 
-trait IfThenElseApi extends IfThenElseExp with BoolApi {
-  this: TextApi =>
-}
+trait IfThenElseApi extends IfThenElseExp { self: ArgonApi => }
 
-trait IfThenElseExp extends Staging with BoolExp with VoidExp with OverloadHack {
-  this: TextExp =>
+trait IfThenElseExp extends OverloadHack { self: ArgonExp =>
 
   /** Virtualized Methods **/
   @util def __ifThenElse[A, B, T<:MetaAny[T]](cond: Bool, thenp: => A, elsep: => B)(implicit liftA: Lift[A,T], liftB: Lift[B,T]): T = {
