@@ -1,10 +1,12 @@
 package argon.codegen.scalagen
 
-import argon.ops.HashMapExp
+import argon.core.Staging
+import argon.ops.{FixPtExp, HashMapExp}
+import argon.typeclasses.CustomBitWidths
 
 
 trait ScalaGenHashMap extends ScalaCodegen {
-  val IR: HashMapExp
+  val IR: HashMapExp with FixPtExp with Staging with CustomBitWidths
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {

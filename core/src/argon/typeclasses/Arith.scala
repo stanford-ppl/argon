@@ -1,12 +1,11 @@
 package argon.typeclasses
 
-import argon.core.Staging
+import argon._
+import argon.core.StagedTypes // Needs to extend StagedTypes to get right implicit ordering
 
-trait ArithApi extends ArithExp {
+trait ArithApi extends ArithExp { self: ArgonApi => }
 
-}
-
-trait ArithExp extends Staging {
+trait ArithExp extends StagedTypes { self: ArgonExp =>
 
   trait Arith[T] {
     def negate(x: T)(implicit ctx: SrcCtx): T
@@ -16,7 +15,7 @@ trait ArithExp extends Staging {
     def divide(x: T, y: T)(implicit ctx: SrcCtx): T
   }
 
-  implicit class Ops[T:Arith](lhs: T) {
+  implicit class ArithOps[T:Arith](lhs: T) {
     def unary_-(implicit ctx: SrcCtx): T = arith[T].negate(lhs)
     def +(rhs: T)(implicit ctx: SrcCtx): T = arith[T].plus(lhs, rhs)
     def -(rhs: T)(implicit ctx: SrcCtx): T = arith[T].minus(lhs, rhs)

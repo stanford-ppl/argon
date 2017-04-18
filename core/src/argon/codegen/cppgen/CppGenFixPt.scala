@@ -1,9 +1,10 @@
 package argon.codegen.cppgen
 
+import argon.core.Staging
 import argon.ops.{FixPtExp, FltPtExp}
 
 trait CppGenFixPt extends CppCodegen {
-  val IR: FixPtExp with FltPtExp
+  val IR: FixPtExp with FltPtExp with Staging
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {

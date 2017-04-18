@@ -1,9 +1,10 @@
 package argon.codegen.scalagen
 
+import argon.core.Staging
 import argon.ops.{FixPtExp, FltPtExp}
 
 trait ScalaGenFltPt extends ScalaCodegen {
-  val IR: FltPtExp with FixPtExp
+  val IR: FltPtExp with FixPtExp with Staging
   import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {

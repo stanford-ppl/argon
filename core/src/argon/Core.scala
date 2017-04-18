@@ -1,5 +1,5 @@
 package argon
-import argon.core.Staging
+import argon.core.{Reporting, Staging}
 import argon.ops.ArrayExp
 import argon.transform.Transformer
 import argon.utils.deleteExts
@@ -49,7 +49,7 @@ trait LibCore {
   def args = __args
 }
 
-trait CompilerCore extends Staging with ArrayExp { self =>
+trait CompilerCore extends ArgonExp {
   val passes: ArrayBuffer[Pass] = ArrayBuffer.empty[Pass]
   val testbench: Boolean = false
 

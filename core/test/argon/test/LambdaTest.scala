@@ -1,14 +1,14 @@
 package argon.test
 
+import argon._
 import argon.ops._
-import argon.{AppCore, LibCore}
 import argon.codegen.scalagen.ScalaCodegen
 import argon.core.Staging
 import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized.{SourceContext, virtualize}
 
 trait SimpleLambdaApi extends SimpleLambdaExp with FixPtApi {
-  this: TextApi with FltPtApi =>
+  this: ArgonApi =>
 
   // Contrived example - unfused map which only returns the first value
   // Keep both blocks without having to introduce extra bound variable
@@ -25,7 +25,7 @@ trait SimpleLambdaApi extends SimpleLambdaExp with FixPtApi {
   }
 }
 
-trait SimpleLambdaExp extends Staging with FixPtExp { this: TextExp with FltPtExp =>
+trait SimpleLambdaExp { this: ArgonExp =>
 
   /** IR Nodes **/
   case class Map2[T: Type](n: Exp[Int32], map1: Block[T], map2: Block[T], i: Bound[Int32]) extends Op[T] {
@@ -48,7 +48,7 @@ trait SimpleLambdaExp extends Staging with FixPtExp { this: TextExp with FltPtEx
 
 
 trait ScalaGenLambda extends ScalaCodegen {
-  val IR: SimpleLambdaExp
+  val IR: ArgonExp with SimpleLambdaExp
   import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {

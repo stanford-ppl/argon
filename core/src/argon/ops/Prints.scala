@@ -1,10 +1,9 @@
 package argon.ops
 
-import argon.core.Staging
-
+import argon._
 import forge._
 
-trait PrintApi extends PrintExp with TextApi with VoidApi {
+trait PrintApi extends PrintExp { self: ArgonApi =>
   /** Direct methods **/
   @api def println(): Void = println("")
 
@@ -15,7 +14,7 @@ trait PrintApi extends PrintExp with TextApi with VoidApi {
   @api def println(x: java.lang.String): Void = println(string2text(x))
 }
 
-trait PrintExp extends Staging with TextExp with VoidExp {
+trait PrintExp { self: ArgonExp =>
   /** IR Nodes **/
   case class Print(x: Exp[Text]) extends Op[Void] { def mirror(f:Tx) = misc_print(f(x)) }
   case class Println(x: Exp[Text]) extends Op[Void] { def mirror(f:Tx) = misc_println(f(x)) }

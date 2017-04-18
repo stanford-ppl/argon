@@ -41,12 +41,24 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   implicit def subTypeEv[T:Meta](x: T): MetaAny[T] = meta[T].ev(x)
 
   /** Frontend staged type evidence **/
-  // TODO: Ideally Type and Meta these would be different, or somehow separated.
+  // TODO: Ideally Type and Meta would be different, or somehow separated.
   /*abstract class Meta[T](implicit val ev: T <:< MetaAny[T]) extends Type[T] {
     def unwrapped(x: T): Exp[T] = x.s
     def wrapped(x: Exp[T]): T
   }*/
   type Meta[T] = Type[T]
+ 
+  private def unstagedWarning(op: String)(implicit ctx: SrcCtx): Unit = {
+    warn(ctx, s"Unstaged method $op was used here on a staged type during staging.")
+    warn("Add @virtualize annotation to an enclosing scope to prevent this.")
+    warn(ctx)
+  }
+  private def unstagedWarningNoCtx(op: String)(ctx: SrcCtx): Unit = {
+    val name = ctx.lhsName.getOrElse("the value")
+    warn(ctx, s"Unstaged method $op was used on $name defined here during staging.")
+    warn("Add @virtualize annotation to an enclosing scope to prevent this.")
+    warn(ctx)
+  }
 
   // Has to be an implicit class to not conflict with higher priority implicits on +
   implicit class ConcatOps[T<:MetaAny[T]](lhs: T) {
@@ -54,20 +66,6 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     @api def +(rhs: Text): Text = concat(lhs.toText, rhs)
     @api def +[R](rhs: MetaAny[R]): Text = concat(lhs.toText, rhs.toText)
   }
-
-  private def unstagedWarning(op: String)(implicit ctx: SrcCtx): Unit = {
-    warn(ctx, s"Unstaged method $op was used here on a staged type during staging.")
-    warn("Add @virtualize annotation to an enclosing scope to prevent this.")
-    warn(ctx)
-  }
-  private def unstagedWarningNoCtx(op: String)(ctx: SrcCtx): Unit = {
-    // val name = ctx.lhsName.getOrElse("the value")
-    val name = "the value"
-    warn(ctx, s"Unstaged method $op was used on $name defined here during staging.")
-    warn("Add @virtualize annotation to an enclosing scope to prevent this.")
-    warn(ctx)
-  }
-
 
   /** Base trait for all staged, frontend types **/
   abstract class MetaAny[T:Meta] extends Product {
@@ -90,11 +88,11 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
       if (State.staging) unstagedWarning("toString")
       this.productPrefix + this.productIterator.mkString("(", ", ", ")")
     }*/
-    final override def toString(): String = {
+    override def toString(): String = {
       if (State.staging) unstagedWarningNoCtx("toString()")(s.ctx)
       this.productPrefix + this.productIterator.mkString("(", ", ", ")")
     }
-    final override def equals(that: Any): Boolean = {
+    override def equals(that: Any): Boolean = {
       if (State.staging) unstagedWarningNoCtx("equals")(s.ctx)
       this.isEqual(that)
     }

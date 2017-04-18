@@ -1,13 +1,15 @@
 package argon.codegen.cppgen
 
 import argon.codegen.StructCodegen
+import argon.core.Staging
 import argon.ops.StructExp
+
 import scala.language.postfixOps
 import sys.process._
 
 
 trait CppGenStructs extends CppCodegen with StructCodegen {
-  val IR: StructExp
+  val IR: StructExp with Staging
   import IR._
 
   protected def structName(tp: StructType[_], idx: Int): String = s"Struct$idx"
