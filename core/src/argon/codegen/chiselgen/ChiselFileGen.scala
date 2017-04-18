@@ -21,13 +21,13 @@ trait ChiselFileGen extends FileGen {
     // val RootController = getStream("RootController")
 
     withStream(getStream("RootController")) {
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Begin!")}
+      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Begin!")}
       preprocess(b)
       toggleEn() // Turn off
       emitMain(b)
       toggleEn() // Turn on
       postprocess(b)
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Complete!")}
+      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Complete!")}
       b
     }
   }
