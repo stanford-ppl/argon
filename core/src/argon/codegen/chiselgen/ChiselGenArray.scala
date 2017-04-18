@@ -11,7 +11,7 @@ trait ChiselGenArray extends ChiselCodegen {
     case tp: ArrayType[_] => src"List[${tp.typeArguments.head}]"
     case _ => super.remap(tp)
   }
-
+  
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     // Array constants are currently disallowed
     case _ => super.quoteConst(c)

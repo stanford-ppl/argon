@@ -149,8 +149,13 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
     })
 
   class TrigInAccelException(lhs: Exp[_]) extends
-    CompilerException(23, c"""Cannot handle trig functions inside of accel block! ${nameOf(lhs).getOrElse("")}""", {
+    CompilerException(24, c"""Cannot handle trig functions inside of accel block! ${nameOf(lhs).getOrElse("")}""", {
       error(c"""Cannot handle trig functions inside of accel block! ${nameOf(lhs).getOrElse("")}""")
+    })
+
+  class NoWireConstructorException(lhs: String) extends
+    CompilerException(25, c"""Cannot create new wire for $lhs""", {
+      error(c"""Cannot create new wire for $lhs""")
     })
 
   // --- User errors

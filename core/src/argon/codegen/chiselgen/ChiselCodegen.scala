@@ -64,7 +64,6 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     }
   }
 
-
   final protected def emitModule(lhs: String, x: String, args: String*): Unit = {
     // dependencies ::= AlwaysDep("chiselgen", "template-level/templates/$x.scala")
 
