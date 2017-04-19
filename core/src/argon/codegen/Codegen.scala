@@ -35,22 +35,22 @@ trait Codegen extends Traversal {
       if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   } 
-  protected def open(x: String): Unit = {
-    if (emitEn) {
+  protected def open(x: String, forceful: Boolean = false): Unit = {
+    if (emitEn | forceful) {
       stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 
     } else { 
       if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   }
-  protected def close(x: String): Unit = { 
-    if (emitEn) {
+  protected def close(x: String, forceful: Boolean = false): Unit = { 
+    if (emitEn | forceful) {
       if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)
     } else { 
       if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   } 
-  protected def closeopen(x: String): Unit = { // Good for "} else {" lines
-    if (emitEn) {
+  protected def closeopen(x: String, forceful: Boolean = false): Unit = { // Good for "} else {" lines
+    if (emitEn | forceful) {
       if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x); streamTab(streamName) += 1
     } else { 
       if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}

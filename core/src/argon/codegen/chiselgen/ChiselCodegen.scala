@@ -51,9 +51,57 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     case lhs: Sym[_] => s"x${lhs.id}"
   }
 
-  final protected def emitGlobal(x: String, forceful: Boolean = false): Unit = { 
+  final protected def emitGlobalWire(x: String, forceful: Boolean = false): Unit = { 
     withStream(getStream("GlobalWires")) {
       emit(x, forceful) 
+    }
+  }
+
+  final protected def emitGlobalModule(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalModules")) {
+      emit(x, forceful) 
+    }
+  }
+
+  final protected def emitGlobalRetiming(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalRetiming")) {
+      emit(x, forceful) 
+    }
+  }
+
+  final protected def openGlobalWire(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalWires")) {
+      open(x, forceful) 
+    }
+  }
+
+  final protected def openGlobalModule(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalModules")) {
+      open(x, forceful) 
+    }
+  }
+
+  final protected def openGlobalRetiming(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalRetiming")) {
+      open(x, forceful) 
+    }
+  }
+
+  final protected def closeGlobalWire(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalWires")) {
+      close(x, forceful) 
+    }
+  }
+
+  final protected def closeGlobalModule(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalModules")) {
+      close(x, forceful) 
+    }
+  }
+
+  final protected def closeGlobalRetiming(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalRetiming")) {
+      close(x, forceful) 
     }
   }
 

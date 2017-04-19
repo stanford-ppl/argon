@@ -65,7 +65,7 @@ import templates.ops._
 import fringe._
 import types._
 import chisel3._""")
-      open(s"trait RootController extends GlobalWires {")
+      open(s"trait RootController extends GlobalWires with GlobalModules with GlobalRetiming {")
       emit(src"// Root controller for app: ${Config.name}")
 
     }
@@ -78,6 +78,25 @@ import chisel3._
 import types._
 trait GlobalWires extends IOModule{""")
     }
+
+    withStream(getStream("GlobalModules")) {
+      emit(s"""package accel
+import templates._
+import templates.ops._
+import chisel3._
+import types._
+trait GlobalModules extends IOModule{""")
+    }
+
+    withStream(getStream("GlobalRetiming")) {
+      emit(s"""package accel
+import templates._
+import templates.ops._
+import chisel3._
+import types._
+trait GlobalRetiming extends IOModule{""")
+    }
+
 
     withStream(getStream("Instantiator")) {
       emit("// See LICENSE for license details.")
@@ -210,10 +229,18 @@ trait GlobalWires extends IOModule{""")
       close("}")
     }
 
+    withStream(getStream("GlobalModules")) {
+      close("}")
+    }
+
+    withStream(getStream("GlobalRetiming")) {
+      close("}")
+    }
+
     if (Config.multifile >= 3 ) {
       val traits = streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-      }.toSet - "AccelTop" - "GlobalWires" - "Instantiator"
+      }.toSet - "AccelTop" - "Instantiator"
 
       withStream(getStream("AccelTop")) {
         emit(s"""package accel
@@ -230,7 +257,7 @@ class AccelTop(
   val storeStreamInfo: List[StreamParInfo],
   val streamInsInfo: List[StreamParInfo],
   val streamOutsInfo: List[StreamParInfo]
-) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+) extends ${traits.mkString("\n with ")} {
 
   // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
 
@@ -240,7 +267,7 @@ class AccelTop(
     // Get traits that need to be mixed in
       val traits = streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-      }.toSet - "AccelTop" - "GlobalWires" - "RootController" - "Instantiator"
+      }.toSet - "AccelTop" - "Instantiator"
       withStream(getStream("AccelTop")) {
         emit(s"""package accel
 import templates._
@@ -257,7 +284,7 @@ class AccelTop(
   val storeStreamInfo: List[StreamParInfo],
   val numStreamIns: List[StreamParInfo],
   val numStreamOuts: List[StreamParInfo]
-) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+) extends ${traits.mkString("\n with ")} {
 
 }
   // AccelTop class mixes in all the other traits and is instantiated by tester""")
