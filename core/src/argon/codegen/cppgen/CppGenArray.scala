@@ -50,24 +50,7 @@ trait CppGenArray extends CppCodegen {
   }
 
   override protected def remap(tp: Type[_]): String = tp match {
-    case tp: ArrayType[_] => tp.typeArguments.head match {
-        case DoubleType() => "vector<double>"
-        case FloatType() => "vector<double>"
-        case IntType() => "vector<int32_t>"
-        case LongType() => "vector<int32_t>"
-        case TextType => "vector<string>"
-        case BoolType => "vector<bool>"
-        case fp: FixPtType[_,_,_] => 
-          fp.fracBits match {
-            case 0 => "vector<int32_t>"
-            case _ => "vector<double>"
-          }
-        case _: FltPtType[_,_] => "double"
-        // case struct: Tup2Type[_,_] => src"cppDeliteArray${tp.typeArguments.head}" // Let struct find appropriate name for this  
-        case tp_inner: ArrayType[_] => s"vector<${remap(tp_inner)}>"
-        case st: StructType[_] => src"vector<${tp.typeArguments.head}>"
-        case _ => src"genericArray of ${tp.typeArguments.head}"
-      }
+    case tp: ArrayType[_] => src"vector<${tp.typeArguments.head}>"
     case _ => super.remap(tp)
   }
 
