@@ -45,6 +45,7 @@ trait CppFileGen extends FileGen {
 #include "cppDeliteArrays.h"
 #include "cppDeliteArraydouble.h"
 #include "FringeContext.h"
+#include "functions.h"
 #include <vector>
 using std::vector;
 
@@ -60,6 +61,16 @@ using std::vector;
       emit("""#ifndef __CPPTYPES_H__
 #define __CPPTYPES_H__
 #endif""")
+    }
+
+    withStream(getStream("functions","h")) {
+      emit("""#ifndef __CPPFUN_H__
+#define __CPPFUN_H__
+""")
+    }
+
+    withStream(getStream("functions","cpp")) {
+      emit("""#include "functions.h""")
     }
 
 //     withStream(getStream("DRAM","h")){
@@ -111,6 +122,9 @@ int main(int argc, char *argv[]) {
 }
 """)
 
+      withStream(getStream("functions","h")) {
+        emit("""#endif""")
+    }
 
     super.emitFileFooter()
   }

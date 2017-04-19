@@ -4,7 +4,7 @@ import argon.core.Staging
 import argon.ops.FunctionExp
 import forge.generate
 
-/*
+
 @generate
 trait ScalaGenFunction extends ScalaCodegen {
   val IR: FunctionExp with Staging
@@ -20,7 +20,8 @@ trait ScalaGenFunction extends ScalaCodegen {
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case FunDeclJJ$JJ$1to22(argII$II$1toJJ, block) =>
       val args = List(argII$II$1toJJ).map(x => x +": " + remap(x.tp)).mkString(",")
-      open(src"def $lhs($args) = {")
+      val rt = remap(block.result.tp)
+      open(src"def $lhs($args): $rt =")
       emitBlock(block)
       close("}")
     case FunApplyJJ$JJ$1to22(fun, argII$II$1toJJ) =>
@@ -29,4 +30,3 @@ trait ScalaGenFunction extends ScalaCodegen {
     case _ => super.emitNode(lhs, rhs)
   }
 }
-*/
