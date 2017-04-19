@@ -31,7 +31,7 @@ trait CppGenFunction extends CppCodegen {
       val rt = remap(block.result.tp)
       val name = metadata[CtxName](lhs).get.name
       withStream(getStream("functions", "cpp")) {
-        open(src"$rt $name($args) = {")
+        open(src"$rt $name($args) {")
         emitBlock(block)
         close("}")
       }
