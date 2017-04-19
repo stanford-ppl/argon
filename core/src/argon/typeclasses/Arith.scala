@@ -1,15 +1,11 @@
 package argon.typeclasses
 
-import argon.{ArgonApi, ArgonExp}
-import argon.core.Staging
+import argon._
+import argon.core.StagedTypes // Needs to extend StagedTypes to get right implicit ordering
 
-trait ArithApi extends ArithExp {
-  self: ArgonApi =>
+trait ArithApi extends ArithExp { self: ArgonApi => }
 
-}
-
-trait ArithExp {
-  self: ArgonExp =>
+trait ArithExp extends StagedTypes { self: ArgonExp =>
 
   trait Arith[T] {
     def negate(x: T)(implicit ctx: SrcCtx): T

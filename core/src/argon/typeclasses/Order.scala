@@ -1,16 +1,11 @@
 package argon.typeclasses
 
-import argon.{ArgonApi, ArgonExp}
-import argon.core.Staging
-import argon.ops._
+import argon._
 
 /** Staged numeric types **/
-trait OrderApi extends OrderExp {
-  self: ArgonApi =>
-}
+trait OrderApi extends OrderExp { self: ArgonApi => }
 
-trait OrderExp {
-  self: ArgonExp =>
+trait OrderExp { self: ArgonExp =>
 
   trait Order[T] {
     def lessThan(a: T, b: T)(implicit ctx: SrcCtx): Bool

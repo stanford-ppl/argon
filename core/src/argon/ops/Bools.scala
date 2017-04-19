@@ -1,17 +1,13 @@
 package argon.ops
 
-import argon.{ArgonApi, ArgonExp}
-import argon.core.Staging
-import argon.typeclasses._
+import argon._
 import forge._
 
-trait BoolApi extends BoolExp {
-  self: ArgonApi =>
+trait BoolApi extends BoolExp { self: ArgonApi =>
   type Boolean = Bool
 }
 
-trait BoolExp {
-  self: ArgonExp =>
+trait BoolExp { self: ArgonExp =>
 
   /** Infix methods **/
   case class Bool(s: Exp[Bool]) extends MetaAny[Bool] {

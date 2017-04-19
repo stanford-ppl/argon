@@ -1,18 +1,13 @@
 package argon.ops
 
-import argon.{ArgonApi, ArgonExp}
-import argon.core.Staging
+import argon._
 import forge._
 
-trait TextApi extends TextExp {
-  self: ArgonApi =>
-
+trait TextApi extends TextExp { self: ArgonApi =>
   type String = Text
-
 }
 
-trait TextExp extends BoolExp {
-  self: ArgonExp =>
+trait TextExp extends BoolExp { self: ArgonExp =>
   /** Infix methods **/
   implicit object TextType extends Meta[Text] {
     def wrapped(x: Exp[Text]) = Text(x)
@@ -21,8 +16,8 @@ trait TextExp extends BoolExp {
   }
 
   case class Text(s: Exp[Text]) extends MetaAny[Text] {
-    @api def +(rhs: String): Text = concat(this, liftString(rhs))
-    @api def +(rhs: Text): Text = concat(this, rhs)
+    @api def +(rhs: String): Text = concat(this.toText, liftString(rhs))
+    @api def +(rhs: Text): Text = concat(this.toText, rhs)
     @api def +[R](rhs: MetaAny[R]): Text = concat(this, rhs.toText)
 
     @api def =!=(that: Text): Bool = Bool(text_differ(this.s, that.s))

@@ -26,10 +26,10 @@ trait Definitions extends Blocks { self: Staging =>
     // Default: All symbol inputs
     def reads: Seq[Dyn[_]] = inputs
 
-    // Freqs: symbol frequency hints used in code motion - less than 0.75f is "cold", while greater than 100f is "hot"
+    // Freqs: symbol frequency hints used in code motion - frequency is either Freq.Hot, Freq.Cold, or Freq.Normal
     // Code motion makes an attempt to schedule unbound "hot" symbols early (move out of blocks)
-    // Default: All symbol inputs have a frequency of 1.0f ("normal")
-    def freqs: Seq[(Dyn[_],UseFreq)] = Nil
+    // Default: All symbol inputs have a frequency of Freq.Normal, block dependencies depend on Block temp
+    def freqs: Seq[(Dyn[_],UseFreq)] = blocks.flatMap{blk => dyns(blk).map(_ -> blk.temp)}
 
     // Scopes: scopes associated with this Def
     // Default: All blocks and lambdas in the Def's case class constructor
@@ -38,6 +38,7 @@ trait Definitions extends Blocks { self: Staging =>
     // Binds: symbols "bound" by this Def
     // Bound symbols define the start of scopes. Effectful symbols in a scope typically must be bound.
     // All dependents of bound syms up until but not including the binding Def make up the majority of a scope
+    // NOTE: Tempting to use productIterator here too, but note that Bound values can be inputs
     // Default: All effects included in all scopes associated with this Def
     def binds: Seq[Dyn[_]] = blocks.flatMap(_.effectful)
 

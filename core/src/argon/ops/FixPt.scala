@@ -5,17 +5,14 @@ import argon.core.{Reporting, Staging}
 import argon.typeclasses._
 import forge._
 
-trait FixPtApi extends FixPtExp {
-  self: ArgonApi =>
-
+trait FixPtApi extends FixPtExp { self: ArgonApi =>
   type Long  = Int64
   type Int   = Int32
   type Short = Int16
   type Char  = Int8
 }
 
-trait FixPtExp extends BoolExp with Reporting {
-  self: ArgonExp =>
+trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
 
   /** Type Aliases **/
   type Int64 = FixPt[TRUE,_64,_0]
