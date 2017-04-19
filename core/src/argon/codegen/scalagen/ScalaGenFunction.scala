@@ -21,12 +21,14 @@ trait ScalaGenFunction extends ScalaCodegen {
     case FunDeclJJ$JJ$1to22(argII$II$1toJJ, block) =>
       val args = List(argII$II$1toJJ).map(x => x +": " + remap(x.tp)).mkString(",")
       val rt = remap(block.result.tp)
-      open(src"def $lhs($args): $rt =")
+      val name = metadata[CtxName](lhs).get.name
+      open(src"def $name($args): $rt =")
       emitBlock(block)
       close("}")
     case FunApplyJJ$JJ$1to22(fun, argII$II$1toJJ) =>
+      val name = metadata[CtxName](fun).get.name
       val args = List(argII$II$1toJJ).mkString(",")
-      emit(src"val $lhs = $fun($args)")
+      emit(src"val $lhs = $name($args)")
     case _ => super.emitNode(lhs, rhs)
   }
 }

@@ -29,8 +29,9 @@ trait CppGenFunction extends CppCodegen {
     case FunDeclJJ$JJ$1to22(argII$II$1toJJ, block) =>
       val args = List(argII$II$1toJJ).map(arg).mkString(",")
       val rt = remap(block.result.tp)
+      val name = metadata[CtxName](lhs).get.name
       withStream(getStream("functions", "cpp")) {
-        open(src"$rt $lhs($args) = {")
+        open(src"$rt $name($args) = {")
         emitBlock(block)
         close("}")
       }
@@ -38,8 +39,9 @@ trait CppGenFunction extends CppCodegen {
         emit(src"$rt $lhs($args);")
       }
     case FunApplyJJ$JJ$1to22(fun, argII$II$1toJJ) =>
+      val name = metadata[CtxName](fun).get.name
       val args = List(argII$II$1toJJ).mkString(",")
-      emit(src"val $lhs = $fun($args)")
+      emit(src"val $lhs = $name($args)")
     case _ => super.emitNode(lhs, rhs)
   }
 }
