@@ -36,7 +36,7 @@ trait CppGenFunction extends CppCodegen {
         close("}")
       }
       withStream(getStream("functions", "h")) {
-        emit(src"$rt $lhs($args);")
+        emit(src"$rt $name($args);")
       }
     case FunApplyJJ$JJ$1to22(fun, argII$II$1toJJ) =>
       val name = metadata[CtxName](fun).get.name
