@@ -39,7 +39,7 @@ trait ArrayExp extends Staging {
   private[argon] def array_infix_foreach[T:Meta](array: MetaArray[T], func: T => Void)(implicit ctx: SrcCtx): Void = {
     val i = fresh[Index]
     val aBlk = stageLambda(array.s) { array.apply(wrap(i)).s }
-    val fBlk = stageLambda(aBlk.result){ func(wrap(aBlk.result)).s }
+    val fBlk = stageLambda(aBlk.result) { func(wrap(aBlk.result)).s }
     val effects = aBlk.summary andAlso fBlk.summary
     Void( stageEffectful(ArrayForeach(array.s, aBlk, fBlk, i), effects.star)(ctx) )
   }

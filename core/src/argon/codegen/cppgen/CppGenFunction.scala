@@ -1,4 +1,4 @@
-package argon.codegen.scalagen
+package argon.codegen.cppgen
 
 import argon.core.Staging
 import argon.ops.FunctionExp
@@ -6,9 +6,10 @@ import forge.generate
 
 /*
 @generate
-trait ScalaGenFunction extends ScalaCodegen {
+trait CppGenFunction extends CppCodegen {
   val IR: FunctionExp with Staging
   import IR._
+
 
   override protected def remap(tp: Type[_]): String = tp match {
     case ArgonFunctionJJType$JJ$1to22(argII$II$1toJJ, r) =>

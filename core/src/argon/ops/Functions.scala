@@ -38,8 +38,8 @@ trait FunctionExp {
   }
 
   def fun$JJ$1to22[TII$II$1toJJ, R:Type](f: FunctionJJ[TII$II$1toJJ, R])(implicit evII$II$1toJJ: Type[TII], ctx: SrcCtx): ArgonFunctionJJ[TII$II$1toJJ,R] = {
-    val argII$II$1toJJ = fresh[TII]
-    val wargII$II$1toJJ = wrap(argII)
+    def argII$II$1toJJ = fresh[TII]
+    def wargII$II$1toJJ = wrap(argII)
     val bodyBlock = stageBlock(f(wargII$II$1toJJ).s)
     val sym = stage(FunDeclJJ(argII$II$1toJJ, bodyBlock))(ctx)
     wrap(sym)
@@ -58,6 +58,9 @@ trait FunctionExp {
     ArgonFunctionJJType(evII$II$1toJJ, meta[R])
   }
 
+  implicit def liftFunctionJJ2ArgonFunction$JJ$1to22[TII$II$1toJJ, R:Type](implicit evII$II$1toJJ: Type[TII]) = new Lift[FunctionJJ[TII$II$1toJJ, R], ArgonFunctionJJ[TII$II$1toJJ, R]] {
+    override def apply(x: FunctionJJ[TII$II$1toJJ, R])(implicit ctx: SrcCtx) = fun(x)
+  }
 
 
 }
