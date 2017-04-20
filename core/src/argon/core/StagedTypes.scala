@@ -92,6 +92,7 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
       if (State.staging) unstagedWarningNoCtx("toString()")(s.ctx)
       this.productPrefix + this.productIterator.mkString("(", ", ", ")")
     }
+
     override def equals(that: Any): Boolean = {
       if (State.staging) unstagedWarningNoCtx("equals")(s.ctx)
       this.isEqual(that)
@@ -107,7 +108,7 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   def liftString(x: String)(implicit ctx: SrcCtx): Text
   def concat(x: Text, y: Text)(implicit ctx: SrcCtx): Text
 
-  @util def infix_toString[T<:MetaAny[T]](x: T): Text = x.toText
+  @util def infix_toString(x: MetaAny[_]): Text = x.toText
 
   def __valDef[T<:MetaAny[T]](init: T, name: String): Unit = {
     log(c"Setting name of ${init.s} to $name")

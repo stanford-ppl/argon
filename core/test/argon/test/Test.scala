@@ -8,7 +8,7 @@ import argon.traversal.IRPrinter
 import argon.codegen.scalagen._
 import argon.transform.ForwardTransformer
 import forge._
-
+import scala.collection.immutable.{StringOps, WrappedString}
 import scala.runtime._
 
 trait TestExp extends ArgonExp
@@ -19,6 +19,9 @@ trait LowPriorityImplicits {
   implicit def long2RichLong(x: Long): RichLong = new RichLong(x)
   implicit def float2RichFloat(x: Float): RichFloat = new RichFloat(x)
   implicit def double2RichDouble(x: Double): RichDouble = new RichDouble(x)
+
+  //implicit def string2StringOps(x: String): StringOps = new StringOps(x)
+  //implicit def string2WrappedString(x: String): WrappedString = new WrappedString(x)
 }
 
 trait TestApi extends TestExp with ArgonApi with LowPriorityImplicits
@@ -36,12 +39,25 @@ trait TestApi extends TestExp with ArgonApi with LowPriorityImplicits
   implicit class doubleWrapper(x: scala.Double) {
     @api def to[B:Meta](implicit cast: Cast[scala.Double,B]): B = cast(x)
   }
+
+  /*implicit class any2stringadd(lhs: java.lang.String) {
+    @api def +[T<:MetaAny[T]](rhs: T): Text = concat(liftString(lhs), rhs.toText)
+    @api def +(rhs: Any): java.lang.String = lhs.concat(rhs.toString)
+  }
+  implicit class augmentString(lhs: java.lang.String) {
+    @api def +[T<:MetaAny[T]](rhs: T): Text = concat(liftString(lhs), rhs.toText)
+    @api def +(rhs: Any): java.lang.String = lhs.concat(rhs.toString)
+  }
+  implicit class wrapString(lhs: java.lang.String) {
+    @api def +[T<:MetaAny[T]](rhs: T): Text = concat(liftString(lhs), rhs.toText)
+    @api def +(rhs: Any): java.lang.String = lhs.concat(rhs.toString)
+  }*/
 }
 
 trait ScalaGen extends ScalaCodegen with ScalaFileGen
   with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert with ScalaGenBool with ScalaGenFixPt with ScalaGenFltPt
   with ScalaGenHashMap with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenStructs
-  with ScalaGenText with ScalaGenVoid {
+  with ScalaGenText with ScalaGenVoid with ScalaGenFunction {
   override val IR: TestExp
 }
 
@@ -246,6 +262,32 @@ object UnstagedToStringTest extends Test {
   }
 }
 
+object StagedStringTest extends Test {
+  import IR._
+
+  @virtualize def main(): Unit = {
+    val cst1 = 32
+    val cst2 = 23
+    val cst3 = 11
+    val cst4 = 7
+    val g1 = cst1 + 2
+    val g2 = cst2 + 4
+    val g3 = cst3 + 6
+    val g4 = cst4 + 8
+
+    val data = Array.tabulate(32){i => i}
+    val g6 = data(3)
+    println("expected: " + g1 + ", " + g2 + ", " + g3 + ", " + g4 + ", "+ g6.toString)
+  }
+}
+
+class StringStagingTests extends FlatSpec with Matchers with argon.core.Exceptions {
+  "StagedStringTest" should "compile" in {
+    StagedStringTest.main(Array.empty)
+    val tostr = StagedStringTest.IR.NodeData.value.collect{case d: StagedStringTest.IR.ToString[_] => d }
+    tostr.length should be >= 2
+  }
+}
 
 class Testbench extends FlatSpec with Matchers with argon.core.Exceptions {
   val noargs = Array[String]()

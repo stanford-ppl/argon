@@ -9,14 +9,17 @@ trait FileGen extends Codegen {
 
   protected def emitMain[S:Type](b: Block[S]): Unit
 
+  protected def mainFile: String = "main"
+
   override protected def process[S:Type](b: Block[S]): Block[S] = {
-    val file = newStream("main")
+    val file = newStream(mainFile)
     withStream(file) {
       preprocess(b)
       emitMain(b)
       postprocess(b)
     }
   }
+
   override protected def preprocess[S:Type](b: Block[S]) = {
     if (Config.clearGen) {
       try {
@@ -29,6 +32,7 @@ trait FileGen extends Codegen {
     emitFileHeader()
     super.preprocess(b)
   }
+
   override protected def postprocess[S:Type](b: Block[S]) = {
     emitFileFooter()
     super.postprocess(b)
