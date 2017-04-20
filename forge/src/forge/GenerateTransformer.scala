@@ -6,30 +6,30 @@ import scala.reflect.macros.blackbox
 class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
   import c.universe._
 
-  private val transformer = new Tx
-  private val checker = new Check
+   val transformer = new Tx
+   val checker = new Check
   def apply[T<:Tree](x: T): List[T] = {
     var round = 0
     var level: List[T] = List(x)
     while (level.exists(needsUnroll) && round < 20) {
-      //println(level)
       val nextLevel = level.flatMap{x => if (needsUnroll(x)) transformer.t(x) else List(x) }
       level = nextLevel
       round += 1
     }
     if (level.exists(needsUnroll)) {
+      println(level)
       c.warning(c.enclosingPosition, "Generation unrolling did not appear to complete after 20 iterations.")
     }
     //println(level)
     level
   }
 
-  private def needsUnroll(x: Tree): Boolean = checker.check(x)
+   def needsUnroll(x: Tree): Boolean = checker.check(x)
 
   object Ranged {
-    private val Numbered = "([a-zA-Z0-9_]+)\\$([^$]*)\\$([0-9]+)".r
-    private val Until = "([a-zA-Z0-9_]+)\\$([^$]*)\\$([0-9]+)until([0-9]+)".r
-    private val To = "([a-zA-Z0-9_]+)\\$([^$]*)\\$([0-9]+)to([0-9]+)".r
+     val Numbered = "([a-zA-Z0-9_]+)\\$([^$]*)\\$([0-9]+)".r
+     val Until = "([a-zA-Z0-9_]+)\\$([^$]*)\\$([0-9]+)until([0-9]+)".r
+     val To = "([a-zA-Z0-9_]+)\\$([^$]*)\\$([0-9]+)to([0-9]+)".r
 
     def unapply(x: String): Option[(String,String,Range)] = x match {
       case Numbered(name,pattern,num) => Some((name,pattern,0 until num.toInt))
@@ -51,9 +51,9 @@ class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
     }
   }
   object Repeat {
-    private val Numbered = "\\$([^$]*)\\$([0-9]+)".r
-    private val Until = "\\$([^$]*)\\$([0-9]+)until([0-9]+)".r
-    private val To = "\\$([^$]*)\\$([0-9]+)to([0-9]+)".r
+     val Numbered = "\\$([^$]*)\\$([0-9]+)".r
+     val Until = "\\$([^$]*)\\$([0-9]+)until([0-9]+)".r
+     val To = "\\$([^$]*)\\$([0-9]+)to([0-9]+)".r
 
     def unapply(x: String): Option[(String,Range)] = x match {
       case Numbered(pattern,num) => Some((pattern,0 until num.toInt))
@@ -80,7 +80,7 @@ class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
     case TypeName(name) => Ranged.unapply(name).isDefined
   }
 
-  private class Check extends Traverser {
+   class Check extends Traverser {
     var needsUnroll: Boolean = false
     override def traverse(tree: Tree): Unit = tree match {
       case x: ValDef if willUnroll(x.name)    => needsUnroll = true
@@ -106,7 +106,7 @@ class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
   }
 
 
-  private class Tx extends Transformer {
+   class Tx extends Transformer {
     var subst: Map[String,Any] = Map.empty
 
     implicit class RangeTx(x: Range) {
@@ -123,7 +123,7 @@ class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
       result
     }
 
-    private def checkName(orig: String, repl: String): Unit = {
+     def checkName(orig: String, repl: String): Unit = {
       if (orig forall Character.isDigit) {
         c.error(c.enclosingPosition, s"Cannot unroll ${orig}, as this would create an illegal name $repl")
       }
