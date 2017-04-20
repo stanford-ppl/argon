@@ -32,4 +32,3 @@ lazy val core = project
 
 addCommandAlias("make", "compile")
 
-
