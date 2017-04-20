@@ -32,5 +32,4 @@ lazy val core = project
 
 addCommandAlias("make", "compile")
 
-sources in (Compile,doc) := Seq.empty
-publishArtifact in (Compile, packageDoc) := false
+
