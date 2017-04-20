@@ -34,12 +34,12 @@ trait CppGenFltPt extends CppCodegen {
       case DoubleType() => emit(src"${lhs.tp} $lhs = cpp.util.Random.nextDouble();")
     }
     case FltConvert(x) => lhs.tp match {
-      case FloatType()  => emit(src"${lhs.tp} $lhs = ${lhs.tp} $x;")
-      case DoubleType() => emit(src"${lhs.tp} $lhs = ${lhs.tp} $x;")
+      case FloatType()  => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;")
+      case DoubleType() => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;")
     }
     case FltPtToFixPt(x) => lhs.tp match {
-      case IntType()  => emit(src"${lhs.tp} $lhs = ${lhs.tp} $x;")
-      case LongType() => emit(src"${lhs.tp} $lhs = ${lhs.tp} $x;")
+      case IntType()  => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;")
+      case LongType() => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;")
       case FixPtType(s,d,f) => emit(src"${lhs.tp} $lhs = $x;")
     }
     case StringToFltPt(x) => lhs.tp match {
