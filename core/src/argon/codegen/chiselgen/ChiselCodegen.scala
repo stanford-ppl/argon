@@ -51,9 +51,57 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     case lhs: Sym[_] => s"x${lhs.id}"
   }
 
-  final protected def emitGlobal(x: String, forceful: Boolean = false): Unit = { 
+  final protected def emitGlobalWire(x: String, forceful: Boolean = false): Unit = { 
     withStream(getStream("GlobalWires")) {
       emit(x, forceful) 
+    }
+  }
+
+  final protected def emitGlobalModule(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalModules")) {
+      emit(x, forceful) 
+    }
+  }
+
+  final protected def emitGlobalRetiming(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalRetiming")) {
+      emit(x, forceful) 
+    }
+  }
+
+  final protected def openGlobalWire(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalWires")) {
+      open(x, forceful) 
+    }
+  }
+
+  final protected def openGlobalModule(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalModules")) {
+      open(x, forceful) 
+    }
+  }
+
+  final protected def openGlobalRetiming(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalRetiming")) {
+      open(x, forceful) 
+    }
+  }
+
+  final protected def closeGlobalWire(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalWires")) {
+      close(x, forceful) 
+    }
+  }
+
+  final protected def closeGlobalModule(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalModules")) {
+      close(x, forceful) 
+    }
+  }
+
+  final protected def closeGlobalRetiming(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("GlobalRetiming")) {
+      close(x, forceful) 
     }
   }
 
@@ -63,7 +111,6 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       case _ => throw new NoBitWidthException(tp)
     }
   }
-
 
   final protected def emitModule(lhs: String, x: String, args: String*): Unit = {
     // dependencies ::= AlwaysDep("chiselgen", "template-level/templates/$x.scala")
@@ -83,10 +130,13 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= DirDep(resourcesPath, "template-level/templates")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeHW") 
     dependencies ::= DirDep(resourcesPath, "template-level/fringeZynq")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeDE1SoC")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeVCS")
+    
     dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile")) 
     dependencies ::= FileDep(resourcesPath, "app-level/verilator.mk", "../", Some("verilator.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/zynq.mk", "../", Some("zynq.mk"))
+    dependencies ::= FileDep(resourcesPath, "app-level/de1soc.mk", "../", Some("de1soc.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/vcs.mk", "../", Some("vcs.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/build.sbt", "../", Some("build.sbt"))
     dependencies ::= FileDep(resourcesPath, "app-level/run.sh", "../", Some("run.sh"))
