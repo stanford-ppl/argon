@@ -29,7 +29,7 @@ trait ScalaGenFunction extends ScalaCodegen {
     case FunApplyJJ$JJ$1to22(fun, argII$II$1toJJ) =>
       val name = metadata[CtxName](fun).get.name
       val args = List(argII$II$1toJJ).map(quote).mkString(",")
-      emit(src"val $lhs = $name($args)")
+      emit(src"val $lhs: ${lhs.tp} = $name($args)")
     case _ => super.emitNode(lhs, rhs)
   }
 }

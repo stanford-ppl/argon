@@ -21,7 +21,7 @@ trait CppGenFunction extends CppCodegen {
   def arg(e: Exp[_]): String = e.tp match {
     case ArgonFunctionJJType$JJ$1to22(argII$II$1toJJ, r) =>
       val args = List(argII$II$1toJJ).map(remap).mkString(",")
-      src"${remap(r)} (*$e)($args)"
+      src"$r (*$e)($args)"
     case a@_ => src"${remap(a)} $e"
   }
 
@@ -41,7 +41,7 @@ trait CppGenFunction extends CppCodegen {
     case FunApplyJJ$JJ$1to22(fun, argII$II$1toJJ) =>
       val name = metadata[CtxName](fun).get.name
       val args = List(argII$II$1toJJ).map(quote).mkString(",")
-      emit(src"val $lhs = $name($args)")
+      emit(src"${lhs.tp} $lhs = $name($args);")
     case _ => super.emitNode(lhs, rhs)
   }
 }
