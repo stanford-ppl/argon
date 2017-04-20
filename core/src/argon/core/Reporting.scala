@@ -66,9 +66,9 @@ trait Reporting {
   // TODO: Should these be macros?
   final def log(x: => Any): Unit = if (Config.verbosity >= 2) logstream.println(x)
   final def dbg(x: => Any): Unit = if (Config.verbosity >= 1) logstream.println(x)
-  final def msg(x: => Any): Unit = {
+  final def msg(x: => Any, level: Int = 2): Unit = {
     logstream.println(x)
-    if (Config.verbosity >= 2) System.out.println(x)
+    if (Config.verbosity >= level) System.out.println(x)
   }
 
   final def report(x: => Any): Unit = if (Config.verbosity >= 0) System.out.println(x)
