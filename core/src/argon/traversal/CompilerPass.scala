@@ -29,9 +29,9 @@ trait CompilerPass { self =>
   var totalTime = 0.0f
 
   // --- Debugging methods
-  final protected def dbgs(x: => Any) = dbg("  "*tab + x)
-  final protected def logs(x: => Any) = log("  "*tab + x)
-  final protected def msgs(x: => Any) = msg("  "*tab + x)
+  protected def dbgs(x: => Any) = dbg("  "*tab + x)
+  protected def logs(x: => Any) = log("  "*tab + x)
+  protected def msgs(x: => Any) = msg("  "*tab + x)
 
   // --- Methods
   /** External method called by compiler **/
