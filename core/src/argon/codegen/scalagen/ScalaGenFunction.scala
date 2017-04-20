@@ -19,15 +19,16 @@ trait ScalaGenFunction extends ScalaCodegen {
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case FunDeclJJ$JJ$1to22(argII$II$1toJJ, block) =>
-      val args = List(argII$II$1toJJ).map(x => x +": " + remap(x.tp)).mkString(",")
+      val args = List(argII$II$1toJJ).map(x => quote(x) +": " + remap(x.tp)).mkString(",")
       val rt = remap(block.result.tp)
       val name = metadata[CtxName](lhs).get.name
-      open(src"def $name($args): $rt =")
+      open(src"def $name($args): $rt = {")
       emitBlock(block)
       close("}")
+
     case FunApplyJJ$JJ$1to22(fun, argII$II$1toJJ) =>
       val name = metadata[CtxName](fun).get.name
-      val args = List(argII$II$1toJJ).mkString(",")
+      val args = List(argII$II$1toJJ).map(quote).mkString(",")
       emit(src"val $lhs = $name($args)")
     case _ => super.emitNode(lhs, rhs)
   }

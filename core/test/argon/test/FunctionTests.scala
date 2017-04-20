@@ -9,9 +9,11 @@ object ScalaFunTest extends Test {
   import IR._
   @virtualize
   def main() {
-    val f: Int => Int = (arg: Int) =>
+    val f: scala.Function1[Int, Int] = (arg: Int) => {
       arg + 4
-    assert(f(4) == 8)
+    }
+    val f4 = f(4)
+    assert(f4 == 8)
     println("Scala functions appears to be working")
   }
 }
@@ -40,7 +42,7 @@ object ArgonFunMapTest extends Test {
 }
 class FunctionTests extends FlatSpec with Matchers with Exceptions {
   val noargs = Array[String]()
-  "ScalaFunTest" should "compile" in { ScalaFunTest.main() }
-  "ArgonFunTest" should "compile" in { ArgonFunTest.main() }
-  "ArgonFunMapTest" should "compile" in { ArgonFunMapTest.main() }
+  "ScalaFunTest" should "compile" in { ScalaFunTest.main(noargs) }
+  "ArgonFunTest" should "compile" in { ArgonFunTest.main(noargs) }
+  "ArgonFunMapTest" should "compile" in { ArgonFunMapTest.main(noargs) }
 }
