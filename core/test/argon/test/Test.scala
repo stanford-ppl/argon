@@ -57,7 +57,7 @@ trait TestApi extends TestExp with ArgonApi with LowPriorityImplicits
 trait ScalaGen extends ScalaCodegen with ScalaFileGen
   with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert with ScalaGenBool with ScalaGenFixPt with ScalaGenFltPt
   with ScalaGenHashMap with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenStructs
-  with ScalaGenText with ScalaGenVoid {
+  with ScalaGenText with ScalaGenVoid with ScalaGenFunction {
   override val IR: TestExp
 }
 

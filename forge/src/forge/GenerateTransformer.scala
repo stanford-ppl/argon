@@ -12,6 +12,7 @@ class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
     var round = 0
     var level: List[T] = List(x)
     while (level.exists(needsUnroll) && round < 20) {
+      //println(level)
       val nextLevel = level.flatMap{x => if (needsUnroll(x)) transformer.t(x) else List(x) }
       level = nextLevel
       round += 1
@@ -19,6 +20,7 @@ class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
     if (level.exists(needsUnroll)) {
       c.warning(c.enclosingPosition, "Generation unrolling did not appear to complete after 20 iterations.")
     }
+    //println(level)
     level
   }
 
@@ -179,6 +181,9 @@ class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
 
       case TypeDef(mods,Ranged(name,p,range),tparams,rhs) =>
         range.tx(p){i => TypeDef(mods, f(name), t(tparams), f(rhs)).asInstanceOf[T] }
+
+      case CaseDef(Apply(Ident(Ranged(name,p,range)), extractor), guard, body) =>
+        range.tx(p) { i => CaseDef(Apply(f(Ident(name)), f(extractor)), f(guard), f(body)).asInstanceOf[T] }
 
       // case X$X$0to4 =>
       case CaseDef(Ident(Ranged(name,p,range)), guard, body) =>
