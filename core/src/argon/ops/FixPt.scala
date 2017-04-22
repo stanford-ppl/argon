@@ -37,6 +37,20 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
     @api def > (that: FixPt[S,I,F]): Bool         = Bool( fix_lt(that.s,this.s))
     @api def >=(that: FixPt[S,I,F]): Bool         = Bool(fix_leq(that.s,this.s))
 
+    // Unbiased rounding operators
+    @api def *& (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_mul(this.s,that.s))
+    @api def /& (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_div(this.s,that.s))
+
+    // Saturating operatiors
+    @api def <+> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_add(this.s,that.s))
+    @api def <-> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_sub(this.s,that.s))
+    @api def <*> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_mul(this.s,that.s))
+    @api def </> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_div(this.s,that.s))
+
+    // Saturating and unbiased rounding operatiors
+    @api def <*&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_mul(this.s,that.s))
+    @api def </&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_div(this.s,that.s))
+
     @api def <<(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix_lsh(this.s, that.s))  // Left shift
     @api def >>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix_rsh(this.s, that.s))  // Right shift (signed)
     @api def >>>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix_ursh(this.s, that.s)) // Right shift (unsigned)
@@ -223,6 +237,7 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
   case class FixAdd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_add(f(x), f(y)) }
   case class FixSub[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_sub(f(x), f(y)) }
   case class FixMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_mul(f(x), f(y)) }
+  case class UnbMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_mul_unbias(f(x), f(y)) }
   case class FixDiv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_div(f(x), f(y)) }
   case class FixAnd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_and(f(x), f(y)) }
   case class FixOr [S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) =  fix_or(f(x), f(y)) }
@@ -289,6 +304,14 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
     case (a, Const(1)) => a
     case (Const(1), b) => b
     case _ => stage(FixMul(x, y) )(ctx)
+  }
+  def fix_mul_unbias[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,F](a * b)
+    case (_, b@Const(0)) => b
+    case (a@Const(0), _) => a
+    case (a, Const(1)) => a
+    case (Const(1), b) => b
+    case _ => stage(UnbMul(x, y) )(ctx)
   }
   def fix_div[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
     case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,F](a / b)

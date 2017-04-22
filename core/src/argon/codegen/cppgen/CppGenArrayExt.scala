@@ -54,7 +54,7 @@ trait CppGenArrayExt extends CppGenArray {
       close("}")
 
     case ArrayForeach(array,apply,func,i) =>
-      open(src"val $lhs = $array.indices.foreach{$i => ")
+      open(src"for (int ${i} = 0; ${i} < ${getSize(array)}; ${i} = ${i} + 1) {")
       visitBlock(apply)
       emitBlock(func)
       close("}")

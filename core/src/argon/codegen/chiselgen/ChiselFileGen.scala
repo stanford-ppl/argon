@@ -21,13 +21,13 @@ trait ChiselFileGen extends FileGen {
     // val RootController = getStream("RootController")
 
     withStream(getStream("RootController")) {
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Begin!")}
+      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Begin!")}
       preprocess(b)
       toggleEn() // Turn off
       emitMain(b)
       toggleEn() // Turn on
       postprocess(b)
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen-NOTE ] Complete!")}
+      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Complete!")}
       b
     }
   }
@@ -65,7 +65,7 @@ import templates.ops._
 import fringe._
 import types._
 import chisel3._""")
-      open(s"trait RootController extends GlobalWires {")
+      open(s"trait RootController extends GlobalWires with GlobalModules with GlobalRetiming {")
       emit(src"// Root controller for app: ${Config.name}")
 
     }
@@ -78,6 +78,25 @@ import chisel3._
 import types._
 trait GlobalWires extends IOModule{""")
     }
+
+    withStream(getStream("GlobalModules")) {
+      emit(s"""package accel
+import templates._
+import templates.ops._
+import chisel3._
+import types._
+trait GlobalModules extends IOModule{""")
+    }
+
+    withStream(getStream("GlobalRetiming")) {
+      emit(s"""package accel
+import templates._
+import templates.ops._
+import chisel3._
+import types._
+trait GlobalRetiming extends IOModule{""")
+    }
+
 
     withStream(getStream("Instantiator")) {
       emit("// See LICENSE for license details.")
@@ -115,9 +134,10 @@ trait GlobalWires extends IOModule{""")
 
     withStream(getStream("Instantiator")) {
           emit("val w = 32")
-          emit("val numArgIns = numArgIns_mem  + numArgIns_reg")
-          emit("val numArgOuts = numArgOuts_reg")
-          emit("new Top(w, numArgIns, numArgOuts, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
+          emit("val numArgIns = numArgIns_mem  + numArgIns_reg + numArgIOs_reg")
+          emit("val numArgOuts = numArgOuts_reg + numArgIOs_reg")
+          emit("val numArgIOs = numArgIOs_reg")
+          emit("new Top(w, numArgIns, numArgOuts, numArgIOs, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
         close("}")
         emit("def tester = { c: DUTType => new TopUnitTester(c) }")
       close("}")
@@ -138,8 +158,9 @@ trait GlobalWires extends IOModule{""")
 
     withStream(getStream("IOModule")) {
       emit("// Combine values")
-      emit("val io_numArgIns = io_numArgIns_reg + io_numArgIns_mem")
-      emit("val io_numArgOuts = io_numArgOuts_reg")
+      emit("val io_numArgIns = io_numArgIns_reg + io_numArgIns_mem + io_numArgIOs_reg")
+      emit("val io_numArgOuts = io_numArgOuts_reg + io_numArgIOs_reg")
+      emit("val io_numArgIOs = io_numArgIOs_reg")
       open("val io = IO(new Bundle {")
         emit("// Control IO")
         emit("val enable = Input(Bool())")
@@ -151,10 +172,52 @@ trait GlobalWires extends IOModule{""")
         emit("// Scalar IO")
         emit("val argIns = Input(Vec(io_numArgIns, UInt(64.W)))")
         emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(64.W))))")
+        emit("")
         emit("// Stream IO")
         emit("val genericStreams = new GenericStreams(io_streamInsInfo, io_streamOutsInfo)")
+        emit("// Video Stream Inputs ")
+        emit("val stream_in_data            = Input(UInt(24.W))")
+        emit("val stream_in_startofpacket   = Input(Bool())")
+        emit("val stream_in_endofpacket     = Input(Bool())")
+        emit("val stream_in_empty           = Input(UInt(2.W))")
+        emit("val stream_in_valid           = Input(Bool()) ")
+        emit("val stream_out_ready          = Input(Bool())")
+        emit(" ")
+        emit("// Video Stream Outputs")
+        emit("val stream_in_ready           = Output(Bool())")
+        emit("val stream_out_data           = Output(UInt(16.W))")
+        emit("val stream_out_startofpacket  = Output(Bool())")
+        emit("val stream_out_endofpacket    = Output(Bool())")
+        emit("val stream_out_empty          = Output(UInt(1.W))")
+        emit("val stream_out_valid          = Output(Bool())")
         emit("")
+        emit("// LED Stream Outputs ")
+        emit("val led_stream_out_data       = Output(UInt(32.W))")
+        emit("")
+        emit("// Slider Switches Stream Inputs ")
+        emit("val switch_stream_in_data     = Input(UInt(32.W))")
       close("})")
+      emit("var outMuxMap: scala.collection.mutable.Map[Int, Int] = scala.collection.mutable.Map[Int,Int]()")
+      emit("(0 until io_numArgOuts).foreach{ i => outMuxMap += (i -> 0) }")
+      open("def getArgOutLane(id: Int): Int = {")
+        emit("val lane = outMuxMap(id)")
+        emit("outMuxMap += (id -> {lane + 1})")
+        emit("lane")
+      close("}")
+      // emit("var loadMuxMap: scala.collection.mutable.Map[Int, Int] = scala.collection.mutable.Map[Int,Int]()")
+      // emit("(0 until io_streamInsInfo.length).foreach{ i => loadMuxMap += (i -> 0) }")
+      // open("def getLoadLane(id: Int): Int = {")
+      //   emit("val lane = loadMuxMap(id)")
+      //   emit("loadMuxMap += (id -> {lane + 1})")
+      //   emit("lane")
+      // close("}")
+      // emit("var storeMuxMap: scala.collection.mutable.Map[Int, Int] = scala.collection.mutable.Map[Int,Int]()")
+      // emit("(0 until io_streamOutsInfo.length).foreach{ i => storeMuxMap += (i -> 0) }")
+      // open("def getStoreLane(id: Int): Int = {")
+      //   emit("val lane = storeMuxMap(id)")
+      //   emit("storeMuxMap += (id -> {lane + 1})")
+      //   emit("lane")
+      // close("}")
       close("}")
     }
 
@@ -166,10 +229,18 @@ trait GlobalWires extends IOModule{""")
       close("}")
     }
 
+    withStream(getStream("GlobalModules")) {
+      close("}")
+    }
+
+    withStream(getStream("GlobalRetiming")) {
+      close("}")
+    }
+
     if (Config.multifile >= 3 ) {
       val traits = streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-      }.toSet - "AccelTop" - "GlobalWires" - "Instantiator"
+      }.toSet - "AccelTop" - "Instantiator"
 
       withStream(getStream("AccelTop")) {
         emit(s"""package accel
@@ -181,11 +252,12 @@ class AccelTop(
   val top_w: Int,
   val numArgIns: Int,
   val numArgOuts: Int,
+  val numArgIOs: Int,
   val loadStreamInfo: List[StreamParInfo],
   val storeStreamInfo: List[StreamParInfo],
   val streamInsInfo: List[StreamParInfo],
   val streamOutsInfo: List[StreamParInfo]
-) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+) extends ${traits.mkString("\n with ")} {
 
   // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
 
@@ -195,7 +267,7 @@ class AccelTop(
     // Get traits that need to be mixed in
       val traits = streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-      }.toSet - "AccelTop" - "GlobalWires" - "RootController" - "Instantiator"
+      }.toSet - "AccelTop" - "Instantiator"
       withStream(getStream("AccelTop")) {
         emit(s"""package accel
 import templates._
@@ -207,11 +279,12 @@ class AccelTop(
   val top_w: Int,
   val numArgIns: Int,
   val numArgOuts: Int,
+  val numArgIOs: Int,
   val loadStreamInfo: List[StreamParInfo],
   val storeStreamInfo: List[StreamParInfo],
   val numStreamIns: List[StreamParInfo],
   val numStreamOuts: List[StreamParInfo]
-) extends GlobalWires with ${(traits++Set("RootController")).mkString("\n with ")} {
+) extends ${traits.mkString("\n with ")} {
 
 }
   // AccelTop class mixes in all the other traits and is instantiated by tester""")

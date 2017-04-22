@@ -46,6 +46,7 @@ trait ChiselGenFltPt extends ChiselCodegen {
     case FltPtToFixPt(x) => lhs.tp match {
       case IntType()  => emit(src"val $lhs = $x.toInt")
       case LongType() => emit(src"val $lhs = $x.toLong")
+      case FixPtType(s,d,f) => emit(src"val $lhs = $x.toFloat")
     }
     case StringToFltPt(x) => lhs.tp match {
       case DoubleType() => emit(src"val $lhs = $x.toDouble")

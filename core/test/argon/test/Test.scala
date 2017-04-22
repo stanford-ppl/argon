@@ -12,7 +12,7 @@ import scala.collection.immutable.{StringOps, WrappedString}
 import scala.runtime._
 
 trait TestExp extends ArgonExp
-  with AssertExp with PrintExp
+  with AssertExp with PrintExp with VariablesExp
 
 trait LowPriorityImplicits {
   implicit def int2RichInt(x: Int): RichInt = new RichInt(x)
@@ -25,7 +25,7 @@ trait LowPriorityImplicits {
 }
 
 trait TestApi extends TestExp with ArgonApi with LowPriorityImplicits
-  with AssertApi with PrintApi {
+  with AssertApi with PrintApi with VariablesApi {
 
   implicit class intWrapper(x: scala.Int) extends {
     @api def to[B:Meta](implicit cast: Cast[scala.Int,B]): B = cast(x)
@@ -57,7 +57,7 @@ trait TestApi extends TestExp with ArgonApi with LowPriorityImplicits
 trait ScalaGen extends ScalaCodegen with ScalaFileGen
   with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert with ScalaGenBool with ScalaGenFixPt with ScalaGenFltPt
   with ScalaGenHashMap with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenStructs
-  with ScalaGenText with ScalaGenVoid {
+  with ScalaGenText with ScalaGenVoid with ScalaGenFunction with ScalaGenVariables {
   override val IR: TestExp
 }
 

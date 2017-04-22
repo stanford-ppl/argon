@@ -10,7 +10,14 @@ trait CppGenFixPt extends CppCodegen {
   override protected def remap(tp: Type[_]): String = tp match {
     case IntType() => "int32_t"
     case LongType() => "int32_t"
-    case FixPtType(s,d,f) => "double"
+    case FixPtType(s,d,f) => 
+      if (f > 0) {"double"} else {
+        if (d > 16) "int32_t"
+        else if (d > 8) "int16_t"
+        else if (d > 4) "int8_t"
+        else if (d > 2) "int2_t"
+        else "boolean"
+      }
     case _ => super.remap(tp)
   }
 
@@ -53,8 +60,8 @@ trait CppGenFixPt extends CppCodegen {
       case FixPtType(s,d,f) => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;  // should be fixpt ${lhs.tp}")
     }
     case FixPtToFltPt(x) => lhs.tp match {
-      case DoubleType() => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
-      case FloatType()  => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
+      case DoubleType() => emit(src"${lhs.tp} $lhs = (double) $x;")
+      case FloatType()  => emit(src"${lhs.tp} $lhs = (double) $x;")
     }
     case StringToFixPt(x) => lhs.tp match {
       case IntType()  => emit(src"int32_t $lhs = atoi(${x}.c_str());")

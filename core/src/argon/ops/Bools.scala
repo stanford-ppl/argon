@@ -13,7 +13,7 @@ trait BoolExp { self: ArgonExp =>
   case class Bool(s: Exp[Bool]) extends MetaAny[Bool] {
     @api def unary_!(): Bool = Bool(bool_not(this.s))
     @api def &&(that: Bool): Bool = Bool(bool_and(this.s, that.s))
-    @api def ||(that: Bool): Bool = Bool( bool_or(this.s, that.s))
+    @api def ||(that: Bool): Bool = Bool(bool_or(this.s, that.s))
     @api def ^ (that: Bool): Bool = Bool(bool_xor(this.s, that.s))
 
     @api def ===(that: Bool): Bool = Bool(bool_xnor(this.s, that.s))
