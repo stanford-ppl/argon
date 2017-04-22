@@ -12,12 +12,12 @@ class GenerateTransformer[Ctx <: blackbox.Context](val c: Ctx) {
     var round = 0
     var level: List[T] = List(x)
     while (level.exists(needsUnroll) && round < 20) {
-      //println(level)
       val nextLevel = level.flatMap{x => if (needsUnroll(x)) transformer.t(x) else List(x) }
       level = nextLevel
       round += 1
     }
     if (level.exists(needsUnroll)) {
+      println(level)
       c.warning(c.enclosingPosition, "Generation unrolling did not appear to complete after 20 iterations.")
     }
     //println(level)
