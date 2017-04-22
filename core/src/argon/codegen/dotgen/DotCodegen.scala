@@ -82,15 +82,6 @@ trait DotCodegen extends Codegen with FileDependencies with DotEnum { // FileDep
     DotAttr().label(quote(n))
   }
 
-  override def copyDependencies(out: String): Unit = {
-    val resourcesPath = s"${sys.env("SPATIAL_HOME")}/src/spatial/codegen/dotgen/resources"
-    dependencies ::= AlwaysDep(s"""${resourcesPath}/run.sh""")
-    super.copyDependencies(out)
-    //val cmd = s"./$out/run.sh" 
-    //Console.println(cmd)
-    //s"$cmd" !
-  }
-
 }
 
 class DotAttr() {
