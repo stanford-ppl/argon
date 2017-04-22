@@ -60,8 +60,8 @@ trait CppGenFixPt extends CppCodegen {
       case FixPtType(s,d,f) => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;  // should be fixpt ${lhs.tp}")
     }
     case FixPtToFltPt(x) => lhs.tp match {
-      case DoubleType() => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
-      case FloatType()  => emit(src"${lhs.tp} $lhs = (int32_t) $x;")
+      case DoubleType() => emit(src"${lhs.tp} $lhs = (double) $x;")
+      case FloatType()  => emit(src"${lhs.tp} $lhs = (double) $x;")
     }
     case StringToFixPt(x) => lhs.tp match {
       case IntType()  => emit(src"int32_t $lhs = atoi(${x}.c_str());")

@@ -70,7 +70,7 @@ using std::vector;
     }
 
     withStream(getStream("functions","cpp")) {
-      emit("""#include "functions.h""")
+      emit("""#include "functions.h" """)
     }
 
 //     withStream(getStream("DRAM","h")){
