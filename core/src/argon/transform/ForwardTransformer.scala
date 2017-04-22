@@ -137,6 +137,11 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
 
   final override protected def visitFat(lhs: Seq[Sym[_]], rhs: Def) = transformFat(lhs, rhs)(lhs.head.ctx)
 
+  override protected def preprocess[S:Type](block: Block[S]) = {
+    subst = Map.empty // Reset substitutions across runs (if transformer used more than once)
+    super.preprocess(block)
+  }
+
   /**
     * DANGER ZONE
     * Use these methods only if you know what you're doing! (i.e. your name is David and you're not drunk)
@@ -151,4 +156,5 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     }
     case _ => e
   }
+
 }
