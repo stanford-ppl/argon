@@ -74,11 +74,11 @@ trait Reporting {
   final def report(x: => Any): Unit = if (Config.verbosity >= 0) System.out.println(x)
   final def warn(x: => Any): Unit = if (Config.showWarn) {
     System.err.println(s"[\u001B[33mwarn\u001B[0m] $x")
-    log(s"[warn] $x")
+    dbg(s"[warn] $x")
   }
   final def error(x: => Any): Unit = {
     System.err.println(s"[\u001B[31merror\u001B[0m] $x")
-    log(s"[error] $x")
+    dbg(s"[error] $x")
   }
 
   final def warn(ctx: SourceContext, x: => Any, noWarn: Boolean = false): Unit = {
