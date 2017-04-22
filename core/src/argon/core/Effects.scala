@@ -59,7 +59,7 @@ trait Effects extends Symbols { this: Staging =>
   def Write(xs: Set[Sym[_]]) = Effects(writes = xs)
 
   object effectsOf {
-    def apply(s: Sym[_]) = metadata[Effects](s).getOrElse(Pure)
+    def apply(s: Exp[_]) = metadata[Effects](s).getOrElse(Pure)
     def update(s: Sym[_], e: Effects) = metadata.add(s, e)
   }
   object Effectful {

@@ -138,22 +138,22 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   def unwrap[T:Meta](xs: List[T]): List[Exp[T]] = xs.map{t => meta[T].unwrapped(t) }
 
   import StagedTypes._
-  //def infix_==[A,B](x1: MetaAny[A], x2: MetaAny[B]): Bool = macro equalImpl[Bool]
-  //def infix_==[A, B, C <:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro equalLiftRightImpl[Bool]
-  //def infix_==[A, B, C <:MetaAny[B]](x1: A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro equalLiftLeftImpl[Bool]
-
-  //def infix_!=[A, B](x1: MetaAny[A], x2: MetaAny[B]): Bool = macro unequalImpl[Bool]
-  //def infix_!=[A, B, C<:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro unequalLiftRightImpl[Bool]
-  //def infix_!=[A, B, C<:MetaAny[B]](x1:A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro unequalLiftLeftImpl[Bool]
-
   // TODO: Should these lifts be casts?
-  def infix_==[A<:MetaAny[A], B<:MetaAny[B]](x1: A, x2: B): Bool = macro equalImpl[Bool]
-  def infix_==[A, B<:MetaAny[B]](x1: B, x2: A)(implicit l: Lift[A,B]): Bool = x1 === lift(x2)
-  def infix_==[A, B<:MetaAny[B]](x1: A, x2: B)(implicit l: Lift[A,B]): Bool = lift(x1) === x2
+  def infix_==[A,B](x1: MetaAny[A], x2: MetaAny[B]): Bool = macro equalImpl[Bool]
+  def infix_==[A, B, C <:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro equalLiftRightImpl[Bool]
+  def infix_==[A, B, C <:MetaAny[B]](x1: A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro equalLiftLeftImpl[Bool]
 
-  def infix_!=[A<:MetaAny[A], B<:MetaAny[B]](x1: A, x2: B): Bool = macro unequalImpl[Bool]
-  def infix_!=[A, B<:MetaAny[B]](x1: B, x2: A)(implicit l: Lift[A,B]): Bool = x1 =!= lift(x2)
-  def infix_!=[A, B<:MetaAny[B]](x1: A, x2: B)(implicit l: Lift[A,B]): Bool = lift(x1) =!= x2
+  def infix_!=[A, B](x1: MetaAny[A], x2: MetaAny[B]): Bool = macro unequalImpl[Bool]
+  def infix_!=[A, B, C<:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro unequalLiftRightImpl[Bool]
+  def infix_!=[A, B, C<:MetaAny[B]](x1:A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro unequalLiftLeftImpl[Bool]
+
+//  def infix_==[A<:MetaAny[A], B<:MetaAny[B]](x1: A, x2: B): Bool = macro equalImpl[Bool]
+//  def infix_==[A, B<:MetaAny[B]](x1: B, x2: A)(implicit l: Lift[A,B]): Bool = x1 === lift(x2)
+//  def infix_==[A, B<:MetaAny[B]](x1: A, x2: B)(implicit l: Lift[A,B]): Bool = lift(x1) === x2
+//
+//  def infix_!=[A<:MetaAny[A], B<:MetaAny[B]](x1: A, x2: B): Bool = macro unequalImpl[Bool]
+//  def infix_!=[A, B<:MetaAny[B]](x1: B, x2: A)(implicit l: Lift[A,B]): Bool = x1 =!= lift(x2)
+//  def infix_!=[A, B<:MetaAny[B]](x1: A, x2: B)(implicit l: Lift[A,B]): Bool = lift(x1) =!= x2
 
   // TODO: Should casts be implicit or explicit? Should have subtypes?
 
