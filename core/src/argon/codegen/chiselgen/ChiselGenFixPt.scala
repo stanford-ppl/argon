@@ -63,14 +63,32 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case FixNeq(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x =/= $y")
     case FixEql(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x === $y")
     case FixMod(x,y) => emit(src"val $lhs = $x % $y")
+    case UnbMul(x,y) => emit(src"val $lhs = $x *& $y")
+    case UnbDiv(x,y) => emit(src"val $lhs = $x /& $y")
+    case SatAdd(x,y) => emit(src"val $lhs = $x <+> $y")
+    case SatSub(x,y) => emit(src"val $lhs = $x <-> $y")
+    case SatMul(x,y) => emit(src"val $lhs = $x <*> $y")
+    case SatDiv(x,y) => emit(src"val $lhs = $x </> $y")
+    case UnbSatMul(x,y) => emit(src"val $lhs = $x <*&> $y")
+    case UnbSatDiv(x,y) => emit(src"val $lhs = $x </&> $y")
     case FixRandom(x) => lhs.tp match {
       case IntType()  => emit(src"val $lhs = chisel.util.Random.nextInt()")
       case LongType() => emit(src"val $lhs = chisel.util.Random.nextLong()")
     }
     case FixConvert(x) => lhs.tp match {
-      case IntType()  => emit(src"val $lhs = $x // Fix to Fix")
-      case LongType() => emit(src"val $lhs = $x // Fix to Long")
-      case FixPtType(s,d,f) => emit(src"val $lhs = $x // should be fixpt ${lhs.tp}")
+      case IntType()  => 
+        emitGlobalWire(src"val $lhs = Wire(new FixedPoint(true, 32, 0))")
+        emit(src"${lhs}.r := ${x}.r")
+      case LongType() => 
+        val pad = bitWidth(lhs.tp) - bitWidth(x.tp)
+        emitGlobalWire(src"val $lhs = Wire(new FixedPoint(true, 64, 0))")
+        if (pad > 0) {
+          emit(src"${lhs}.r := Utils.Cat(0.U(${pad}.W), ${x}.r)")
+        } else {
+          emit(src"${lhs}.r := ${x}.r.apply(${bitWidth(lhs.tp)-1}, 0)")
+        }
+      case FixPtType(s,d,f) => 
+        emit(src"val $lhs = ${x}.r.FP($s, $d, $f)")
     }
     case FixPtToFltPt(x) => lhs.tp match {
       case DoubleType() => emit(src"val $lhs = $x.toDouble")

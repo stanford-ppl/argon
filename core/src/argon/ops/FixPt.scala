@@ -38,18 +38,18 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
     @api def >=(that: FixPt[S,I,F]): Bool         = Bool(fix_leq(that.s,this.s))
 
     // Unbiased rounding operators
-    @api def *& (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_mul(this.s,that.s))
-    @api def /& (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_div(this.s,that.s))
+    @api def *& (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_mul_unbias(this.s,that.s))
+    @api def /& (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_div_unbias(this.s,that.s))
 
     // Saturating operatiors
-    @api def <+> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_add(this.s,that.s))
-    @api def <-> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_sub(this.s,that.s))
-    @api def <*> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_mul(this.s,that.s))
-    @api def </> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_div(this.s,that.s))
+    @api def <+> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_add_sat(this.s,that.s))
+    @api def <-> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_sub_sat(this.s,that.s))
+    @api def <*> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_mul_sat(this.s,that.s))
+    @api def </> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_div_sat(this.s,that.s))
 
     // Saturating and unbiased rounding operatiors
-    @api def <*&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_mul(this.s,that.s))
-    @api def </&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_div(this.s,that.s))
+    @api def <*&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_mul_unb_sat(this.s,that.s))
+    @api def </&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_div_unb_sat(this.s,that.s))
 
     @api def <<(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix_lsh(this.s, that.s))  // Left shift
     @api def >>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix_rsh(this.s, that.s))  // Right shift (signed)
@@ -191,6 +191,7 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
   }
   def fixpt[S:BOOL,I:INT,F:INT](x: BigDecimal)(implicit ctx: SrcCtx): Const[FixPt[S,I,F]] = createConstant[S,I,F](x, enWarn=false)
   def int32(x: BigDecimal)(implicit ctx: SrcCtx): Const[Int32] = createConstant[TRUE,_32,_0](x, enWarn = true)
+  def int64(x: BigDecimal)(implicit ctx: SrcCtx): Const[Int64] = createConstant[TRUE,_64,_0](x, enWarn = true)
 
   implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
   implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long)(implicit ctx: SrcCtx): FixPt[S,I,F] = FixPt(createConstant[S,I,F](x))
@@ -235,10 +236,17 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
   case class FixNeg[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_neg(f(x)) }
 
   case class FixAdd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_add(f(x), f(y)) }
+  case class SatAdd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_add_sat(f(x), f(y)) }
   case class FixSub[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_sub(f(x), f(y)) }
+  case class SatSub[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_sub_sat(f(x), f(y)) }
   case class FixMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_mul(f(x), f(y)) }
+  case class UnbSatMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_mul_unb_sat(f(x), f(y)) }
+  case class SatMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_mul_sat(f(x), f(y)) }
   case class UnbMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_mul_unbias(f(x), f(y)) }
   case class FixDiv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_div(f(x), f(y)) }
+  case class UnbSatDiv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_div_unb_sat(f(x), f(y)) }
+  case class SatDiv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_div_sat(f(x), f(y)) }
+  case class UnbDiv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_div_unbias(f(x), f(y)) }
   case class FixAnd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_and(f(x), f(y)) }
   case class FixOr [S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) =  fix_or(f(x), f(y)) }
   case class FixLt [S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = fix_lt(f(x), f(y)) }
@@ -287,6 +295,16 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
     case (a, Op(FixSub(b,c))) if a == c => b              // a + (b - a) => b
     case _ => stage(FixAdd(x,y))(ctx)
   }
+  def fix_add_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => fixpt[S,I,F](a + b)
+    case (a, Const(0)) => a                               // a + 0 => a
+    case (Const(0), b) => b                               // 0 + a => a
+    case (a, Op(FixNeg(b))) if a == b => fixpt[S,I,F](0)  // a + -a => 0
+    case (Op(FixNeg(a)), b) if a == b => fixpt[S,I,F](0)  // -a + a => 0
+    case (Op(FixSub(a,b)), c) if b == c => a              // a - b + b => a
+    case (a, Op(FixSub(b,c))) if a == c => b              // a + (b - a) => b
+    case _ => stage(SatAdd(x,y))(ctx)
+  }
   def fix_sub[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
     case (Const(a:BigDecimal), Const(b:BigDecimal)) => fixpt[S,I,F](a - b)
     case (a, Const(0)) => a                                      // a - 0 => a
@@ -296,6 +314,15 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
     case (a, Op(FixAdd(b,c))) if a == b => stage(FixNeg(c))(ctx) // a - (a + b) => -b
     case _ => stage(FixSub(x,y))(ctx)
   }
+  def fix_sub_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a:BigDecimal), Const(b:BigDecimal)) => fixpt[S,I,F](a - b)
+    case (a, Const(0)) => a                                      // a - 0 => a
+    case (Const(0), a) => stage(FixNeg(a))(ctx)                  // 0 - a => -a
+    case (Op(FixAdd(a,b)), c) if a == c => b                     // a + b - a => b
+    case (a, Op(FixAdd(b,c))) if a == c => stage(FixNeg(b))(ctx) // a - (b + a) => -b
+    case (a, Op(FixAdd(b,c))) if a == b => stage(FixNeg(c))(ctx) // a - (a + b) => -b
+    case _ => stage(SatSub(x,y))(ctx)
+  }
 
   def fix_mul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
     case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,F](a * b)
@@ -304,6 +331,22 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
     case (a, Const(1)) => a
     case (Const(1), b) => b
     case _ => stage(FixMul(x, y) )(ctx)
+  }
+  def fix_mul_unb_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,F](a * b)
+    case (_, b@Const(0)) => b
+    case (a@Const(0), _) => a
+    case (a, Const(1)) => a
+    case (Const(1), b) => b
+    case _ => stage(UnbSatMul(x, y) )(ctx)
+  }
+  def fix_mul_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,F](a * b)
+    case (_, b@Const(0)) => b
+    case (a@Const(0), _) => a
+    case (a, Const(1)) => a
+    case (Const(1), b) => b
+    case _ => stage(SatMul(x, y) )(ctx)
   }
   def fix_mul_unbias[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
     case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,F](a * b)
@@ -318,6 +361,24 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
     case (a, Const(1)) => a
     case (_, Const(0)) => warn(ctx, "Division by constant 0 detected"); stage(FixDiv(x,y))(ctx)
     case _ => stage(FixDiv(x,y))(ctx)
+  }
+  def fix_div_unb_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,F](a / b)
+    case (a, Const(1)) => a
+    case (_, Const(0)) => warn(ctx, "Division by constant 0 detected"); stage(FixDiv(x,y))(ctx)
+    case _ => stage(UnbSatDiv(x,y))(ctx)
+  }
+  def fix_div_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,F](a / b)
+    case (a, Const(1)) => a
+    case (_, Const(0)) => warn(ctx, "Division by constant 0 detected"); stage(FixDiv(x,y))(ctx)
+    case _ => stage(SatDiv(x,y))(ctx)
+  }
+  def fix_div_unbias[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => fixpt[S,I,F](a / b)
+    case (a, Const(1)) => a
+    case (_, Const(0)) => warn(ctx, "Division by constant 0 detected"); stage(UnbDiv(x,y))(ctx)
+    case _ => stage(UnbDiv(x,y))(ctx)
   }
   def fix_and[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
     case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isWhole => fixpt[S,I,F](BigDecimal(a.toBigInt & b.toBigInt))

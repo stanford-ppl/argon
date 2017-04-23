@@ -12,6 +12,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   override val name = "Chisel Codegen"
   override val lang: String = "chisel"
   override val ext: String = "scala"
+  var controllerStack = scala.collection.mutable.Stack[Exp[_]]()
 
   var alphaconv = HashMap[String, String]() // Map for tracking defs of nodes and if they get redeffed anywhere, we map it to a suffix
 
