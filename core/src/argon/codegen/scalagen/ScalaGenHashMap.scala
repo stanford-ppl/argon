@@ -15,7 +15,7 @@ trait ScalaGenHashMap extends ScalaCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
-    case HashIndexApply(index, key) => emit(src"val $lhs = $index.getOrElse($key, -1)")
+    case HashIndexApply(index, key) => emit(src"val $lhs = $index.getOrElse($key, ${int32(-1)(lhs.ctx)})")
     case _ => super.emitNode(lhs, rhs)
   }
 
