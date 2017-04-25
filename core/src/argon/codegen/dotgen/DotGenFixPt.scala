@@ -16,6 +16,7 @@ trait DotGenFixPt extends DotCodegen {
       case Def(FixMul(_,_)) => super.attr(n).shape(circle).label("*")
       case Def(FixAnd(_,_)) => super.attr(n).shape(circle).label("&")
       case Def(FixOr(_,_)) => super.attr(n).shape(circle).label("|")
+      case Def(FixXor(_,_)) => super.attr(n).shape(circle).label("^")
       case Def(FixLt(_,_)) => super.attr(n).shape(circle).label("<")
       case Def(FixLeq(_,_)) => super.attr(n).shape(circle).label("<=")
       case _ => super.attr(n)
@@ -32,6 +33,7 @@ trait DotGenFixPt extends DotCodegen {
     case FixDiv(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixAnd(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixOr(x,y)  => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixXor(x,y)  => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixLt(x,y)  => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixLeq(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixNeq(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}

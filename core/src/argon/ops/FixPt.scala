@@ -32,6 +32,7 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
     @api def / (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_div(this.s,that.s))
     @api def & (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix_and(this.s,that.s))
     @api def | (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt( fix_or(this.s,that.s))
+    @api def ^ (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt( fix_xor(this.s,that.s))
     @api def < (that: FixPt[S,I,F]): Bool         = Bool( fix_lt(this.s,that.s))
     @api def <=(that: FixPt[S,I,F]): Bool         = Bool(fix_leq(this.s,that.s))
     @api def > (that: FixPt[S,I,F]): Bool         = Bool( fix_lt(that.s,this.s))
@@ -249,6 +250,7 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
   case class UnbDiv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_div_unbias(f(x), f(y)) }
   case class FixAnd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_and(f(x), f(y)) }
   case class FixOr [S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) =  fix_or(f(x), f(y)) }
+  case class FixXor [S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) =  fix_xor(f(x), f(y)) }
   case class FixLt [S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = fix_lt(f(x), f(y)) }
   case class FixLeq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = fix_leq(f(x), f(y)) }
   case class FixNeq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp2[S,I,F,Bool] { def mirror(f:Tx) = fix_neq(f(x), f(y)) }
@@ -391,6 +393,12 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
     case (a, Const(0)) => a
     case (Const(0), b) => b
     case _ => stage(FixOr(x,y))(ctx)
+  }
+  def fix_xor[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isWhole => fixpt[S,I,F](BigDecimal(a.toBigInt ^ b.toBigInt))
+    case (a, Const(0)) => a
+    case (Const(0), b) => b
+    case _ => stage(FixXor(x,y))(ctx)
   }
   def fix_lt[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]])(implicit ctx: SrcCtx): Exp[Bool] = (x,y) match {
     case (Const(a: BigDecimal), Const(b: BigDecimal)) => bool(a < b)

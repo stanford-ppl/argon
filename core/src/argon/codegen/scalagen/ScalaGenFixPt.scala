@@ -28,6 +28,7 @@ trait ScalaGenFixPt extends ScalaCodegen {
     case FixDiv(x,y) => emit(src"val $lhs = $x / $y")
     case FixAnd(x,y) => emit(src"val $lhs = $x & $y")
     case FixOr(x,y)  => emit(src"val $lhs = $x | $y")
+    case FixXor(x,y)  => emit(src"val $lhs = $x ^ $y")
     case FixLt(x,y)  => emit(src"val $lhs = $x < $y")
     case FixLeq(x,y) => emit(src"val $lhs = $x <= $y")
     case FixNeq(x,y) => emit(src"val $lhs = $x != $y")
