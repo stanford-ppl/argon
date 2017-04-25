@@ -37,26 +37,30 @@ trait DotCodegen extends Codegen with FileDependencies with DotEnum { // FileDep
     close(s"}")
     res
   }
-  def emitVert(n:Exp[_]):Unit = emitVert(n, attr(n))
-  def emitVert(n:Any, label:Any):Unit = {
-    emit(s"""${q(n)} [label="${q(label)}"];""")
-  }
-  def emitVert(n:Any, label:Any, attr:DotAttr):Unit = {
-    emit(s"""${q(n)} [label="${q(label)}" ${attr.list} ];""")
-  }
-  def emitVert(n:Any, attr:DotAttr):Unit = {
-    emit(s"""${q(n)} [${attr.list} ];""")
+  def emitVert(n:Exp[_], forceful:Boolean = false):Unit = emitVert(n, attr(n), forceful)
+  // def emitVert(n:Exp[_], label:String, forceful:Boolean = false):Unit = {
+  //   emit(s"""${q(n)} [label="${q(label)}"];""", forceful = forceful)
+  // }
+  // def emitVert(n:Exp[_], label:String, attr:DotAttr):Unit = {
+  //   emit(s"""${q(n)} [label="${q(label)}" ${attr.list} ];""")
+  // }
+  def emitVert(n:Any, attr:DotAttr, forceful:Boolean):Unit = {
+    emit(s"""${q(n)} [${attr.list} ];""", forceful = forceful)
   }
   def emitEdge(from:Any, to:Any, label:String):Unit = {
     emitEdge(from, to, DotAttr().label(label))
   }
   def emitEdge(from:Any, to:Any, attr:DotAttr):Unit = {
     def buffered() = { emit(s"""${q(from)} -> ${q(to)} ${if (attr.attrMap.size!=0) s"[${attr.list}]" else ""}""") }
-    edges += buffered _
+    if (emitEn) {
+      edges += buffered _
+    }
   }
   def emitEdge(from:Any, to:Any):Unit = {
     def buffered() = { emit(s"""${q(from)} -> ${q(to)}""") }
-    edges += buffered _
+    if (emitEn) {
+      edges += buffered _
+    }
   }
   //def emitEdge(from:Any, ffield:Any, to:Any, tfield:Any):Unit = {
     //emitEdge(s"${from}:${ffield}", s"${to}:${tfield}")
@@ -130,6 +134,8 @@ trait DotEnum {
   val ellipse   = Shape("ellipse")
   val circle    = Shape("circle")
   val hexagon   = Shape("hexagon")
+  val diamond   = Shape("diamond")
+  val point     = Shape("point")
 
 	val filled    = Style("filled")
   val bold      = Style("bold")

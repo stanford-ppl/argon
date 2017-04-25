@@ -1,26 +1,42 @@
 package argon.codegen.dotgen
 
 import argon.core.Staging
+import argon.Config
 import argon.ops.FixPtExp
 
 trait DotGenFixPt extends DotCodegen {
   val IR: Staging with FixPtExp
   import IR._
 
+  override def attr(n:Exp[_]) = n match {
+    case lhs: Sym[_] => lhs match {
+      case Def(FixAdd(_,_)) => super.attr(n).shape(circle).label("+")
+      case Def(FixSub(_,_)) => super.attr(n).shape(circle).label("-")
+      case Def(FixDiv(_,_)) => super.attr(n).shape(circle).label("/")
+      case Def(FixMul(_,_)) => super.attr(n).shape(circle).label("*")
+      case Def(FixAnd(_,_)) => super.attr(n).shape(circle).label("&")
+      case Def(FixOr(_,_)) => super.attr(n).shape(circle).label("|")
+      case Def(FixLt(_,_)) => super.attr(n).shape(circle).label("<")
+      case Def(FixLeq(_,_)) => super.attr(n).shape(circle).label("<=")
+      case _ => super.attr(n)
+    }
+    case _ => super.attr(n)
+  }
+
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case FixInv(x)   => 
     case FixNeg(x)   => 
-    case FixAdd(x,y) => 
-    case FixSub(x,y) => 
-    case FixMul(x,y) => 
-    case FixDiv(x,y) => 
-    case FixAnd(x,y) => 
-    case FixOr(x,y)  => 
-    case FixLt(x,y)  => 
-    case FixLeq(x,y) => 
-    case FixNeq(x,y) => 
-    case FixEql(x,y) => 
-    case FixMod(x,y) => 
+    case FixAdd(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixSub(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixMul(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixDiv(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixAnd(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixOr(x,y)  => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixLt(x,y)  => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixLeq(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixNeq(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixEql(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixMod(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixRandom(x) => lhs.tp match {
       case IntType()  => 
       case LongType() => 

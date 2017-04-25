@@ -18,6 +18,7 @@ argon {
   clear-logs = true
   clear-gen = false
   multifile = 4
+  detail = 0
   unwrap = true
   emission = 0
   atomicw = true
@@ -37,6 +38,7 @@ argon {
       clearLogs: Boolean,
       clearGen: Boolean,
       multifile: Int,
+      detail: Int, 
       unwrap: Boolean,
       emission: Int,
       atomicw: Boolean
@@ -57,6 +59,7 @@ argon {
     clearLogs = conf.clearLogs
     clearGen = conf.clearGen
     multifile = conf.multifile
+    dotDetail = conf.detail
     unwrapStructs = conf.unwrap
     emitDevel = conf.emission// level of conservativeness and debug printing when emitting nodes
     allowAtomicWrites = conf.atomicw
@@ -76,6 +79,7 @@ argon {
   var clearLogs: Boolean = _
   var clearGen: Boolean = _
   var multifile: Int = _
+  var dotDetail: Int = _
   var unwrapStructs: Boolean = _
   var emitDevel: Int = _
   var allowAtomicWrites: Boolean = _
