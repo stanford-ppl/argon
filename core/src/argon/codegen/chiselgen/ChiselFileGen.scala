@@ -65,7 +65,7 @@ import templates.ops._
 import fringe._
 import types._
 import chisel3._""")
-      open(s"trait RootController extends GlobalWires with GlobalModules with GlobalRetiming {")
+      open(s"trait RootController extends GlobalModules with GlobalRetiming {")
       emit(src"// Root controller for app: ${Config.name}")
 
     }
@@ -85,7 +85,7 @@ import templates._
 import templates.ops._
 import chisel3._
 import types._
-trait GlobalModules extends IOModule{""")
+trait GlobalModules extends GlobalWires{""")
     }
 
     withStream(getStream("GlobalRetiming")) {
@@ -94,7 +94,7 @@ import templates._
 import templates.ops._
 import chisel3._
 import types._
-trait GlobalRetiming extends IOModule{""")
+trait GlobalRetiming extends GlobalWires{""")
     }
 
 
