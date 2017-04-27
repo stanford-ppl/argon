@@ -65,7 +65,7 @@ abstract class Transformer { self =>
   }
 
 
-  final def mirror(lhs: Seq[Sym[_]], rhs: Def): Seq[Exp[_]] = {
+  def mirror(lhs: Seq[Sym[_]], rhs: Def): Seq[Exp[_]] = {
     log(c"Mirror: $lhs = $rhs")
     lhs.foreach{s =>
       if (lhs.length > 1) log(c"$s")
