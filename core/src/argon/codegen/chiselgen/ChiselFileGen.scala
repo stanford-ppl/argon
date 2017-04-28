@@ -58,6 +58,9 @@ import chisel3._""")
       open(s"""trait BufferControlCxns extends RootController {""")
     }
 
+    val gw_extensions = (0 until numGlobalFiles).map{j => "GlobalWires" + j}.mkString(" with ")
+    val gm_extensions = (0 until numGlobalFiles).map{j => "GlobalModules" + j}.mkString(" with ")
+
     withStream(getStream("RootController")) {
       emit(s"""package accel
 import templates._
@@ -65,27 +68,32 @@ import templates.ops._
 import fringe._
 import types._
 import chisel3._""")
-      open(s"trait RootController extends GlobalModules with GlobalRetiming {")
+      open(s"trait RootController extends ${gm_extensions} with GlobalRetiming {")
       emit(src"// Root controller for app: ${Config.name}")
 
     }
 
-    withStream(getStream("GlobalWires")) {
-      emit(s"""package accel
+    for (i <- 0 until numGlobalFiles) {
+      withStream(getStream("GlobalWires"+i)) {
+        emit(s"""package accel
 import templates._
 import templates.ops._
 import chisel3._
 import types._
-trait GlobalWires extends IOModule{""")
+trait GlobalWires$i extends IOModule{""")
+      }
+
     }
 
-    withStream(getStream("GlobalModules")) {
-      emit(s"""package accel
-import templates._
-import templates.ops._
-import chisel3._
-import types._
-trait GlobalModules extends GlobalWires{""")
+    for (i <- 0 until numGlobalFiles) {
+      withStream(getStream("GlobalModules" + i)) {
+        emit(s"""package accel
+  import templates._
+  import templates.ops._
+  import chisel3._
+  import types._ 
+  trait GlobalModules$i extends ${gw_extensions} {""")
+      }
     }
 
     withStream(getStream("GlobalRetiming")) {
@@ -94,7 +102,7 @@ import templates._
 import templates.ops._
 import chisel3._
 import types._
-trait GlobalRetiming extends GlobalWires{""")
+trait GlobalRetiming extends ${gw_extensions} {""")
     }
 
 
@@ -143,7 +151,8 @@ trait GlobalRetiming extends GlobalWires{""")
       close("}")
 
     }
-    withStream(getStream("GlobalWires")) {
+    for (i <- 0 until numGlobalFiles) {
+      withStream(getStream("GlobalWires"+ i)) {
       // // Get each all unique reg strings
       // emitted_argins.toList.map{a=>a._2}.distinct.foreach{ a => 
       //   emit(s"""val ${a} = io.ArgIn.ports(${argInsByName.indexOf(a)})""")
@@ -153,7 +162,8 @@ trait GlobalRetiming extends GlobalWires{""")
       //   case (sym, regStr) =>
       //     emit(s"""val ${quote(sym)} = $regStr""")
       // }
-      emit("}")
+        emit("}")
+      }
     }
 
     withStream(getStream("IOModule")) {
@@ -229,8 +239,10 @@ trait GlobalRetiming extends GlobalWires{""")
       close("}")
     }
 
-    withStream(getStream("GlobalModules")) {
-      close("}")
+    for (i <- 0 until numGlobalFiles) {
+      withStream(getStream("GlobalModules"+i)) {
+        close("}")
+      }
     }
 
     withStream(getStream("GlobalRetiming")) {

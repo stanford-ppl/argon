@@ -52,14 +52,20 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     case lhs: Sym[_] => s"x${lhs.id}"
   }
 
+  var gw_lines = 0
   final protected def emitGlobalWire(x: String, forceful: Boolean = false): Unit = { 
-    withStream(getStream("GlobalWires")) {
+    val file_num = numGlobalFiles min {gw_lines / maxLinesPerGlobalFile}
+    gw_lines = gw_lines + 1
+    withStream(getStream("GlobalWires" + file_num)) {
       emit(x, forceful) 
     }
   }
 
+  var gm_lines = 0
   final protected def emitGlobalModule(x: String, forceful: Boolean = false): Unit = { 
-    withStream(getStream("GlobalModules")) {
+    val file_num = numGlobalFiles min {gm_lines / maxLinesPerGlobalFile}
+    gm_lines = gm_lines + 1
+    withStream(getStream("GlobalModules" + file_num)) {
       emit(x, forceful) 
     }
   }
@@ -71,13 +77,17 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   final protected def openGlobalWire(x: String, forceful: Boolean = false): Unit = { 
-    withStream(getStream("GlobalWires")) {
+    val file_num = numGlobalFiles min {gw_lines / maxLinesPerGlobalFile}
+    gw_lines = gw_lines + 1
+    withStream(getStream("GlobalWires"+file_num)) {
       open(x, forceful) 
     }
   }
 
   final protected def openGlobalModule(x: String, forceful: Boolean = false): Unit = { 
-    withStream(getStream("GlobalModules")) {
+    val file_num = numGlobalFiles min {gm_lines / maxLinesPerGlobalFile}
+    gm_lines = gm_lines + 1
+    withStream(getStream("GlobalModules"+file_num)) {
       open(x, forceful) 
     }
   }
@@ -89,13 +99,17 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   final protected def closeGlobalWire(x: String, forceful: Boolean = false): Unit = { 
-    withStream(getStream("GlobalWires")) {
+    val file_num = numGlobalFiles min {gw_lines / maxLinesPerGlobalFile}
+    gw_lines = gw_lines + 1
+    withStream(getStream("GlobalWires"+file_num)) {
       close(x, forceful) 
     }
   }
 
   final protected def closeGlobalModule(x: String, forceful: Boolean = false): Unit = { 
-    withStream(getStream("GlobalModules")) {
+    val file_num = numGlobalFiles min {gm_lines / maxLinesPerGlobalFile}
+    gm_lines = gm_lines + 1
+    withStream(getStream("GlobalModules"+file_num)) {
       close(x, forceful) 
     }
   }

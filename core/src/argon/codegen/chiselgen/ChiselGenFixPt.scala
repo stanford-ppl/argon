@@ -27,6 +27,14 @@ trait ChiselGenFixPt extends ChiselCodegen {
       case _ => super.needsFPType(tp)
   }
 
+  protected def newWireFix(tp: Type[_]): String = tp match {
+    case FixPtType(s,d,f) => src"new FixedPoint($s, $d, $f)"
+    case IntType() => "UInt(32.W)"
+    case LongType() => "UInt(32.W)"
+    case _ => throw new NoWireConstructorException(s"$tp")
+  }
+
+
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     case (FixPtType(s,d,f), Const(cc: BigDecimal)) => 
       if (s) {
