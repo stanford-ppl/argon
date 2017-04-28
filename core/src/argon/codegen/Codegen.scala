@@ -18,7 +18,7 @@ trait Codegen extends Traversal {
   def out: String = s"${Config.genDir}${Config.sep}$lang${Config.sep}"
   var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
 
-  val numGlobalFiles = 5           // Specific hacks for chisel     
+  val numGlobalFiles = 8           // Specific hacks for chisel     
   val maxLinesPerGlobalFile = 400  // Specific hacks for chisel             
 
   var stream: PrintWriter = _
