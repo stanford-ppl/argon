@@ -43,11 +43,7 @@ trait DotGenFixPt extends DotCodegen {
       case IntType()  => 
       case LongType() => 
     }
-    case FixConvert(x) => lhs.tp match {
-      case IntType()  => 
-      case LongType() => 
-      case FixPtType(s,d,f) => 
-    }
+    case FixConvert(x) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs);}
     case _ => super.emitNode(lhs, rhs)
   }
 }
