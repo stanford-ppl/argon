@@ -20,6 +20,7 @@ trait Codegen extends Traversal {
 
   val numGlobalFiles = 8           // Specific hacks for chisel     
   val maxLinesPerFile = 500  // Specific hacks for chisel             
+  val numTraitsPerMixer = 50 // Specific hacks for chisel
 
   var stream: PrintWriter = _
   var streamName = ""

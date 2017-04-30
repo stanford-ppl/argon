@@ -251,9 +251,25 @@ import types._""")
     }
 
     if (Config.multifile >= 3 ) {
-      val traits = streamMapReverse.keySet.toSet.map{
+      val traits = (streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-      }.toSet - "AccelTop" - "Instantiator"
+      }.toSet - "AccelTop" - "Instantiator").toList
+
+      var numMixers = 0
+      (0 until traits.length by numTraitsPerMixer).foreach { i =>
+        val numLocalTraits = {traits.length - i} min numTraitsPerMixer
+        val thisTraits = (0 until numLocalTraits).map { j => traits(i+j) }
+        withStream(getStream("Mixer"+numMixers)) {
+          emit(s"""package accel
+import templates._
+import fringe._
+import chisel3._
+import chisel3.util._""")
+          emit(s"""trait Mixer$numMixers extends ${thisTraits.mkString("\n with ")} {}""")
+
+        }
+        numMixers = numMixers + 1
+      }
 
       withStream(getStream("AccelTop")) {
         emit(s"""package accel
@@ -270,7 +286,7 @@ class AccelTop(
   val storeStreamInfo: List[StreamParInfo],
   val streamInsInfo: List[StreamParInfo],
   val streamOutsInfo: List[StreamParInfo]
-) extends ${traits.mkString("\n with ")} {
+) extends ${(0 until numMixers).map{i => "Mixer" + i}.mkString("\n with ")} {
 
   // TODO: Figure out better way to pass constructor args to IOModule.  Currently just recreate args inside IOModule redundantly
 
