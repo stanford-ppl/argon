@@ -69,6 +69,12 @@ trait DotCodegen extends Codegen with FileDependencies with DotEnum { // FileDep
       edges += buffered _
     }
   }
+  def emitSel(from:Any, to:Any):Unit = {
+    def buffered() = { emit(s"""${q(from)} -> ${q(to)} [color="red"] """) }
+    if (emitEn) {
+      edges += buffered _
+    }
+  }
   //def emitEdge(from:Any, ffield:Any, to:Any, tfield:Any):Unit = {
     //emitEdge(s"${from}:${ffield}", s"${to}:${tfield}")
   //}
@@ -143,6 +149,7 @@ trait DotEnum {
   val hexagon   = Shape("hexagon")
   val diamond   = Shape("diamond")
   val point     = Shape("point")
+  val mux       = Shape("invtrapezium")
 
 	val filled    = Style("filled")
   val bold      = Style("bold")

@@ -19,6 +19,9 @@ trait DotGenFixPt extends DotCodegen {
       case Def(FixXor(_,_)) => super.attr(n).shape(circle).label("^")
       case Def(FixLt(_,_)) => super.attr(n).shape(circle).label("<")
       case Def(FixLeq(_,_)) => super.attr(n).shape(circle).label("<=")
+      case Def(FixNeq(_,_)) => super.attr(n).shape(circle).label("!=")
+      case Def(FixEql(_,_)) => super.attr(n).shape(circle).label("==")
+      case Def(FixMod(_,_)) => super.attr(n).shape(circle).label("%")
       case _ => super.attr(n)
     }
     case _ => super.attr(n)

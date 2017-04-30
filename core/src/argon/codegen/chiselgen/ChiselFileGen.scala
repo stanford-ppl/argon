@@ -67,7 +67,8 @@ import templates._
 import templates.ops._
 import fringe._
 import types._
-import chisel3._""")
+import chisel3._
+import chisel3.util._""")
       open(s"trait RootController extends ${gm_extensions} with GlobalRetiming {")
       emit(src"// Root controller for app: ${Config.name}")
 
