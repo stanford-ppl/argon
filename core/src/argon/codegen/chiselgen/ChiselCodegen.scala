@@ -55,7 +55,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   var gw_lines = 0
   final protected def emitGlobalWire(x: String, forceful: Boolean = false): Unit = { 
     if (x.indexOf("val") == 0) gw_lines = gw_lines + 1
-    val file_num = (numGlobalFiles-1) min {gw_lines / maxLinesPerGlobalFile}
+    val file_num = (numGlobalFiles-1) min {gw_lines / maxLinesPerFile}
     withStream(getStream("GlobalWires" + file_num)) {
       emit(x, forceful) 
     }
@@ -64,7 +64,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   var gm_lines = 0
   final protected def emitGlobalModule(x: String, forceful: Boolean = false): Unit = { 
     if (x.indexOf("val") == 0) gm_lines = gm_lines + 1
-    val file_num = (numGlobalFiles-1) min {gm_lines / maxLinesPerGlobalFile}
+    val file_num = (numGlobalFiles-1) min {gm_lines / maxLinesPerFile}
     withStream(getStream("GlobalModules" + file_num)) {
       emit(x, forceful) 
     }
@@ -78,7 +78,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final protected def openGlobalWire(x: String, forceful: Boolean = false): Unit = { 
     if (x.indexOf("val") == 0) gw_lines = gw_lines + 1
-    val file_num = (numGlobalFiles-1) min {gw_lines / maxLinesPerGlobalFile}
+    val file_num = (numGlobalFiles-1) min {gw_lines / maxLinesPerFile}
     withStream(getStream("GlobalWires"+file_num)) {
       open(x, forceful) 
     }
@@ -86,7 +86,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final protected def openGlobalModule(x: String, forceful: Boolean = false): Unit = { 
     if (x.indexOf("val") == 0) gm_lines = gm_lines + 1
-    val file_num = (numGlobalFiles-1) min {gm_lines / maxLinesPerGlobalFile}
+    val file_num = (numGlobalFiles-1) min {gm_lines / maxLinesPerFile}
     withStream(getStream("GlobalModules"+file_num)) {
       open(x, forceful) 
     }
@@ -100,7 +100,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final protected def closeGlobalWire(x: String, forceful: Boolean = false): Unit = { 
     if (x.indexOf("val") == 0) gw_lines = gw_lines + 1
-    val file_num = (numGlobalFiles-1) min {gw_lines / maxLinesPerGlobalFile}
+    val file_num = (numGlobalFiles-1) min {gw_lines / maxLinesPerFile}
     withStream(getStream("GlobalWires"+file_num)) {
       close(x, forceful) 
     }
@@ -108,7 +108,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final protected def closeGlobalModule(x: String, forceful: Boolean = false): Unit = { 
     if (x.indexOf("val") == 0) gm_lines = gm_lines + 1
-    val file_num = (numGlobalFiles-1) min {gm_lines / maxLinesPerGlobalFile}
+    val file_num = (numGlobalFiles-1) min {gm_lines / maxLinesPerFile}
     withStream(getStream("GlobalModules"+file_num)) {
       close(x, forceful) 
     }
@@ -160,8 +160,85 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
 
+  def tabbing(stream: String): String = " "*(tabWidth*(streamTab getOrElse (stream, 0)))
+
+  protected def strip_ext(name: String): String = {"\\..*".r.replaceAllIn(name,"")}
+  protected def get_ext(name: String): String = {".*\\.".r.replaceAllIn(name,"")}
+  protected def get_real_stream(curStream: String, x: String): String = {
+    if ((curStream contains "Global") | (curStream contains "BufferControl") | (curStream contains "IOModule") | (curStream contains "AccelTop")) {
+      strip_ext(curStream)
+    } else {
+      val current_ext = streamExtensions(strip_ext(curStream)).last
+      val cur_stream_ext = if (current_ext == 0) {strip_ext(curStream)} else {strip_ext(curStream) + "_" + current_ext}
+      val cur_tabbing = streamTab(cur_stream_ext + "." + get_ext(curStream))
+      if (/*(x.indexOf("val") == 0) & */(cur_tabbing == 1)) streamLines(cur_stream_ext) += 1
+      val file_num = streamLines(cur_stream_ext) / maxLinesPerFile
+      if (streamLines(cur_stream_ext) % maxLinesPerFile == 0 & (!streamExtensions(strip_ext(curStream)).contains(file_num))) { // How the fuck is it entering this loop if the condition is false
+        val next = newStream(strip_ext(curStream) + "_" + file_num)
+        val curlist = streamExtensions(strip_ext(curStream))
+        streamExtensions += (strip_ext(curStream) -> {curlist :+ file_num})
+        withStream(next) {
+          stream.println("""package accel
+import templates._
+import templates.ops._
+import types._
+import chisel3._""")
+          val prnt = if (file_num == 1) src"${strip_ext(curStream)}" else src"${strip_ext(curStream)}_${file_num-1}"
+          open(src"""trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {""")
+        }
+      }
+      cur_stream_ext
+    }
+
+  }
+
+
+
+  override protected def emit(x: String, forceful: Boolean = false): Unit = { 
+    if (emitEn | forceful) {
+      val realstream = get_real_stream(streamName,x)
+      withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x)}
+    } else { 
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+    }
+  } 
+  override protected def open(x: String, forceful: Boolean = false): Unit = {
+    if (emitEn | forceful) {
+      val realstream = get_real_stream(streamName,x)
+      withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x)}; 
+      if (streamTab contains {realstream + "." + get_ext(streamName)}) streamTab(realstream + "." + get_ext(streamName)) += 1 
+    } else { 
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+    }
+  }
+  override protected def close(x: String, forceful: Boolean = false): Unit = { 
+    if (emitEn | forceful) {
+      val realstream = get_real_stream(streamName,x)
+      if (streamTab contains {realstream + "." + get_ext(streamName)}) {
+        streamTab(realstream + "." + get_ext(streamName)) -= 1; 
+        withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x)}
+      }
+    } else { 
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+    }
+  } 
+  override protected def closeopen(x: String, forceful: Boolean = false): Unit = { // Good for "} else {" lines
+    if (emitEn | forceful) {
+      val realstream = get_real_stream(streamName,x)
+      if (streamTab contains {realstream + "." + get_ext(streamName)}) {
+        streamTab(realstream + "." + get_ext(streamName)) -= 1; 
+        withStream(getStream(realstream)) {stream.println(x);}
+        streamTab(realstream + "." + get_ext(streamName)) += 1
+      }
+    } else { 
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+    }
+  } 
+
+
   final protected def withSubStream[A](name: String, parent: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
     if (Config.multifile == 4) {
+      val prnts = if (!(streamExtensions contains parent)) src"$parent" else streamExtensions(parent).map{i => if (i == 0) src"$parent" else src"${parent}_${i}"}.mkString(" with ")
       emit(src"// Creating sub kernel ${name}")
       withStream(newStream(name)) {
           emit("""package accel
@@ -169,10 +246,13 @@ import templates._
 import templates.ops._
 import types._
 import chisel3._""")
-          open(src"""trait ${name} extends ${parent} {""")
+          open(src"""trait ${name} extends ${prnts} {""")
           try { body } 
           finally { 
-            close("}")
+            streamExtensions(name).foreach{i => 
+              val fname = if (i == 0) src"$name" else src"${name}_${i}"
+              withStream(getStream(fname)) { stream.println("}")}
+            }
           }
       }
     } else if (Config.multifile == 3 & inner) {
@@ -203,9 +283,6 @@ import chisel3._""")
       finally { close("") }      
     }
   }
-
-
-
 
 
 }

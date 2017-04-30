@@ -19,11 +19,13 @@ trait Codegen extends Traversal {
   var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
 
   val numGlobalFiles = 8           // Specific hacks for chisel     
-  val maxLinesPerGlobalFile = 400  // Specific hacks for chisel             
+  val maxLinesPerFile = 500  // Specific hacks for chisel             
 
   var stream: PrintWriter = _
   var streamName = ""
   var streamTab = collection.mutable.Map[String, Int]() // Map from filename to its tab level
+  var streamLines = collection.mutable.Map[String, Int]() // Map from filename number of lines it has
+  var streamExtensions = collection.mutable.Map[String, List[Int]]() // Map from filename to number of extensions it has
   var streamMap = collection.mutable.Map[PrintWriter, String]() // Map from PrintWriter to its string name
   var streamMapReverse = collection.mutable.Map[String, PrintWriter]() // Map from PrintWriter to its string name
   var topLayerTraits = List[String]() // List of top layer nodes, used in multifile==4 generation
@@ -89,6 +91,8 @@ trait Codegen extends Traversal {
     // TODO: Assert streamMap does not contain this guy already
     val fullname = name + "." + exten
     streamTab += (fullname -> 0)
+    streamLines += (name -> 0)
+    streamExtensions += (name -> List(0))
     Files.createDirectories(Paths.get(out))
     val file = new PrintWriter(s"${out}${name}.$exten")
     streamMap += (file -> fullname)

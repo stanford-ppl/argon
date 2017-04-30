@@ -79,8 +79,8 @@ import chisel3._""")
 import templates._
 import templates.ops._
 import chisel3._
-import types._
-trait GlobalWires$i extends IOModule{""")
+import types._""")
+        open(s"""trait GlobalWires$i extends IOModule{""")
       }
 
     }
@@ -88,11 +88,11 @@ trait GlobalWires$i extends IOModule{""")
     for (i <- 0 until numGlobalFiles) {
       withStream(getStream("GlobalModules" + i)) {
         emit(s"""package accel
-  import templates._
-  import templates.ops._
-  import chisel3._
-  import types._ 
-  trait GlobalModules$i extends ${gw_extensions} {""")
+import templates._
+import templates.ops._
+import chisel3._
+import types._ """)
+        open(s"""trait GlobalModules$i extends ${gw_extensions} {""")
       }
     }
 
@@ -101,8 +101,8 @@ trait GlobalWires$i extends IOModule{""")
 import templates._
 import templates.ops._
 import chisel3._
-import types._
-trait GlobalRetiming extends ${gw_extensions} {""")
+import types._""")
+      open(s"""trait GlobalRetiming extends ${gw_extensions} {""")
     }
 
 
@@ -231,8 +231,9 @@ trait GlobalRetiming extends ${gw_extensions} {""")
       close("}")
     }
 
-    withStream(getStream("RootController")) {
-      close(s"}")
+    streamExtensions("RootController").foreach{i => 
+      val fname = if (i == 0) "RootController" else src"RootController_${i}"
+      withStream(getStream(fname)) { stream.println("}")}
     }
 
     withStream(getStream("BufferControlCxns")) {
