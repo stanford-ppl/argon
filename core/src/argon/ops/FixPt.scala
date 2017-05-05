@@ -20,6 +20,9 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
   type Int16 = FixPt[TRUE,_16,_0]
   type Int8  = FixPt[TRUE,_8,_0]
 
+  @generate
+  type UIntJJ$JJ$2to128 = FixPt[FALSE,_JJ,_0]
+
   type Index = Int32  // Addressing, sizes, etc.
 
   /** Infix Methods **/
