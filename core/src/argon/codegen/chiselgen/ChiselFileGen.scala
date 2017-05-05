@@ -58,52 +58,45 @@ import chisel3._""")
       open(s"""trait BufferControlCxns extends RootController {""")
     }
 
-    val gw_extensions = (0 until numGlobalFiles).map{j => "GlobalWires" + j}.mkString(" with ")
-    val gm_extensions = (0 until numGlobalFiles).map{j => "GlobalModules" + j}.mkString(" with ")
-
     withStream(getStream("RootController")) {
       emit(s"""package accel
 import templates._
 import templates.ops._
 import fringe._
 import types._
-import chisel3._""")
-      open(s"trait RootController extends ${gm_extensions} with GlobalRetiming {")
+import chisel3._
+import chisel3.util._""")
+      open(s"trait RootController extends GlobalModulesMixer {")
       emit(src"// Root controller for app: ${Config.name}")
 
     }
 
-    for (i <- 0 until numGlobalFiles) {
-      withStream(getStream("GlobalWires"+i)) {
-        emit(s"""package accel
-import templates._
-import templates.ops._
-import chisel3._
-import types._""")
-        open(s"""trait GlobalWires$i extends IOModule{""")
-      }
-
-    }
-
-    for (i <- 0 until numGlobalFiles) {
-      withStream(getStream("GlobalModules" + i)) {
-        emit(s"""package accel
-import templates._
-import templates.ops._
-import chisel3._
-import types._ """)
-        open(s"""trait GlobalModules$i extends ${gw_extensions} {""")
-      }
-    }
-
-    withStream(getStream("GlobalRetiming")) {
+    withStream(getStream("GlobalWires")) {
       emit(s"""package accel
 import templates._
 import templates.ops._
 import chisel3._
 import types._""")
-      open(s"""trait GlobalRetiming extends ${gw_extensions} {""")
+      open(s"""trait GlobalWires extends IOModule{""")
     }
+
+    withStream(getStream("GlobalModules")) {
+      emit(s"""package accel
+import templates._
+import templates.ops._
+import chisel3._
+import types._ """)
+      open(s"""trait GlobalModules extends GlobalWiresMixer {""")
+    }
+
+//     withStream(getStream("GlobalRetiming")) {
+//       emit(s"""package accel
+// import templates._
+// import templates.ops._
+// import chisel3._
+// import types._""")
+//       open(s"""trait GlobalRetiming extends GlobalWiresMixer {""")
+//     }
 
 
     withStream(getStream("Instantiator")) {
@@ -151,20 +144,20 @@ import types._""")
       close("}")
 
     }
-    for (i <- 0 until numGlobalFiles) {
-      withStream(getStream("GlobalWires"+ i)) {
-      // // Get each all unique reg strings
-      // emitted_argins.toList.map{a=>a._2}.distinct.foreach{ a => 
-      //   emit(s"""val ${a} = io.ArgIn.ports(${argInsByName.indexOf(a)})""")
-      // }
+    // for (i <- 0 until numGlobalFiles) {
+    //   withStream(getStream("GlobalWires"+ i)) {
+    //   // // Get each all unique reg strings
+    //   // emitted_argins.toList.map{a=>a._2}.distinct.foreach{ a => 
+    //   //   emit(s"""val ${a} = io.ArgIn.ports(${argInsByName.indexOf(a)})""")
+    //   // }
 
-      // emitted_argins.toList.foreach {
-      //   case (sym, regStr) =>
-      //     emit(s"""val ${quote(sym)} = $regStr""")
-      // }
-        emit("}")
-      }
-    }
+    //   // emitted_argins.toList.foreach {
+    //   //   case (sym, regStr) =>
+    //   //     emit(s"""val ${quote(sym)} = $regStr""")
+    //   // }
+    //     emit("}")
+    //   }
+    // }
 
     withStream(getStream("IOModule")) {
       emit("// Combine values")
@@ -236,19 +229,45 @@ import types._""")
       withStream(getStream(fname)) { stream.println("}")}
     }
 
-    withStream(getStream("BufferControlCxns")) {
-      close("}")
+    streamExtensions("BufferControlCxns").foreach{i => 
+      val fname = if (i == 0) "BufferControlCxns" else src"BufferControlCxns_${i}"
+      withStream(getStream(fname)) { stream.println("}")}
     }
 
-    for (i <- 0 until numGlobalFiles) {
-      withStream(getStream("GlobalModules"+i)) {
-        close("}")
+    val gms = streamExtensions("GlobalModules").map{i =>
+      val fname = if (i == 0) "GlobalModules" else src"GlobalModules_${i}"
+      withStream(getStream(fname)) { stream.println("}")}
+      fname
+    }
+
+    val gws = streamExtensions("GlobalWires").map{i =>
+      val fname = if (i == 0) "GlobalWires" else src"GlobalWires_${i}"
+      withStream(getStream(fname)) { stream.println("}")}
+      fname
+    }
+
+    withStream(getStream("GlobalWiresMixer")) {
+        emit(s"""package accel
+import templates._
+import fringe._
+import chisel3._
+import chisel3.util._
+trait GlobalWiresMixer extends ${gws.mkString("\n with ")}""")
       }
-    }
 
-    withStream(getStream("GlobalRetiming")) {
-      close("}")
-    }
+    withStream(getStream("GlobalModulesMixer")) {
+        emit(s"""package accel
+import templates._
+import fringe._
+import chisel3._
+import chisel3.util._
+trait GlobalModulesMixer extends ${gms.mkString("\n with ")}""")
+      }
+
+
+    // withStream(getStream("GlobalRetiming")) {
+    //   close("}")
+    // }
 
     if (Config.multifile >= 3 ) {
       val traits = (streamMapReverse.keySet.toSet.map{

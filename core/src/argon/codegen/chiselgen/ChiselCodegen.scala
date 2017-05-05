@@ -52,20 +52,14 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     case lhs: Sym[_] => s"x${lhs.id}"
   }
 
-  var gw_lines = 0
   final protected def emitGlobalWire(x: String, forceful: Boolean = false): Unit = { 
-    if (x.indexOf("val") == 0) gw_lines = gw_lines + 1
-    val file_num = (numGlobalFiles-1) min {gw_lines / maxLinesPerFile}
-    withStream(getStream("GlobalWires" + file_num)) {
+    withStream(getStream("GlobalWires")) {
       emit(x, forceful) 
     }
   }
 
-  var gm_lines = 0
   final protected def emitGlobalModule(x: String, forceful: Boolean = false): Unit = { 
-    if (x.indexOf("val") == 0) gm_lines = gm_lines + 1
-    val file_num = (numGlobalFiles-1) min {gm_lines / maxLinesPerFile}
-    withStream(getStream("GlobalModules" + file_num)) {
+    withStream(getStream("GlobalModules")) {
       emit(x, forceful) 
     }
   }
@@ -77,17 +71,13 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   final protected def openGlobalWire(x: String, forceful: Boolean = false): Unit = { 
-    if (x.indexOf("val") == 0) gw_lines = gw_lines + 1
-    val file_num = (numGlobalFiles-1) min {gw_lines / maxLinesPerFile}
-    withStream(getStream("GlobalWires"+file_num)) {
+    withStream(getStream("GlobalWires")) {
       open(x, forceful) 
     }
   }
 
   final protected def openGlobalModule(x: String, forceful: Boolean = false): Unit = { 
-    if (x.indexOf("val") == 0) gm_lines = gm_lines + 1
-    val file_num = (numGlobalFiles-1) min {gm_lines / maxLinesPerFile}
-    withStream(getStream("GlobalModules"+file_num)) {
+    withStream(getStream("GlobalModules")) {
       open(x, forceful) 
     }
   }
@@ -99,17 +89,13 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   final protected def closeGlobalWire(x: String, forceful: Boolean = false): Unit = { 
-    if (x.indexOf("val") == 0) gw_lines = gw_lines + 1
-    val file_num = (numGlobalFiles-1) min {gw_lines / maxLinesPerFile}
-    withStream(getStream("GlobalWires"+file_num)) {
+    withStream(getStream("GlobalWires")) {
       close(x, forceful) 
     }
   }
 
   final protected def closeGlobalModule(x: String, forceful: Boolean = false): Unit = { 
-    if (x.indexOf("val") == 0) gm_lines = gm_lines + 1
-    val file_num = (numGlobalFiles-1) min {gm_lines / maxLinesPerFile}
-    withStream(getStream("GlobalModules"+file_num)) {
+    withStream(getStream("GlobalModules")) {
       close(x, forceful) 
     }
   }
@@ -165,7 +151,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   protected def strip_ext(name: String): String = {"\\..*".r.replaceAllIn(name,"")}
   protected def get_ext(name: String): String = {".*\\.".r.replaceAllIn(name,"")}
   protected def get_real_stream(curStream: String, x: String): String = {
-    if ((curStream contains "Global") | (curStream contains "BufferControl") | (curStream contains "IOModule") | (curStream contains "AccelTop")) {
+    if ((curStream contains "IOModule") | (curStream contains "AccelTop")) {
       strip_ext(curStream)
     } else {
       val current_ext = streamExtensions(strip_ext(curStream)).last
@@ -182,7 +168,8 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 import templates._
 import templates.ops._
 import types._
-import chisel3._""")
+import chisel3._
+import chisel3.util._""")
           val prnt = if (file_num == 1) src"${strip_ext(curStream)}" else src"${strip_ext(curStream)}_${file_num-1}"
           open(src"""trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {""")
         }
@@ -245,7 +232,8 @@ import chisel3._""")
 import templates._
 import templates.ops._
 import types._
-import chisel3._""")
+import chisel3._
+import chisel3.util._""")
           open(src"""trait ${name} extends ${prnts} {""")
           try { body } 
           finally { 
@@ -261,7 +249,8 @@ import chisel3._""")
   import templates._
   import templates.ops._
   import types._
-  import chisel3._""")
+  import chisel3._
+  import chisel3.util._""")
             open(src"""trait ${name} extends RootController {""")
             try { body } 
             finally { 
