@@ -16,8 +16,8 @@ trait CppGenFixPt extends CppCodegen {
         else if (d > 16) "int32_t"
         else if (d > 8) "int16_t"
         else if (d > 4) "int8_t"
-        else if (d > 2) "int2_t"
-        else "boolean"
+        else if (d > 2) "int8_t"
+        else "bool"
       }
     case _ => super.remap(tp)
   }
