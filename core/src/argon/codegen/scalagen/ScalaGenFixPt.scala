@@ -19,6 +19,8 @@ trait ScalaGenFixPt extends ScalaCodegen {
     case _ => super.quoteConst(c)
   }
 
+  /* WHY IS THIS FILE BEING IGNORED?! */
+  
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case FixInv(x)   => emit(src"val $lhs = ~$x")
     case FixNeg(x)   => emit(src"val $lhs = -$x")
@@ -28,7 +30,6 @@ trait ScalaGenFixPt extends ScalaCodegen {
     case FixDiv(x,y) => emit(src"val $lhs = $x / $y")
     case FixAnd(x,y) => emit(src"val $lhs = $x & $y")
     case FixOr(x,y)  => emit(src"val $lhs = $x | $y")
-    case FixXor(x,y)  => emit(src"val $lhs = $x ^ $y")
     case FixLt(x,y)  => emit(src"val $lhs = $x < $y")
     case FixLeq(x,y) => emit(src"val $lhs = $x <= $y")
     case FixNeq(x,y) => emit(src"val $lhs = $x != $y")
