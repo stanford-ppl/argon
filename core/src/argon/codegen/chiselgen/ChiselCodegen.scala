@@ -157,9 +157,10 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       val current_ext = streamExtensions(strip_ext(curStream)).last
       val cur_stream_ext = if (current_ext == 0) {strip_ext(curStream)} else {strip_ext(curStream) + "_" + current_ext}
       val cur_tabbing = streamTab(cur_stream_ext + "." + get_ext(curStream))
-      if (/*(x.indexOf("val") == 0) & */(cur_tabbing == 1)) streamLines(cur_stream_ext) += 1
-      val file_num = streamLines(cur_stream_ext) / maxLinesPerFile
-      if (streamLines(cur_stream_ext) % maxLinesPerFile == 0 & (!streamExtensions(strip_ext(curStream)).contains(file_num))) { // How the fuck is it entering this loop if the condition is false
+      if (/*(x.indexOf("val") == 0) & */(cur_tabbing == 1)) streamLines(strip_ext(curStream)) += 1
+      val global_lines = streamLines(strip_ext(curStream))
+      val file_num = global_lines / maxLinesPerFile
+      if (global_lines % maxLinesPerFile == 0 & (!streamExtensions(strip_ext(curStream)).contains(file_num))) { // How the fuck is it entering this loop if the condition is false
         val next = newStream(strip_ext(curStream) + "_" + file_num)
         val curlist = streamExtensions(strip_ext(curStream))
         streamExtensions += (strip_ext(curStream) -> {curlist :+ file_num})
@@ -183,8 +184,17 @@ import chisel3.util._""")
 
   override protected def emit(x: String, forceful: Boolean = false): Unit = { 
     if (emitEn | forceful) {
+
+      // val current_ext = streamExtensions(strip_ext(streamName)).last
+      // val cur_stream_ext = if (current_ext == 0) {strip_ext(streamName)} else {strip_ext(streamName) + "_" + current_ext}
+      // val cur_tabbing = streamTab(cur_stream_ext + "." + get_ext(streamName))
+      // val global_lines = streamLines(strip_ext(streamName))
+      // val ext_list = streamExtensions(strip_ext(streamName))
+      // val file_num = global_lines / maxLinesPerFile
+      // val debug_stuff = "// lines " + global_lines + " tabbing " + cur_tabbing + " ext_list " + ext_list + " file_num " + file_num
+
       val realstream = get_real_stream(streamName,x)
-      withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x)}
+      withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x /*+ debug_stuff*/)}
     } else { 
       if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }

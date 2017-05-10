@@ -1,6 +1,7 @@
 package argon.codegen.chiselgen
 
 import argon.core.Staging
+import scala.math._
 import argon.ops.{FixPtExp, FltPtExp}
 
 trait ChiselGenFixPt extends ChiselCodegen {
@@ -80,10 +81,12 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case SatDiv(x,y) => emit(src"val $lhs = $x </> $y")
     case UnbSatMul(x,y) => emit(src"val $lhs = $x <*&> $y")
     case UnbSatDiv(x,y) => emit(src"val $lhs = $x </&> $y")
-    case FixRandom(x) => lhs.tp match {
-      case IntType()  => emit(src"val $lhs = chisel.util.Random.nextInt()")
-      case LongType() => emit(src"val $lhs = chisel.util.Random.nextLong()")
-    }
+    case FixRandom(x) => 
+      val seed = (random*1000).toInt
+      emit(s"val ${quote(lhs)}_bitsize = log2Up(${x.getOrElse(4096)}) min 1")
+      emitGlobalModule(src"val ${lhs}_rng = Module(new PRNG($seed))")
+      emitGlobalModule(src"${lhs}_rng.io.en := true.B")
+      emit(src"val ${lhs} = ${lhs}_rng.io.output(${lhs}_bitsize,0)")
     case FixConvert(x) => lhs.tp match {
       case IntType()  => 
         emitGlobalWire(src"val $lhs = Wire(new FixedPoint(true, 32, 0))")
