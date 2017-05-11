@@ -1,6 +1,4 @@
 package argon
-import argon.core.{Reporting, Staging}
-import argon.ops.ArrayExp
 import argon.transform.Transformer
 import argon.utils.deleteExts
 
@@ -19,13 +17,20 @@ trait AppCore { self =>
 
   def parseArguments(args: Seq[String]): Unit = {
     val parser = new ArgonArgParser
-    parser.parse(args) match {
-      case None =>
-        println("Nothing generated")
-        sys.exit(0)
-      case _ =>
-        println("Starting generation")
+    parser.parse(args)
+  }
+
+  protected def onException(t: Throwable): Unit = {
+    IR.withLog(Config.cwd, Config.name + "_exception.log") {
+      Config.verbosity = 10
+      IR.log(t.getMessage)
+      IR.log("")
+      t.getStackTrace.foreach{elem => IR.log(elem.toString) }
     }
+    IR.error(s"An exception was encountered while compiling ${Config.name}: ")
+    IR.error(s"  ${t.getMessage}")
+    IR.error(s"This is likely a compiler bug. A log file has been created at: ")
+    IR.error(s"  ${Config.cwd}/${Config.name}_exception.log")
   }
 
   def main(sargs: Array[String]): Unit = {
@@ -39,7 +44,19 @@ trait AppCore { self =>
     IR.__stagingArgs = this.__stagingArgs
     Lib.__args = this.__stagingArgs
 
-    IR.compileOrRun( main() )
+    try {
+      IR.compileOrRun(main())
+    }
+    catch {case t: Throwable =>
+      if (Config.verbosity > 0) {
+        IR.report(t.getMessage)
+        t.getStackTrace.foreach{elem => IR.report(elem.toString) }
+      }
+      else {
+        onException(t)
+      }
+      sys.exit(-1)
+    }
   }
 }
 
@@ -93,7 +110,7 @@ trait CompilerCore extends ArgonExp {
     var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(blk).s } }
     State.staging = false
 
-    if (curEdgeId == 0) return  // Nothing was Staged -- likely running in library mode (or empty program)
+    if (curEdgeId == 0) return  // Nothing was staged -- likely running in library mode (or empty program)
 
     // Exit now if errors were found during staging
     checkErrors(start, "staging")
