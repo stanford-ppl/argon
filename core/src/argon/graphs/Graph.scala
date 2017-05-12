@@ -2,12 +2,11 @@ package argon.graphs
 
 import java.io.PrintStream
 
-import argon.Config
-import argon.core.Exceptions
+import argon.{Config, Freq}
 
 import scala.collection.mutable
 
-trait Graph extends Exceptions {
+class Graph[E<:Edge,N<:Node] {
   type EdgeId = Int
   type NodeId = Int
   final val VERBOSE_SCHEDULING = false
@@ -19,7 +18,7 @@ trait Graph extends Exceptions {
   implicit class IntToEdgeId(x: Int) { @inline def toEdgeId: EdgeId = x.asInstanceOf[EdgeId] }
   implicit class IntToNodeId(x: Int) { @inline def toNodeId: NodeId = x.asInstanceOf[NodeId] }
 
-  type Triple = (Iterable[Edge], Node, Iterable[Edge]) // outputs, node, inputs
+  type Triple = (Iterable[E], N, Iterable[E]) // outputs, node, inputs
 
   var curEdgeId : EdgeId = 0.toEdgeId
   var curNodeId : NodeId = 0.toNodeId
@@ -33,29 +32,14 @@ trait Graph extends Exceptions {
     }
   }
 
-  sealed abstract class UseFreq
-  object Freq {
-    case object Cold extends UseFreq
-    case object Hot  extends UseFreq
-    case object Normal extends UseFreq
-  }
-
-  def combine(a: UseFreq, b: UseFreq): UseFreq = (a,b) match {
-    case (Freq.Cold, _) => Freq.Cold
-    case (_, Freq.Cold) => Freq.Cold
-    case (Freq.Hot, _)  => Freq.Hot
-    case (_, Freq.Hot)  => Freq.Hot
-    case _              => Freq.Normal
-  }
-
   object EdgeData {
-    val value = mutable.ArrayBuffer[Edge]()
+    val value = mutable.ArrayBuffer[E]()
     val producer = mutable.ArrayBuffer[NodeId]()            // Index of node corresponding to this edge
     val dependents = mutable.ArrayBuffer[List[NodeId]]()    // Dataflow edges (forward) -- per edge
   }
 
   object NodeData {
-    val value   = mutable.ArrayBuffer[Node]()
+    val value   = mutable.ArrayBuffer[N]()
     val outputs = mutable.ArrayBuffer[EdgeId](0.toEdgeId)            // nodeId :: nodeId+1 ==> edges for this node
     val inputs  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Dataflow edges (reverse) -- per node
     val bounds  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Edges bound by this node
@@ -63,8 +47,7 @@ trait Graph extends Exceptions {
     val freqs   = mutable.ArrayBuffer[Seq[UseFreq]]()                // Frequency hints for code motion
   }
 
-  override def reset(): Unit = {
-    super.reset()
+  def reset(): Unit = {
     curEdgeId = 0.toEdgeId
     curNodeId = 0.toNodeId
     curInputId = 0.toEdgeId
@@ -87,8 +70,8 @@ trait Graph extends Exceptions {
   def nodeBounds(node: NodeId): Seq[EdgeId] = NodeData.bounds(node.toInt)
   def nodeTunnels(node: NodeId): Seq[(EdgeId,Seq[EdgeId])] = NodeData.tunnels(node.toInt)
   def nodeFreqs(node: NodeId): Seq[UseFreq] = NodeData.freqs(node.toInt)
-  def nodeOf(node: NodeId): Node = NodeData.value(node.toInt)
-  def edgeOf(edge: EdgeId): Edge = EdgeData.value(edge.toInt)
+  def nodeOf(node: NodeId): N = NodeData.value(node.toInt)
+  def edgeOf(edge: EdgeId): E = EdgeData.value(edge.toInt)
   def dependentsOf(edge: EdgeId): Seq[NodeId] = EdgeData.dependents(edge.toInt)
   def producerOf(edge: EdgeId): NodeId = EdgeData.producer(edge.toInt)
   def triple(id: NodeId): Triple = (nodeOutputs(id).map(edgeOf), nodeOf(id), nodeInputs(id).map(edgeOf))
@@ -109,7 +92,7 @@ trait Graph extends Exceptions {
   final def addBound(out: Edge) = addNode(Nil, Seq(out), Nil, Nil, Nil, null).head
 
   /** Add output edge(s) with corresponding node **/
-  final def addNode(ins: Seq[Edge], outs: Seq[Edge], binds: Seq[Edge], tunnel: Seq[(Edge,Seq[Edge])], freqs: Seq[UseFreq], node: Node) = {
+  final def addNode(ins: Seq[E], outs: Seq[E], binds: Seq[E], tunnel: Seq[(Edge,Seq[E])], freqs: Seq[UseFreq], node: N) = {
     outs.foreach { out =>
       out.id = curEdgeId.toInt
 

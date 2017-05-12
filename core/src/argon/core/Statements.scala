@@ -1,36 +1,30 @@
 package argon.core
 
 import argon.Config
-import scala.collection.mutable
+import forge._
 
-trait Statements extends Definitions with ArgonExceptions { this: Staging =>
-  // -- State
-  var defCache: Map[Def, Seq[Sym[_]]] = Map.empty
-  protected val shallowAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
-  protected val deepAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
-  protected val aliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
+// --- Statements
+case class Stm(lhs: Seq[Sym[_]], rhs: Def)
 
-  // --- Statements
-  case class Stm(lhs: Seq[Sym[_]], rhs: Def)
-
-  // "Typed pair" - symbol + an op
-  object TP {
-    def unapply[A](x: Stm): Option[(Sym[_],Op[Any])] = x match {
-      case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[_]], rhs.asInstanceOf[Op[Any]]))
-      case _ => None
-    }
+// "Typed pair" - symbol + an op
+object TP {
+  def unapply[A](x: Stm): Option[(Sym[_],Op[Any])] = x match {
+    case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[_]], rhs.asInstanceOf[Op[Any]]))
+    case _ => None
   }
+}
 
-  // "Tupled type pair" - one or more symbols + a Def
-  object TTP {
-    def unapply(x: Stm): Option[(Seq[Sym[_]],Def)] = x match {
-      case Stm(_, rhs: Op[_]) => None
-      case stm: Stm => Some((stm.lhs,stm.rhs))
-      case _ => None
-    }
+// "Tupled type pair" - one or more symbols + a Def
+object TTP {
+  def unapply(x: Stm): Option[(Seq[Sym[_]],Def)] = x match {
+    case Stm(_, rhs: Op[_]) => None
+    case stm: Stm => Some((stm.lhs,stm.rhs))
+    case _ => None
   }
+}
 
 
+trait Statements extends Definitions { this: Staging =>
   // --- Helper functions
   // Getting statement returns Option to account for Bounds, but this is known to be a Sym
   def stmOf(sym: Sym[_]): Stm = stmFromSymId(sym.id).get
@@ -58,20 +52,20 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   // --- Symbol aliasing
   private def noPrims(x: Set[Dyn[_]]): Set[Sym[_]] = x.collect{case s: Sym[_] if !s.tp.isPrimitive => s}
 
-  def shallowAliases(x: Any): Set[Sym[_]] = {
-    noPrims(aliasSyms(x)).flatMap { case s@Def(d) => shallowAliasCache.getOrElseUpdate(s, shallowAliases(d)) + s } ++
-      noPrims(extractSyms(x)).flatMap { case s@Def(d) => deepAliasCache.getOrElseUpdate(s, deepAliases(d)) }
+  @stateful def shallowAliases(x: Any): Set[Sym[_]] = {
+    noPrims(aliasSyms(x)).flatMap { case s@Def(d) => state.shallowAliasCache.getOrElseUpdate(s, shallowAliases(d)) + s } ++
+      noPrims(extractSyms(x)).flatMap { case s@Def(d) => state.deepAliasCache.getOrElseUpdate(s, deepAliases(d)) }
   }
-  def deepAliases(x: Any): Set[Sym[_]] = {
-    noPrims(aliasSyms(x)).flatMap { case s@Def(d) => deepAliasCache.getOrElseUpdate(s, deepAliases(d)) } ++
-      noPrims(copySyms(x)).flatMap { case s@Def(d) => deepAliasCache.getOrElseUpdate(s, deepAliases(d)) } ++
-      noPrims(containSyms(x)).flatMap { case s@Def(d) => aliasCache.getOrElseUpdate(s, allAliases(d)) + s } ++
-      noPrims(extractSyms(x)).flatMap { case s@Def(d) => deepAliasCache.getOrElseUpdate(s, deepAliases(d)) }
+  @stateful def deepAliases(x: Any): Set[Sym[_]] = {
+    noPrims(aliasSyms(x)).flatMap { case s@Def(d) => state.deepAliasCache.getOrElseUpdate(s, deepAliases(d)) } ++
+      noPrims(copySyms(x)).flatMap { case s@Def(d) => state.deepAliasCache.getOrElseUpdate(s, deepAliases(d)) } ++
+      noPrims(containSyms(x)).flatMap { case s@Def(d) => state.aliasCache.getOrElseUpdate(s, allAliases(d)) + s } ++
+      noPrims(extractSyms(x)).flatMap { case s@Def(d) => state.deepAliasCache.getOrElseUpdate(s, deepAliases(d)) }
   }
-  final def allAliases(x: Any): Set[Sym[_]] = {
+  @stateful final def allAliases(x: Any): Set[Sym[_]] = {
     shallowAliases(x) ++ deepAliases(x)
   }
-  final def mutableAliases(x: Any): Set[Sym[_]] = allAliases(x).filter(isMutable)
+  @stateful final def mutableAliases(x: Any): Set[Sym[_]] = state.allAliases(x).filter(isMutable)
   final def mutableInputs(d: Def): Set[Sym[_]] = {
     val bounds = d.binds
     val actuallyReadSyms = d.reads diff bounds
@@ -93,13 +87,5 @@ trait Statements extends Definitions with ArgonExceptions { this: Staging =>
   final def propagateWrites(effects: Effects): Effects = if (!Config.allowAtomicWrites) effects else {
     val writes = effects.writes.map{s => extractAtomicWrite(s) }
     effects.copy(writes = writes)
-  }
-
-  override def reset(): Unit = {
-    super.reset()
-    defCache = Map.empty
-    shallowAliasCache.clear()
-    deepAliasCache.clear()
-    aliasCache.clear()
   }
 }

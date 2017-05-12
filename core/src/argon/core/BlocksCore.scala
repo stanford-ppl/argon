@@ -1,22 +1,17 @@
 package argon.core
 
-import argon.traversal.CompilerPass
 import scala.collection.mutable
 
-trait Blocks extends Effects { self: Staging =>
-  type Pass = CompilerPass{ val IR: self.type }
+import forge._
+import argon._
 
-  /** Class representing the result of a staged scope. */
-  case class Block[+T](result: Exp[T], summary: Effects, effectful: Seq[Sym[_]], inputs: Seq[Sym[_]], temp: UseFreq) {
-    def tp: Type[_] = result.tp
-  }
-
+trait BlocksCore { self: ArgonCore =>
   /**
     * Computes an *external* summary for a seq of nodes
     * (Ignores reads/writes on data allocated within the scope)
     */
   def summarizeScope(context: Seq[Sym[_]]): Effects = {
-    var effects = Pure
+    var effects: Effects = Pure
     val allocs = new mutable.HashSet[Sym[_]]
     def clean(xs: Set[Sym[_]]) = xs diff allocs
     for (s@Effectful(u2, _) <- context) {
@@ -26,7 +21,9 @@ trait Blocks extends Effects { self: Staging =>
     effects
   }
 
-  def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]], temp: UseFreq): Block[T] = {
+  def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]], temp: Freq)(implicit state: State): Block[T] = {
+    import state._
+
     val saveContext = context
     val saveCache = defCache
     context = Nil
@@ -61,12 +58,14 @@ trait Blocks extends Effects { self: Staging =>
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
     * All assumptions about the current context carry over unchanged.
     */
-  def stageBlockInline[T:Type](block: => Exp[T]): Block[T] = {
+  def stageBlockInline[T:Type](block: => Exp[T])(implicit state: State): Block[T] = {
+    import state._
+
     val saveContext = context
-    if (saveContext eq null) context = Nil
+    if (saveContext eq null) state.context = Nil
 
     val result = block
-    val nAdded = context.length - saveContext.length
+    val nAdded = state.context.length - saveContext.length
 
     if ((saveContext ne null) && context.drop(nAdded) != saveContext)
       throw IllegalStageHereException(saveContext, context)
@@ -77,12 +76,5 @@ trait Blocks extends Effects { self: Staging =>
     context = saveContext
 
     Block[T](result, effects, deps, Nil, Freq.Normal)
-  }
-
-  /** Compiler debugging **/
-  override def readable(x: Any) = x match {
-    case b: Block[_] if b.inputs.isEmpty => c"Block(${b.result})"
-    case b: Block[_] => c"""Block(${b.inputs.mkString("(",",",")")} => ${b.result})"""
-    case _ => super.readable(x)
   }
 }

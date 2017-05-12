@@ -1,13 +1,14 @@
 package argon.core
 
+import argon._
+import forge._
+
 import scala.collection.mutable
 
 
-trait Scheduling extends Statements { this: Staging =>
+trait Scheduling extends Statements { this: ArgonCore =>
 
-  val scopeCache = mutable.HashMap[Block[_],Seq[Stm]]()
-
-  def makeScopeIndex(scope: Iterable[Stm]): OrderCache = buildScopeIndex(scope.map(_.rhs.id))
+  @stateful def makeScopeIndex(scope: Iterable[Stm]): OrderCache = buildScopeIndex(scope.map(_.rhs.id))
   def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache): Seq[Stm] = {
     scheduleDepsWithIndex(dyns(roots).map(_.id), cache).flatMap(stmFromNodeId)
   }

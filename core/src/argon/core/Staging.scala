@@ -1,25 +1,27 @@
 package argon.core
 
+import argon._
 import argon.utils.escapeConst
+import forge._
 
-trait Staging extends Scheduling {
+trait Staging { this: ArgonCore =>
 
-  def fresh[T:Type]: Bound[T] = {
+  @stateful def fresh[T:Type]: Bound[T] = {
     val bnd = new Bound(typ[T])
-    addBound(bnd)
+    state.graph.addBound(bnd)
     bnd
   }
-  def constant[T:Type](c: Any)(implicit ctx: SrcCtx): Const[T] = {
+  @stateful def constant[T:Type](c: Any)(implicit ctx: SrcCtx): Const[T] = {
     val cc = new Const[T](c)(typ[T])
     log(c"Making constant ${typ[T]} from ${escapeConst(c)} : ${c.getClass}")
-    registerInput(cc)
+    state.graph.registerInput(cc)
     cc.setCtx(ctx)
     cc
   }
-  def parameter[T:Type](c: Any)(implicit ctx: SrcCtx): Param[T] = {
+  @stateful def parameter[T:Type](c: Any)(implicit ctx: SrcCtx): Param[T] = {
     val p = new Param[T](c)(typ[T])
     log(c"Making parameter ${typ[T]} from ${escapeConst(p)} : ${c.getClass}")
-    registerInput(p)
+    state.graph.registerInput(p)
     p.setCtx(ctx)
     p
   }
@@ -55,7 +57,7 @@ trait Staging extends Scheduling {
   private def registerDef(d: Def, extraDeps: Seq[Sym[_]])(ctx: SrcCtx): Seq[Sym[Any]] = {
     val bounds = d.binds
     val tunnels = d.tunnels
-    val dfreqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).fold(Freq.Normal){combine})
+    val dfreqs = d.freqs.groupBy(_._1).mapValues(_.map(_._2).fold(Freq.Normal){Freq.combine})
     val freqs = d.inputs.map { in => dfreqs.getOrElse(in, Freq.Normal) } ++ extraDeps.distinct.map { d => Freq.Normal }
 
     val inputs = d.inputs

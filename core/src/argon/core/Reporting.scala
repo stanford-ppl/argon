@@ -1,29 +1,20 @@
 package argon.core
 
-import argon.Config
+import argon._
+import forge._
 import java.io.PrintStream
-import org.virtualized.SourceContext
 import java.nio.file.{Files, Paths}
-import java.io.OutputStream
+
+// TODO: Move these two elsewhere?
+trait UserFacing {
+  def toStringUser: String
+}
+trait CompilerFacing {
+  def toStringCompiler: String
+}
+
 
 trait Reporting {
-  class NullOutputStream() extends OutputStream {
-    override def write(b: Int) { }
-    override def write(b: Array[Byte]) { }
-    override def write(b: Array[Byte], off: Int, len: Int) { }
-  }
-  val nullstream = new PrintStream(new NullOutputStream)
-
-  private var logstream: PrintStream = nullstream
-  private var _errors = 0
-  private var _warns = 0
-  def hadErrors = _errors > 0
-  def nErrors = _errors
-  def hadWarns = _warns > 0
-  def nWarns = _warns
-
-  def logError() { _errors += 1}
-
   def plural(x: Int, sing: String, plur: String): String = if (x == 1) sing else plur
 
   def createLog(dir: String, filename: String): PrintStream = {
@@ -31,22 +22,22 @@ trait Reporting {
     new PrintStream(dir + Config.sep + filename)
   }
 
-  final def withLog[T](log: PrintStream)(blk: => T): T = {
+  @stateful final def withLog[T](log: PrintStream)(blk: => T): T = {
     if (Config.verbosity >= 1) {
-      val save = logstream
-      logstream = log
+      val save = state.logstream
+      state.logstream = log
       try {
         blk
       }
       finally {
-        logstream.flush()
-        logstream = save
+        state.logstream.flush()
+        state.logstream = save
       }
     }
     else blk
   }
 
-  final def withLog[T](dir: String, filename: String)(blk: => T): T = {
+  @stateful final def withLog[T](dir: String, filename: String)(blk: => T): T = {
     val log = createLog(dir, filename)
     try {
       withLog(log)(blk)
@@ -55,19 +46,13 @@ trait Reporting {
       log.close()
     }
   }
-  final def withConsole[T](blk: => T): T = {
-    val save = logstream
-    logstream = System.out
-    val result = blk
-    logstream = save
-    result
-  }
+  final def withConsole[T](blk: => T): T = withLog(System.out)(blk)
 
   // TODO: Should these be macros?
-  final def log(x: => Any): Unit = if (Config.verbosity >= 2) logstream.println(x)
-  final def dbg(x: => Any): Unit = if (Config.verbosity >= 1) logstream.println(x)
-  final def msg(x: => Any, level: Int = 2): Unit = {
-    logstream.println(x)
+  @stateful final def log(x: => Any): Unit = if (Config.verbosity >= 2) state.logstream.println(x)
+  @stateful final def dbg(x: => Any): Unit = if (Config.verbosity >= 1) state.logstream.println(x)
+  final def msg(x: => Any, level: Int = 2)(implicit state: State): Unit = {
+    state.logstream.println(x)
     if (Config.verbosity >= level) System.out.println(x)
   }
 
@@ -81,38 +66,50 @@ trait Reporting {
     dbg(s"[error] $x")
   }
 
-  final def warn(ctx: SourceContext, x: => Any, noWarn: Boolean = false): Unit = {
+  @stateful final def warn(ctx: SrcCtx, x: => Any, noWarn: Boolean = false): Unit = {
     warn(ctx.toString() + ": " + x)
-    if (!noWarn) _warns += 1
+    if (!noWarn) state.logWarning()
   }
-  final def error(ctx: SourceContext, x: => Any, noError: Boolean = false): Unit = {
+  @stateful final def error(ctx: SrcCtx, x: => Any, noError: Boolean = false): Unit = {
     error(ctx.fileName + ":" + ctx.line + ": " + x)
-    if (!noError) _errors += 1
+    if (!noError) state.logError()
   }
 
-  final def warn(ctx: SourceContext, showCaret: Boolean): Unit = if (ctx.lineContent.isDefined) {
+  final def warn(ctx: SrcCtx, showCaret: Boolean): Unit = if (ctx.lineContent.isDefined) {
     warn(ctx.lineContent.get)
     if (showCaret) warn(" "*(ctx.column-1) + "^") else warn("")
   }
-  final def error(ctx: SourceContext, showCaret: Boolean): Unit = if (ctx.lineContent.isDefined) {
+  final def error(ctx: SrcCtx, showCaret: Boolean): Unit = if (ctx.lineContent.isDefined) {
     error(ctx.lineContent.get)
     if (showCaret) error(" "*(ctx.column-1) + "^") else error("")
   }
 
-  final def warn(ctx: SourceContext): Unit = warn(ctx, showCaret = false)
-  final def error(ctx: SourceContext): Unit = error(ctx, showCaret = false)
+  final def warn(ctx: SrcCtx): Unit = warn(ctx, showCaret = false)
+  final def error(ctx: SrcCtx): Unit = error(ctx, showCaret = false)
 
-  def readable(x: Any): String = x match {
-    case c:Class[_]    => c.getName.split('$').last.replace("class ", "")
-    case p:Iterable[_] => if (p.isEmpty) "Nil" else p.map(readable).mkString("Seq(", ",", ")")
-    case p:Product     => if (p.productIterator.isEmpty) c"${p.productPrefix}"
-                          else c"""${p.productPrefix}(${p.productIterator.map(readable).mkString(", ")})"""
+  final def str(lhs: Exp[_]): String = lhs match {
+    case Def(rhs) => c"$lhs = $rhs"
+    case Const(c) => c"$lhs = $c"
+    case _: Bound[_] => c"$lhs [bound]"
+  }
+  final def str(lhs: Seq[Exp[_]]): String = lhs.head match {
+    case Def(rhs) => c"$lhs = $rhs"
+    case syms => c"$syms"
+  }
+
+  private def readable(x: Any): String = x match {
+    case c: CompilerFacing => c.toStringCompiler
+    case c:Class[_]        => c.getName.split('$').last.replace("class ", "")
+    case p:Iterable[_]     => if (p.isEmpty) "Nil" else p.map(readable).mkString("Seq(", ",", ")")
+    case p:Product         => if (p.productIterator.isEmpty) c"${p.productPrefix}"
+                              else c"""${p.productPrefix}(${p.productIterator.map(readable).mkString(", ")})"""
     case _ =>
       if (x == null) "null" else x.toString
   }
 
-  def userReadable(x: Any): String = x match {
-    case c:Class[_]    => c.getName.split('$').last.replace("class ", "")
+  private def userReadable(x: Any): String = x match {
+    case c: UserFacing => c.toStringUser
+    case c:Class[_]  => c.getName.split('$').last.replace("class ", "")
     case _ => readable(x)
   }
 
@@ -123,8 +120,4 @@ trait Reporting {
     def u(args: Any*): String = sc.raw(args.map(userReadable): _*).stripMargin
   }
 
-  def reset(): Unit = {
-    _errors = 0
-    _warns = 0
-  }
 }

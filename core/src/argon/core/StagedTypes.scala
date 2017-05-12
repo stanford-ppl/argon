@@ -1,5 +1,6 @@
 package argon.core
 
+import argon._
 import forge._
 
 import scala.annotation.implicitNotFound
@@ -8,57 +9,10 @@ import org.virtualized.{EmbeddedControls, SourceContext}
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
 
-import argon.State
-
-trait StagedTypes extends EmbeddedControls { this: Staging =>
+trait StagedTypes extends EmbeddedControls { this: ArgonCore =>
   type SrcCtx = SourceContext
-  type Bool
-  type Text
 
-  /** Type evidence for staged types **/
-  @implicitNotFound(msg = "Type ${T} is not a staged type. Try adding an explicit lift() call?")
-  abstract class Type[T](implicit val ev: T <:< MetaAny[T]) {
-    // TODO: In the future we may want to refactor these two methods out
-    def unwrapped(x: T): Exp[T] = x.s
-    def wrapped(x: Exp[T]): T
-
-    def typeArguments: List[Type[_]] = Nil
-    def stagedClass: Class[T]
-    def isPrimitive: Boolean
-
-    final def <:<(that: Type[_]) = isSubtype(this.stagedClass, that.stagedClass)
-
-    /** Stolen from Delite utils **/
-    private def isSubtype(x: java.lang.Class[_], cls: java.lang.Class[_]): Boolean = {
-      if ((x == cls) || x.getInterfaces.contains(cls)) true
-      else if (x.getSuperclass == null && x.getInterfaces.length == 0) false
-      else {
-        val superIsSub = if (x.getSuperclass != null) isSubtype(x.getSuperclass, cls) else false
-        superIsSub || x.getInterfaces.exists(s=>isSubtype(s,cls))
-      }
-    }
-  }
-  implicit def subTypeEv[T:Meta](x: T): MetaAny[T] = meta[T].ev(x)
-
-  /** Frontend staged type evidence **/
-  // TODO: Ideally Type and Meta would be different, or somehow separated.
-  /*abstract class Meta[T](implicit val ev: T <:< MetaAny[T]) extends Type[T] {
-    def unwrapped(x: T): Exp[T] = x.s
-    def wrapped(x: Exp[T]): T
-  }*/
-  type Meta[T] = Type[T]
- 
-  private def unstagedWarning(op: String)(implicit ctx: SrcCtx): Unit = {
-    warn(ctx, s"Unstaged method $op was used here on a staged type during staging.")
-    warn("Add @virtualize annotation to an enclosing scope to prevent this.")
-    warn(ctx)
-  }
-  private def unstagedWarningNoCtx(op: String)(ctx: SrcCtx): Unit = {
-    val name = ctx.lhsName.getOrElse("the value")
-    warn(ctx, s"Unstaged method $op was used on $name defined here during staging.")
-    warn("Add @virtualize annotation to an enclosing scope to prevent this.")
-    warn(ctx)
-  }
+  implicit def subTypeEv[T:Type](x: T): MetaAny[T] = meta[T].ev(x)
 
   // Has to be an implicit class to not conflict with higher priority implicits on +
   implicit class ConcatOps[T<:MetaAny[T]](lhs: T) {
@@ -67,48 +21,10 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     @api def +[R](rhs: MetaAny[R]): Text = concat(lhs.toText, rhs.toText)
   }
 
-  /** Base trait for all staged, frontend types **/
-  abstract class MetaAny[T:Meta] extends Product {
-    def s: Exp[T]
-
-    private def isEqual(that: Any): Boolean = that match {
-      case x: MetaAny[_] => this.s == x.s
-      case _ => false
-    }
-
-    /*final def ==(that: Any)(implicit ctx: SrcCtx): Boolean = {
-      if (State.staging) unstagedWarning("==")
-      this.isEqual(that)
-    }
-    final def !=(that: Any)(implicit ctx: SrcCtx): Boolean = {
-      if (State.staging) unstagedWarning("!=")
-      !this.isEqual(that)
-    }
-    final def toString(implicit ctx: SrcCtx): String = {
-      if (State.staging) unstagedWarning("toString")
-      this.productPrefix + this.productIterator.mkString("(", ", ", ")")
-    }*/
-    override def toString(): String = {
-      if (State.staging) unstagedWarningNoCtx("toString()")(s.ctx)
-      this.productPrefix + this.productIterator.mkString("(", ", ", ")")
-    }
-
-    override def equals(that: Any): Boolean = {
-      if (State.staging) unstagedWarningNoCtx("equals")(s.ctx)
-      this.isEqual(that)
-    }
-
-    @api def !=(that: T): Bool = this =!= that
-    @api def ==(that: T): Bool = this === that
-    @api def ===(that: T): Bool
-    @api def =!=(that: T): Bool
-    @api def toText: Text
-  }
-
   def liftString(x: String)(implicit ctx: SrcCtx): Text
   def concat(x: Text, y: Text)(implicit ctx: SrcCtx): Text
 
-  @util def infix_toString(x: MetaAny[_]): Text = x.toText
+  @internal def infix_toString(x: MetaAny[_]): Text = x.toText
 
   def __valDef[T<:MetaAny[T]](init: T, name: String): Unit = {
     log(c"Setting name of ${init.s} to $name")
@@ -116,26 +32,26 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     nameOf(init.s) = name
   }
 
-  @util def __equals[T<:MetaAny[T]](x: T, y: T): Bool = x === y
-  @util def __equals[A, T<:MetaAny[T]](x: A, y: T)(implicit lift: Lift[A, T]): Bool = lift(x) === y
-  @util def __equals[A, T<:MetaAny[T]](x: T, y: A)(implicit lift: Lift[A, T]): Bool = x === lift(y)
-  @util def __unequals[T<:MetaAny[T]](x: T, y: T): Bool = x =!= y
-  @util def __unequals[A, T<:MetaAny[T]](x: A, y: T)(implicit lift: Lift[A, T]): Bool = lift(x) =!= y
-  @util def __unequals[A, T<:MetaAny[T]](x: T, y: A)(implicit lift: Lift[A, T]): Bool = x =!= lift(y)
+  @internal def __equals[T<:MetaAny[T]](x: T, y: T): Bool = x === y
+  @internal def __equals[A, T<:MetaAny[T]](x: A, y: T)(implicit lift: Lift[A, T]): Bool = lift(x) === y
+  @internal def __equals[A, T<:MetaAny[T]](x: T, y: A)(implicit lift: Lift[A, T]): Bool = x === lift(y)
+  @internal def __unequals[T<:MetaAny[T]](x: T, y: T): Bool = x =!= y
+  @internal def __unequals[A, T<:MetaAny[T]](x: A, y: T)(implicit lift: Lift[A, T]): Bool = lift(x) =!= y
+  @internal def __unequals[A, T<:MetaAny[T]](x: T, y: A)(implicit lift: Lift[A, T]): Bool = x =!= lift(y)
 
   def typ[T:Type] = implicitly[Type[T]]
   def mtyp[A,B](x: Type[A]): Type[B] = x.asInstanceOf[Type[B]]
 
-  def meta[T:Meta] = implicitly[Meta[T]]
-  def mmeta[A,B](x: Meta[A]): Meta[B] = x.asInstanceOf[Meta[B]]
+  def meta[T:Type] = implicitly[Type[T]]
+  def mmeta[A,B](x: Type[A]): Type[B] = x.asInstanceOf[Type[B]]
 
-  def wrap[T:Meta](s: Exp[T]): T = meta[T].wrapped(s)
-  def wrap[T:Meta](xs: List[Exp[T]]): List[T] = xs.map{t => meta[T].wrapped(t) }
-  def wrap[T:Meta](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => meta[T].wrapped(t) }
+  def wrap[T:Type](s: Exp[T]): T = meta[T].wrapped(s)
+  def wrap[T:Type](xs: List[Exp[T]]): List[T] = xs.map{t => meta[T].wrapped(t) }
+  def wrap[T:Type](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => meta[T].wrapped(t) }
 
-  def unwrap[T:Meta](x: T): Exp[T] = meta[T].unwrapped(x)
-  def unwrap[T:Meta](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => meta[T].unwrapped(t) }
-  def unwrap[T:Meta](xs: List[T]): List[Exp[T]] = xs.map{t => meta[T].unwrapped(t) }
+  def unwrap[T:Type](x: T): Exp[T] = meta[T].unwrapped(x)
+  def unwrap[T:Type](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => meta[T].unwrapped(t) }
+  def unwrap[T:Type](xs: List[T]): List[Exp[T]] = xs.map{t => meta[T].unwrapped(t) }
 
   import StagedTypes._
   // TODO: Should these lifts be casts?
@@ -158,7 +74,7 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
   // TODO: Should casts be implicit or explicit? Should have subtypes?
 
   @implicitNotFound(msg = "Cannot find way to cast type ${A} to type ${B}.")
-  abstract class Cast[A,B](implicit mB: Meta[B]) {
+  abstract class Cast[A,B](implicit mB: Type[B]) {
     val staged = mB
     def apply(x: A)(implicit ctx: SrcCtx): B
   }
@@ -173,14 +89,14 @@ trait StagedTypes extends EmbeddedControls { this: Staging =>
     * causing any implicit value or def with result Type[_] in scope to qualify.
     **/
   @implicitNotFound(msg = "Cannot find way to lift type ${A} to type ${B}. Try adding an explicit cast using .to[${B}].")
-  abstract class Lift[A,B](implicit mB: Meta[B]) {
+  abstract class Lift[A,B](implicit mB: Type[B]) {
     val staged = mB
     def apply(x: A)(implicit ctx: SrcCtx): B
   }
 
   final def lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l(x)
 
-  implicit def selfLift[T:Meta]: Lift[T,T] = new Lift[T,T] {
+  implicit def selfLift[T:Type]: Lift[T,T] = new Lift[T,T] {
     override def apply(x: T)(implicit ctx: SrcCtx): T = x
   }
 }
