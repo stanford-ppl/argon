@@ -49,5 +49,13 @@ class ArgonArgParser extends ArgParser {
       1 = warn when undefined
       2 = warn when undefined and report when node matched but outside backend rules""")
 
+  parser.opt[Int]('d', "detail").action( (x,_) =>
+    Config.dotDetail = x
+  ).text(
+    """Amount of detail to emit when generating graphviz.
+      false = control nodes only (legacy mode for PIR debugging)
+      true = include info about primitives and retiming""")
+
+
 
 }
