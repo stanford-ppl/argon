@@ -2,7 +2,6 @@ package argon.core
 
 import org.virtualized.EmptyContext
 import argon._
-import argon.utils.escapeConst
 import forge._
 
 trait ExpsCore { self: ArgonCore =>
@@ -28,14 +27,5 @@ trait ExpsCore { self: ArgonCore =>
   object nameOf {
     @stateful def apply(x: Exp[_]): Option[String] = metadata[CtxName](x).map(_.name)
     @stateful def update(x: Exp[_], name: String) = metadata.add(x, CtxName(name))
-  }
-
-  /** Compiler debugging **/
-
-  override def userReadable(x: Any): String = x match {
-
-    case t: Type[_] =>
-
-    case _ => super.userReadable(x)
   }
 }

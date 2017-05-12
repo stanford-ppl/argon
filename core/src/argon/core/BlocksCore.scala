@@ -7,7 +7,7 @@ import argon._
 
 trait BlocksCore { self: ArgonCore =>
   /**
-    * Computes an *external* summary for a seq of nodes
+    * Computes an *external* summary for a sequence of nodes
     * (Ignores reads/writes on data allocated within the scope)
     */
   def summarizeScope(context: Seq[Sym[_]]): Effects = {
@@ -21,7 +21,11 @@ trait BlocksCore { self: ArgonCore =>
     effects
   }
 
-  def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]], temp: Freq)(implicit state: State): Block[T] = {
+  /**
+    * Stage the effects of an isolated block.
+    * No assumptions about the current context remain valid.
+    */
+  @stateful def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]], temp: Freq)(implicit state: State): Block[T] = {
     import state._
 
     val saveContext = context
@@ -40,25 +44,21 @@ trait BlocksCore { self: ArgonCore =>
     Block[T](result, effects, deps, inputs, temp)
   }
 
-  /**
-    * Stage the effects of an isolated block.
-    * No assumptions about the current context remain valid.
-    */
-  def stageBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Normal)
-  def stageLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Normal)
+  @stateful def stageBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Normal)
+  @stateful def stageLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Normal)
 
-  def stageColdBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Cold)
-  def stageColdLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Cold)
+  @stateful def stageColdBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Cold)
+  @stateful def stageColdLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Cold)
 
-  def stageHotBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Hot)
-  def stageHotLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Hot)
+  @stateful def stageHotBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Hot)
+  @stateful def stageHotLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Hot)
 
 
   /**
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
     * All assumptions about the current context carry over unchanged.
     */
-  def stageBlockInline[T:Type](block: => Exp[T])(implicit state: State): Block[T] = {
+  @stateful def stageBlockInline[T:Type](block: => Exp[T])(implicit state: State): Block[T] = {
     import state._
 
     val saveContext = context

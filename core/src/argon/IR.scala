@@ -1,5 +1,6 @@
 package argon
 
+import org.virtualized.{SourceContext, EmptyContext}
 import argon.core.{CompilerFacing, UserFacing}
 import argon.utils.escapeConst
 import forge._
@@ -7,6 +8,8 @@ import graphs._
 import utils.recursive
 
 import scala.annotation.unchecked.uncheckedVariance
+
+// --- Scopes
 
 /** Class representing the result of a staged scope. */
 case class Block[+T](result: Exp[T], summary: Effects, effectful: Seq[Sym[_]], inputs: Seq[Sym[_]], temp: Freq) extends CompilerFacing {
@@ -20,6 +23,7 @@ case class Block[+T](result: Exp[T], summary: Effects, effectful: Seq[Sym[_]], i
 }
 
 
+// --- Symbols
 
 /** Any staged symbol **/
 sealed abstract class Exp[+T](staged: Type[T]) extends EdgeLike with UserFacing {
@@ -60,7 +64,7 @@ class Sym[+T](staged: Type[T]) extends Dyn[T](staged) {
 /** A staged constant **/
 class Const[+T](x: Any)(staged: Type[T]) extends Exp[T](staged) {
   private val _c: Any = x
-  def c: Any = _c
+  @stateful def c: Any = _c // Not actually stateful, but Param's method is.
 
   override def hashCode() = (tp, c).hashCode()
   override def equals(x: Any) = x match {
@@ -76,8 +80,8 @@ class Const[+T](x: Any)(staged: Type[T]) extends Exp[T](staged) {
 case class ParamValue(value: Any) extends Metadata[ParamValue] { def mirror(f: Tx) = this }
 
 class Param[+T](x: Any, pid: Int)(staged: Type[T]) extends Const[T](x)(staged) {
-  @stateful override def c: Any = state.metadata[ParamValue](this).map(_.value).getOrElse(x)
-  @stateful def c_=(rhs: Any) { if (!isFinal) state.metadata.add(this, ParamValue(rhs)) }
+  @stateful override def c: Any = metadata[ParamValue](this).map(_.value).getOrElse(x)
+  @stateful def c_=(rhs: Any) { if (!isFinal) metadata.add(this, ParamValue(rhs)) }
 
   private var _isFinal: Boolean = false
   def isFinal: Boolean = _isFinal
@@ -110,7 +114,7 @@ object Param {
 }
 
 
-
+// --- Definitions
 
 
 /** Generalized Def representation which can have arbitrary output(s) -- roughly equivalent to LMS's FatDef **/
@@ -232,5 +236,25 @@ object Def {
   }
 }
 
+
+// --- Statements
+case class Stm(lhs: Seq[Sym[_]], rhs: Def)
+
+// "Typed pair" - symbol + an op
+object TP {
+  def unapply[A](x: Stm): Option[(Sym[_],Op[Any])] = x match {
+    case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[_]], rhs.asInstanceOf[Op[Any]]))
+    case _ => None
+  }
+}
+
+// "Tupled type pair" - one or more symbols + a Def
+object TTP {
+  def unapply(x: Stm): Option[(Seq[Sym[_]],Def)] = x match {
+    case Stm(_, rhs: Op[_]) => None
+    case stm: Stm => Some((stm.lhs,stm.rhs))
+    case _ => None
+  }
+}
 
 

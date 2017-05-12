@@ -113,7 +113,7 @@ object StateAnnotation {
         })
         val params = if (hasImplicits) {
           val hasCtx = vparamss.lastOption.exists(_.exists{
-            case ValDef(_,_,Ident(TypeName(n)),_) => n == "State" || n == "argon.core.State"
+            case ValDef(_,_,Ident(TypeName(n)),_) => n == "State" || n == "argon.State"
             case _ => false
           })
           if (!hasCtx) {

@@ -3,33 +3,37 @@ package argon.core
 import argon._
 import forge._
 
-import scala.collection.mutable
+trait Scheduling { this: ArgonCore =>
+  // TODO: Awkward placement for this - better spot?
+  // Based on performance testing LongMap is slightly faster than others (even with casting)
+  type OrderCache = scala.collection.mutable.LongMap[(NodeId,Int)] // EdgeId -> (NodeId,Int)
+  def OrderCache() = new scala.collection.mutable.LongMap[(NodeId,Int)]()
 
-
-trait Scheduling extends Statements { this: ArgonCore =>
-
-  @stateful def makeScopeIndex(scope: Iterable[Stm]): OrderCache = buildScopeIndex(scope.map(_.rhs.id))
-  def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache): Seq[Stm] = {
-    scheduleDepsWithIndex(dyns(roots).map(_.id), cache).flatMap(stmFromNodeId)
+  @stateful def makeScopeIndex(scope: Iterable[Stm])(implicit state: State): OrderCache = {
+    state.graph.buildScopeIndex(scope.map(_.rhs.id))
+  }
+  @stateful def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache)(implicit state: State): Seq[Stm] = {
+    state.graph.scheduleDepsWithIndex(dyns(roots).map(_.id), cache).flatMap(stmFromNodeId)
   }
 
-  def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => Seq[Stm]): Seq[Stm] = {
-    def succ(node: NodeId): Iterable[NodeId] = nodeOutputs(node).map(symFromSymId).flatMap(next).map(_.rhs.id)
+  @stateful def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => Seq[Stm])(implicit state: State): Seq[Stm] = {
+
+    def succ(node: NodeId): Iterable[NodeId] = state.graph.nodeOutputs(node).map(symFromSymId).flatMap(next).map(_.rhs.id)
 
     val start = roots.map(_.rhs.id)
 
     val ids = if (checkAcyclic) {
-      val xx = sccs(start){node => succ(node) }
-      checkIfAcyclic(roots, xx)
+      val xx = state.graph.sccs(start){node => succ(node) }
+      state.graph.checkIfAcyclic(roots, xx)
       xx.flatten.reverse
     }
     else {
-      dfs(start){node => succ(node) }
+      state.graph.dfs(start){node => succ(node) }
     }
     ids.flatMap(stmFromNodeId)
   }
 
-  def scheduleBlock(availNodes: Seq[NodeId], block: Block[_]): Seq[Stm] = scopeCache.getOrElseUpdate(block, {
+  @stateful def scheduleBlock(availNodes: Seq[NodeId], block: Block[_])(implicit state: State): Seq[Stm] = state.scopeCache.getOrElseUpdate(block, {
     /**
       * Check that nothing got messed up in the IR
       * (Basically just checks that, for a given block, all effects that should be bound to that block were scheduled)
@@ -48,15 +52,9 @@ trait Scheduling extends Statements { this: ArgonCore =>
 
     val allDependencies = dyns(block.result +: block.effectful)
     // Result and scheduling dependencies
-    val schedule = getLocalSchedule(availableNodes = availNodes, result = allDependencies.map(_.id))
+    val schedule = state.graph.getLocalSchedule(availableNodes = availNodes, result = allDependencies.map(_.id))
     scopeSanityCheck(block, schedule)
 
     schedule.flatMap{nodeId => stmFromNodeId(nodeId) }
   })
-
-  override def reset(): Unit = {
-    super.reset()
-    scopeCache.clear()
-  }
-
 }

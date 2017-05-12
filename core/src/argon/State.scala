@@ -10,7 +10,7 @@ import scala.collection.mutable
 
 class State {
   /** The IR Graph **/
-  val graph: Graph[Exp[_],Def] = new Graph[Exp[_],Def]
+  val graph: Graph[Dyn[_],Def] = new Graph[Dyn[_],Def]
 
   /** List of effectful statements in the current scope **/
   var context: List[Sym[_]] = _
@@ -20,9 +20,9 @@ class State {
   var defCache: Map[Def, Seq[Sym[_]]] = Map.empty
 
   /** Alias caches **/
-  protected val shallowAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
-  protected val deepAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
-  protected val aliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
+  val shallowAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
+  val deepAliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
+  val aliasCache = new mutable.HashMap[Sym[_], Set[Sym[_]]]
 
   /** Scope cache - used to make scheduling faster **/
   val scopeCache = mutable.HashMap[Block[_],Seq[Stm]]()
@@ -55,7 +55,7 @@ class State {
 
   /** Number of parameters used **/
   var nParams = 0
-
+  def nextParamId(): Int = {nParams -= 1; nParams}
 
   def reset(): Unit = {
     graph.reset()

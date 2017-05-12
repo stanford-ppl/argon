@@ -2,14 +2,15 @@ package argon.graphs
 
 import java.io.PrintStream
 
-import argon.{Config, Freq}
+import argon._
+import argon.core._
 
 import scala.collection.mutable
 
 class Graph[E<:Edge,N<:Node] {
   type EdgeId = Int
   type NodeId = Int
-  final val VERBOSE_SCHEDULING = false
+  final private val VERBOSE_SCHEDULING = false
   var graphLog: PrintStream = if (VERBOSE_SCHEDULING) createLog(Config.logDir + "/sched/", "0000 Staging.log") else null
   @inline private def xlog(x: String) = if (VERBOSE_SCHEDULING) withLog(graphLog){ log(x) }
 
@@ -44,7 +45,7 @@ class Graph[E<:Edge,N<:Node] {
     val inputs  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Dataflow edges (reverse) -- per node
     val bounds  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Edges bound by this node
     val tunnels = mutable.ArrayBuffer[Seq[(EdgeId,Seq[EdgeId])]]()   // Edges bound by this node, defined elsewhere
-    val freqs   = mutable.ArrayBuffer[Seq[UseFreq]]()                // Frequency hints for code motion
+    val freqs   = mutable.ArrayBuffer[Seq[Freq]]()                   // Frequency hints for code motion
   }
 
   def reset(): Unit = {
@@ -69,7 +70,7 @@ class Graph[E<:Edge,N<:Node] {
   def nodeInputs(node: NodeId): Seq[EdgeId] = NodeData.inputs(node.toInt)
   def nodeBounds(node: NodeId): Seq[EdgeId] = NodeData.bounds(node.toInt)
   def nodeTunnels(node: NodeId): Seq[(EdgeId,Seq[EdgeId])] = NodeData.tunnels(node.toInt)
-  def nodeFreqs(node: NodeId): Seq[UseFreq] = NodeData.freqs(node.toInt)
+  def nodeFreqs(node: NodeId): Seq[Freq] = NodeData.freqs(node.toInt)
   def nodeOf(node: NodeId): N = NodeData.value(node.toInt)
   def edgeOf(edge: EdgeId): E = EdgeData.value(edge.toInt)
   def dependentsOf(edge: EdgeId): Seq[NodeId] = EdgeData.dependents(edge.toInt)
@@ -89,10 +90,10 @@ class Graph[E<:Edge,N<:Node] {
   }
 
   /** Add an edge with no node but which may be required for scheduling **/
-  final def addBound(out: Edge) = addNode(Nil, Seq(out), Nil, Nil, Nil, null).head
+  final def addBound(out: E) = addNode(Nil, Seq(out), Nil, Nil, Nil, null.asInstanceOf[N]).head
 
   /** Add output edge(s) with corresponding node **/
-  final def addNode(ins: Seq[E], outs: Seq[E], binds: Seq[E], tunnel: Seq[(Edge,Seq[E])], freqs: Seq[UseFreq], node: N) = {
+  final def addNode(ins: Seq[E], outs: Seq[E], binds: Seq[E], tunnel: Seq[(Edge,Seq[E])], freqs: Seq[Freq], node: N) = {
     outs.foreach { out =>
       out.id = curEdgeId.toInt
 
@@ -131,10 +132,6 @@ class Graph[E<:Edge,N<:Node] {
   }
 
   // --- Scheduling
-  // Based on performance testing LongMap is slightly faster than others (even with casting)
-  type OrderCache = scala.collection.mutable.LongMap[(NodeId,Int)] // EdgeId -> (NodeId,Int)
-  def OrderCache() = new scala.collection.mutable.LongMap[(NodeId,Int)]()
-
   type SMap  = scala.collection.mutable.LongMap[Int] //java.util.HashMap[NodeId,Int]
   def SMap() = new mutable.LongMap[Int]() //new java.util.HashMap[NodeId,Int]()
   type Stack = java.util.ArrayDeque[NodeId]

@@ -6,16 +6,16 @@ import forge._
 
 trait DefsCore { this: ArgonCore =>
   // --- Helper functions
-  @stateful def defOf(s:Sym[_]): Def = state.graph.defFromSymId(s.id).get
-  def getDef(s: Exp[_]): Option[Def] = s match { case s: Sym[_] => Some(defOf(s)); case _ => None }
+  @stateful def defOf(s:Sym[_]): Def = defFromSymId(s.id).get
+  @stateful def getDef(s: Exp[_]): Option[Def] = s match { case s: Sym[_] => Some(defOf(s)); case _ => None }
 
-  private val __dyns: PartialFunction[Any,Seq[Dyn[_]]] = {
+  val __dyns: PartialFunction[Any,Seq[Dyn[_]]] = {
     case s: Dyn[_] => Seq(s)
     case b: Block[_]  => dyns(b.result) ++ dyns(b.effectful)
     case d: Def       => d.inputs
     case l: Iterable[_] => recursive.collectSeqs(__dyns)(l.iterator)
   }
-  private val __exps: PartialFunction[Any,Seq[Exp[_]]] = {
+  val __exps: PartialFunction[Any,Seq[Exp[_]]] = {
     case e: Exp[_]   => Seq(e)
     case b: Block[_] => Seq(b.result) ++ b.effectful
     case d: Def      => d.expInputs

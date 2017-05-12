@@ -1,53 +1,35 @@
 package argon.core
 
-import argon.Config
+import argon._
 import forge._
 
-// --- Statements
-case class Stm(lhs: Seq[Sym[_]], rhs: Def)
+trait Statements { this: ArgonCore =>
+  type NodeId = Int
+  type EdgeId = Int
 
-// "Typed pair" - symbol + an op
-object TP {
-  def unapply[A](x: Stm): Option[(Sym[_],Op[Any])] = x match {
-    case Stm(List(lhs), rhs: Op[_]) => Some((lhs.asInstanceOf[Sym[_]], rhs.asInstanceOf[Op[Any]]))
-    case _ => None
-  }
-}
-
-// "Tupled type pair" - one or more symbols + a Def
-object TTP {
-  def unapply(x: Stm): Option[(Seq[Sym[_]],Def)] = x match {
-    case Stm(_, rhs: Op[_]) => None
-    case stm: Stm => Some((stm.lhs,stm.rhs))
-    case _ => None
-  }
-}
-
-
-trait Statements extends Definitions { this: Staging =>
   // --- Helper functions
   // Getting statement returns Option to account for Bounds, but this is known to be a Sym
   def stmOf(sym: Sym[_]): Stm = stmFromSymId(sym.id).get
 
-  private[argon] def stmFromNodeId(id: Int): Option[Stm] = {
-    val x = triple(id)
+  @stateful def stmFromNodeId(id: Int): Option[Stm] = {
+    val x = state.graph.triple(id)
     x._1.head match {
       case _:Sym[_] =>
         val lhs = x._1.toList.map(_.asInstanceOf[Sym[_]])
-        val rhs = x._2.asInstanceOf[Def]
+        val rhs = x._2
         Some(Stm(lhs, rhs))
 
       case _:Bound[_] => None
     }
   }
-  private[argon] def stmFromSymId(id: EdgeId): Option[Stm] = {
-    val node = producerOf(id)
+  @stateful def stmFromSymId(id: EdgeId): Option[Stm] = {
+    val node = state.graph.producerOf(id)
     stmFromNodeId(node)
   }
 
-  private[argon] def symFromSymId(id: EdgeId): Dyn[_] = edgeOf(id).asInstanceOf[Dyn[_]]
-  private[argon] def defFromNodeId(id: NodeId): Def = nodeOf(id).asInstanceOf[Def]
-  private[argon] def defFromSymId(id: EdgeId): Option[Def] = stmFromSymId(id).map(_.rhs)
+  @stateful def symFromSymId(id: EdgeId): Dyn[_] = state.graph.edgeOf(id)
+  @stateful def defFromNodeId(id: NodeId): Def = state.graph.nodeOf(id)
+  @stateful def defFromSymId(id: EdgeId): Option[Def] = stmFromSymId(id).map(_.rhs)
 
   // --- Symbol aliasing
   private def noPrims(x: Set[Dyn[_]]): Set[Sym[_]] = x.collect{case s: Sym[_] if !s.tp.isPrimitive => s}
@@ -65,7 +47,7 @@ trait Statements extends Definitions { this: Staging =>
   @stateful final def allAliases(x: Any): Set[Sym[_]] = {
     shallowAliases(x) ++ deepAliases(x)
   }
-  @stateful final def mutableAliases(x: Any): Set[Sym[_]] = state.allAliases(x).filter(isMutable)
+  @stateful final def mutableAliases(x: Any): Set[Sym[_]] = allAliases(x).filter(isMutable)
   final def mutableInputs(d: Def): Set[Sym[_]] = {
     val bounds = d.binds
     val actuallyReadSyms = d.reads diff bounds

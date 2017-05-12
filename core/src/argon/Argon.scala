@@ -5,6 +5,7 @@ import argon.ops._
 import argon.typeclasses._
 
 trait ArgonCore extends Reporting
+  with StagedTypes
   with BlocksCore
   with DefsCore
   with ExpsCore
