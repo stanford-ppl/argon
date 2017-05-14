@@ -15,6 +15,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   var controllerStack = scala.collection.mutable.Stack[Exp[_]]()
 
   var alphaconv = HashMap[String, String]() // Map for tracking defs of nodes and if they get redeffed anywhere, we map it to a suffix
+  var maxretime: Int = 0
 
   final def alphaconv_register(xx: String): Unit = {
     val x = "_reuse.*".r.replaceAllIn(xx, "")
