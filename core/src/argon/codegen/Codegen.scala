@@ -147,6 +147,7 @@ trait Codegen extends Traversal {
     case s: String => s
     case c: Int => c.toString
     case b: Boolean => b.toString
+    case l: Long => l.toString
     case _ => throw new RuntimeException(s"Could not quote or remap $arg (${arg.getClass})")
   }
 
