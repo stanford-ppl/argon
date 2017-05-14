@@ -1,14 +1,19 @@
 package argon.transform
 
-import argon.core.{ArgonExceptions, Definitions}
+import argon._
 
 abstract class Transformer { self =>
-  val IR: Definitions with ArgonExceptions
+  val IR: State //Definitions with ArgonExceptions
   import IR._
-  protected val f = this.asInstanceOf[Tx]
+
+  protected val f = this //.asInstanceOf[Tx]
   def apply[T](e: Exp[T]): Exp[T] = transformExp(e)(mtyp(e.tp))
 
-  def apply[T:Type](b: Block[T]): Exp[T] = inlineBlock(b)
+  def apply[R:Type](b: Block[R]): () => Exp[R] = inlineBlock(b)
+  def apply[A,R:Type](b: Lambda1[A,R]): Exp[A] => Exp[R] = inlineLambda(b)
+  def apply[A,B,R:Type](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R] = inlineLambda(b)
+  def apply[A,B,C,R:Type](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R] = inlineLambda(b)
+  def apply[A,B,C,D,R:Type](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R] = inlineLambda(b)
 
   def apply[T](xs: List[Exp[T]]): List[Exp[T]] = xs.map{x => this.apply(x)}
   def apply[T](xs: Seq[Exp[T]]): Seq[Exp[T]] = xs.map{x => this.apply(x)}
@@ -20,7 +25,13 @@ abstract class Transformer { self =>
 
   def txSyms(xs: Set[Sym[_]]): Set[Sym[_]] = syms(xs.map{x => f(x)}).toSet
 
-  protected def inlineBlock[T:Type](b: Block[T]): Exp[T]
+  protected def inlineBlock[R:Type](b: Block[R]): () => Exp[R]
+  protected def inlineLambda[A,R:Type](b: Lambda1[A,R]): Exp[A] => Exp[R]
+  protected def inlineLambda[A,B,R:Type](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R]
+  protected def inlineLambda[A,B,C,R:Type](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R]
+  protected def inlineLambda[A,B,C,D,R:Type](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R]
+
+
   protected def transformBlock[T:Type](b: Block[T]): Block[T]
   protected def transformExp[T:Type](s: Exp[T]): Exp[T]
 
@@ -41,7 +52,7 @@ abstract class Transformer { self =>
   // transformer, the mirrored symbol underwent a rewrite rule or CSE. The correct thing to do here is
   // to keep the previously created symbol's metadata, not the mirrored version of lhs's.
   final protected def transferMetadataIfNew(lhs: Seq[Exp[_]])(tx: => Seq[Exp[_]]): (Seq[Exp[_]], Seq[Boolean]) = {
-    val id = IR.curEdgeId
+    val id = IR.graph.curEdgeId
     val lhs2 = tx
     val out = lhs.zip(lhs2).map{
       case (sym: Exp[_], sym2: Sym[_]) if sym2.id >= id || sym == sym2 =>
@@ -53,7 +64,7 @@ abstract class Transformer { self =>
     (out.map(_._1), out.map(_._2))
   }
   final protected def transferMetadataIfNew[T](lhs: Exp[T])(tx: => Exp[T]): (Exp[T], Boolean) = {
-    val id = IR.curEdgeId
+    val id = IR.graph.curEdgeId
     val lhs2 = tx
     (lhs, lhs2) match {
       case (sym: Exp[_], sym2: Sym[_]) if sym2.id >= id || sym == sym2 =>
@@ -72,7 +83,7 @@ abstract class Transformer { self =>
       metadata.get(s).foreach{m => log(c" - ${m._1}: ${m._2}") }
     }
 
-    val (lhs2, _) = transferMetadataIfNew(lhs){ rhs.mirrorNode(lhs, self.asInstanceOf[Tx]) }
+    val (lhs2, _) = transferMetadataIfNew(lhs){ rhs.mirrorNode(lhs, self) }
 
     log(c"Result: ${str(lhs2)}")
     lhs2.foreach{s2 =>
@@ -88,6 +99,6 @@ abstract class Transformer { self =>
     // Also, scala docs lie about the return type of collect on flatMap apparently
     props.collect{case (key,meta) if !meta.ignoreOnTransform => key -> mirror(meta) }.toMap
   }
-  final def mirror[M<:Metadata[_]](m: M): M = m.mirror(self.asInstanceOf[Tx]).asInstanceOf[M]
+  final def mirror[M<:Metadata[_]](m: M): M = m.mirror(self).asInstanceOf[M]
 
 }

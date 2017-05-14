@@ -25,7 +25,7 @@ trait BlocksCore { self: ArgonCore =>
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
     */
-  @stateful def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]], temp: Freq)(implicit state: State): Block[T] = {
+  @stateful private def stageScope[R](block: => Exp[R], temp: Freq)(implicit state: State): (Exp[R], Effects, Seq[Sym[_]]) = {
     import state._
 
     val saveContext = context
@@ -41,24 +41,48 @@ trait BlocksCore { self: ArgonCore =>
     if (temp == Freq.Cold) defCache = saveCache
 
     val effects = summarizeScope(deps)
-    Block[T](result, effects, deps, inputs, temp)
+    (result, effects, deps)
   }
 
-  @stateful def stageBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Normal)
-  @stateful def stageLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Normal)
+  @stateful def stageBlock[R](block: => Exp[R], temp: Freq = Freq.Normal): Block[R] = {
+    val (result, effects, effectful) = stageScope(block, temp)
+    Block(Nil, result, effects, effectful, temp)
+  }
+  @stateful def stageLambda[A,R](a: Exp[A])(block: => Exp[R], temp: Freq = Freq.Normal): Lambda1[A,R] = {
+    val (result, effects, effectful) = stageScope(block, temp)
+    Lambda1(a, result, effects, effectful, temp)
+  }
+  @stateful def stageLambda[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R], temp: Freq = Freq.Normal): Lambda2[A,B,R] = {
+    val (result, effects, effectful) = stageScope(block, temp)
+    Lambda2(a, b, result, effects, effectful, temp)
+  }
+  @stateful def stageLambda[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R], temp: Freq = Freq.Normal): Lambda3[A,B,C,R] = {
+    val (result, effects, effectful) = stageScope(block, temp)
+    Lambda3(a, b, c, result, effects, effectful, temp)
+  }
+  @stateful def stageLambda[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R], temp: Freq = Freq.Normal): Lambda4[A,B,C,D,R] = {
+    val (result, effects, effectful) = stageScope(block, temp)
+    Lambda4(a, b, c, d, result, effects, effectful, temp)
+  }
 
-  @stateful def stageColdBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Cold)
-  @stateful def stageColdLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Cold)
+  @stateful def stageColdBlock[R](block: => Exp[R]) = stageBlock(block, Freq.Cold)
+  @stateful def stageColdLambda[A,R](a: Exp[A])(block: => Exp[R]) = stageLambda(a)(block, Freq.Cold)
+  @stateful def stageColdLambda[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R]) = stageLambda(a,b)(block, Freq.Cold)
+  @stateful def stageColdLambda[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R])= stageLambda(a,b,c)(block, Freq.Cold)
+  @stateful def stageColdLambda[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R])= stageLambda(a,b,c,d)(block, Freq.Cold)
 
-  @stateful def stageHotBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Hot)
-  @stateful def stageHotLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Hot)
-
+  @stateful def stageHotBlock[R](block: => Exp[R]) = stageBlock(block, Freq.Hot)
+  @stateful def stageHotLambda[A,R](a: Exp[A])(block: => Exp[R]) = stageLambda(a)(block, Freq.Hot)
+  @stateful def stageHotLambda[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R]) = stageLambda(a,b)(block, Freq.Hot)
+  @stateful def stageHotLambda[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R])= stageLambda(a,b,c)(block, Freq.Hot)
+  @stateful def stageHotLambda[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R])= stageLambda(a,b,c,d)(block, Freq.Hot)
 
   /**
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
     * All assumptions about the current context carry over unchanged.
+    * TODO: Not sure where this is useful yet, commenting out for now.
     */
-  @stateful def stageBlockInline[T:Type](block: => Exp[T])(implicit state: State): Block[T] = {
+  /*@stateful def stageBlockInline[T:Type](block: => Exp[T])(implicit state: State): Block[T] = {
     import state._
 
     val saveContext = context
@@ -76,5 +100,5 @@ trait BlocksCore { self: ArgonCore =>
     context = saveContext
 
     Block[T](result, effects, deps, Nil, Freq.Normal)
-  }
+  }*/
 }

@@ -11,7 +11,7 @@ trait ArrayApi { this: ArgonApi =>
 
 trait ArrayExp extends Staging { this: ArgonExp =>
   /** Infix methods **/
-  case class MetaArray[T:Meta](s: Exp[MetaArray[T]]) extends MetaAny[MetaArray[T]] {
+  case class MetaArray[T:Type](s: Exp[MetaArray[T]]) extends MetaAny[MetaArray[T]] {
     @api def apply(i: Int32): T = wrap(array_apply(s, i.s))
     @api def length: Int32 = wrap(array_length(s))
 

@@ -8,6 +8,7 @@ import argon.util.NullOutputStream
 
 import scala.collection.mutable
 
+
 class State {
   /** The IR Graph **/
   val graph: Graph[Dyn[_],Def] = new Graph[Dyn[_],Def]

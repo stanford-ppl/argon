@@ -1,6 +1,7 @@
 package argon.core
 
 import argon._
+import argon.exp.{Text,TextExp,Bool}
 import forge._
 
 import scala.annotation.implicitNotFound
@@ -10,23 +11,19 @@ import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
 
 trait StagedTypes extends EmbeddedControls { this: ArgonCore =>
-  type SrcCtx = SourceContext
 
   implicit def subTypeEv[T:Type](x: T): MetaAny[T] = meta[T].ev(x)
 
   // Has to be an implicit class to not conflict with higher priority implicits on +
   implicit class ConcatOps[T<:MetaAny[T]](lhs: T) {
-    @api def +(rhs: String): Text = concat(lhs.toText, liftString(rhs))
-    @api def +(rhs: Text): Text = concat(lhs.toText, rhs)
-    @api def +[R](rhs: MetaAny[R]): Text = concat(lhs.toText, rhs.toText)
+    @api def +(rhs: String): Text = lhs.toText + TextExp.lift(rhs)
+    @api def +(rhs: Text): Text = lhs.toText + rhs
+    @api def +[R](rhs: MetaAny[R]): Text = lhs.toText + rhs.toText
   }
-
-  def liftString(x: String)(implicit ctx: SrcCtx): Text
-  def concat(x: Text, y: Text)(implicit ctx: SrcCtx): Text
 
   @internal def infix_toString(x: MetaAny[_]): Text = x.toText
 
-  def __valDef[T<:MetaAny[T]](init: T, name: String): Unit = {
+  @stateful def __valDef[T<:MetaAny[T]](init: T, name: String): Unit = {
     log(c"Setting name of ${init.s} to $name")
     //init.s.ctx.lhsName = Some(name)
     nameOf(init.s) = name
@@ -76,10 +73,10 @@ trait StagedTypes extends EmbeddedControls { this: ArgonCore =>
   @implicitNotFound(msg = "Cannot find way to cast type ${A} to type ${B}.")
   abstract class Cast[A,B](implicit mB: Type[B]) {
     val staged = mB
-    def apply(x: A)(implicit ctx: SrcCtx): B
+    @internal def apply(x: A): B
   }
 
-  final def cast[A,B](x: A)(implicit ctx: SrcCtx, c: Cast[A,B]): B = c(x)
+  @internal final def cast[A,B](x: A)(implicit c: Cast[A,B]): B = c(x)
 
   /** Lift[A,B] is used in place of Type[T] for user-facing type parameters, where the user may either
     * give an unstaged constant or a staged symbol as the return value.
@@ -91,13 +88,13 @@ trait StagedTypes extends EmbeddedControls { this: ArgonCore =>
   @implicitNotFound(msg = "Cannot find way to lift type ${A} to type ${B}. Try adding an explicit cast using .to[${B}].")
   abstract class Lift[A,B](implicit mB: Type[B]) {
     val staged = mB
-    def apply(x: A)(implicit ctx: SrcCtx): B
+    @internal def apply(x: A): B
   }
 
-  final def lift[A,B](x: A)(implicit ctx: SrcCtx, l: Lift[A,B]): B = l(x)
+  @internal final def lift[A,B](x: A)(implicit l: Lift[A,B]): B = l(x)
 
   implicit def selfLift[T:Type]: Lift[T,T] = new Lift[T,T] {
-    override def apply(x: T)(implicit ctx: SrcCtx): T = x
+    @internal override def apply(x: T): T = x
   }
 }
 
