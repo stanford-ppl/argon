@@ -7,15 +7,15 @@ trait IndexPatternApi extends IndexPatternExp
 trait IndexPatternExp extends Staging {
   type Index
   // Variations used here allow Index to be abstract (otherwise can't as easily define stride of 1)
-  sealed abstract class IndexPattern { def index: Option[Bound[Index]] }
+  sealed abstract class IndexPattern { def index: Option[Exp[Index]] }
   // a*i + b, where a and b must be loop invariant
-  case class AffineAccess(a: Exp[Index], i: Bound[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
+  case class AffineAccess(a: Exp[Index], i: Exp[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
   // i + b, where b must be loop invariant
-  case class OffsetAccess(i: Bound[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
+  case class OffsetAccess(i: Exp[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
   // a*i, where a must be loop invariant
-  case class StridedAccess(a: Exp[Index], i: Bound[Index]) extends IndexPattern { def index = Some(i) }
+  case class StridedAccess(a: Exp[Index], i: Exp[Index]) extends IndexPattern { def index = Some(i) }
   // linear access with some loop iterator
-  case class LinearAccess(i: Bound[Index]) extends IndexPattern { def index = Some(i) }
+  case class LinearAccess(i: Exp[Index]) extends IndexPattern { def index = Some(i) }
   // loop invariant access (but may change with outer loops)
   case class InvariantAccess(b: Exp[Index]) extends IndexPattern { def index = None }
   // anything else
@@ -23,10 +23,10 @@ trait IndexPatternExp extends Staging {
 
   case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPattern] {
     def mirror(f:Tx) = AccessPattern(indices.map{
-      case AffineAccess(a,i,b) => AffineAccess(f(a),f(i).asInstanceOf[Bound[Index]],f(b))
-      case OffsetAccess(i,b)   => OffsetAccess(f(i).asInstanceOf[Bound[Index]], f(b))
-      case StridedAccess(a,i)  => StridedAccess(f(a),f(i).asInstanceOf[Bound[Index]])
-      case LinearAccess(i)     => LinearAccess(f(i).asInstanceOf[Bound[Index]])
+      case AffineAccess(a,i,b) => AffineAccess(f(a),f(i),f(b))
+      case OffsetAccess(i,b)   => OffsetAccess(f(i), f(b))
+      case StridedAccess(a,i)  => StridedAccess(f(a),f(i))
+      case LinearAccess(i)     => LinearAccess(f(i))
       case InvariantAccess(b)  => InvariantAccess(f(b))
       case RandomAccess        => RandomAccess
     })
