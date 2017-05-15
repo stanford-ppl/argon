@@ -179,16 +179,6 @@ class UnsupportedLiftError(c: Any, x: Type[_])(ctx: SrcCtx) extends UserError(ct
   error(ctx, c"Unsupported lift: $c of type ${c.getClass} to $x")
 })
 
-class LiftOverflowError(tp: Type[_], c: Any)(ctx: SrcCtx) extends UserError(ctx, {
-  error(ctx, u"Loss of precision detected in implicit lift: $tp cannot represent value ${escapeConst(c)}.")
-  error(u"""Use the explicit annotation "${escapeConst(c)}.to[$tp]" to ignore this error.""")
-})
-
-class LiftUnderflowError(tp: Type[_], c: Any)(ctx: SrcCtx) extends UserError(ctx, {
-  error(ctx, u"Loss of precision detected in implicit lift: $tp cannot represent value ${escapeConst(c)}.")
-  error(u"""Use the explicit annotation "${escapeConst(c)}.to[$tp]" to ignore this error.""")
-})
-
 class UnsupportedTextCastError(tp: Type[_])(implicit ctx: SrcCtx) extends UserError(ctx, {
   error(ctx, c"Casting from String to $tp is unsupported.")
 })

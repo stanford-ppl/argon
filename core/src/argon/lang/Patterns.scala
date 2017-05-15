@@ -1,6 +1,5 @@
 package argon.ops
 
-import argon.core.Staging
 /*
 trait PatternApi extends PatternExp
 trait PatternExp extends Staging with FltPtExp with FixPtExp with VoidExp with TextExp /*{

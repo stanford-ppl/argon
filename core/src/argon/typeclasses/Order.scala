@@ -1,25 +1,25 @@
 package argon.typeclasses
 
 import argon._
+import argon.lang.Bool
+import forge._
 
-/** Staged numeric types **/
-trait OrderApi extends OrderExp { self: ArgonApi => }
+/** Staged types with ordering **/
+trait Order[T] {
+  @api def lessThan(a: T, b: T): Bool
+  @api def lessThanOrEqual(a: T, b: T): Bool
+  @api def equal(a: T, b: T): Bool
+}
 
-trait OrderExp { self: ArgonExp =>
-
-  trait Order[T] {
-    def lessThan(a: T, b: T)(implicit ctx: SrcCtx): Bool
-    def lessThanOrEqual(a: T, b: T)(implicit ctx: SrcCtx): Bool
-    def equal(a: T, b: T)(implicit ctx: SrcCtx): Bool
-  }
+trait OrderExp {
 
   implicit class OrderInfixOps[T:Order](lhs: T) {
-    def > (rhs: T)(implicit ctx: SrcCtx) = ord[T].lessThan(rhs, lhs)
-    def >=(rhs: T)(implicit ctx: SrcCtx) = ord[T].lessThanOrEqual(rhs, lhs)
-    def < (rhs: T)(implicit ctx: SrcCtx) = ord[T].lessThan(lhs, rhs)
-    def <=(rhs: T)(implicit ctx: SrcCtx) = ord[T].lessThanOrEqual(lhs, rhs)
-    def ===(rhs: T)(implicit ctx: SrcCtx): Bool = ord[T].equal(lhs, rhs)
-    def =!=(rhs: T)(implicit ctx: SrcCtx): Bool = !(lhs === rhs)
+    @api def > (rhs: T): Bool = ord[T].lessThan(rhs, lhs)
+    @api def >=(rhs: T): Bool = ord[T].lessThanOrEqual(rhs, lhs)
+    @api def < (rhs: T): Bool = ord[T].lessThan(lhs, rhs)
+    @api def <=(rhs: T): Bool = ord[T].lessThanOrEqual(lhs, rhs)
+    @api def ===(rhs: T): Bool = ord[T].equal(lhs, rhs)
+    @api def =!=(rhs: T): Bool = !(lhs === rhs)
   }
 
   def ord[T:Order] = implicitly[Order[T]]

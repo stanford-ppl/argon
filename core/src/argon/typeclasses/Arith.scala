@@ -1,26 +1,23 @@
 package argon.typeclasses
 
 import argon._
-import argon.core.StagedTypes // Needs to extend StagedTypes to get right implicit ordering
+import forge._
 
-trait ArithApi extends ArithExp { self: ArgonApi => }
+trait Arith[T] {
+  @api def negate(x: T): T
+  @api def plus(x: T, y: T): T
+  @api def minus(x: T, y: T): T
+  @api def times(x: T, y: T): T
+  @api def divide(x: T, y: T): T
+}
 
-trait ArithExp extends StagedTypes { self: ArgonExp =>
-
-  trait Arith[T] {
-    def negate(x: T)(implicit ctx: SrcCtx): T
-    def plus(x: T, y: T)(implicit ctx: SrcCtx): T
-    def minus(x: T, y: T)(implicit ctx: SrcCtx): T
-    def times(x: T, y: T)(implicit ctx: SrcCtx): T
-    def divide(x: T, y: T)(implicit ctx: SrcCtx): T
-  }
-
+trait ArithExp {
   implicit class ArithOps[T:Arith](lhs: T) {
-    def unary_-(implicit ctx: SrcCtx): T = arith[T].negate(lhs)
-    def +(rhs: T)(implicit ctx: SrcCtx): T = arith[T].plus(lhs, rhs)
-    def -(rhs: T)(implicit ctx: SrcCtx): T = arith[T].minus(lhs, rhs)
-    def *(rhs: T)(implicit ctx: SrcCtx): T = arith[T].times(lhs, rhs)
-    def /(rhs: T)(implicit ctx: SrcCtx): T = arith[T].divide(lhs, rhs)
+    @api def unary_-(): T = arith[T].negate(lhs)
+    @api def +(rhs: T): T = arith[T].plus(lhs, rhs)
+    @api def -(rhs: T): T = arith[T].minus(lhs, rhs)
+    @api def *(rhs: T): T = arith[T].times(lhs, rhs)
+    @api def /(rhs: T): T = arith[T].divide(lhs, rhs)
   }
 
   def arith[T:Arith] = implicitly[Arith[T]]

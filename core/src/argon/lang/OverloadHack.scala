@@ -1,80 +1,71 @@
-package argon.ops
+package argon.lang
 
-import forge._
+class Overload0
+class Overload1
+class Overload2
+class Overload3
+class Overload4
+class Overload5
+class Overload6
+class Overload7
+class Overload8
+class Overload9
+class Overload10
+class Overload11
+class Overload12
+class Overload13
+class Overload14
+class Overload15
+class Overload16
+class Overload17
+class Overload18
+class Overload19
+class Overload20
+class Overload21
+class Overload22
+class Overload23
+class Overload24
+class Overload25
+class Overload26
+class Overload27
+class Overload28
+class Overload29
+class Overload30
+class Overload31
+class Overload32
+class Overload33
+class Overload34
+class Overload35
+class Overload36
+class Overload37
+class Overload38
+class Overload39
+class Overload40
+class Overload41
+class Overload42
+class Overload43
+class Overload44
+class Overload45
+class Overload46
+class Overload47
+class Overload48
+class Overload49
+class Overload50
+class Overload51
+class Overload52
+class Overload53
+class Overload54
+class Overload55
+class Overload56
+class Overload57
+class Overload58
+class Overload59
+class Overload60
+class Overload61
+class Overload62
+class Overload63
 
-trait OverloadHack {
-  /*
-  @generate
-  class OverloadI$I$0to63
-  @generate
-  implicit val overloadI$I$0to63 = new OverloadI
-  */
-
-  class Overload0
-  class Overload1
-  class Overload2
-  class Overload3
-  class Overload4
-  class Overload5
-  class Overload6
-  class Overload7
-  class Overload8
-  class Overload9
-  class Overload10
-  class Overload11
-  class Overload12
-  class Overload13
-  class Overload14
-  class Overload15
-  class Overload16
-  class Overload17
-  class Overload18
-  class Overload19
-  class Overload20
-  class Overload21
-  class Overload22
-  class Overload23
-  class Overload24
-  class Overload25
-  class Overload26
-  class Overload27
-  class Overload28
-  class Overload29
-  class Overload30
-  class Overload31
-  class Overload32
-  class Overload33
-  class Overload34
-  class Overload35
-  class Overload36
-  class Overload37
-  class Overload38
-  class Overload39
-  class Overload40
-  class Overload41
-  class Overload42
-  class Overload43
-  class Overload44
-  class Overload45
-  class Overload46
-  class Overload47
-  class Overload48
-  class Overload49
-  class Overload50
-  class Overload51
-  class Overload52
-  class Overload53
-  class Overload54
-  class Overload55
-  class Overload56
-  class Overload57
-  class Overload58
-  class Overload59
-  class Overload60
-  class Overload61
-  class Overload62
-  class Overload63
-
+trait OverloadHackExp {
   implicit val overload0 = new Overload0
   implicit val overload1 = new Overload1
   implicit val overload2 = new Overload2
@@ -140,3 +131,5 @@ trait OverloadHack {
   implicit val overload62 = new Overload62
   implicit val overload63 = new Overload63
 }
+
+trait OverloadHackApi { }

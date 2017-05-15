@@ -63,8 +63,12 @@ trait Statements { this: ArgonCore =>
     *
     * TODO: Any reason for this to be Sym[_] => Seq[Sym[_]] ?
     */
-  def recurseAtomicLookup(s: Exp[_]): Exp[_] = s
-  final def extractAtomicWrite(s: Sym[_]): Sym[_] = syms(recurseAtomicLookup(s)).headOption.getOrElse(s)
+  final def recurseAtomicLookup(e: Exp[_]): Exp[_] = {
+    getDef(e).flatMap{case d: AtomicRead[_,_] => Some(d.memory); case _ => None}.getOrElse(e)
+  }
+  final def extractAtomicWrite(s: Sym[_]): Sym[_] = {
+    syms(recurseAtomicLookup(s)).headOption.getOrElse(s)
+  }
 
   final def propagateWrites(effects: Effects): Effects = if (!Config.allowAtomicWrites) effects else {
     val writes = effects.writes.map{s => extractAtomicWrite(s) }

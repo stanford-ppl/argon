@@ -1,7 +1,7 @@
 package argon.codegen.cppgen
 
 import argon.core.Staging
-import argon.ops.FunctionExp
+import argon.lang.FunctionExp
 import forge.generate
 
 

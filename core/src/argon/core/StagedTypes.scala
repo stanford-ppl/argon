@@ -1,7 +1,7 @@
 package argon.core
 
 import argon._
-import argon.exp.{Text,TextExp,Bool}
+import argon.lang.{Text,TextExp,Bool}
 import forge._
 
 import scala.annotation.implicitNotFound
@@ -12,11 +12,11 @@ import scala.reflect.macros.whitebox
 
 trait StagedTypes extends EmbeddedControls { this: ArgonCore =>
 
-  implicit def subTypeEv[T:Type](x: T): MetaAny[T] = meta[T].ev(x)
+  implicit def subTypeEv[T:Type](x: T): MetaAny[T] = typ[T].ev(x)
 
   // Has to be an implicit class to not conflict with higher priority implicits on +
   implicit class ConcatOps[T<:MetaAny[T]](lhs: T) {
-    @api def +(rhs: String): Text = lhs.toText + TextExp.lift(rhs)
+    @api def +(rhs: String): Text = lhs.toText + Text(rhs)
     @api def +(rhs: Text): Text = lhs.toText + rhs
     @api def +[R](rhs: MetaAny[R]): Text = lhs.toText + rhs.toText
   }
@@ -39,16 +39,13 @@ trait StagedTypes extends EmbeddedControls { this: ArgonCore =>
   def typ[T:Type] = implicitly[Type[T]]
   def mtyp[A,B](x: Type[A]): Type[B] = x.asInstanceOf[Type[B]]
 
-  def meta[T:Type] = implicitly[Type[T]]
-  def mmeta[A,B](x: Type[A]): Type[B] = x.asInstanceOf[Type[B]]
+  def wrap[T:Type](s: Exp[T]): T = typ[T].wrapped(s)
+  def wrap[T:Type](xs: List[Exp[T]]): List[T] = xs.map{t => typ[T].wrapped(t) }
+  def wrap[T:Type](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => typ[T].wrapped(t) }
 
-  def wrap[T:Type](s: Exp[T]): T = meta[T].wrapped(s)
-  def wrap[T:Type](xs: List[Exp[T]]): List[T] = xs.map{t => meta[T].wrapped(t) }
-  def wrap[T:Type](xs: Seq[Exp[T]]): Seq[T] = xs.map{t => meta[T].wrapped(t) }
-
-  def unwrap[T:Type](x: T): Exp[T] = meta[T].unwrapped(x)
-  def unwrap[T:Type](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => meta[T].unwrapped(t) }
-  def unwrap[T:Type](xs: List[T]): List[Exp[T]] = xs.map{t => meta[T].unwrapped(t) }
+  def unwrap[T:Type](x: T): Exp[T] = typ[T].unwrapped(x)
+  def unwrap[T:Type](xs: Seq[T]): Seq[Exp[T]] = xs.map{t => typ[T].unwrapped(t) }
+  def unwrap[T:Type](xs: List[T]): List[Exp[T]] = xs.map{t => typ[T].unwrapped(t) }
 
   import StagedTypes._
   // TODO: Should these lifts be casts?

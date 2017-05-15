@@ -1,4 +1,4 @@
-package argon.ops
+package argon.lang
 
 import argon._
 import forge._
@@ -31,7 +31,7 @@ trait FunctionCC {
   case class ArgonFunctionJJ$JJ$1to22[TII$II$1toJJ, R:Type](s: Exp[ArgonFunctionJJ[TII$II$1toJJ, R]])(implicit evII$II$1toJJ: Type[TII]) extends MetaAny[ArgonFunctionJJ[TII$II$1toJJ,R]] with FunctionJJ[TII$II$1toJJ, R] {
     @api def ===(that: ArgonFunctionJJ[TII$II$1toJJ, R]) = ???
     @api def =!=(that: ArgonFunctionJJ[TII$II$1toJJ, R]) = ???
-    @api def toText = textify(this)
+    @api def toText = Text.ify(this)
 
     def apply(xII$II$1toJJ: TII): R = applyArg(xII$II$1toJJ)(EmptyContext)
     @api def applyArg(xII$II$1toJJ: TII): R = wrap(fun_applyJJ(s, xII$II$1toJJ.s))

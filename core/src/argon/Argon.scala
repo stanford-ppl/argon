@@ -1,6 +1,7 @@
 package argon
 
 import argon.core._
+import argon.lang.{FunctionApi, FunctionExp}
 import argon.ops._
 import argon.typeclasses._
 

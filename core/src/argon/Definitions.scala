@@ -5,7 +5,6 @@ import forge._
 import graphs._
 import utils.recursive
 
-
 /** Generalized Def representation which can have arbitrary output(s) -- roughly equivalent to LMS's FatDef **/
 abstract class Def extends Node with Product {
   type Tx = argon.transform.Transformer
@@ -74,10 +73,10 @@ abstract class Def extends Node with Product {
 
   /** Mirroring and Mutating **/
   def mutate(f:Tx): Unit = throw new Exception("Cannot mutate immutable node")
-  def fatMirror(f:Tx): Seq[Exp[_]]
+  @stateful def fatMirror(f:Tx): Seq[Exp[_]]
 
 
-  def updateNode(orig: Seq[Sym[_]], f: Tx): Seq[Exp[_]] = {
+  @stateful def updateNode(orig: Seq[Sym[_]], f: Tx): Seq[Exp[_]] = {
     try {
       mutate(f)
       orig
@@ -86,24 +85,34 @@ abstract class Def extends Node with Product {
       fatMirror(f)
     }
   }
-  def mirrorNode(orig: Seq[Sym[_]], f: Tx): Seq[Exp[_]] = fatMirror(f)
+  @stateful def mirrorNode(orig: Seq[Sym[_]], f: Tx): Seq[Exp[_]] = fatMirror(f)
 
-  implicit val src: SourceContext = EmptyContext
+  protected implicit val src: SourceContext = EmptyContext
 }
 
 /** Most common variant of Def - returns only one symbol of one type **/
 abstract class Op[R:Type] extends Def {
   val mR = typ[R]
+  protected implicit var state: State = _
 
   def mirror(f:Tx): Exp[R]
 
-  final override def outputTypes = List(mR)
-  final override def fatMirror(f:Tx): List[Exp[_]] = List(this.mirror(f))
+  @stateful final override def outputTypes = List(mR)
+  @stateful final override def fatMirror(f:Tx): List[Exp[_]] = {
+    state = f.IR
+    List(this.mirror(f))
+  }
 }
 abstract class Op2[A:Type,R:Type] extends Op[R] { def mA = typ[A] }
 abstract class Op3[A:Type,B:Type,R:Type] extends Op2[A,R] { def mB = typ[B] }
 abstract class Op4[A:Type,B:Type,C:Type,R:Type] extends Op3[A,B,R] { def mC = typ[C] }
 abstract class Op5[A:Type,B:Type,C:Type,D:Type,R:Type] extends Op4[A,B,C,R] { def mD = typ[D] }
+
+
+trait AtomicRead[M] {
+  def coll: Exp[M]
+}
+
 
 /** Api **/
 
