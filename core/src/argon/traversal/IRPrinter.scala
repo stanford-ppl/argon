@@ -1,9 +1,9 @@
 package argon.traversal
 
-// Print IR + metadata for each encountered symbol
-trait IRPrinter extends Traversal {
-  import IR._
+import argon._
 
+// Print IR + metadata for each encountered symbol
+class IRPrinter(IR: State) extends Traversal(IR) {
   override val name = "PrinterPlus"
   override def shouldRun = verbosity >= 1
 
@@ -17,7 +17,7 @@ trait IRPrinter extends Traversal {
     tab += 1
     dbgs(c"block $i: $blk {")
     tab += 1
-    logs(c"effects: ${blk.summary}")
+    logs(c"effects: ${blk.effects}")
     logs(c"anti-deps: ${blk.effectful}")
     visitBlock(blk)
     tab -= 1

@@ -1,7 +1,7 @@
 package argon.core
 
 import argon._
-import argon.lang.{Text,TextExp,Bool}
+import argon.lang.{Text,Bool}
 import forge._
 
 import scala.annotation.implicitNotFound
@@ -25,8 +25,7 @@ trait StagedTypes extends EmbeddedControls { this: ArgonCore =>
 
   @stateful def __valDef[T<:MetaAny[T]](init: T, name: String): Unit = {
     log(c"Setting name of ${init.s} to $name")
-    //init.s.ctx.lhsName = Some(name)
-    nameOf(init.s) = name
+    init.s.name = Some(name)
   }
 
   @internal def __equals[T<:MetaAny[T]](x: T, y: T): Bool = x === y
@@ -57,13 +56,6 @@ trait StagedTypes extends EmbeddedControls { this: ArgonCore =>
   def infix_!=[A, B, C<:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro unequalLiftRightImpl[Bool]
   def infix_!=[A, B, C<:MetaAny[B]](x1:A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro unequalLiftLeftImpl[Bool]
 
-//  def infix_==[A<:MetaAny[A], B<:MetaAny[B]](x1: A, x2: B): Bool = macro equalImpl[Bool]
-//  def infix_==[A, B<:MetaAny[B]](x1: B, x2: A)(implicit l: Lift[A,B]): Bool = x1 === lift(x2)
-//  def infix_==[A, B<:MetaAny[B]](x1: A, x2: B)(implicit l: Lift[A,B]): Bool = lift(x1) === x2
-//
-//  def infix_!=[A<:MetaAny[A], B<:MetaAny[B]](x1: A, x2: B): Bool = macro unequalImpl[Bool]
-//  def infix_!=[A, B<:MetaAny[B]](x1: B, x2: A)(implicit l: Lift[A,B]): Bool = x1 =!= lift(x2)
-//  def infix_!=[A, B<:MetaAny[B]](x1: A, x2: B)(implicit l: Lift[A,B]): Bool = lift(x1) =!= x2
 
   // TODO: Should casts be implicit or explicit? Should have subtypes?
 

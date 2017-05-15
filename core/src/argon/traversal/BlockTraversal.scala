@@ -1,21 +1,21 @@
 package argon.traversal
 
-import argon.Config
-import argon.core.Staging
+import argon._
 
-trait BlockTraversal {
-  val IR: Staging
-  import IR._
+abstract class BlockTraversal(IR: State) {
+  implicit val state: State = IR
 
   /** All statements defined in lower (further nested) blocks within the current traversal scope **/
   private var innerScope: Seq[NodeId] = _
 
   final protected def scrubSym(s: Sym[_]): Unit = {
-    IR.scrubSymbol(s)
+    log(c"Scrubbing symbol $s from IR graph!")
+    state.graph.removeEdge(s)
+    state.context = state.context.filterNot(_ == s)
     innerScope = innerScope.filterNot(_ == s.id)
   }
 
-  private def availableStms = if (innerScope ne null) innerScope else 0 until IR.curNodeId
+  private def availableStms = if (innerScope ne null) innerScope else 0 until state.graph.curNodeId
 
   // Statement versions of the above
   protected def innerStms: Seq[Stm] = innerScope.flatMap(stmFromNodeId)
@@ -55,9 +55,9 @@ trait BlockTraversal {
       traverseStmsInBlock(x, {stms => stms ++ stms.flatMap{_.rhs.blocks.flatMap(definedInBlock)} })
     }
 
-    val stms = definedInBlock(block)
-    val used = stms.flatMap(_.rhs.inputs) ++ block.inputs
-    val made = stms.flatMap{stm => stm.lhs ++ stm.rhs.binds }.toSet
+    val stms: Seq[Stm] = definedInBlock(block)
+    val used: Seq[Exp[_]] = stms.flatMap(_.rhs.inputs) ++ block.inputs
+    val made: Set[Exp[_]] = stms.flatMap{stm => stm.lhs ++ stm.rhs.binds }.map(_.asInstanceOf[Exp[_]]).toSet
 
     val inputs = used filterNot (made contains _)
 
@@ -75,9 +75,9 @@ trait BlockTraversal {
 
   final protected def traverseStmsInBlock(block: Block[_]): Unit = traverseStmsInBlock(block, visitStms)
   final protected def traverseStmsInBlock[A](block: Block[_], func: Seq[Stm] => A): A = {
-    val inputs = block.inputs.map(defOf).map(_.id)
+    val inputs = block.inputs.flatMap(getDef).map(_.id)
     withInnerScope(availableStms diff inputs) {
-      val schedule = IR.scheduleBlock(availableStms, block)
+      val schedule = scheduleBlock(availableStms, block)
       // Delay all other symbols as part of the inner scope
       withInnerScope(availableStms diff schedule.map(_.rhs.id)) {
         func(schedule)
@@ -89,6 +89,6 @@ trait BlockTraversal {
   protected def visitBlock[S](block: Block[S]): Block[S] = { traverseStmsInBlock(block); block }
 
   protected def getCustomSchedule(scope: Seq[Stm], result: Seq[Exp[_]]): Seq[Stm] = {
-    IR.getLocalSchedule(scope.map(_.rhs.id), dyns(result).map(_.id)).flatMap(stmFromNodeId)
+    state.graph.getLocalSchedule(scope.map(_.rhs.id), dyns(result).map(_.id)).flatMap(stmFromNodeId)
   }
 }

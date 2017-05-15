@@ -97,8 +97,9 @@ trait Reporting {
     case syms => c"$syms"
   }
 
-  private def readable(x: Any): String = x match {
+  final def readable(x: Any): String = x match {
     case c: CompilerFacing => c.toStringCompiler
+    case x: Tuple3[_,_,_]  => c"${x._1} = ${x._2} [inputs = ${x._3}]"
     case c:Class[_]        => c.getName.split('$').last.replace("class ", "")
     case p:Iterable[_]     => if (p.isEmpty) "Nil" else p.map(readable).mkString("Seq(", ",", ")")
     case p:Product         => if (p.productIterator.isEmpty) c"${p.productPrefix}"
@@ -107,7 +108,7 @@ trait Reporting {
       if (x == null) "null" else x.toString
   }
 
-  private def userReadable(x: Any): String = x match {
+  final def userReadable(x: Any): String = x match {
     case c: UserFacing => c.toStringUser
     case c:Class[_]  => c.getName.split('$').last.replace("class ", "")
     case _ => readable(x)

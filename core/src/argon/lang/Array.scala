@@ -131,6 +131,8 @@ object Array {
     val effects = aBlk.effects andAlso fBlk.effects
     stageEffectful(ArrayFlatMap(array,aBlk,fBlk,i), effects.star)(ctx)
   }
+
+  @internal private[argon] def input_arguments(ctx: SrcCtx, state: State): Array[Text] = wrap(stage(InputArguments())(ctx))
 }
 
 
@@ -139,8 +141,6 @@ trait ArrayExp {
   implicit def arrayType[T:Type]: Type[Array[T]] = ArrayType(typ[T])
 
 
-  /** Static Methods **/
-  @internal private[argon] def input_arguments(): Array[Text] = wrap(stage(InputArguments())(ctx))
 
 
   /*override def recurseAtomicLookup(s: Exp[_]): Exp[_] = s match {

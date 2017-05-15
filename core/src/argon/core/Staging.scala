@@ -132,14 +132,4 @@ trait Staging { this: ArgonCore =>
 
   private def single[T:Type](xx: Seq[Sym[_]]): Sym[T] = xx.head.asInstanceOf[Sym[T]]
 
-  /**
-    * DANGER ZONE
-    * Use these methods only if you know what you're doing! (i.e. your name is David and you're not drunk)
-    */
-  @stateful def scrubSymbol(x: Sym[_]): Unit = {
-    log(c"Scrubbing symbol $x from IR graph!")
-    state.graph.removeEdge(x)
-    state.context = state.context.filterNot(_ == x)
-  }
-
 }

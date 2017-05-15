@@ -21,11 +21,4 @@ trait ExpsCore { self: ArgonCore =>
     def addCtx(ctx: SrcCtx) { if (ctx != EmptyContext || ctxsOf(x).isEmpty) ctxsOf(x) = ctxsOf(x) :+ ctx }
     def setCtx(ctx: SrcCtx) { if (ctx != EmptyContext || ctxsOf(x).isEmpty) ctxsOf(x) = List(ctx) }
   }
-
-  case class CtxName(name: String) extends Metadata[CtxName] { def mirror(f:Tx) = this }
-
-  object nameOf {
-    @stateful def apply(x: Exp[_]): Option[String] = metadata[CtxName](x).map(_.name)
-    @stateful def update(x: Exp[_], name: String) = metadata.add(x, CtxName(name))
-  }
 }

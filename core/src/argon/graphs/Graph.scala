@@ -10,9 +10,9 @@ import scala.collection.mutable
 class Graph[E<:Edge,N<:Node] {
   type EdgeId = Int
   type NodeId = Int
-  final private val VERBOSE_SCHEDULING = false
-  var graphLog: PrintStream = if (VERBOSE_SCHEDULING) createLog(Config.logDir + "/sched/", "0000 Staging.log") else null
-  @inline private def xlog(x: String) = if (VERBOSE_SCHEDULING) withLog(graphLog){ log(x) }
+  final val VERBOSE_SCHEDULING = false
+  var glog: PrintStream = if (VERBOSE_SCHEDULING) createLog(Config.logDir + "/sched/", "0000 Staging.log") else null
+  @inline private def xlog(x: String) = if (VERBOSE_SCHEDULING) withLog(glog){ log(x) }
 
   implicit class EdgeIdToInt(x: EdgeId) { @inline def toInt: Int = x.asInstanceOf[Int] }
   implicit class NodeIdToInt(x: NodeId) { @inline def toInt: Int = x.asInstanceOf[Int] }

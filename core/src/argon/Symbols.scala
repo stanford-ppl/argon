@@ -10,7 +10,8 @@ import scala.annotation.unchecked.uncheckedVariance
 /** Any staged symbol **/
 sealed abstract class Exp[+T](staged: Type[T]) extends EdgeLike with UserFacing {
   def tp: Type[T @uncheckedVariance] = staged
-  override def toStringUser = nameOf(this) match {
+  var name: Option[String] = None
+  override def toStringUser = name match {
     case Some(name) => name + " (" + this.toString + ")"
     case None => this.toString
   }
@@ -24,7 +25,7 @@ sealed abstract class Dyn[+T](staged: Type[T]) extends Exp[T](staged) with Edge 
     case _ => false
   }
 
-  def dependents: Seq[Exp[_]] = dependentsOf(this.id).flatMap(nodeOutputs).map(symFromSymId)
+  @stateful def dependents: Seq[Exp[_]] = dependentsOf(this.id).flatMap(nodeOutputs).map(symFromSymId)
 }
 
 /** Staged symbols created as bound variables **/

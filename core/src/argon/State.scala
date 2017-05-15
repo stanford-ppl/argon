@@ -8,7 +8,9 @@ import argon.util.NullOutputStream
 
 import scala.collection.mutable
 
-
+/**
+  * Threadsafe compiler state
+  */
 class State {
   /** The IR Graph **/
   val graph: Graph[Dyn[_],Def] = new Graph[Dyn[_],Def]
@@ -30,9 +32,6 @@ class State {
 
   /** Graph Metadata **/
   val metadata: IRMetadata = new IRMetadata
-
-  /** Compiler is in staging mode **/
-  var staging: Boolean = false
 
   /** The number of the current compiler pass **/
   var pass: Int = 1
@@ -67,7 +66,6 @@ class State {
     aliasCache.clear()
     scopeCache.clear()
     metadata.reset()
-    staging = false
     pass = 1
     logstream = new PrintStream(new NullOutputStream)
     _errors = 0

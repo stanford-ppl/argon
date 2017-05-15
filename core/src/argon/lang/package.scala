@@ -5,8 +5,11 @@ package object lang
   with BoolExp
   with FixPtExp
   with FltPtExp
+  with HashMapExp
+  with Tup2Exp
   with TextExp
   with VoidExp
+  with VarExp
 {
 
 }

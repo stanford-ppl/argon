@@ -17,6 +17,7 @@ object VoidType extends Type[Void] {
 
 object Void {
   @internal def apply(): Void = Void(const())
+  @internal def apply(s: Unit) = Void(const())
   @internal def const(): Exp[Void] = constant[Void](())
 }
 

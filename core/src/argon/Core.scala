@@ -1,4 +1,8 @@
 package argon
+
+import argon.core.TestBenchFailed
+import argon.lang.{Text, Void, Array => MetaArray}
+import argon.traversal.CompilerPass
 import argon.transform.Transformer
 import argon.utils.deleteExts
 
@@ -67,25 +71,26 @@ trait LibCore {
 }
 
 trait CompilerCore extends ArgonExp {
-  val passes: ArrayBuffer[Pass] = ArrayBuffer.empty[Pass]
+  val passes: ArrayBuffer[CompilerPass] = ArrayBuffer.empty[CompilerPass]
   val testbench: Boolean = false
 
-  lazy val args: MetaArray[Text] = input_arguments()(EmptyContext)
+  lazy val state: State = new State
+  lazy val args: MetaArray[Text] = MetaArray.input_arguments(EmptyContext, state)
   private[argon] var __stagingArgs: scala.Array[java.lang.String] = _
   def stagingArgs = __stagingArgs
 
   lazy val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
 
-  def checkErrors(start: Long, stageName: String): Unit = if (hadErrors) {
+  def checkErrors(start: Long, stageName: String): Unit = if (state.hadErrors) {
     val time = (System.currentTimeMillis - start).toFloat
     checkWarnings()
-    error(s"""$nErrors ${plural(nErrors,"error","errors")} found during $stageName""")
+    error(s"""${state.errors} ${plural(state.errors,"error","errors")} found during $stageName""")
     error(s"Total time: " + "%.4f".format(time/1000) + " seconds")
-    if (testbench) throw new TestBenchFailed(nErrors)
-    else System.exit(nErrors)
+    if (testbench) throw new TestBenchFailed(state.errors)
+    else System.exit(state.errors)
   }
-  def checkWarnings(): Unit = if (hadWarns) {
-    warn(s"""$nWarns ${plural(nWarns, "warning","warnings")} found""")
+  def checkWarnings(): Unit = if (state.hadWarnings) {
+    warn(s"""${state.warnings} ${plural(state.warnings, "warning","warnings")} found""")
   }
 
   def settings(): Unit = { }
@@ -94,7 +99,7 @@ trait CompilerCore extends ArgonExp {
 
   def compileOrRun(blk: => Unit): Unit = {
     // --- Setup
-    reset() // Reset global state
+    state.reset() // Reset global state
     settings()
     createTraversalSchedule()
 
@@ -106,11 +111,11 @@ trait CompilerCore extends ArgonExp {
     // --- Staging
 
     val start = System.currentTimeMillis()
-    State.staging = true
-    var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { unit2void(blk).s } }
-    State.staging = false
+    Globals.staging = true
+    var block: Block[Void] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { Void(blk).s } }
+    Globals.staging = false
 
-    if (curEdgeId == 0) return  // Nothing was staged -- likely running in library mode (or empty program)
+    if (state.graph.curEdgeId == 0) return  // Nothing was staged -- likely running in library mode (or empty program)
 
     // Exit now if errors were found during staging
     checkErrors(start, "staging")
@@ -119,11 +124,11 @@ trait CompilerCore extends ArgonExp {
     // --- Traversals
 
     for (t <- passes) {
-      if (VERBOSE_SCHEDULING) {
-        graphLog.close()
-        graphLog = createLog(Config.logDir + "/sched/", State.paddedPass + " " + t.name + ".log")
-        withLog(graphLog) {
-          log(s"${State.pass} ${t.name}")
+      if (state.graph.VERBOSE_SCHEDULING) {
+        state.graph.glog.close()
+        state.graph.glog = createLog(Config.logDir + "/sched/", state.paddedPass + " " + t.name + ".log")
+        withLog(state.graph.glog) {
+          log(s"${state.pass} ${t.name}")
           log(s"===============================================")
         }
       }
@@ -140,10 +145,10 @@ trait CompilerCore extends ArgonExp {
       // a. didn't exist before
       // b. existed but must be rescheduled now that it has new nodes
       if (t.isInstanceOf[Transformer]) {
-        scopeCache.clear()
+        state.scopeCache.clear()
       }
     }
-    if (VERBOSE_SCHEDULING) graphLog.close()
+    if (state.graph.VERBOSE_SCHEDULING) state.graph.glog.close()
 
 
     val time = (System.currentTimeMillis - start).toFloat
@@ -163,12 +168,6 @@ trait CompilerCore extends ArgonExp {
 
     checkWarnings()
     report(s"[\u001B[32mcompleted\u001B[0m] Total time: " + "%.4f".format(time/1000) + " seconds")
-  }
-
-
-  override def readable(x: Any): String = x match {
-    case x: Tuple3[_,_,_] => c"${x._1} = ${x._2} [inputs = ${x._3}]"
-    case _ => super.readable(x)
   }
 }
 

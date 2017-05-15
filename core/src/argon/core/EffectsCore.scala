@@ -7,7 +7,7 @@ trait EffectsCore { this: ArgonCore =>
 
   object depsOf {
     @stateful def apply(x: Exp[_]): Seq[Exp[_]] = metadata[AntiDeps](x).map(_.syms).getOrElse(Nil)
-    @stateful def update(x: Exp[_], deps: Seq[Exp[_]]): Unit = metadata.add(x, new AntiDeps(deps))
+    @stateful def update(x: Exp[_], deps: Seq[Exp[_]]): Unit = metadata.add(x, AntiDeps(deps))
   }
 
   object effectsOf {
@@ -23,10 +23,10 @@ trait EffectsCore { this: ArgonCore =>
     }
   }
 
-  final def Read(xs: Exp[_]*)  = new Effects(reads = syms(xs).toSet)
-  final def Write(xs: Exp[_]*) = new Effects(writes = syms(xs).toSet)
-  final def Read(xs: Set[Sym[_]]) = new Effects(reads = xs)
-  final def Write(xs: Set[Sym[_]]) = new Effects(writes = xs)
+  final def Read(xs: Exp[_]*)  = Effects(reads = syms(xs).toSet)
+  final def Write(xs: Exp[_]*) = Effects(writes = syms(xs).toSet)
+  final def Read(xs: Set[Sym[_]]) = Effects(reads = xs)
+  final def Write(xs: Set[Sym[_]]) = Effects(writes = xs)
 
   final def isMutable(s: Exp[_]): Boolean = metadata[Effects](s).exists(_.mutable)
 

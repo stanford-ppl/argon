@@ -1,7 +1,6 @@
 package argon.traversal
 
-import argon.core.Staging
-import argon.{Config,State}
+import argon._
 
 /**
   * Common trait for all passes which can be run by the compiler,
@@ -11,8 +10,8 @@ import argon.{Config,State}
   * Otherwise, extend Traversal or IterativeTraversal
   */
 trait CompilerPass { self =>
-  val IR: Staging
-  import IR._
+  val IR: State
+  implicit val state: State = IR
 
   def name: String = readable(self.getClass)
 
@@ -37,8 +36,8 @@ trait CompilerPass { self =>
   /** External method called by compiler **/
   final def run[T:Type](b: Block[T]): Block[T] = if (shouldRun) {
 
-    val outfile = State.paddedPass + " " + name + ".log"
-    State.pass += 1
+    val outfile = state.paddedPass + " " + name + ".log"
+    state.pass += 1
 
     withLog(Config.logDir, outfile) {
       val saveVerbosity = Config.verbosity

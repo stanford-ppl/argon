@@ -1,13 +1,14 @@
 package argon.traversal
 
-import argon.core.Staging
+import argon._
+import argon.core.TraversalFailedToCompleteException
+import argon.core.TraversalFailedToConvergeException
 
 /**
   * Single or iterative traversal of the IR with pre- and post- processing
   */
-trait Traversal extends CompilerPass with BlockTraversal { self =>
-  val IR: Staging
-  import IR._
+abstract class Traversal(IR: State) extends BlockTraversal(IR) with CompilerPass { self =>
+  override implicit val state: State = IR
 
   sealed abstract class RecurseOpt
   case object Always extends RecurseOpt
@@ -57,8 +58,8 @@ trait Traversal extends CompilerPass with BlockTraversal { self =>
   protected def visitFat(lhs: Seq[Sym[_]], rhs: Def): Unit = {}
 }
 
-trait IterativeTraversal extends Traversal {
-  import IR._
+
+abstract class IterativeTraversal(IR: State) extends Traversal(IR) {
 
   private var runs = 0                  // Current analysis iteration
   private var retries = 0               // Current retry
