@@ -34,9 +34,11 @@ trait Scheduling { this: ArgonCore =>
   }
 
   @stateful def scheduleBlock(availNodes: Seq[NodeId], block: Block[_])(implicit state: State): Seq[Stm] = state.scopeCache.getOrElseUpdate(block, {
+    val allDependencies = dyns(block.result +: block.effectful)
+    val result = allDependencies.map(_.id)
     /**
       * Check that nothing got messed up in the IR
-      * (Basically just checks that, for a given block, all effects that should be bound to that block were scheduled)
+      * (Basically just checks that, for a given block, all effects that are bound to that block were actually scheduled)
       */
     def scopeSanityCheck(block: Block[_], scope: Seq[NodeId]): Unit = {
       val observable = block.effectful.map(defOf).map(_.id).distinct // node ids for effect producers
@@ -46,13 +48,18 @@ trait Scheduling { this: ArgonCore =>
         val expectedStms = observable.flatMap{s => stmFromNodeId(s)}
         val actualStms = actual.flatMap{s => stmFromNodeId(s)}
         val missingStms = missing.flatMap{s => stmFromNodeId(s)}
-        throw new EffectsOrderException(block.result, expectedStms, actualStms, missingStms)
+        val binding = missing.flatMap{id =>
+          stmFromNodeId(id).map {stm =>
+            val binders = state.graph.getNodesThatBindGiven(availNodes, result, Seq(id))
+            stm -> binders.flatMap(stmFromNodeId)
+          }
+        }
+        throw new EffectsOrderException(block.result, expectedStms, actualStms, missingStms, binding)
       }
     }
 
-    val allDependencies = dyns(block.result +: block.effectful)
     // Result and scheduling dependencies
-    val schedule = state.graph.getLocalSchedule(availableNodes = availNodes, result = allDependencies.map(_.id))
+    val schedule = state.graph.getLocalSchedule(availableNodes = availNodes, result = result)
     scopeSanityCheck(block, schedule)
 
     schedule.flatMap{nodeId => stmFromNodeId(nodeId) }

@@ -271,9 +271,9 @@ class Graph[E<:Edge,N<:Node] {
 
       // All nodes that depend on this node except nodes which bind the given root
       def uses(node: NodeId) = {
-        if (VERBOSE_SCHEDULING) {
+        /*if (VERBOSE_SCHEDULING) {
           forward(node, scope).foreach{next => xlog(c"[USES] ${triple(next)} (bounds = " + nodeBounds(next).mkString(",") + ")") }
-        }
+        }*/
 
         forward(node,scope) filterNot {next => nodeBounds(next) exists (rootEdges contains _) }
       }
@@ -285,7 +285,7 @@ class Graph[E<:Edge,N<:Node] {
       val bounds = nodeBounds(node).map(producerOf)
       val sched = bounds.flatMap(getDependents)
 
-      if (VERBOSE_SCHEDULING) {
+      /*if (VERBOSE_SCHEDULING) {
         if (bounds.nonEmpty) {
           xlog(c"  [Bounds] node: ${triple(node)}")
           xlog(c"  [Bounds] bounds:")
@@ -293,15 +293,15 @@ class Graph[E<:Edge,N<:Node] {
           xlog(c"  [Bounds] binded: ")
           sched.foreach{s => xlog(c"  [Bounds]  ${triple(s)}") }
         }
-      }
+      }*/
 
       sched
     }
 
     val tunnelDependents = scope.flatMap{node =>
-      if (VERBOSE_SCHEDULING) {
+      /*if (VERBOSE_SCHEDULING) {
         if (nodeTunnels(node).nonEmpty) xlog(c"  [Tunnel] node: ${triple(node)}: ")
-      }
+      }*/
 
       nodeTunnels(node).flatMap{case (tun,res) =>
         val tunnel = producerOf(tun)
@@ -311,14 +311,14 @@ class Graph[E<:Edge,N<:Node] {
         val schedule = dfs(results){node => reverse(node,scope) }
         val forward  = getDependents(tunnel) filterNot (_ == tunnel)
 
-        if (VERBOSE_SCHEDULING) {
+        /*if (VERBOSE_SCHEDULING) {
           xlog(c"  [Tunnel] tunnel: ")
           xlog(c"  [Tunnel]  ${triple(tunnel)}")
           xlog(c"  [Tunnel] schedule: ")
           schedule.foreach { stm => xlog(c"  [Tunnel]  ${triple(stm)}") }
           xlog(c"  [Tunnel] dependents: ")
           forward.foreach { stm => xlog(c"  [Tunnel]  ${triple(stm)}") }
-        }
+        }*/
 
         schedule intersect forward
       }
@@ -429,4 +429,105 @@ class Graph[E<:Edge,N<:Node] {
 
     localSchedule
   }
+
+  /**
+    * DEBUGGING
+    */
+  def getNodesThatBindGiven(availableNodes: Seq[NodeId], result: Seq[EdgeId], given: Seq[NodeId]): Seq[NodeId] = {
+    val availCache = buildScopeIndex(availableNodes)
+    val availRoots = scheduleDepsWithIndex(result, availCache)
+    val localNodes = getSchedule(availRoots, availCache, checkAcyclic = true)
+    val givenSet = given.toSet
+
+    val scope = localNodes
+
+    def getBoundDependentsDEBUG(nodes: Set[NodeId], scope: Set[NodeId], verbose: Boolean): Set[NodeId] = {
+      def getDependents(root: NodeId) = {
+        val rootEdges = nodeOutputs(root)
+
+        // All nodes that depend on this node except nodes which bind the given root
+        def uses(node: NodeId) = {
+          /*if (VERBOSE_SCHEDULING) {
+            forward(node, scope).foreach{next => xlog(c"[USES] ${triple(next)} (bounds = " + nodeBounds(next).mkString(",") + ")") }
+          }*/
+
+          forward(node,scope) filterNot {next => nodeBounds(next) exists (rootEdges contains _) }
+        }
+
+        dfs(List(root))(uses)
+      }
+
+      val boundDependents = nodes.flatMap{node =>
+        val bounds = nodeBounds(node).map(producerOf)
+        val sched = bounds.flatMap(getDependents)
+
+        if (bounds.nonEmpty && verbose) {
+          log(c"  [Bounds] node: ${triple(node)}")
+          log(c"  [Bounds] bounds:")
+          bounds.foreach{bnd => log(c"  [Bounds]  ${triple(bnd)}")}
+          log(c"  [Bounds] binded: ")
+          sched.foreach{s => log(c"  [Bounds]  ${triple(s)}") }
+        }
+
+        sched
+      }
+
+      val tunnelDependents = scope.flatMap{node =>
+        if (verbose && nodeTunnels(node).nonEmpty) log(c"  [Tunnel] node: ${triple(node)}: ")
+
+        nodeTunnels(node).flatMap{case (tun,res) =>
+          val tunnel = producerOf(tun)
+          // Everything upstream of (prior to) the block results for this tunnel
+          val results = res.map(producerOf)
+          // Everything downstream of (depending on) the tunnel
+          val schedule = dfs(results){node => reverse(node,scope) }
+          val forward  = getDependents(tunnel) filterNot (_ == tunnel)
+
+          if (verbose) {
+            log(c"  [Tunnel] tunnel: ")
+            log(c"  [Tunnel]  ${triple(tunnel)}")
+            log(c"  [Tunnel] schedule: ")
+            schedule.foreach { stm => log(c"  [Tunnel]  ${triple(stm)}") }
+            log(c"  [Tunnel] dependents: ")
+            forward.foreach { stm => log(c"  [Tunnel]  ${triple(stm)}") }
+          }
+
+          schedule intersect forward
+        }
+      }
+      boundDependents ++ tunnelDependents
+    }
+
+    //val mustInside = getBoundDependentsDEBUG(scope.toSet)
+    //log("Must inside: ")
+    //mustInside.foreach{stm => log(c"  ${triple(stm)}")}
+
+    val scopeSet = scope.toSet
+
+    scope.flatMap{node =>
+      val pseudoSet = Set(node)
+      val binds = getBoundDependentsDEBUG(pseudoSet, scopeSet, verbose=false)
+      if ((binds intersect givenSet).nonEmpty) {
+        val cache = buildScopeIndex(binds)
+        val path = getSchedule(givenSet, cache, checkAcyclic = false)
+        //getBoundDependentsDEBUG(pseudoSet,scopeSet,verbose=true)
+        log(c"Found binding: ${triple(node)}")
+        log(c"  bound syms:")
+        val bindsL1 = nodeBounds(node)
+        bindsL1.foreach{bound => log(c"  ${triple(producerOf(bound))}") }
+        log(c"  path: ")
+        path.foreach{p => log(c"  ${triple(p)}")}
+        // TODO: This part appears to be broken right now
+        /*val otherParents = path.find{node => nodeBounds(node).nonEmpty }
+        if (otherParents.nonEmpty) {
+          log(c"  Possible culprit: The following nodes may be bound by x$node and " + otherParents.map{x => s"x$x"}.mkString(", "))
+          (path filter(bindsL1 contains _)).foreach{x => log(c"  ${triple(x)}")}
+        }*/
+        Some(node)
+      }
+      else None
+    }
+  }
+
+
 }
