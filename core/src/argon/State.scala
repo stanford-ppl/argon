@@ -2,7 +2,7 @@ package argon
 
 import java.io.PrintStream
 
-import argon.core._
+import argon.core.UninitializedEffectContextException
 import argon.graphs.Graph
 import argon.util.NullOutputStream
 

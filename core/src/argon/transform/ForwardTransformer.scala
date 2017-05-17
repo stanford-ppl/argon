@@ -1,11 +1,10 @@
 package argon.transform
 
-import argon.core.Staging
+import argon._
+import argon.core.{IllegalSubstException,IllegalMirrorExpException}
 import argon.traversal.Traversal
 
-trait ForwardTransformer extends SubstTransformer with Traversal { self =>
-  val IR: Staging
-  import IR._
+trait ForwardTransformer extends Traversal with SubstTransformer {
 
   val allowPretransform = false       // Need to explicitly enable this
   final override val recurse = Never  // Mirroring already guarantees we always recursively visit scopes
@@ -66,15 +65,19 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     * block with the resulting transformed statements. The return Exp[T] of func will be the result symbol of the
     * new block.
     */
-  final protected def transformBlock[T:Type](b: Block[T], func: Seq[Stm] => Exp[T]): Block[T] = {
-    val inputs = syms(f.tx(b.inputs))
-    createBlock({ inlineBlock(b,func) }, inputs, b.temp)
+  final protected def transformBlock[T:Type](block: Block[T], func: Seq[Stm] => Exp[T]): Block[T] = block match {
+    case Lambda1(input,_,_,_,temp)   => stageLambda(f(input))({ inlineBlock(block,func) }, temp)
+    case Lambda2(a,b, _,_,_,temp)    => stageLambda(f(a),f(b))({ inlineBlock(block,func) }, temp)
+    case Lambda3(a,b,c,_,_,_,temp)   => stageLambda(f(a),f(b),f(c))( {inlineBlock(block,func) }, temp)
+    case Lambda4(a,b,c,d,_,_,_,temp) => stageLambda(f(a),f(b),f(c),f(d))({ inlineBlock(block, func)}, temp)
+    case Block(inputs,_,_,_,temp)    => stageLambdaN(f.tx(inputs), { inlineBlock(block, func) }, temp)
   }
+
 
   /**
     * Perform inlining while "mangling" the given block using the given statement transformation function.
-    * No new block is created, and the return type does not have to be an Exp[T]
-    * Note that this means the return types may be entirely different - use with caution.
+    * No new block is created, and the returned value does not have to be an Exp[T]
+    * Note that this means the return type of the new Block may be entirely different - use with caution.
     */
   final protected def mangleBlock[T:Type, R](b: Block[T], func: Seq[Stm] => R): R = {
     tab += 1

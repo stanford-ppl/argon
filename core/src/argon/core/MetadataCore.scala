@@ -13,9 +13,11 @@ trait MetadataCore { this: ArgonCore =>
     val bottom = None
   }
 
+  /** Shortcuts for metadata **/
   object metadata {
     @stateful def apply[M<:Metadata[M]:Manifest](edge: Exp[_]): Option[M] = state.metadata[M](edge)
     @stateful def add[M<:Metadata[M]:Manifest](edge: Exp[_], m: M): Unit = state.metadata.add[M](edge, m)
+    @stateful def get(edge: Exp[_]): Map[Class[_],Metadata[_]] = state.metadata.get(edge)
   }
 
 }

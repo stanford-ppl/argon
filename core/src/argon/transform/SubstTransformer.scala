@@ -1,8 +1,8 @@
 package argon.transform
 
-trait SubstTransformer extends Transformer {
-  import IR._
+import argon._
 
+trait SubstTransformer extends Transformer {
   var subst: Map[Exp[_],Exp[_]] = Map.empty
 
   // Syntax is, e.g.: register(x -> y)

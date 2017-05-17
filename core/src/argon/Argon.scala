@@ -1,35 +1,45 @@
 package argon
 
 import argon.core._
-import argon.lang.{FunctionApi, FunctionExp}
-import argon.ops._
+import argon.lang._
 import argon.typeclasses._
 
-trait ArgonCore extends Reporting
+trait ArgonCore
+  extends Reporting
   with StagedTypes
   with BlocksCore
   with DefsCore
   with ExpsCore
   with EffectsCore
+  with Lattices
   with MetadataCore
   with Scheduling
   with Staging
   with Statements
 
-trait ArgonExp extends ArrayExp with ArrayExtExp
-  with BoolExp with ArithExp
-  with CastExp with FixPtExp with FltPtExp
-  with HashMapExp with IfThenElseExp with StructExp
-  with TextExp with TupleExp with VoidExp
-  with BitsExp with CustomBitWidths with OrderExp
-  with NumExp with Reporting
-  with FunctionExp with VariablesExp
+trait ArgonExp
+  extends ArrayExp
+  with BooleanExp
+  with CastsExp
+  with FixPtExp
+  with FltPtExp
+  with FunctionExp
+  with HashMapExp
+  with IfThenElseExp
+  with StringExp
+  with Tuple2Exp
+  with UnitExp
+  with ArithExp
+  with BitsExp
+  with NumExp
+  with OrderExp
 
-trait ArgonApi extends ArrayApi with ArrayExtApi
-  with BoolApi with ArithApi
-  with CastApi with FixPtApi with FltPtApi
-  with HashMapApi with IfThenElseApi with StructApi
-  with TextApi with TupleApi with VoidApi
-  with BitsApi with OrderApi
-  with NumApi with LowPriorityNumImplicits
-  with FunctionApi with VariablesApi with ArgonExp
+trait ArgonApi
+  extends ArgonExp
+  with CastsApi
+  with FixPtApi
+  with FltPtApi
+  with FunctionApi
+  with HashMapApi
+  with IfThenElseApi
+  with NumApi

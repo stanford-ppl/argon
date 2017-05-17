@@ -1,14 +1,12 @@
 package argon.codegen.scalagen
 
-import argon.core.Staging
-import argon.ops.BoolExp
+import argon._
+import argon.nodes._
 
-trait ScalaGenBool extends ScalaCodegen {
-  val IR: BoolExp with Staging
-  import IR._
+trait ScalaGenBoolean extends ScalaCodegen {
 
   override protected def remap(tp: Type[_]): String = tp match {
-    case BoolType => "Boolean"
+    case BooleanType => "Boolean"
     case _ => super.remap(tp)
   }
 
@@ -23,9 +21,9 @@ trait ScalaGenBool extends ScalaCodegen {
     case Or(x,y)   => emit(src"val $lhs = $x || $y")
     case XOr(x,y)  => emit(src"val $lhs = $x != $y")
     case XNor(x,y) => emit(src"val $lhs = $x == $y")
-    case RandomBool(None) => emit(src"val $lhs = java.util.concurrent.ThreadLocalRandom.current().nextBoolean()")
-    case RandomBool(Some(max)) => emit(src"val $lhs = java.util.concurrent.ThreadLocalRandom.current().nextBoolean() && $max")
-    case StringToBool(x) => emit(src"val $lhs = $x.toBoolean")
+    case RandomBoolean(None) => emit(src"val $lhs = java.util.concurrent.ThreadLocalRandom.current().nextBoolean()")
+    case RandomBoolean(Some(max)) => emit(src"val $lhs = java.util.concurrent.ThreadLocalRandom.current().nextBoolean() && $max")
+    case StringToBoolean(x) => emit(src"val $lhs = $x.toBoolean")
     case _ => super.emitNode(lhs, rhs)
   }
 }

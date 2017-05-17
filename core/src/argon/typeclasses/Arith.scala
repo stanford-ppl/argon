@@ -1,6 +1,5 @@
 package argon.typeclasses
 
-import argon._
 import forge._
 
 trait Arith[T] {

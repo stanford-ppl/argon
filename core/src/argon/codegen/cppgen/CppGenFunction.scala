@@ -1,15 +1,12 @@
 package argon.codegen.cppgen
 
-import argon.core.Staging
-import argon.lang.FunctionExp
+import argon._
+import argon.nodes._
 import forge.generate
 
 
 @generate
 trait CppGenFunction extends CppCodegen {
-  val IR: FunctionExp with Staging
-  import IR._
-
 
   override protected def remap(tp: Type[_]): String = tp match {
     case ArgonFunctionJJType$JJ$1to22(argII$II$1toJJ, r) =>

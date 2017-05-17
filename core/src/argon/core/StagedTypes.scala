@@ -1,7 +1,7 @@
 package argon.core
 
 import argon._
-import argon.lang.{Text,Bool}
+import argon.lang.{String => MString, Boolean => MBoolean}
 import forge._
 
 import scala.annotation.implicitNotFound
@@ -16,24 +16,24 @@ trait StagedTypes extends EmbeddedControls { this: ArgonCore =>
 
   // Has to be an implicit class to not conflict with higher priority implicits on +
   implicit class ConcatOps[T<:MetaAny[T]](lhs: T) {
-    @api def +(rhs: String): Text = lhs.toText + Text(rhs)
-    @api def +(rhs: Text): Text = lhs.toText + rhs
-    @api def +[R](rhs: MetaAny[R]): Text = lhs.toText + rhs.toText
+    @api def +(rhs: String): MString = lhs.toText + MString(rhs)
+    @api def +(rhs: MString): MString = lhs.toText + rhs
+    @api def +[R](rhs: MetaAny[R]): MString = lhs.toText + rhs.toText
   }
 
-  @internal def infix_toString(x: MetaAny[_]): Text = x.toText
+  @internal def infix_toString(x: MetaAny[_]): MString = x.toText
 
   @stateful def __valDef[T<:MetaAny[T]](init: T, name: String): Unit = {
     log(c"Setting name of ${init.s} to $name")
     init.s.name = Some(name)
   }
 
-  @internal def __equals[T<:MetaAny[T]](x: T, y: T): Bool = x === y
-  @internal def __equals[A, T<:MetaAny[T]](x: A, y: T)(implicit lift: Lift[A, T]): Bool = lift(x) === y
-  @internal def __equals[A, T<:MetaAny[T]](x: T, y: A)(implicit lift: Lift[A, T]): Bool = x === lift(y)
-  @internal def __unequals[T<:MetaAny[T]](x: T, y: T): Bool = x =!= y
-  @internal def __unequals[A, T<:MetaAny[T]](x: A, y: T)(implicit lift: Lift[A, T]): Bool = lift(x) =!= y
-  @internal def __unequals[A, T<:MetaAny[T]](x: T, y: A)(implicit lift: Lift[A, T]): Bool = x =!= lift(y)
+  @internal def __equals[T<:MetaAny[T]](x: T, y: T): MBoolean = x === y
+  @internal def __equals[A, T<:MetaAny[T]](x: A, y: T)(implicit lift: Lift[A, T]): MBoolean = lift(x) === y
+  @internal def __equals[A, T<:MetaAny[T]](x: T, y: A)(implicit lift: Lift[A, T]): MBoolean = x === lift(y)
+  @internal def __unequals[T<:MetaAny[T]](x: T, y: T): MBoolean = x =!= y
+  @internal def __unequals[A, T<:MetaAny[T]](x: A, y: T)(implicit lift: Lift[A, T]): MBoolean = lift(x) =!= y
+  @internal def __unequals[A, T<:MetaAny[T]](x: T, y: A)(implicit lift: Lift[A, T]): MBoolean = x =!= lift(y)
 
   def typ[T:Type] = implicitly[Type[T]]
   def mtyp[A,B](x: Type[A]): Type[B] = x.asInstanceOf[Type[B]]
@@ -48,13 +48,13 @@ trait StagedTypes extends EmbeddedControls { this: ArgonCore =>
 
   import StagedTypes._
   // TODO: Should these lifts be casts?
-  def infix_==[A,B](x1: MetaAny[A], x2: MetaAny[B]): Bool = macro equalImpl[Bool]
-  def infix_==[A, B, C <:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro equalLiftRightImpl[Bool]
-  def infix_==[A, B, C <:MetaAny[B]](x1: A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro equalLiftLeftImpl[Bool]
+  def infix_==[A,B](x1: MetaAny[A], x2: MetaAny[B]): MBoolean = macro equalImpl[MBoolean]
+  def infix_==[A, B, C <:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): MBoolean = macro equalLiftRightImpl[MBoolean]
+  def infix_==[A, B, C <:MetaAny[B]](x1: A, x2: MetaAny[B])(implicit l: Lift[A,C]): MBoolean = macro equalLiftLeftImpl[MBoolean]
 
-  def infix_!=[A, B](x1: MetaAny[A], x2: MetaAny[B]): Bool = macro unequalImpl[Bool]
-  def infix_!=[A, B, C<:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): Bool = macro unequalLiftRightImpl[Bool]
-  def infix_!=[A, B, C<:MetaAny[B]](x1:A, x2: MetaAny[B])(implicit l: Lift[A,C]): Bool = macro unequalLiftLeftImpl[Bool]
+  def infix_!=[A, B](x1: MetaAny[A], x2: MetaAny[B]): MBoolean = macro unequalImpl[MBoolean]
+  def infix_!=[A, B, C<:MetaAny[B]](x1: MetaAny[B], x2: A)(implicit l: Lift[A,C]): MBoolean = macro unequalLiftRightImpl[MBoolean]
+  def infix_!=[A, B, C<:MetaAny[B]](x1:A, x2: MetaAny[B])(implicit l: Lift[A,C]): MBoolean = macro unequalLiftLeftImpl[MBoolean]
 
 
   // TODO: Should casts be implicit or explicit? Should have subtypes?

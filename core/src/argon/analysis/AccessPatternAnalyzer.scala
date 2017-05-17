@@ -1,47 +1,43 @@
 package argon.analysis
 
-import argon.core.Staging
+import argon._
+import argon.core.UndefinedAccessPatternException
 import argon.traversal.Traversal
+import forge._
 
-trait IndexPatternApi extends IndexPatternExp
-trait IndexPatternExp extends Staging {
-  type Index
-  // Variations used here allow Index to be abstract (otherwise can't as easily define stride of 1)
-  sealed abstract class IndexPattern { def index: Option[Exp[Index]] }
-  // a*i + b, where a and b must be loop invariant
-  case class AffineAccess(a: Exp[Index], i: Exp[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
-  // i + b, where b must be loop invariant
-  case class OffsetAccess(i: Exp[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
-  // a*i, where a must be loop invariant
-  case class StridedAccess(a: Exp[Index], i: Exp[Index]) extends IndexPattern { def index = Some(i) }
-  // linear access with some loop iterator
-  case class LinearAccess(i: Exp[Index]) extends IndexPattern { def index = Some(i) }
-  // loop invariant access (but may change with outer loops)
-  case class InvariantAccess(b: Exp[Index]) extends IndexPattern { def index = None }
-  // anything else
-  case object RandomAccess extends IndexPattern { def index = None }
+// Variations used here allow Index to be abstract (otherwise can't as easily define stride of 1)
+sealed abstract class IndexPattern { def index: Option[Exp[Index]] }
+// a*i + b, where a and b must be loop invariant
+case class AffineAccess(a: Exp[Index], i: Exp[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
+// i + b, where b must be loop invariant
+case class OffsetAccess(i: Exp[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
+// a*i, where a must be loop invariant
+case class StridedAccess(a: Exp[Index], i: Exp[Index]) extends IndexPattern { def index = Some(i) }
+// linear access with some loop iterator
+case class LinearAccess(i: Exp[Index]) extends IndexPattern { def index = Some(i) }
+// loop invariant access (but may change with outer loops)
+case class InvariantAccess(b: Exp[Index]) extends IndexPattern { def index = None }
+// anything else
+case object RandomAccess extends IndexPattern { def index = None }
 
-  case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPattern] {
-    def mirror(f:Tx) = AccessPattern(indices.map{
-      case AffineAccess(a,i,b) => AffineAccess(f(a),f(i),f(b))
-      case OffsetAccess(i,b)   => OffsetAccess(f(i), f(b))
-      case StridedAccess(a,i)  => StridedAccess(f(a),f(i))
-      case LinearAccess(i)     => LinearAccess(f(i))
-      case InvariantAccess(b)  => InvariantAccess(f(b))
-      case RandomAccess        => RandomAccess
-    })
-  }
+case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPattern] {
+  def mirror(f:Tx) = AccessPattern(indices.map{
+    case AffineAccess(a,i,b) => AffineAccess(f(a),f(i),f(b))
+    case OffsetAccess(i,b)   => OffsetAccess(f(i), f(b))
+    case StridedAccess(a,i)  => StridedAccess(f(a),f(i))
+    case LinearAccess(i)     => LinearAccess(f(i))
+    case InvariantAccess(b)  => InvariantAccess(f(b))
+    case RandomAccess        => RandomAccess
+  })
+}
 
-  object accessPatternOf {
-    def apply(x: Exp[_]): Seq[IndexPattern] = accessPatternOf.get(x).getOrElse{ throw new UndefinedAccessPatternException(x) }
-    def update(x: Exp[_], indices: Seq[IndexPattern]) { metadata.add(x, AccessPattern(indices)) }
-    def get(x: Exp[_]): Option[Seq[IndexPattern]] = metadata[AccessPattern](x).map(_.indices)
-  }
+object accessPatternOf {
+  @stateful def apply(x: Exp[_]): Seq[IndexPattern] = accessPatternOf.get(x).getOrElse{ throw new UndefinedAccessPatternException(x) }
+  @stateful def update(x: Exp[_], indices: Seq[IndexPattern]) { metadata.add(x, AccessPattern(indices)) }
+  @stateful def get(x: Exp[_]): Option[Seq[IndexPattern]] = metadata[AccessPattern](x).map(_.indices)
 }
 
 trait AccessPatternAnalyzer extends Traversal {
-  val IR: IndexPatternExp
-  import IR._
 
   // All loop indices encountered above the current scope
   var loopIndices = Set[Bound[Index]]()

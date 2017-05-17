@@ -1,12 +1,10 @@
 package argon.codegen
 
-import argon.ops.StructExp
+import argon._
+import argon.nodes._
 import scala.collection.mutable
 
 trait StructCodegen extends Codegen {
-  val IR: StructExp
-  import IR._
-
   val encounteredStructs = mutable.HashMap[StructType[_], String]()
   var structNumber: Int = 0
 

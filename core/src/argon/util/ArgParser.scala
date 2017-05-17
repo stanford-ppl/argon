@@ -1,4 +1,5 @@
 package argon.util
+
 import argon.core.Reporting
 import scopt._
 

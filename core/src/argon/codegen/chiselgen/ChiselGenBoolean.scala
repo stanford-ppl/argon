@@ -1,14 +1,12 @@
 package argon.codegen.chiselgen
 
-import argon.core.Staging
-import argon.ops.BoolExp
+import argon._
+import argon.nodes._
 
 trait ChiselGenBool extends ChiselCodegen {
-  val IR: BoolExp with Staging
-  import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
-    case BoolType => "Boolean"
+    case BooleanType => "Boolean"
     case _ => super.remap(tp)
   }
 
@@ -23,8 +21,8 @@ trait ChiselGenBool extends ChiselCodegen {
     case Or(x,y)      => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x || $y")
     case XOr(x,y)     => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x =/= $y")
     case XNor(x,y)    => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x === $y")
-    case RandomBool(x) => emit(src"val $lhs = java.util.concurrent.ThreadLocalRandom.current().nextBoolean()")
-    case StringToBool(x) => emit(src"val $lhs = $x.toBoolean")
+    case RandomBoolean(x) => emit(src"val $lhs = java.util.concurrent.ThreadLocalRandom.current().nextBoolean()")
+    case StringToBoolean(x) => emit(src"val $lhs = $x.toBoolean")
     case _ => super.emitNode(lhs, rhs)
   }
 }

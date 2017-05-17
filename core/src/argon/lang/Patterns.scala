@@ -14,7 +14,7 @@ trait PatternExp extends Staging with FltPtExp with FixPtExp with VoidExp with T
   case class ForeachElem[A:StageAny](
     func:   Block[A],   // Foreach function
     chunks: Int
-  ) extends Op[Void] with LoopElem {
+  ) extends Op[MUnit] with LoopElem {
     def mirror(f:Tx) = foreach_elem(f(func),chunks)
     val mA = typ[A]
   }
@@ -77,7 +77,7 @@ trait PatternExp extends Staging with FltPtExp with FixPtExp with VoidExp with T
 
 
   /** Constructors **/
-  def foreach_elem[A:StageAny](func: => Exp[A], chunks: Int)(implicit ctx: SrcCtx): Sym[Void] = {
+  def foreach_elem[A:StageAny](func: => Exp[A], chunks: Int)(implicit ctx: SrcCtx): Sym[MUnit] = {
     val blk = stageBlock{ func }
     val effects = blk.summary
     stageEffectful(ForeachElem(blk, chunks), effects.star)(ctx)

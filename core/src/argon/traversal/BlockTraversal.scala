@@ -2,7 +2,8 @@ package argon.traversal
 
 import argon._
 
-abstract class BlockTraversal(IR: State) {
+trait BlockTraversal {
+  val IR: State
   implicit val state: State = IR
 
   /** All statements defined in lower (further nested) blocks within the current traversal scope **/

@@ -1,11 +1,11 @@
 package argon
 
+import argon._
 import forge._
-import argon.lang.{Text, Bool}
-
 
 /** Base trait for all staged, frontend types **/
 abstract class MetaAny[T:Type] extends Product {
+  type Internal = Any
   def s: Exp[T]
 
   private def isEqual(that: Any): Boolean = that match {
@@ -13,20 +13,20 @@ abstract class MetaAny[T:Type] extends Product {
     case _ => false
   }
 
-  @internal def unstagedWarning(op: String): Unit = {
-    warn(ctx, s"Unstaged method $op was used here on a staged type during staging.")
+  private def unstagedWarning(op: String)(implicit ctx: SrcCtx): Unit = {
+    warn(s"$ctx: Unstaged method $op was used here on a staged type during staging.")
     warn("Add @virtualize annotation to an enclosing scope to prevent this.")
     warn(ctx)
   }
-  @internal def unstagedWarningNoCtx(op: String): Unit = {
+  private def unstagedWarningNoCtx(op: String)(implicit ctx: SrcCtx): Unit = {
     val name = ctx.lhsName.getOrElse("the value")
-    warn(ctx, s"Unstaged method $op was used on $name defined here during staging.")
+    warn(s"$ctx: Unstaged method $op was used on $name defined here during staging.")
     warn("Add @virtualize annotation to an enclosing scope to prevent this.")
     warn(ctx)
   }
 
-  override def toString(): String = {
-    if (Globals.staging) unstagedWarningNoCtx("toString()")(s.ctx)
+  override def toString: String = {
+    if (Globals.staging) unstagedWarningNoCtx("toString")(s.ctx)
     this.productPrefix + this.productIterator.mkString("(", ", ", ")")
   }
 
@@ -35,9 +35,9 @@ abstract class MetaAny[T:Type] extends Product {
     this.isEqual(that)
   }
 
-  @api def !=(that: T): Bool = this =!= that
-  @api def ==(that: T): Bool = this === that
-  @api def ===(that: T): Bool
-  @api def =!=(that: T): Bool
-  @api def toText: Text
+  @api def !=(that: T): MBoolean = this =!= that
+  @api def ==(that: T): MBoolean = this === that
+  @api def ===(that: T): MBoolean
+  @api def =!=(that: T): MBoolean
+  @api def toText: MString
 }

@@ -1,7 +1,7 @@
 package argon.typeclasses
 
 import argon._
-import argon.lang._
+import argon.nodes._
 import forge._
 
 trait Num[T] extends Bits[T] with Arith[T] with Order[T] {
@@ -15,16 +15,16 @@ trait Num[T] extends Bits[T] with Arith[T] with Order[T] {
 }
 
 
-trait LowPriorityNumImplicits { this: NumExp =>
+trait LowPriorityNumImplicits {
 
   // FIXME: Users may want to write x.to[T], where T is a generic type with evidence of Num
   // Should this be allowed? Better way to support in general?
   implicit def num2num[T:Type:Num,R:Type:Num] = new Cast[T,R] {
     @internal def apply(x: T): R = typ[R] match {
       case tp: FixPtType[s,i,f] =>
-        implicit val bS = tp.mS.asInstanceOf[BOOL[S]]
-        implicit val iI = tp.mI.asInstanceOF[INT[I]]
-        implicit val iF = tp.mF.asInstanceOf[INT[F]]
+        implicit val bS = tp.mS.asInstanceOf[BOOL[s]]
+        implicit val iI = tp.mI.asInstanceOf[INT[i]]
+        implicit val iF = tp.mF.asInstanceOf[INT[f]]
         num[T].toFixPt[s,i,f](x).asInstanceOf[R]
       case tp: FltPtType[g,e]   =>
         implicit val iG = tp.mG.asInstanceOf[INT[g]]
@@ -33,8 +33,8 @@ trait LowPriorityNumImplicits { this: NumExp =>
       case _ => throw new Exception(u"Cannot find way to convert type ")
     }
   }
-
 }
+trait NumApi extends LowPriorityNumImplicits
 
 trait NumExp {
   implicit def num2fltpt[T:Num,G:INT,E:INT] = new Cast[T,FltPt[G,E]] {

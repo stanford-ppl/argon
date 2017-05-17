@@ -1,11 +1,9 @@
 package argon.codegen.cppgen
 
-import argon.core.Staging
-import argon.ops.PrintExp
+import argon._
+import argon.nodes._
 
 trait CppGenPrint extends CppCodegen {
-  val IR: PrintExp with Staging
-  import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
     case Print(x)   => emit(src"""std::cout << $x;""")

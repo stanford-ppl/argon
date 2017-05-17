@@ -1,11 +1,9 @@
 package argon.codegen.dotgen
 
-import argon.core.Staging
-import argon.ops.FltPtExp
+import argon._
+import argon.nodes._
 
 trait DotGenFltPt extends DotCodegen {
-  val IR: Staging with FltPtExp
-  import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case FltNeg(x)   => 

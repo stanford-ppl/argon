@@ -1,11 +1,9 @@
 package argon.codegen.chiselgen
 
-import argon.core.Staging
-import argon.ops.VoidExp
+import argon._
+import argon.nodes._
 
-trait ChiselGenVoid extends ChiselCodegen {
-  val IR: VoidExp with Staging
-  import IR._
+trait ChiselGenUnit extends ChiselCodegen {
 
   override protected def quoteConst(c: Const[_]): String = c match {
     case Const(()) => "()"

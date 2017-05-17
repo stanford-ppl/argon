@@ -1,11 +1,10 @@
 package argon.codegen.cppgen
 
-import argon.core.Staging
-import argon.ops.{ArrayExtExp, BoolExp, FixPtExp, FltPtExp, HashMapExp, IfThenElseExp, StructExp, TextExp, TupleExp}
+import argon._
+import argon.core.NDArrayException
+import argon.nodes._
 
 trait CppGenArrayExt extends CppGenArray {
-  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp with Staging
-  import IR._
 
   private def getNestingLevel(tp: Type[_]): Int = tp match {
     case tp: ArrayType[_] => 1 + getNestingLevel(tp.typeArguments.head) 
@@ -13,7 +12,7 @@ trait CppGenArrayExt extends CppGenArray {
   }
 
   private def zeroElement(tp: Type[_]): String = tp match {
-    case tp: Tup2Type[_,_] => src"*(new ${tp}(0,0));"
+    case tp: Tuple2Type[_,_] => src"*(new ${tp}(0,0));"
     case _ => "0"
   }
  
@@ -108,7 +107,7 @@ trait CppGenArrayExt extends CppGenArray {
       emit("// TODO: flatMap node assumes the func block contains only applies (.flatten)")
 
       // Initialize lhs array
-      (0 until nesting).map{ level => 
+      (0 until nesting).foreach{ level =>
         val grabbers = (0 until level).map{ m => "[0]" }.mkString("")
         emit(src"int size_${lhs}_$level = (*${array})${grabbers}.size();")
       }

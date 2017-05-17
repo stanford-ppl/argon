@@ -8,8 +8,9 @@ import forge._
 import scala.annotation.unchecked.uncheckedVariance
 
 /** Any staged symbol **/
-sealed abstract class Exp[+T](staged: Type[T]) extends EdgeLike with UserFacing {
-  def tp: Type[T @uncheckedVariance] = staged
+sealed abstract class Exp[+T] extends EdgeLike with UserFacing {
+  def tp: Type[T @uncheckedVariance]
+
   var name: Option[String] = None
   override def toStringUser = name match {
     case Some(name) => name + " (" + this.toString + ")"
@@ -18,23 +19,25 @@ sealed abstract class Exp[+T](staged: Type[T]) extends EdgeLike with UserFacing 
 }
 
 /** A staged symbol which represents a non-constant value **/
-sealed abstract class Dyn[+T](staged: Type[T]) extends Exp[T](staged) with Edge {
+sealed abstract class Dyn[+T] extends Exp[T] with Edge {
   override def hashCode(): Int = id
   override def equals(x: Any) = x match {
     case that: Dyn[_] => this.id == that.id
     case _ => false
   }
 
-  @stateful def dependents: Seq[Exp[_]] = dependentsOf(this.id).flatMap(nodeOutputs).map(symFromSymId)
+  @stateful def dependents: Seq[Exp[_]] = {
+    state.graph.dependentsOf(this.id).flatMap{dep => state.graph.nodeOutputs(dep)}.map(symFromSymId)
+  }
 }
 
 /** Staged symbols created as bound variables **/
-class Bound[+T](staged: Type[T]) extends Dyn[T](staged) {
+class Bound[+T](val tp: Type[T @ uncheckedVariance]) extends Dyn[T] {
   override def toString = s"b$id"
 }
 
 /** Staged symbols with definitions **/
-class Sym[+T](staged: Type[T]) extends Dyn[T](staged) {
+class Sym[+T](val tp: Type[T @uncheckedVariance]) extends Dyn[T] {
   override def toString = s"x$id"
 }
 
@@ -45,9 +48,9 @@ class Sym[+T](staged: Type[T]) extends Dyn[T](staged) {
 // and be guaranteed that this is legal
 // :: Param is a special, mutable case of Const
 /** A staged constant **/
-class Const[+T](x: Any)(staged: Type[T]) extends Exp[T](staged) {
-  private val _c: Any = x
-  @stateful def c: Any = _c // Not actually stateful, but Param's method is.
+class Const[+T<:MetaAny[_]](val tp: Type[T@uncheckedVariance])(x: T#Internal) extends Exp[T] {
+  private val _c: T#Internal = x
+  @stateful def c(implicit state: State): T#Internal = _c // Not actually stateful, but Param's method is.
 
   override def hashCode() = (tp, c).hashCode()
   override def equals(x: Any) = x match {
@@ -62,9 +65,13 @@ class Const[+T](x: Any)(staged: Type[T]) extends Exp[T](staged) {
 /** A Staged, mutable constant **/
 case class ParamValue(value: Any) extends Metadata[ParamValue] { def mirror(f: Tx) = this }
 
-class Param[+T](x: Any, pid: Int)(staged: Type[T]) extends Const[T](x)(staged) {
-  @stateful override def c: Any = metadata[ParamValue](this).map(_.value).getOrElse(x)
-  @stateful def c_=(rhs: Any) { if (!isFinal) metadata.add(this, ParamValue(rhs)) }
+class Param[+T<:MetaAny[_]](override val tp: Type[T@uncheckedVariance])(x: T#Internal, pid: Int) extends Const[T](tp)(x) {
+  @stateful override def c(implicit state: State): T#Internal = {
+    state.metadata[ParamValue](this).map(_.value.asInstanceOf[T#Internal]).getOrElse(x)
+  }
+  @stateful def c_=(rhs: T#Internal)(implicit state: State): Unit = {
+    if (!isFinal) state.metadata.add(this, ParamValue(rhs))
+  }
 
   private var _isFinal: Boolean = false
   def isFinal: Boolean = _isFinal
@@ -80,18 +87,27 @@ class Param[+T](x: Any, pid: Int)(staged: Type[T]) extends Const[T](x)(staged) {
   override def toStringUser = this.toString   // TODO: Is this what is we want here?
 }
 
-
 object Const {
-  @stateful def unapply(s: Exp[_]): Option[Any] = s match {
-    case param:Param[_] if param.isFinal => Some(param.c)
-    case const:Const[_] => Some(const.c)
+  @stateful def unapply[T<:Any](s: Exp[T]): Option[Any] = s match {
+    case param: Param[_] if param.isFinal => Some(param.c)
+    case const: Const[_] => Some(const.c)
+    case _ => None
+  }
+  @stateful def unapply[T<:MetaAny[T]](s: Exp[T]): Option[T#Internal] = s match {
+    case param: Param[_] if param.isFinal => Some(param.c)
+    case const: Const[_] => Some(const.c)
     case _ => None
   }
 }
 
 object Param {
-  @stateful def unapply(s: Exp[_]): Option[Any] = s match {
-    case param:Param[_] => Some(param.c) // TODO: Should this only return if isFinal is false?
+  @stateful def unapply[T<:MetaAny[T]](s: Exp[T]): Option[T#Internal] = s match {
+    // TODO: Should this only return if isFinal is false?
+    case param:Param[_] => Some(param.c)
+    case _ => None
+  }
+  @stateful def unapply[T<:Any](s: Exp[T]): Option[Any] = s match {
+    case param: Param[_] => Some(param.c)
     case _ => None
   }
 }

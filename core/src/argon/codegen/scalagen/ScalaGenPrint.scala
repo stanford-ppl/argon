@@ -1,11 +1,9 @@
 package argon.codegen.scalagen
 
-import argon.core.Staging
-import argon.ops.PrintExp
+import argon._
+import argon.nodes._
 
 trait ScalaGenPrint extends ScalaCodegen {
-  val IR: PrintExp with Staging
-  import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
     case Print(x)   => emit(src"val $lhs = System.out.print($x)")

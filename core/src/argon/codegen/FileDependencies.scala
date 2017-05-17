@@ -1,13 +1,12 @@
 package argon.codegen
 
+import argon._
 import sys.process._
 import scala.language.postfixOps
 import org.apache.commons.io._
 import java.io.File
 
-
 trait FileDependencies extends Codegen {
-  import IR._
 
   sealed trait CodegenDep {
     def copy(out: String): Unit
@@ -62,9 +61,6 @@ trait FileDependencies extends Codegen {
         .filter(_.startsWith("./"+dir))
         .map(rename)
         .foreach(_.copy(out))
-
-
-
     }
   }
 

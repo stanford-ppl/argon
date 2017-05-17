@@ -1,8 +1,5 @@
 package argon.typeclasses
 
-import argon._
-import forge._
-
 sealed trait BOOL[T] {
   val v: Boolean
   override def toString = if (v) "TRUE" else "FALSE"

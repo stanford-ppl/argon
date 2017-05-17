@@ -1,13 +1,15 @@
 package argon.lang
 
 import argon._
-import argon.core.UserFacing
+import argon.nodes._
 import argon.typeclasses._
 import argon.utils.escapeConst
 import forge._
 
-/** Infix Methods **/
+/** All Fixed Point Types **/
 case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt[S,I,F]] {
+  override type Internal = BigDecimal // TODO: Should use custom type here
+
   protected val fix = FixPt
   @api def unary_-(): FixPt[S,I,F] = FixPt(fix.neg(this.s))
   @api def unary_~(): FixPt[S,I,F] = FixPt(fix.inv(this.s))
@@ -18,22 +20,22 @@ case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt
   @api def & (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.and(this.s,that.s))
   @api def | (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.or(this.s,that.s))
   @api def ^ (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.xor(this.s,that.s))
-  @api def < (that: FixPt[S,I,F]): Bool         = Bool( fix.lt(this.s,that.s))
-  @api def <=(that: FixPt[S,I,F]): Bool         = Bool(fix.leq(this.s,that.s))
-  @api def > (that: FixPt[S,I,F]): Bool         = Bool( fix.lt(that.s,this.s))
-  @api def >=(that: FixPt[S,I,F]): Bool         = Bool(fix.leq(that.s,this.s))
+  @api def < (that: FixPt[S,I,F]): MBoolean     = MBoolean( fix.lt(this.s,that.s))
+  @api def <=(that: FixPt[S,I,F]): MBoolean     = MBoolean(fix.leq(this.s,that.s))
+  @api def > (that: FixPt[S,I,F]): MBoolean     = MBoolean( fix.lt(that.s,this.s))
+  @api def >=(that: FixPt[S,I,F]): MBoolean     = MBoolean(fix.leq(that.s,this.s))
 
   // Unbiased rounding operators
   @api def *& (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul_unbias(this.s,that.s))
   @api def /& (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div_unbias(this.s,that.s))
 
-  // Saturating operatiors
+  // Saturating operators
   @api def <+> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.add_sat(this.s,that.s))
   @api def <-> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.sub_sat(this.s,that.s))
   @api def <*> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul_sat(this.s,that.s))
   @api def </> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div_sat(this.s,that.s))
 
-  // Saturating and unbiased rounding operatiors
+  // Saturating and unbiased rounding operators
   @api def <*&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul_unb_sat(this.s,that.s))
   @api def </&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div_unb_sat(this.s,that.s))
 
@@ -41,103 +43,25 @@ case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt
   @api def >>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix.rsh(this.s, that.s))  // Right shift (signed)
   @api def >>>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix.ursh(this.s, that.s)) // Right shift (unsigned)
 
-  @api def ===(that: FixPt[S,I,F]) = Bool(fix.eql(this.s, that.s))
-  @api def =!=(that: FixPt[S,I,F]) = Bool(fix.neq(this.s, that.s))
-  @api override def toText = Text.ify(this)
-}
-
-sealed class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Type[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] {
-  def wrapped(s: Exp[FixPt[S,I,F]]): FixPt[S,I,F] = FixPt[S,I,F](s)(mS,mI,mF)
-  def stagedClass = classOf[FixPt[S,I,F]]
-  def isPrimitive = true
-
-  def isSigned: Boolean = mS.v
-  def intBits: Int = mI.v
-  def fracBits: Int = mF.v
-
-  override def equals(x: Any) = x match {
-    case that: FixPtType[_,_,_] => this.mS == that.mS && this.mI == that.mI && this.mF == that.mF
-    case _ => false
-  }
-  override def hashCode() = (mS,mI,mF).##
-  protected def getBits(children: Seq[Type[_]]) = Some(FixPtNum[S,I,F](mS,mI,mF))
-
-  override def toString = s"FixPt[$mS,$mI,$mF]"
-}
-
-class FixPtNum[S:BOOL,I:INT,F:INT] extends Num[FixPt[S,I,F]] {
-  @api def negate(x: FixPt[S,I,F]) = -x
-  @api def plus(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x + y
-  @api def minus(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x - y
-  @api def times(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x * y
-  @api def divide(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x / y
-
-  @api def zero = FixPt[S,I,F](0, force = true)
-  @api def one = FixPt[S,I,F](1, force = true)
-  @api def random(max: Option[FixPt[S,I,F]]): FixPt[S, I, F] = FixPt[S, I, F](FixPt.random[S, I, F](max.map(_.s)))
-  @api def length: Int = INT[I].v + INT[F].v
-
-  @api def lessThan(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x < y
-  @api def lessThanOrEqual(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x <= y
-  @api def equal(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x === y
-
-  @api def toFixPt[S2:BOOL,I2:INT,F2:INT](x: FixPt[S,I,F]): FixPt[S2,I2,F2] = FixPt(FixPt.convert[S,I,F,S2,I2,F2](x.s))
-  @api def toFltPt[G:INT,E:INT](x: FixPt[S,I,F]): FltPt[G,E] = FltPt(FixPt.to_flt[S,I,F,G,E](x.s))
-
-  @api def fromInt(x: Int, force: Boolean = true) = FixPt[S,I,F](x, force)
-  @api def fromLong(x: Long, force: Boolean = true) = FixPt[S,I,F](x, force)
-  @api def fromFloat(x: Float, force: Boolean = true) = FixPt[S,I,F](x, force)
-  @api def fromDouble(x: Double, force: Boolean = true) = FixPt[S,I,F](x, force)
-}
-object FixPtNum {
-  def apply[S:BOOL,I:INT,F:INT] = new FixPtNum[S,I,F]
-}
-
-object FixPtType {
-  def apply[S:BOOL,I:INT,F:INT] = new FixPtType[S,I,F](BOOL[S],INT[I],INT[F])
-
-  def unapply(x:Type[_]):Option[(Boolean, Int, Int)] = x match {
-    case tp:FixPtType[_,_,_] => Some((tp.isSigned, tp.intBits, tp.fracBits))
-    case _ => None
-  }
-}
-
-object IntType extends FixPtType(BOOL[TRUE],INT[_32],INT[_0]) with UserFacing {
-  def unapply(x: Type[_]): Boolean = x match {
-    case FixPtType(true, 32, 0) => true
-    case _ => false
-  }
-  override def toStringUser = "Int"
-}
-
-object LongType extends FixPtType(BOOL[TRUE],INT[_64],INT[_0]) with UserFacing {
-  def unapply(x: Type[_]): Boolean = x match {
-    case FixPtType(true, 64, 0) => true
-    case _ => false
-  }
-  override def toStringUser = "Long"
-}
-
-trait FixPtExp {
-  implicit class FixPtIntLikeOps[S:BOOL,I:INT](x: FixPt[S,I,_0]) {
-    @api def %(y: FixPt[S,I,_0]): FixPt[S,I,_0] = FixPt(FixPt.mod(x.s, y.s))
-  }
+  @api def ===(that: FixPt[S,I,F]) = MBoolean(fix.eql(this.s, that.s))
+  @api def =!=(that: FixPt[S,I,F]) = MBoolean(fix.neq(this.s, that.s))
+  @api override def toText = String.ify(this)
 }
 
 object FixPt {
   /** Static methods **/
-  @internal def apply[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) = new FixPt[S,I,F](s)
-  @api def apply[S:BOOL,I:INT,F:INT](x: Int, force: Boolean = false): FixPt[S,I,F] = FixPt[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: Long, force: Boolean = false): FixPt[S,I,F] = FixPt[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: Float, force: Boolean = false): FixPt[S,I,F] = FixPt[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: Double, force: Boolean = false): FixPt[S,I,F] = FixPt[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: String, force: Boolean = false): FixPt[S,I,F] = FixPt[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: BigInt, force: Boolean = false): FixPt[S,I,F] = FixPt[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: BigDecimal, force: Boolean = false): FixPt[S,I,F] = FixPt[S,I,F](const(x, force))
+  @internal def wrap[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) = new FixPt[S,I,F](s)
+  @api def apply[S:BOOL,I:INT,F:INT](x: Int, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
+  @api def apply[S:BOOL,I:INT,F:INT](x: Long, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
+  @api def apply[S:BOOL,I:INT,F:INT](x: Float, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
+  @api def apply[S:BOOL,I:INT,F:INT](x: Double, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
+  @api def apply[S:BOOL,I:INT,F:INT](x: CString, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
+  @api def apply[S:BOOL,I:INT,F:INT](x: BigInt, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
+  @api def apply[S:BOOL,I:INT,F:INT](x: BigDecimal, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
 
 
   /** Constants **/
-  @internal def literalToBigDecimal[S:BOOL,I:INT,F:INT](x: Any, force: Boolean): BigDecimal = {
+  @internal def literalToBigDecimal[S:BOOL,I:INT,F:INT](x: Any, force: CBoolean): BigDecimal = {
     log(c"Creating fixed point constant for $x")
 
     val sign = BOOL[S].v
@@ -176,33 +100,32 @@ object FixPt {
       case x: Long => makeFixPt(BigDecimal(x))
       case x: Float => makeFixPt(BigDecimal(x.toDouble))
       case x: Double => makeFixPt(BigDecimal(x))
-      case x: String if !x.exists(_ == '.') => makeFixPt(BigDecimal(x))
+      case x: CString if !x.exists(_ == '.') => makeFixPt(BigDecimal(x))
       case c =>
         error(ctx, s"$c cannot be lifted to a fixed point value")
         error(ctx)
         BigDecimal(0)
     }
   }
-  @internal def const[S:BOOL,I:INT,F:INT](x: Any, force: Boolean = true): Const[FixPt[S,I,F]] = {
+  @internal def const[S:BOOL,I:INT,F:INT](x: Any, force: CBoolean = true): Const[FixPt[S,I,F]] = {
     constant[FixPt[S,I,F]](literalToBigDecimal[S,I,F](x,force))
   }
   @internal def int32(x: BigDecimal): Const[Int32] = const[TRUE,_32,_0](x, force = false)
   @internal def int64(x: BigDecimal): Const[Int64] = const[TRUE,_64,_0](x, force = false)
 
-
   /** Constructors **/
   @internal def neg[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = x match {
-    case Const(c:BigDecimal) => const[S,I,F](-c)
+    case Const(c) => const[S,I,F](-c)
     case Op(FixNeg(x)) => x
     case _ => stage(FixNeg(x))(ctx)
   }
   @internal def inv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = x match {
-    case Const(c:BigDecimal) if c.isWhole => const[S,I,F](BigDecimal(~c.toBigInt))
+    case Const(c) if c.isWhole => const[S,I,F](BigDecimal(~c.toBigInt))
     case Op(FixInv(x)) => x
     case _ => stage(FixInv(x))(ctx)
   }
   @internal def add[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a:BigDecimal), Const(b:BigDecimal)) => const[S,I,F](a + b)
+    case (Const(a), Const(b)) => const[S,I,F](a + b)
     case (a, Const(0)) => a                               // a + 0 => a
     case (Const(0), b) => b                               // 0 + a => a
     case (a, Op(FixNeg(b))) if a == b => const[S,I,F](0)  // a + -a => 0
@@ -303,52 +226,52 @@ object FixPt {
     case _ => stage(FixAnd(x,y))(ctx)
   }
   @internal def or[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isWhole => const[S,I,F](BigDecimal(a.toBigInt | b.toBigInt))
+    case (Const(a), Const(b)) if a.isWhole && b.isWhole => const[S,I,F](BigDecimal(a.toBigInt | b.toBigInt))
     case (a, Const(0)) => a
     case (Const(0), b) => b
     case _ => stage(FixOr(x,y))(ctx)
   }
   @internal def xor[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isWhole => const[S,I,F](BigDecimal(a.toBigInt ^ b.toBigInt))
+    case (Const(a), Const(b)) if a.isWhole && b.isWhole => const[S,I,F](BigDecimal(a.toBigInt ^ b.toBigInt))
     case (a, Const(0)) => a
     case (Const(0), b) => b
     case _ => stage(FixXor(x,y))(ctx)
   }
-  @internal def lt[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[Bool] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Bool.const(a < b)
+  @internal def lt[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
+    case (Const(a), Const(b)) => MBoolean.const(a < b)
     case _ => stage( FixLt(x,y))(ctx)
   }
 
-  @internal def leq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[Bool] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Bool.const(a <= b)
+  @internal def leq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
+    case (Const(a), Const(b)) => MBoolean.const(a <= b)
     case _ => stage(FixLeq(x,y))(ctx)
   }
-  @internal def neq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[Bool] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Bool.const(a != b)
+  @internal def neq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
+    case (Const(a), Const(b)) => MBoolean.const(a != b)
     case _ => stage(FixNeq(x,y))(ctx)
   }
-  @internal def eql[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[Bool] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Bool.const(a == b)
+  @internal def eql[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
+    case (Const(a), Const(b)) => MBoolean.const(a == b)
     case _ => stage(FixEql(x,y))(ctx)
   }
   @internal def mod[S:BOOL,I:INT](x: Exp[FixPt[S,I,_0]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,_0]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[S,I,_0](a % b)
+    case (Const(a), Const(b)) => const[S,I,_0](a % b)
     case (a, Const(1)) => const[S,I,_0](0)
     case _ => stage(FixMod(x,y))(ctx)
   }
 
   @internal def lsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isValidInt => const[S,I,F](BigDecimal(a.toBigInt << b.toInt))
+    case (Const(a), Const(b)) if a.isWhole && b.isValidInt => const[S,I,F](BigDecimal(a.toBigInt << b.toInt))
     case (a, Const(0)) => a
     case _ => stage(FixLsh(x,y))(ctx)
   }
   @internal def rsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isValidInt => const[S,I,F](BigDecimal(a.toBigInt >> b.toInt))
+    case (Const(a), Const(b)) if a.isWhole && b.isValidInt => const[S,I,F](BigDecimal(a.toBigInt >> b.toInt))
     case (a, Const(0)) => a
     case _ => stage(FixRsh(x,y))(ctx)
   }
   @internal def ursh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isValidLong && b.isValidInt => const[S,I,F](BigDecimal(a.toLong >>> b.toInt))
+    case (Const(a), Const(b)) if a.isValidLong && b.isValidInt => const[S,I,F](BigDecimal(a.toLong >>> b.toInt))
     case (a, Const(0)) => a
     case _ => stage(FixURsh(x,y))(ctx)
   }
@@ -365,8 +288,8 @@ object FixPt {
     stage(FixPtToFltPt[S,I,F,G,E](x.asInstanceOf[Exp[FixPt[S,I,F]]]))(ctx)
   }
 
-  @internal def from_text[S:BOOL,I:INT,F:INT](x: Exp[Text]): Exp[FixPt[S,I,F]] = x match {
-    case Const(c: String) => FixPt[S,I,F](c).s
+  @internal def from_text[S:BOOL,I:INT,F:INT](x: Exp[MString]): Exp[FixPt[S,I,F]] = x match {
+    case Const(c) => FixPt[S,I,F](c).s
     case _ => stage(StringToFixPt[S,I,F](x))(ctx)
   }
 }
@@ -388,6 +311,10 @@ trait FixPtExp {
   def isFixPtType(x: Type[_]) = FixPtType.unapply(x).isDefined
   def isInt32Type(x: Type[_]) = IntType.unapply(x)
   @internal def intParam(c: Int): Param[Int32] = parameter[Int32](FixPt.literalToBigDecimal[TRUE,_32,_0](c, force=true))
+
+  implicit class FixPtIntLikeOps[S:BOOL,I:INT](x: FixPt[S,I,_0]) {
+    @api def %(y: FixPt[S,I,_0]): FixPt[S,I,_0] = FixPt(FixPt.mod(x.s, y.s))
+  }
 
   /** Type classes **/
   implicit def fixPtIsStaged[S:BOOL,I:INT,F:INT]: Type[FixPt[S,I,F]] = FixPtType[S,I,F](BOOL[S],INT[I],INT[F])
@@ -426,8 +353,8 @@ trait FixPtExp {
   implicit def fixpt2fltpt[S:BOOL,I:INT,F:INT, G:INT,E:INT] = new Cast[FixPt[S,I,F],FltPt[G,E]] {
     @internal def apply(x: FixPt[S,I,F]): FltPt[G,E] = wrap(FixPt.to_flt[S,I,F,G,E](x.s))
   }
-  implicit def text2fixpt[S:BOOL,I:INT,F:INT] = new Cast[Text,FixPt[S,I,F]] {
-    @internal def apply(x: Text): FixPt[S,I,F] = wrap(FixPt.from_text[S,I,F](x.s))
+  implicit def string2fixpt[S:BOOL,I:INT,F:INT] = new Cast[MString,FixPt[S,I,F]] {
+    @internal def apply(x: MString): FixPt[S,I,F] = wrap(FixPt.from_text[S,I,F](x.s))
   }
 }
 
@@ -437,60 +364,4 @@ trait FixPtApi {
   type Short = FixPt[TRUE,_16,_0]
   type Char  = FixPt[TRUE, _8,_0]
 }
-
-
-
-/** IR Nodes **/
-abstract class FixPtOp[S:BOOL,I:INT,F:INT,R:Type] extends Op[R] {
-  protected val fix = FixPt
-  def mS = BOOL[S]
-  def mI = INT[I]
-  def mF = INT[F]
-  def tp = FixPtType[S,I,F]
-}
-abstract class FixPtOp1[S:BOOL,I:INT,F:INT] extends FixPtOp[S,I,F,FixPt[S,I,F]]
-
-case class FixInv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.inv(f(x)) }
-case class FixNeg[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.neg(f(x)) }
-
-case class FixAdd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.add(f(x), f(y)) }
-case class SatAdd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.add_sat(f(x), f(y)) }
-case class FixSub[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.sub(f(x), f(y)) }
-case class SatSub[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.sub_sat(f(x), f(y)) }
-case class FixMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.mul(f(x), f(y)) }
-case class UnbSatMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.mul_unb_sat(f(x), f(y)) }
-case class SatMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.mul_sat(f(x), f(y)) }
-case class UnbMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.mul_unbias(f(x), f(y)) }
-case class FixDiv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.div(f(x), f(y)) }
-case class UnbSatDiv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.div_unb_sat(f(x), f(y)) }
-case class SatDiv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.div_sat(f(x), f(y)) }
-case class UnbDiv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.div_unbias(f(x), f(y)) }
-case class FixAnd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.and(f(x), f(y)) }
-case class FixOr [S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) =  fix.or(f(x), f(y)) }
-case class FixXor [S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) =  fix.xor(f(x), f(y)) }
-case class FixLt [S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F,Bool] { def mirror(f:Tx) = fix.lt(f(x), f(y)) }
-case class FixLeq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F,Bool] { def mirror(f:Tx) = fix.leq(f(x), f(y)) }
-case class FixNeq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F,Bool] { def mirror(f:Tx) = fix.neq(f(x), f(y)) }
-case class FixEql[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F,Bool] { def mirror(f:Tx) = fix.eql(f(x), f(y)) }
-case class FixMod[S:BOOL,I:INT](x: Exp[FixPt[S,I,_0]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp1[S,I,_0] { def mirror(f:Tx) = fix.mod(f(x), f(y)) }
-
-case class FixLsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.lsh(f(x), f(y)) }
-case class FixRsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.rsh(f(x), f(y)) }
-case class FixURsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.ursh(f(x), f(y)) }
-
-case class FixRandom[S:BOOL,I:INT,F:INT](max: Option[Exp[FixPt[S,I,F]]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.random[S,I,F](f(max)) }
-
-case class FixConvert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp1[S2,I2,F2] {
-  def mirror(f:Tx) = fix.convert[S,I,F,S2,I2,F2](f(x))
-}
-
-case class FixPtToFltPt[S:BOOL,I:INT,F:INT,G:INT,E:INT](x: Exp[FixPt[S,I,F]]) extends FltPtOp1[G,E] {
-  def mirror(f:Tx) = FixPt.to_flt[S,I,F,G,E](f(x))
-}
-
-case class StringToFixPt[S:BOOL,I:INT,F:INT](x: Exp[Text]) extends FixPtOp1[S,I,F] {
-  def mirror(f:Tx) = fix.from_text[S,I,F](f(x))
-}
-
-
 

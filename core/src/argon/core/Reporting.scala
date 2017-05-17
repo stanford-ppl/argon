@@ -15,6 +15,8 @@ trait CompilerFacing {
 
 
 trait Reporting {
+  type Log = java.io.PrintStream
+
   def plural(x: Int, sing: String, plur: String): String = if (x == 1) sing else plur
 
   def createLog(dir: String, filename: String): PrintStream = {

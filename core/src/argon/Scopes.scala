@@ -1,7 +1,7 @@
 package argon
 
 /** Class representing the result of a staged scope. */
-class Block[+R](
+sealed class Block[+R](
   val inputs:    Seq[Exp[_]],
   val result:    Exp[R],
   val effects:   Effects,

@@ -1,15 +1,13 @@
 package argon.codegen.scalagen
 
-import argon.core.Staging
-import argon.ops.TextExp
+import argon._
+import argon.nodes._
 import argon.utils.escapeString
 
-trait ScalaGenText extends ScalaCodegen {
-  val IR: TextExp with Staging
-  import IR._
+trait ScalaGenString extends ScalaCodegen {
 
   override protected def remap(tp: Type[_]): String = tp match {
-    case TextType => "String"
+    case StringType => "String"
     case _ => super.remap(tp)
   }
 
@@ -24,9 +22,9 @@ trait ScalaGenText extends ScalaCodegen {
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case e@ToString(x) => emitToString(lhs, x, e.mT)
-    case TextConcat(x,y) => emit(src"val $lhs = $x + $y")
-    case TextEquals(x,y) => emit(src"val $lhs = $x == $y")
-    case TextDiffer(x,y) => emit(src"val $lhs = $x != $y")
+    case StringConcat(x,y) => emit(src"val $lhs = $x + $y")
+    case StringEquals(x,y) => emit(src"val $lhs = $x == $y")
+    case StringDiffer(x,y) => emit(src"val $lhs = $x != $y")
     case _ => super.emitNode(lhs, rhs)
   }
 

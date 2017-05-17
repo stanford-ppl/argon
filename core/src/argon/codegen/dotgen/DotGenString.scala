@@ -1,12 +1,10 @@
 package argon.codegen.dotgen
 
-import argon.core.Staging
-import argon.ops.TextExp
+import argon._
+import argon.nodes._
 import argon.utils.escapeString
 
-trait DotGenText extends DotCodegen {
-  val IR: Staging with TextExp
-  import IR._
+trait DotGenString extends DotCodegen {
 
   override protected def quoteConst(c: Const[_]): String = c match {
     case Const(c: String) => escapeString(c)
@@ -15,9 +13,9 @@ trait DotGenText extends DotCodegen {
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case ToString(x) => 
-    case TextConcat(x,y) => 
-    case TextEquals(x,y) => 
-    case TextDiffer(x,y) => 
+    case StringConcat(x,y) =>
+    case StringEquals(x,y) =>
+    case StringDiffer(x,y) =>
     case _ => super.emitNode(lhs, rhs)
   }
 

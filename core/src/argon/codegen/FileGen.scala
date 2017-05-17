@@ -1,11 +1,10 @@
 package argon.codegen
 
-import argon.Config
+import argon._
 import org.apache.commons.io.FileUtils
 import java.io.{File, IOException}
 
 trait FileGen extends Codegen {
-  import IR._
 
   protected def emitMain[S:Type](b: Block[S]): Unit
 

@@ -1,14 +1,12 @@
 package argon.codegen.dotgen
 
-import scala.language.postfixOps
-import argon.codegen.Codegen
-import argon.codegen.FileDependencies
+import argon._
+import argon.codegen.{Codegen, FileDependencies}
 
-import scala.collection.mutable.Map
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{Map, ListBuffer}
+import scala.language.postfixOps
 
 trait DotCodegen extends Codegen with FileDependencies with DotEnum { // FileDependencies extends Codegen already
-  import IR._
   override val name = "Dot Codegen"
   override val lang: String = "dot"
   override val ext: String = "dot"

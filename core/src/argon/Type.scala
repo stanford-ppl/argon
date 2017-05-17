@@ -7,6 +7,11 @@ import scala.annotation.implicitNotFound
 /** Type evidence for staged types **/
 @implicitNotFound(msg = "Type ${T} is not a staged type. Try adding an explicit lift() call?")
 abstract class Type[T](implicit val ev: T <:< MetaAny[T]) extends UserFacing with CompilerFacing {
+
+  private def fakeT: T = wrapped(null)
+  val fake: MetaAny[T] = ev(fakeT)
+  type Internal = fake.Internal
+
   // TODO: In the future we may want to refactor these two methods out
   def unwrapped(x: T): Exp[T] = x.s
   def wrapped(x: Exp[T]): T

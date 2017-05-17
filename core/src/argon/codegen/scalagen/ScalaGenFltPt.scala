@@ -1,12 +1,12 @@
 package argon.codegen.scalagen
 
-import argon.core.Staging
-import argon.ops.{FixPtExp, FltPtExp}
+import argon._
+import argon.nodes._
 
+/**
+  * NOTE TO SPATIAL AUTHORS: NOT USED IN SPATIAL!
+  */
 trait ScalaGenFltPt extends ScalaCodegen {
-  val IR: FltPtExp with FixPtExp with Staging
-  import IR._
-
   override protected def remap(tp: Type[_]): String = tp match {
     case FloatType()  => "Float"
     case DoubleType() => "Double"

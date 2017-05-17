@@ -7,7 +7,8 @@ import argon.core.TraversalFailedToConvergeException
 /**
   * Single or iterative traversal of the IR with pre- and post- processing
   */
-abstract class Traversal(IR: State) extends BlockTraversal(IR) with CompilerPass { self =>
+trait Traversal extends BlockTraversal with CompilerPass { self =>
+  val IR: State
   override implicit val state: State = IR
 
   sealed abstract class RecurseOpt

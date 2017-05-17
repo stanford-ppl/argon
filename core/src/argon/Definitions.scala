@@ -87,7 +87,7 @@ abstract class Def extends Node with Product {
   }
   @stateful def mirrorNode(orig: Seq[Sym[_]], f: Tx): Seq[Exp[_]] = fatMirror(f)
 
-  protected implicit val src: SourceContext = EmptyContext
+  final protected implicit val src: SourceContext = EmptyContext
 }
 
 /** Most common variant of Def - returns only one symbol of one type **/

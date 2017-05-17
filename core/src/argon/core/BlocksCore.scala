@@ -64,6 +64,10 @@ trait BlocksCore { self: ArgonCore =>
     val (result, effects, effectful) = stageScope(block, temp)
     Lambda4(a, b, c, d, result, effects, effectful, temp)
   }
+  @stateful def stageLambdaN[R](inputs: Seq[Exp[_]], block: => Exp[R], temp: Freq = Freq.Normal): Block[R] = {
+    val (result, effects, effectful) = stageScope(block, temp)
+    Block(inputs, result, effects, effectful, temp)
+  }
 
   @stateful def stageColdBlock[R](block: => Exp[R]) = stageBlock(block, Freq.Cold)
   @stateful def stageColdLambda[A,R](a: Exp[A])(block: => Exp[R]) = stageLambda(a)(block, Freq.Cold)

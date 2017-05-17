@@ -11,16 +11,16 @@ trait Staging { this: ArgonCore =>
     state.graph.addBound(bnd)
     bnd
   }
-  @stateful def constant[T:Type](c: Any)(implicit ctx: SrcCtx): Const[T] = {
-    val cc = new Const[T](c)(typ[T])
+  @stateful def constant[T<:MetaAny[T]](c: T#Internal)(implicit ctx: SrcCtx): Const[T] = {
+    val cc = new Const[T](typ[T])(c)
     log(c"Making constant ${typ[T]} from ${escapeConst(c)} : ${c.getClass}")
     state.graph.registerInput(cc)
     cc.setCtx(ctx)
     cc
   }
-  @stateful def parameter[T:Type](c: Any)(implicit ctx: SrcCtx): Param[T] = {
+  @stateful def parameter[T<:MetaAny[T]](c: T#Internal)(implicit ctx: SrcCtx): Param[T] = {
     val pid = state.nextParamId()
-    val p = new Param[T](c, pid)(typ[T])
+    val p = new Param[T](typ[T])(c, pid)
     log(c"Making parameter ${typ[T]} from ${escapeConst(p)} : ${c.getClass}")
     state.graph.registerInput(p)
     p.setCtx(ctx)

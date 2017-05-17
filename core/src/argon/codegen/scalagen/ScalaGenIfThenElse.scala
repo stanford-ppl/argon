@@ -1,11 +1,9 @@
 package argon.codegen.scalagen
 
-import argon.core.Staging
-import argon.ops.IfThenElseExp
+import argon._
+import argon.nodes._
 
 trait ScalaGenIfThenElse extends ScalaCodegen {
-  val IR: IfThenElseExp with Staging
-  import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case IfThenElse(cond, thenp, elsep) =>

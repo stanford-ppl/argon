@@ -1,11 +1,9 @@
 package argon.codegen.cppgen
 
-import argon.core.Staging
-import argon.ops.{FixPtExp, FltPtExp}
+import argon._
+import argon.nodes._
 
 trait CppGenFixPt extends CppCodegen {
-  val IR: FixPtExp with FltPtExp with Staging
-  import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
     case IntType() => "int32_t"

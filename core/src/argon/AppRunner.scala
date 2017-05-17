@@ -1,14 +1,14 @@
 package argon
 
+import argon._
+import argon.core.RunningFailed
 import argon.codegen.FileGen
 import scala.sys.process._
 
-trait RunnerCore extends CompilerCore {
-  self =>
-
+trait AppRunner extends AppCore { self =>
   var testArgs = List[String]()
 
-  def run(out: String): Int = {
+  final protected def run(out: String): Int = {
     val start = System.currentTimeMillis()
     // msg("--------------------------")
     report(c"Executing ${Config.name}")
@@ -16,7 +16,7 @@ trait RunnerCore extends CompilerCore {
 
     val proc = scala.sys.process.Process(Seq("sbt", s"""run ${testArgs.mkString(" ")}"""), new java.io.File(out))
     val logger = ProcessLogger{str => msg(str, 2) }
-    val exitCode = withLog(Config.logDir, State.paddedPass + " RUN.log") { proc.run(logger).exitValue() }
+    val exitCode = withLog(Config.logDir, state.paddedPass + " RUN.log") { proc.run(logger).exitValue() }
 
     val time = (System.currentTimeMillis - start).toFloat
     if (exitCode != 0)
@@ -27,8 +27,8 @@ trait RunnerCore extends CompilerCore {
     exitCode
   }
 
-  override def compileOrRun(blk: => Unit): Unit = {
-    super.compileOrRun(blk)
+  override def compileProgram(blk: => Unit): Unit = {
+    super.compileProgram(blk)
     passes.foreach {
       // TODO: More generic compilation / running
       case pass: FileGen if pass.lang == "scala" =>

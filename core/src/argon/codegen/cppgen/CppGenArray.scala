@@ -1,13 +1,9 @@
 package argon.codegen.cppgen
 
-import argon.core.Staging
-import argon.ops.{ArrayExtExp, BoolExp, FixPtExp, FltPtExp, HashMapExp, IfThenElseExp, StructExp, TextExp, TupleExp}
+import argon._
+import argon.nodes._
 
 trait CppGenArray extends CppCodegen {
-  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp with Staging
-  import IR._
-
-
   protected def isArrayType(tp: Type[_]): Boolean = tp match {
     case tp: ArrayType[_] => tp.typeArguments.head match {
       case tp: ArrayType[_] => println("EXCEPTION: Probably can't handle nested array types in ifthenelse"); true
