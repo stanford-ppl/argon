@@ -13,8 +13,8 @@ case class Unit(s: Exp[Unit]) extends MetaAny[Unit] {
 
 object Unit {
   @internal def apply(): MUnit = MUnit(const())
-  @internal def apply(s: CUnit) = MUnit(const())
-  @internal def const(): Exp[MUnit] = constant[MUnit](())
+  @internal def apply(s: CUnit): MUnit = MUnit(const())
+  @internal def const(): Exp[MUnit] = constant(UnitType)(())
 }
 
 trait UnitExp {

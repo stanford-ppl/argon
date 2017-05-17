@@ -16,9 +16,9 @@ trait ExpsCore { self: ArgonCore =>
   }
 
   implicit class ExpContextOps(x: Exp[_]) {
-    def ctx: SrcCtx = ctxsOf(x).headOption.getOrElse(EmptyContext)
-    def ctxOrElse(els: SrcCtx) = ctxsOf(x).headOption.getOrElse(els)
-    def addCtx(ctx: SrcCtx) { if (ctx != EmptyContext || ctxsOf(x).isEmpty) ctxsOf(x) = ctxsOf(x) :+ ctx }
-    def setCtx(ctx: SrcCtx) { if (ctx != EmptyContext || ctxsOf(x).isEmpty) ctxsOf(x) = List(ctx) }
+    @stateful def ctx: SrcCtx = ctxsOf(x).headOption.getOrElse(EmptyContext)
+    @stateful def ctxOrElse(els: SrcCtx) = ctxsOf(x).headOption.getOrElse(els)
+    @stateful def addCtx(ctx: SrcCtx) { if (ctx != EmptyContext || ctxsOf(x).isEmpty) ctxsOf(x) = ctxsOf(x) :+ ctx }
+    @stateful def setCtx(ctx: SrcCtx) { if (ctx != EmptyContext || ctxsOf(x).isEmpty) ctxsOf(x) = List(ctx) }
   }
 }

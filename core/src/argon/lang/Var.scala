@@ -5,9 +5,10 @@ import argon.nodes._
 import forge._
 
 import scala.reflect.macros.whitebox
+import scala.language.experimental.macros
 
 case class Var[T:Type](s: Exp[Var[T]])(implicit selfType: Type[Var[T]]) extends MetaAny[Var[T]] {
-  protected def read = Var.read_var(this.s)
+  @internal protected def read = wrap{ Var.read_var(this.s) }
 
   @api override def ===(that: Var[T]): MBoolean = this.read === that.read
   @api override def =!=(that: Var[T]): MBoolean = this.read =!= that.read

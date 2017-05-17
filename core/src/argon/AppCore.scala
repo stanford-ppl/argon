@@ -5,10 +5,9 @@ import argon.core.TestBenchFailed
 import argon.traversal.CompilerPass
 import argon.transform.Transformer
 import argon.utils.deleteExts
-import forge._
 
 import scala.collection.mutable.ArrayBuffer
-import org.virtualized.{EmptyContext, SourceContext}
+import org.virtualized.SourceContext
 
 trait AppCore { self =>
   /**
@@ -16,6 +15,8 @@ trait AppCore { self =>
     * Allows @virtualize def main(): Unit = { } and [@virtualize] def main() { }
     */
   def main(): Unit
+
+  protected implicit var IR: State = _
 
   private var __stagingArgs: Array[String] = _
   private var __args: MArray[MString] = _
@@ -63,7 +64,7 @@ trait AppCore { self =>
     settings()
     createTraversalSchedule(state)
 
-    __args = MArray.input_arguments(EmptyContext, state)
+    __args = MArray.input_arguments()
 
     if (Config.clearLogs) deleteExts(Config.logDir, ".log")
     report(c"Compiling ${Config.name} to ${Config.genDir}")
@@ -73,14 +74,14 @@ trait AppCore { self =>
   /**
     * Stage block
     */
-  @stateful final protected def stageProgram[R:Type](blk: => R)(implicit state: State): Block[R] = {
+  final protected def stageProgram[R:Type](blk: => R): Block[R] = {
     Globals.staging = true
     val block: Block[R] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { blk.s } }
     Globals.staging = false
     block
   }
 
-  @stateful final protected def runTraversals[R](startTime: Long, b: Block[R], timingLog: Log)(implicit state: State): Unit = {
+  final protected def runTraversals[R:Type](startTime: Long, b: Block[R], timingLog: Log): Unit = {
     var block: Block[R] = b
     // --- Traversals
     for (t <- passes) {
@@ -114,7 +115,7 @@ trait AppCore { self =>
 
   protected def compileProgram(blk: => Unit): Unit = {
     // Spin up a new compiler state
-    implicit val state: State = new State
+    IR = new State
     init(state)
 
     val startTime = System.currentTimeMillis()
@@ -128,7 +129,7 @@ trait AppCore { self =>
     checkErrors(state, startTime, "staging")
 
     val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
-    runTraversals(startTime, block, timingLog)(state)
+    runTraversals(startTime, block, timingLog)
 
     val time = (System.currentTimeMillis - startTime).toFloat
 

@@ -1,7 +1,6 @@
 package argon.core
 
 import argon._
-import argon.utils.escapeConst
 import scala.util.control.NoStackTrace
 
 abstract class CompilerException(id: Int, msg: String, console: => Unit) extends
@@ -17,7 +16,7 @@ class TestBenchFailed(errs: Int) extends Exception(c"""Compilation failed with $
 class RunningFailed(exit: Int) extends Exception(c"Running compiled testbench failed with exit code $exit") with NoStackTrace
 
 class GenerationFailedException(node: Def) extends Exception(c"Don't know how to generate node $node") with NoStackTrace
-class ConstantGenFailedException(c: Const[_]) extends Exception(c"Don't know how to generate constant $c (${c.c.getClass}) with type ${c.tp}") with NoStackTrace
+class ConstantGenFailedException(c: Const[_])(implicit state: State) extends Exception(c"Don't know how to generate constant $c (${c.c.getClass}) with type ${c.tp}") with NoStackTrace
 
 class UninitializedEffectContextException() extends
   CompilerException(1, "Attempted to stage effectful node outside effect context", ())
@@ -29,40 +28,23 @@ case class RedefinedSymbolException(s: Sym[_], d1: Def, d2: Def) extends
     error(c"Second: $s = $d2")
   })
 
-case class IllegalStageHereException(save: List[Sym[_]], context: List[Sym[_]]) extends
+/*case class IllegalStageHereException(save: List[Sym[_]], context: List[Sym[_]])(implicit state: State) extends
   CompilerException(3, "Staging effects 'here' did not leave outer information intact", {
     error("While staging effects 'here', saved context was not preserved:")
     error("Saved:")
     save.foreach { s => error(str(s)) }
     error("Context:")
     context.foreach { s => error(str(s)) }
-  })
+  })*/
 
 class CodegenException(codegen: String, lhs: Sym[_], rhs: Def) extends
   CompilerException(4, c"Don't know how to generate $codegen code for $lhs = $rhs", {
     error(c"[$codegen] Don't know how to generate code for $lhs = $rhs")
   })
 
-class EffectsOrderException(res: Exp[_], expected: Seq[Stm], actual: Seq[Stm], missing: Seq[Stm], binders: Seq[(Stm,Seq[Stm])]) extends
-  CompilerException(5, c"Violated ordering of effects", {
-    error(c"Violated ordering of effects while traversing block result: ")
-    error(str(res))
-    error("expected: ")
-    expected.foreach{stm => error(c"  $stm")}
-    error("actual: ")
-    actual.foreach{stm => error(c"  $stm")}
-    error("missing: ")
-    //missing.foreach{stm => error(c"  $stm")}
-    binders.foreach{case (stm, bindedby) =>
-      error(c"  $stm")
-      error("  appears to be bound by: ")
-      bindedby.foreach{s => error(c"    $s")}
-      error("")
-      error("")
-    }
-  })
+class EffectsOrderException extends CompilerException(5, c"Violated ordering of effects", {})
 
-class FlexEvaluationException(s: Sym[_]) extends
+class FlexEvaluationException(s: Sym[_])(implicit state: State) extends
   CompilerException(6, c"Unable to evaluate $s", {error(c"Unable to flex evaluate ${str(s)}") })
 
 class UndefinedMirrorException(x: Any) extends
@@ -74,7 +56,7 @@ class TraversalFailedToConvergeException(msg: String) extends
 class TraversalFailedToCompleteException(msg: String) extends
   CompilerException(10, msg, {error(msg)})
 
-class NoFieldException(s: Exp[_], index: String) extends
+class NoFieldException(s: Exp[_], index: String)(implicit state: State) extends
   CompilerException(11, c"Attempted to unwrap undefined field $index from record $s", {
     error(c"Attempted to unwrap undefined field $index from record ${str(s)}")
   })
@@ -141,51 +123,11 @@ class DoublyUsedDRAMException(dram: Exp[_], name: String) extends
   })
 
 class TrigInAccelException(lhs: Exp[_]) extends
-  CompilerException(24, c"""Cannot handle trig functions inside of accel block! ${nameOf(lhs).getOrElse("")}""", {
-    error(c"""Cannot handle trig functions inside of accel block! ${nameOf(lhs).getOrElse("")}""")
+  CompilerException(24, c"""Cannot handle trig functions inside of accel block! ${lhs.name.getOrElse("")}""", {
+    error(c"""Cannot handle trig functions inside of accel block! ${lhs.name.getOrElse("")}""")
   })
 
 class NoWireConstructorException(lhs: String) extends
   CompilerException(25, c"""Cannot create new wire for $lhs""", {
     error(c"""Cannot create new wire for $lhs""")
   })
-
-
-// --- User errors
-abstract class UserError(ctx: SrcCtx, console: => Unit) {
-  console
-  error(ctx)
-}
-
-abstract class ProgramError(console: => Unit) {
-  logError()
-  console
-}
-
-class IllegalMutableSharingError(s: Sym[_], aliases: Set[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
-  error(ctx, c"Illegal sharing of mutable objects: ")
-  (aliases + s).foreach{alias =>
-    val pos = alias.ctx
-    error(c"${pos.fileName}:${pos.line}:  symbol ${str(alias)} defined here")
-  }
-})
-
-class IllegalMutationError(s: Sym[_], mutated: Set[Sym[_]])(ctx: SrcCtx) extends UserError(ctx, {
-  error(ctx, c"Illegal mutation of immutable symbols")
-  mutated.foreach { mut =>
-    val pos = mpos(mut)
-    error(c"${pos.fileName}:${pos.line}:  symbol ${str(mut)} defined here")
-  }
-})
-
-class UnsupportedCastError(x: Type[_], y: Type[_])(ctx: SrcCtx) extends UserError(ctx, {
-  error(ctx, c"Casting from $x to $y is unsupported")
-})
-
-class UnsupportedLiftError(c: Any, x: Type[_])(ctx: SrcCtx) extends UserError(ctx, {
-  error(ctx, c"Unsupported lift: $c of type ${c.getClass} to $x")
-})
-
-class UnsupportedTextCastError(tp: Type[_])(implicit ctx: SrcCtx) extends UserError(ctx, {
-  error(ctx, c"Casting from String to $tp is unsupported.")
-})

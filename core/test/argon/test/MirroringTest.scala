@@ -9,8 +9,6 @@ import org.virtualized.SourceContext
 
 
 object MirroringTest extends Test { self =>
-  import IR._
-
   override def main() = {}
 
   // Note: All of this internal stuff shouldn't necessarily be visible to the user, just need it for debugging for now
@@ -26,7 +24,7 @@ object MirroringTest extends Test { self =>
       }
 
       val y2 = tx.withSubstScope(x.s -> z.s) {
-        val y2 = tx.mirror(y, getDef(y).get.asInstanceOf[Op[Void]])
+        val y2 = tx.mirror(y, getDef(y).get.asInstanceOf[Op[MUnit]])
 
         System.out.println("INSIDE: ")
         System.out.println(str(y2))

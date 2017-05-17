@@ -21,7 +21,7 @@ trait CppGenFixPt extends CppCodegen {
     case _ => super.remap(tp)
   }
 
-  override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
+  override protected def quoteConst(c: Const[?]): String = (c.tp, c) match {
     case (IntType(), Const(c: BigDecimal)) => c.toInt.toString
     case (LongType(), Const(c: BigDecimal)) => c.toLong.toString + "L"
     case (FixPtType(s,d,f), Const(c: BigDecimal)) => c.toString

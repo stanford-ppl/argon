@@ -14,6 +14,7 @@ abstract class Struct[T:StructType] extends MetaAny[T]{ self =>
     Struct.field_apply[T,F](self.s, name)
   }
   @internal protected def fieldToText[F](name: CString, tp: Type[F])(implicit ctx: SrcCtx, state: State): MString = {
+    implicit val mF: Type[F] = tp
     tp.ev(field[F](name)).toText
   }
 
@@ -41,8 +42,10 @@ object Struct {
   }
 
   @internal def struct[T:StructType](fields: (CString, Exp[_])*): T = wrap(struct_new[T](fields))
-  @internal def field[T:StructType,R](struct: T, name: CString, typ: Type[R]): R = typ.wrapped(field_apply[T,R](struct.s, name))
-
+  @internal def field[T:StructType,R](struct: T, name: CString, typ: Type[R]): R = {
+    implicit val mR: Type[R] = typ
+    typ.wrapped(field_apply[T,R](struct.s, name))
+  }
 
   @internal private[argon] def equals[T:StructType](a: T, b: T): MBoolean = {
     val tp = implicitly[StructType[T]]
@@ -67,7 +70,7 @@ object Struct {
     }.reduce(_||_)
   }
 
-  private[argon] def unwrapStruct[S:StructType,T:Type](struct: Exp[S], index: CString): Option[Exp[T]] = struct match {
+  @stateful private[argon] def unwrapStruct[S:StructType,T:Type](struct: Exp[S], index: CString): Option[Exp[T]] = struct match {
     case Op(Struct(elems)) => elems.get(index) match {
       case Some(x) if x.tp <:< typ[T] => Some(x.asInstanceOf[Exp[T]]) // TODO: Should this be Staged asInstanceOf?
       case None =>
@@ -78,7 +81,7 @@ object Struct {
 
 
   /** Constructors **/
-  def struct_new[S:StructType](elems: Seq[(CString, Exp[_])])(implicit ctx: SrcCtx): Exp[S] = {
+  @internal def struct_new[S:StructType](elems: Seq[(CString, Exp[_])]): Exp[S] = {
     stage(SimpleStruct(elems))(ctx)
   }
 

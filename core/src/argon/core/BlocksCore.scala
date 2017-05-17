@@ -10,7 +10,7 @@ trait BlocksCore { self: ArgonCore =>
     * Computes an *external* summary for a sequence of nodes
     * (Ignores reads/writes on data allocated within the scope)
     */
-  def summarizeScope(context: Seq[Sym[_]]): Effects = {
+  @stateful def summarizeScope(context: Seq[Sym[_]]): Effects = {
     var effects: Effects = Pure
     val allocs = new mutable.HashSet[Sym[_]]
     def clean(xs: Set[Sym[_]]) = xs diff allocs

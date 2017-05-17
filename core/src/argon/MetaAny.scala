@@ -13,25 +13,24 @@ abstract class MetaAny[T:Type] extends Product {
     case _ => false
   }
 
-  private def unstagedWarning(op: String)(implicit ctx: SrcCtx): Unit = {
-    warn(s"$ctx: Unstaged method $op was used here on a staged type during staging.")
+  /*private def unstagedWarning(op: String)(implicit ctx: SrcCtx): Unit = {
+    warn(s"Unstaged method $op was used here on a staged type during staging.")
     warn("Add @virtualize annotation to an enclosing scope to prevent this.")
     warn(ctx)
-  }
-  private def unstagedWarningNoCtx(op: String)(implicit ctx: SrcCtx): Unit = {
-    val name = ctx.lhsName.getOrElse("the value")
-    warn(s"$ctx: Unstaged method $op was used on $name defined here during staging.")
+  }*/
+  private def unstagedWarningNoCtx(op: String): Unit = {
+    val name = s.name.getOrElse(s.toString)
+    warn(s"Unstaged method $op was used on value $name during staging.")
     warn("Add @virtualize annotation to an enclosing scope to prevent this.")
-    warn(ctx)
   }
 
   override def toString: String = {
-    if (Globals.staging) unstagedWarningNoCtx("toString")(s.ctx)
+    if (Globals.staging) unstagedWarningNoCtx("toString")
     this.productPrefix + this.productIterator.mkString("(", ", ", ")")
   }
 
   override def equals(that: Any): Boolean = {
-    if (Globals.staging) unstagedWarningNoCtx("equals")(s.ctx)
+    if (Globals.staging) unstagedWarningNoCtx("equals")
     this.isEqual(that)
   }
 

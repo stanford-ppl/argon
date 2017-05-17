@@ -9,7 +9,6 @@ import utils.recursive
 abstract class Def extends Node with Product {
   type Tx = argon.transform.Transformer
 
-  @stateful final def allInputs: Seq[Dyn[_]] = state.graph.nodeInputs(this.id).map{id => symFromSymId(id) }
   final def expInputs: Seq[Exp[_]] = recursive.collectSeqs(__exps)(productIterator)
 
   def outputTypes: Seq[Type[_]]
@@ -72,36 +71,37 @@ abstract class Def extends Node with Product {
 
 
   /** Mirroring and Mutating **/
+  // HACK to avoid having to have @stateful or @internal on every mirror method name
+  final protected implicit val src: SourceContext = EmptyContext
+  protected implicit var IR: State = _
+
   def mutate(f:Tx): Unit = throw new Exception("Cannot mutate immutable node")
-  @stateful def fatMirror(f:Tx): Seq[Exp[_]]
 
+  def fatMirror(f:Tx): Seq[Exp[_]]
 
-  @stateful def updateNode(orig: Seq[Sym[_]], f: Tx): Seq[Exp[_]] = {
+  final def updateNode(orig: Seq[Sym[_]], f: Tx)(implicit state: State): Seq[Exp[_]] = {
     try {
       mutate(f)
       orig
     }
     catch{case _:Throwable =>
-      fatMirror(f)
+      mirrorNode(f)(state)
     }
   }
-  @stateful def mirrorNode(orig: Seq[Sym[_]], f: Tx): Seq[Exp[_]] = fatMirror(f)
-
-  final protected implicit val src: SourceContext = EmptyContext
+  final def mirrorNode(f: Tx)(implicit state: State): Seq[Exp[_]] = {
+    this.IR = state
+    fatMirror(f)
+  }
 }
 
 /** Most common variant of Def - returns only one symbol of one type **/
 abstract class Op[R:Type] extends Def {
   val mR = typ[R]
-  protected implicit var state: State = _
 
   def mirror(f:Tx): Exp[R]
 
-  @stateful final override def outputTypes = List(mR)
-  @stateful final override def fatMirror(f:Tx): List[Exp[_]] = {
-    state = f.IR
-    List(this.mirror(f))
-  }
+  final override def outputTypes = List(mR)
+  final override def fatMirror(f:Tx): List[Exp[_]] = List(this.mirror(f))
 }
 abstract class Op2[A:Type,R:Type] extends Op[R] { def mA = typ[A] }
 abstract class Op3[A:Type,B:Type,R:Type] extends Op2[A,R] { def mB = typ[B] }
@@ -117,7 +117,7 @@ trait AtomicRead[M] {
 /** Api **/
 
 object Op {
-  def unapply[T](e: Exp[T]): Option[Op[T]] = e match {
+  @stateful def unapply[T](e: Exp[T]): Option[Op[T]] = e match {
     case s: Sym[_] => defOf(s) match {
       case op: Op[_] => Some(op.asInstanceOf[Op[T]])
       case _ => None
@@ -128,7 +128,7 @@ object Op {
 
 
 object Def {
-  def unapply(e: Exp[_]): Option[Def] = e match {
+  @stateful def unapply(e: Exp[_]): Option[Def] = e match {
     case s: Sym[_] => Some(defOf(s))
     case _ => None
   }

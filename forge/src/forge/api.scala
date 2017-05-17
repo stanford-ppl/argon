@@ -104,7 +104,7 @@ object StateAnnotation {
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
     import c.universe._
 
-    val state = q"state: argon.core.State"
+    val state = q"state: argon.State"
 
     val tree = annottees.head match {
       case DefDef(mods,name,tparams,vparamss,tpt,rhs) =>

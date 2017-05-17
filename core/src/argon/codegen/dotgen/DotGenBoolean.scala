@@ -1,13 +1,9 @@
 package argon.codegen.dotgen
 
-import argon.core.Staging
-import argon.ops.BoolExp
-import argon.Config
+import argon._
+import argon.nodes._
 
-
-trait DotGenBool extends DotCodegen {
-  val IR: Staging with BoolExp
-  import IR._
+trait DotGenBoolean extends DotCodegen {
 
   override def attr(n:Exp[_]) = n match {
     case lhs: Sym[_] => lhs match {
@@ -16,7 +12,7 @@ trait DotGenBool extends DotCodegen {
       case Def(Or(x,y)      ) => super.attr(n).label("|")
       case Def(XOr(x,y)     ) => super.attr(n).label("^")
       case Def(XNor(x,y)    ) => super.attr(n).label("xnor")
-      case Def(RandomBool(x)) => super.attr(n).label("rnd")
+      case Def(RandomBoolean(x)) => super.attr(n).label("rnd")
       case _ => super.attr(n)
     }
     case _ => super.attr(n)
@@ -28,7 +24,7 @@ trait DotGenBool extends DotCodegen {
     case Or(x,y)      => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); emitEdge(y, lhs)}
     case XOr(x,y)     => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); emitEdge(y, lhs)}
     case XNor(x,y)    => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); emitEdge(y, lhs)}
-    case RandomBool(x) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); }
+    case RandomBoolean(x) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); }
     case _ => super.emitNode(lhs, rhs)
   }
 }

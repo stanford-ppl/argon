@@ -11,7 +11,7 @@ trait CppGenFltPt extends CppCodegen {
     case _ => super.remap(tp)
   }
 
-  override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
+  override protected def quoteConst(c: Const[?]): String = (c.tp, c) match {
     case (FloatType(), Const(c: BigDecimal)) => c.toString
     case (DoubleType(), Const(c: BigDecimal)) => c.toString
     case _ => super.quoteConst(c)

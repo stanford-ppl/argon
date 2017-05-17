@@ -41,4 +41,8 @@ trait DefsCore { this: ArgonCore =>
   final def extractSyms(a: Any): Set[Dyn[_]] = recursive.collectSets{case d: Def => d.extracts}(a)
   final def copySyms(a: Any): Set[Dyn[_]]    = recursive.collectSets{case d: Def => d.copies}(a)
 
+  implicit class DefOps(x: Def) {
+    @stateful def allInputs: Seq[Dyn[_]] = state.graph.nodeInputs(x.id).map{id => symFromSymId(id) }
+  }
+
 }

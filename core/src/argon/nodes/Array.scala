@@ -4,7 +4,7 @@ import argon._
 import org.virtualized.EmptyContext
 
 case class ArrayType[T](child: Type[T]) extends Type[MArray[T]] {
-  override def wrapped(s: Exp[Array[T]]): MArray[T] = MArray(s)(child)
+  override def wrapped(s: Exp[MArray[T]]): MArray[T] = MArray(s)(child)
   override def typeArguments = List(child)
   override def stagedClass = classOf[MArray[T]]
   override def isPrimitive = false
@@ -64,7 +64,7 @@ case class ArrayForeach[T:Type](
 
 case class ArrayMap[T:Type,S:Type](
   array: Exp[MArray[T]],
-  apply: Lambda2[Array[T],Index,T],
+  apply: Lambda2[MArray[T],Index,T],
   func:  Lambda1[T,S],
   i:     Bound[Index]
 ) extends Op[MArray[S]] {

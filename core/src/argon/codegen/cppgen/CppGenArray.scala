@@ -50,7 +50,7 @@ trait CppGenArray extends CppCodegen {
     case _ => super.remap(tp)
   }
 
-  override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
+  override protected def quoteConst(c: Const[?]): String = (c.tp, c) match {
     // Array constants are currently disallowed
     case _ => super.quoteConst(c)
   }

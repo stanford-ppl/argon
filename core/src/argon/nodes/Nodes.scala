@@ -2,11 +2,14 @@ package argon.nodes
 
 import argon.lang._
 
-trait Nodes extends ArrayExp
+trait Nodes
+  extends ArrayExp
   with BooleanExp
   with FixPtExp
   with FltPtExp
+  with FunctionExp
   with HashMapExp
+  with OverloadHackExp
   with StringExp
   with Tuple2Exp
   with UnitExp

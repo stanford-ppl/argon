@@ -108,7 +108,7 @@ object FixPt {
     }
   }
   @internal def const[S:BOOL,I:INT,F:INT](x: Any, force: CBoolean = true): Const[FixPt[S,I,F]] = {
-    constant[FixPt[S,I,F]](literalToBigDecimal[S,I,F](x,force))
+    constant(FixPtType[S,I,F])(literalToBigDecimal[S,I,F](x,force))
   }
   @internal def int32(x: BigDecimal): Const[Int32] = const[TRUE,_32,_0](x, force = false)
   @internal def int64(x: BigDecimal): Const[Int64] = const[TRUE,_64,_0](x, force = false)
@@ -310,7 +310,7 @@ trait FixPtExp {
   /** Static methods **/
   def isFixPtType(x: Type[_]) = FixPtType.unapply(x).isDefined
   def isInt32Type(x: Type[_]) = IntType.unapply(x)
-  @internal def intParam(c: Int): Param[Int32] = parameter[Int32](FixPt.literalToBigDecimal[TRUE,_32,_0](c, force=true))
+  @internal def intParam(c: Int): Param[Int32] = parameter(IntType)(FixPt.literalToBigDecimal[TRUE,_32,_0](c, force=true))
 
   implicit class FixPtIntLikeOps[S:BOOL,I:INT](x: FixPt[S,I,_0]) {
     @api def %(y: FixPt[S,I,_0]): FixPt[S,I,_0] = FixPt(FixPt.mod(x.s, y.s))

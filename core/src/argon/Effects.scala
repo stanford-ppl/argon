@@ -62,10 +62,3 @@ case class Effects(
     }
   }
 }
-
-case object Pure extends Effects()
-case object Cold extends Effects(cold = true)
-case object Simple extends Effects(simple = true)
-case object Global extends Effects(global = true)
-case object Mutable extends Effects(mutable = true)
-case object Throws extends Effects(mutable = true)

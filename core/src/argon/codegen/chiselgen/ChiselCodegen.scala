@@ -5,7 +5,7 @@ import argon.codegen.{Codegen, FileDependencies}
 import argon.core.NoBitWidthException
 import scala.collection.mutable.HashMap
 import scala.language.postfixOps
-import sys.process.
+import sys.process._
 
 trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies extends Codegen already
   override val name = "Chisel Codegen"

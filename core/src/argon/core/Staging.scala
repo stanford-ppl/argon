@@ -11,17 +11,17 @@ trait Staging { this: ArgonCore =>
     state.graph.addBound(bnd)
     bnd
   }
-  @stateful def constant[T<:MetaAny[T]](c: T#Internal)(implicit ctx: SrcCtx): Const[T] = {
-    val cc = new Const[T](typ[T])(c)
-    log(c"Making constant ${typ[T]} from ${escapeConst(c)} : ${c.getClass}")
+  @internal def constant[T](tp: Type[T])(c: tp.Internal): Const[T] = {
+    val cc = new Const[T](tp)(c)
+    log(c"Making constant $tp from ${escapeConst(c)} : ${c.getClass}")
     state.graph.registerInput(cc)
     cc.setCtx(ctx)
     cc
   }
-  @stateful def parameter[T<:MetaAny[T]](c: T#Internal)(implicit ctx: SrcCtx): Param[T] = {
+  @internal def parameter[T](tp: Type[T])(c: tp.Internal): Param[T] = {
     val pid = state.nextParamId()
-    val p = new Param[T](typ[T])(c, pid)
-    log(c"Making parameter ${typ[T]} from ${escapeConst(p)} : ${c.getClass}")
+    val p = new Param[T](tp)(c, pid)
+    log(c"Making parameter $tp from ${escapeConst(p)} : ${c.getClass}")
     state.graph.registerInput(p)
     p.setCtx(ctx)
     p
@@ -105,8 +105,14 @@ trait Staging { this: ArgonCore =>
         val immutables = effects.writes.filterNot(isMutable)
         val aliases = mutableAliases(d) diff effects.writes
 
-        if (aliases.nonEmpty) new IllegalMutableSharingError(ss.head, aliases)(ctx)
-        if (immutables.nonEmpty) new IllegalMutationError(ss.head, immutables)(ctx)
+        if (aliases.nonEmpty) {
+          error(ctx, c"Illegal sharing of mutable objects: ")
+          (aliases ++ ss).foreach{alias => error(c"${alias.ctx}:  symbol ${str(alias)} defined here") }
+        }
+        if (immutables.nonEmpty) {
+          error(ctx, c"Illegal mutation of immutable symbols")
+          immutables.foreach { mut => error(c"${mut.ctx}:  symbol ${str(mut)} defined here") }
+        }
 
         ss
       }

@@ -18,7 +18,7 @@ case class String(s: Exp[String]) extends MetaAny[String] {
 
 object String {
   @api def apply(s: CString): MString = MString(const(s))
-  @internal def const(s: CString): Const[MString] = constant[MString](s)
+  @internal def const(s: CString): Const[MString] = constant(StringType)(s)
 
   @internal def ify[T:Type](x: T): MString = MString(sym_tostring(x.s))
 
@@ -58,7 +58,7 @@ trait StringExp {
   implicit val stringIsStaged: Type[String] = StringType
 
   /** Lifting **/
-  implicit def string2text(x: CString)(implicit ctx: SrcCtx): MString = MMString(x)
+  @api implicit def string2text(x: CString): MString = MString(x)
 
   implicit object LiftString extends Lift[CString,MString] {
     @internal def apply(x: CString): MString = MString(x)

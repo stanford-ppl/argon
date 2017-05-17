@@ -9,7 +9,7 @@ trait Statements { this: ArgonCore =>
 
   // --- Helper functions
   // Getting statement returns Option to account for Bounds, but this is known to be a Sym
-  def stmOf(sym: Sym[_]): Stm = stmFromSymId(sym.id).get
+  @stateful def stmOf(sym: Sym[_]): Stm = stmFromSymId(sym.id).get
 
   @stateful def stmFromNodeId(id: Int): Option[Stm] = {
     val x = state.graph.triple(id)
@@ -48,7 +48,7 @@ trait Statements { this: ArgonCore =>
     shallowAliases(x) ++ deepAliases(x)
   }
   @stateful final def mutableAliases(x: Any): Set[Sym[_]] = allAliases(x).filter(isMutable)
-  final def mutableInputs(d: Def): Set[Sym[_]] = {
+  @stateful final def mutableInputs(d: Def): Set[Sym[_]] = {
     val bounds = d.binds
     val actuallyReadSyms = d.reads diff bounds
     mutableAliases(actuallyReadSyms) filterNot (bounds contains _)
@@ -63,14 +63,14 @@ trait Statements { this: ArgonCore =>
     *
     * TODO: Any reason for this to be Sym[_] => Seq[Sym[_]] ?
     */
-  final def recurseAtomicLookup(e: Exp[_]): Exp[_] = {
-    getDef(e).flatMap{case d: AtomicRead[_,_] => Some(d.memory); case _ => None}.getOrElse(e)
+  @stateful final def recurseAtomicLookup(e: Exp[_]): Exp[_] = {
+    getDef(e).flatMap{case d: AtomicRead[_] => Some(d.coll); case _ => None}.getOrElse(e)
   }
-  final def extractAtomicWrite(s: Sym[_]): Sym[_] = {
+  @stateful final def extractAtomicWrite(s: Sym[_]): Sym[_] = {
     syms(recurseAtomicLookup(s)).headOption.getOrElse(s)
   }
 
-  final def propagateWrites(effects: Effects): Effects = if (!Config.allowAtomicWrites) effects else {
+  @stateful final def propagateWrites(effects: Effects): Effects = if (!Config.allowAtomicWrites) effects else {
     val writes = effects.writes.map{s => extractAtomicWrite(s) }
     effects.copy(writes = writes)
   }

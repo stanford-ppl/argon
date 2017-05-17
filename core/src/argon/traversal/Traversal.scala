@@ -60,7 +60,7 @@ trait Traversal extends BlockTraversal with CompilerPass { self =>
 }
 
 
-abstract class IterativeTraversal(IR: State) extends Traversal(IR) {
+trait IterativeTraversal extends Traversal {
 
   private var runs = 0                  // Current analysis iteration
   private var retries = 0               // Current retry

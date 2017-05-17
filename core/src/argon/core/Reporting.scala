@@ -48,12 +48,12 @@ trait Reporting {
       log.close()
     }
   }
-  final def withConsole[T](blk: => T): T = withLog(System.out)(blk)
+  @stateful final def withConsole[T](blk: => T): T = withLog(System.out)(blk)
 
   // TODO: Should these be macros?
   @stateful final def log(x: => Any): Unit = if (Config.verbosity >= 2) state.logstream.println(x)
   @stateful final def dbg(x: => Any): Unit = if (Config.verbosity >= 1) state.logstream.println(x)
-  final def msg(x: => Any, level: Int = 2)(implicit state: State): Unit = {
+  @stateful final def msg(x: => Any, level: Int = 2)(implicit state: State): Unit = {
     state.logstream.println(x)
     if (Config.verbosity >= level) System.out.println(x)
   }
@@ -61,15 +61,13 @@ trait Reporting {
   final def report(x: => Any): Unit = if (Config.verbosity >= 0) System.out.println(x)
   final def warn(x: => Any): Unit = if (Config.showWarn) {
     System.err.println(s"[\u001B[33mwarn\u001B[0m] $x")
-    dbg(s"[warn] $x")
   }
   final def error(x: => Any): Unit = {
     System.err.println(s"[\u001B[31merror\u001B[0m] $x")
-    dbg(s"[error] $x")
   }
 
   @stateful final def warn(ctx: SrcCtx, x: => Any, noWarn: Boolean = false): Unit = {
-    warn(ctx.toString() + ": " + x)
+    warn(ctx.toString + ": " + x)
     if (!noWarn) state.logWarning()
   }
   @stateful final def error(ctx: SrcCtx, x: => Any, noError: Boolean = false): Unit = {
@@ -89,12 +87,12 @@ trait Reporting {
   final def warn(ctx: SrcCtx): Unit = warn(ctx, showCaret = false)
   final def error(ctx: SrcCtx): Unit = error(ctx, showCaret = false)
 
-  final def str(lhs: Exp[_]): String = lhs match {
+  @stateful final def str(lhs: Exp[_]): String = lhs match {
     case Def(rhs) => c"$lhs = $rhs"
     case Const(c) => c"$lhs = $c"
     case _: Bound[_] => c"$lhs [bound]"
   }
-  final def str(lhs: Seq[Exp[_]]): String = lhs.head match {
+  @stateful final def str(lhs: Seq[Exp[_]]): String = lhs.head match {
     case Def(rhs) => c"$lhs = $rhs"
     case syms => c"$syms"
   }

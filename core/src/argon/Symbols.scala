@@ -2,6 +2,7 @@ package argon
 
 import argon.core.UserFacing
 import argon.graphs.{Edge, EdgeLike}
+import argon.lang.{Overload1, Overload2}
 import argon.utils.escapeConst
 import forge._
 
@@ -50,7 +51,7 @@ class Sym[+T](val tp: Type[T @uncheckedVariance]) extends Dyn[T] {
 /** A staged constant **/
 class Const[+T<:MetaAny[_]](val tp: Type[T@uncheckedVariance])(x: T#Internal) extends Exp[T] {
   private val _c: T#Internal = x
-  @stateful def c(implicit state: State): T#Internal = _c // Not actually stateful, but Param's method is.
+  def c: T#Internal = _c
 
   override def hashCode() = (tp, c).hashCode()
   override def equals(x: Any) = x match {
@@ -58,20 +59,15 @@ class Const[+T<:MetaAny[_]](val tp: Type[T@uncheckedVariance])(x: T#Internal) ex
     case _ => false
   }
 
-  override def toString = s"Const(${escapeConst(c)})"
-  override def toStringUser = escapeConst(c)
+  override def toString = s"Const(${escapeConst(_c)})"
+  override def toStringUser = escapeConst(_c)
 }
 
 /** A Staged, mutable constant **/
-case class ParamValue(value: Any) extends Metadata[ParamValue] { def mirror(f: Tx) = this }
-
-class Param[+T<:MetaAny[_]](override val tp: Type[T@uncheckedVariance])(x: T#Internal, pid: Int) extends Const[T](tp)(x) {
-  @stateful override def c(implicit state: State): T#Internal = {
-    state.metadata[ParamValue](this).map(_.value.asInstanceOf[T#Internal]).getOrElse(x)
-  }
-  @stateful def c_=(rhs: T#Internal)(implicit state: State): Unit = {
-    if (!isFinal) state.metadata.add(this, ParamValue(rhs))
-  }
+class Param[+T<:MetaAny[_]](override val tp: Type[T@uncheckedVariance])(val x: T#Internal, val pid: Int) extends Const[T](tp)(x) {
+  private var _c: T#Internal = x
+  override def c: T#Internal = _c
+  def c_=(rhs: T#Internal): Unit = if (!isFinal) _c = rhs
 
   private var _isFinal: Boolean = false
   def isFinal: Boolean = _isFinal
@@ -87,13 +83,16 @@ class Param[+T<:MetaAny[_]](override val tp: Type[T@uncheckedVariance])(x: T#Int
   override def toStringUser = this.toString   // TODO: Is this what is we want here?
 }
 
-object Const {
-  @stateful def unapply[T<:Any](s: Exp[T]): Option[Any] = s match {
+object Lit {
+  def unapply[T<:MetaAny[T]](s: Exp[T]): Option[T#Internal] = s match {
     case param: Param[_] if param.isFinal => Some(param.c)
     case const: Const[_] => Some(const.c)
     case _ => None
   }
-  @stateful def unapply[T<:MetaAny[T]](s: Exp[T]): Option[T#Internal] = s match {
+}
+
+object Const {
+  def unapply(s: Exp[_]): Option[Any] = s match {
     case param: Param[_] if param.isFinal => Some(param.c)
     case const: Const[_] => Some(const.c)
     case _ => None
@@ -101,12 +100,7 @@ object Const {
 }
 
 object Param {
-  @stateful def unapply[T<:MetaAny[T]](s: Exp[T]): Option[T#Internal] = s match {
-    // TODO: Should this only return if isFinal is false?
-    case param:Param[_] => Some(param.c)
-    case _ => None
-  }
-  @stateful def unapply[T<:Any](s: Exp[T]): Option[Any] = s match {
+  def unapply(s: Exp[_]): Option[Any] = s match {
     case param: Param[_] => Some(param.c)
     case _ => None
   }

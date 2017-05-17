@@ -5,7 +5,7 @@ import argon.nodes._
 import forge._
 
 case class HashIndex[K:Type](s: Exp[HashIndex[K]]) extends MetaAny[HashIndex[K]] {
-  private val mK: MetaAny[K] = typ[K].fake
+  val mK: MetaAny[K] = typ[K].fake
   override type Internal = scala.collection.immutable.HashMap[mK.Internal,scala.Int]
 
   @api def =!=(x: HashIndex[K]): MBoolean = ??? // TODO! but never seen by user currently
@@ -14,8 +14,8 @@ case class HashIndex[K:Type](s: Exp[HashIndex[K]]) extends MetaAny[HashIndex[K]]
 }
 
 case class HashMap[K:Type,V:Type](s: Exp[HashMap[K,V]]) extends Struct[HashMap[K,V]] {
-  private val mK: MetaAny[K] = typ[K].fake
-  private val mV: MetaAny[V] = typ[V].fake
+  val mK: MetaAny[K] = typ[K].fake
+  val mV: MetaAny[V] = typ[V].fake
   override type Internal = scala.collection.immutable.HashMap[mK.Internal,mV.Internal]
 
   @api def keys: Array[K]   = field[Array[K]]("keys")
@@ -79,7 +79,7 @@ trait HashMapApi {
       val i = fresh[Index]
       val rV = (fresh[V],fresh[V])
       val (keys, values, index) = {
-        HashMap.build_hashmap(array.s, {a => key(wrap(a)).s}, {a => value(wrap(a)).s}, {(a,b) => reduce(wrap(a),wrap(b)).s}, rV, i)
+        HashMap.build_hashmap(array.s, {a:Exp[A] => key(wrap(a)).s}, {a:Exp[A] => value(wrap(a)).s}, {(a:Exp[V],b:Exp[V]) => reduce(wrap(a),wrap(b)).s}, rV, i)
       }
       wrap(HashMap.hashmap_new(keys, values, index, wrap(keys).length.s))
     }

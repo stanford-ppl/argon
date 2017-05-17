@@ -23,12 +23,18 @@ trait EffectsCore { this: ArgonCore =>
     }
   }
 
+  final val Pure = Effects()
+  final val Cold = Effects(cold = true)
+  final val Simple = Effects(simple = true)
+  final val Global = Effects(global = true)
+  final val Mutable = Effects(mutable = true)
+  final val Throws = Effects(mutable = true)
   final def Read(xs: Exp[_]*)  = Effects(reads = syms(xs).toSet)
   final def Write(xs: Exp[_]*) = Effects(writes = syms(xs).toSet)
   final def Read(xs: Set[Sym[_]]) = Effects(reads = xs)
   final def Write(xs: Set[Sym[_]]) = Effects(writes = xs)
 
-  final def isMutable(s: Exp[_]): Boolean = metadata[Effects](s).exists(_.mutable)
+  @stateful final def isMutable(s: Exp[_]): Boolean = metadata[Effects](s).exists(_.mutable)
 
   /**
     * Find scheduling dependencies in context

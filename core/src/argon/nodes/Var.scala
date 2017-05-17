@@ -24,7 +24,7 @@ case class ReadVar[T:Type](v: Exp[Var[T]]) extends Op[T] {
   override def contains = Nil
   override def extracts = dyns(v)
 }
-case class AssignVar[T:Type](v: Exp[Var[T]], x: Exp[T]) extends Op[Void] {
+case class AssignVar[T:Type](v: Exp[Var[T]], x: Exp[T]) extends Op[MUnit] {
   def mirror(f:Tx) = Var.assign_var(f(v),f(x))
   override def aliases = Nil
   override def contains = dyns(x)

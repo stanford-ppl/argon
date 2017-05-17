@@ -54,7 +54,22 @@ trait Scheduling { this: ArgonCore =>
             stm -> binders.flatMap(stmFromNodeId)
           }
         }
-        throw new EffectsOrderException(block.result, expectedStms, actualStms, missingStms, binding)
+        error(c"Violated ordering of effects while traversing block result: ")
+        error(str(block.result))
+        error("expected: ")
+        observable.foreach{stm => error(c"  $stm")}
+        error("actual: ")
+        actual.foreach{stm => error(c"  $stm")}
+        error("missing: ")
+        //missing.foreach{stm => error(c"  $stm")}
+        binding.foreach{case (stm, bindedby) =>
+          error(c"  $stm")
+          error("  appears to be bound by: ")
+          bindedby.foreach{s => error(c"    $s")}
+          error("")
+          error("")
+        }
+        throw new EffectsOrderException
       }
     }
 

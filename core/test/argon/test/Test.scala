@@ -1,17 +1,17 @@
 package argon.test
 
 import argon._
-import argon.lang._
-import argon.traversal.IRPrinter
 import argon.codegen.scalagen._
+import argon.lang.{AssertExp,PrintExp,VarExp}
 import argon.transform.ForwardTransformer
+import argon.traversal.IRPrinter
 import forge._
 import scala.runtime._
 
 trait TestExp
   extends ArgonExp
-  with AssertsExp
-  with PrintsExp
+  with AssertExp
+  with PrintExp
   with VarExp
 
 trait LowPriorityImplicits {
@@ -44,9 +44,9 @@ trait TestApi
 object api extends TestApi
 
 case class ScalaGen(IR: State) extends ScalaCodegen with ScalaFileGen
-  with ScalaGenArray with ScalaGenArrayExt with ScalaGenAssert with ScalaGenBool with ScalaGenFixPt with ScalaGenFltPt
+  with ScalaGenArray with ScalaGenAssert with ScalaGenBoolean with ScalaGenFixPt with ScalaGenFltPt
   with ScalaGenHashMap with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenStructs
-  with ScalaGenText with ScalaGenVoid with ScalaGenFunction with ScalaGenVariables
+  with ScalaGenString with ScalaGenUnit with ScalaGenFunction with ScalaGenVariables
 
 case class IdentityTransformer(IR: State) extends ForwardTransformer {
   override val name = "Identity Transformer"
@@ -75,7 +75,7 @@ trait Test extends TestBase {
   override protected def createTraversalSchedule(state: State) = {
     super.createTraversalSchedule(state)
 
-    lazy val scalagen = new ScalaGen(state)
+    lazy val scalagen = ScalaGen(state)
     passes += scalagen
   }
 }

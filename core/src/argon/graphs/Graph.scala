@@ -3,7 +3,8 @@ package argon.graphs
 import java.io.PrintStream
 
 import argon._
-import argon.core._
+import argon.core.RecursiveScheduleException
+import forge.stateful
 
 import scala.collection.mutable
 
@@ -12,7 +13,7 @@ class Graph[E<:Edge,N<:Node] {
   type NodeId = Int
   final val VERBOSE_SCHEDULING = false
   var glog: PrintStream = if (VERBOSE_SCHEDULING) createLog(Config.logDir + "/sched/", "0000 Staging.log") else null
-  @inline private def xlog(x: String) = if (VERBOSE_SCHEDULING) withLog(glog){ log(x) }
+  @inline private def xlog(x: => Any) = if (VERBOSE_SCHEDULING) glog.println(x)
 
   implicit class EdgeIdToInt(x: EdgeId) { @inline def toInt: Int = x.asInstanceOf[Int] }
   implicit class NodeIdToInt(x: NodeId) { @inline def toInt: Int = x.asInstanceOf[Int] }
@@ -265,7 +266,7 @@ class Graph[E<:Edge,N<:Node] {
     *   - tunnel symbols: ANY dependents of tunnel symbols which are also dependencies of the binder
     * Note that while it would be nice to only do one DFS, we need to track which nodes are bound where.
     */
-  def getBoundDependents(scope: Set[NodeId]): Set[NodeId] = {
+  def getBoundDependents(nodes: Set[NodeId], scope: Set[NodeId]): Set[NodeId] = {
     def getDependents(root: NodeId) = {
       val rootEdges = nodeOutputs(root)
 
@@ -281,7 +282,7 @@ class Graph[E<:Edge,N<:Node] {
       dfs(List(root))(uses)
     }
 
-    val boundDependents = scope.flatMap{node =>
+    val boundDependents = nodes.flatMap{node =>
       val bounds = nodeBounds(node).map(producerOf)
       val sched = bounds.flatMap(getDependents)
 
@@ -334,7 +335,7 @@ class Graph[E<:Edge,N<:Node] {
     // But that appears to cause things to leak out of cold blocks...
     val roots = result.map(producerOf) //scheduleDepsWithIndex(result, localCache)
 
-    val mustInside = getBoundDependents(scope)
+    val mustInside = getBoundDependents(scope, scope)
 
     val mayOutside = scope diff mustInside
     val fringe = mustInside.flatMap(reverse) intersect mayOutside
@@ -370,7 +371,7 @@ class Graph[E<:Edge,N<:Node] {
     val levelScope = currentScope.filter(canOutside)
 
 // These xlog statements are VERY expensive - use only when debugging
-    if (VERBOSE_SCHEDULING) {
+    /*if (VERBOSE_SCHEDULING) {
       xlog("Getting scope level within scope: ")
       scope.foreach{stm => xlog(c"  ${triple(stm)}"); xlog(c"    dependents = ${nodeOutputs(stm).flatMap(dependentsOf)}") }
       xlog("For result: ")
@@ -395,7 +396,7 @@ class Graph[E<:Edge,N<:Node] {
       hotFringeDeps.foreach{stm => xlog(c"  ${triple(stm)}")}
       xlog("levelScope: ")
       levelScope.foreach{stm => xlog(c"  ${triple(stm)}")}
-    }
+    }*/
 
     levelScope
   }
@@ -412,7 +413,7 @@ class Graph[E<:Edge,N<:Node] {
     val localSchedule = getSchedule(localRoots, localCache, checkAcyclic = false) filter (localScope contains _)
 
 // These xlog statements are VERY expensive - use only when debugging
-    if (VERBOSE_SCHEDULING) {
+    /*if (VERBOSE_SCHEDULING) {
       xlog("avail nodes: ")
       availableNodes.foreach{stm => xlog(c"  ${triple(stm)}")}
       xlog("avail roots:")
@@ -425,7 +426,7 @@ class Graph[E<:Edge,N<:Node] {
       localRoots.foreach{stm => xlog(c"  ${triple(stm)}")}
       xlog("local schedule:")
       localSchedule.foreach{stm => xlog(c"  ${triple(stm)}")}
-    }
+    }*/
 
     localSchedule
   }
@@ -433,70 +434,13 @@ class Graph[E<:Edge,N<:Node] {
   /**
     * DEBUGGING
     */
-  def getNodesThatBindGiven(availableNodes: Seq[NodeId], result: Seq[EdgeId], given: Seq[NodeId]): Seq[NodeId] = {
+  @stateful def getNodesThatBindGiven(availableNodes: Seq[NodeId], result: Seq[EdgeId], given: Seq[NodeId]): Seq[NodeId] = {
     val availCache = buildScopeIndex(availableNodes)
     val availRoots = scheduleDepsWithIndex(result, availCache)
     val localNodes = getSchedule(availRoots, availCache, checkAcyclic = true)
     val givenSet = given.toSet
 
     val scope = localNodes
-
-    def getBoundDependentsDEBUG(nodes: Set[NodeId], scope: Set[NodeId], verbose: Boolean): Set[NodeId] = {
-      def getDependents(root: NodeId) = {
-        val rootEdges = nodeOutputs(root)
-
-        // All nodes that depend on this node except nodes which bind the given root
-        def uses(node: NodeId) = {
-          /*if (VERBOSE_SCHEDULING) {
-            forward(node, scope).foreach{next => xlog(c"[USES] ${triple(next)} (bounds = " + nodeBounds(next).mkString(",") + ")") }
-          }*/
-
-          forward(node,scope) filterNot {next => nodeBounds(next) exists (rootEdges contains _) }
-        }
-
-        dfs(List(root))(uses)
-      }
-
-      val boundDependents = nodes.flatMap{node =>
-        val bounds = nodeBounds(node).map(producerOf)
-        val sched = bounds.flatMap(getDependents)
-
-        if (bounds.nonEmpty && verbose) {
-          log(c"  [Bounds] node: ${triple(node)}")
-          log(c"  [Bounds] bounds:")
-          bounds.foreach{bnd => log(c"  [Bounds]  ${triple(bnd)}")}
-          log(c"  [Bounds] binded: ")
-          sched.foreach{s => log(c"  [Bounds]  ${triple(s)}") }
-        }
-
-        sched
-      }
-
-      val tunnelDependents = scope.flatMap{node =>
-        if (verbose && nodeTunnels(node).nonEmpty) log(c"  [Tunnel] node: ${triple(node)}: ")
-
-        nodeTunnels(node).flatMap{case (tun,res) =>
-          val tunnel = producerOf(tun)
-          // Everything upstream of (prior to) the block results for this tunnel
-          val results = res.map(producerOf)
-          // Everything downstream of (depending on) the tunnel
-          val schedule = dfs(results){node => reverse(node,scope) }
-          val forward  = getDependents(tunnel) filterNot (_ == tunnel)
-
-          if (verbose) {
-            log(c"  [Tunnel] tunnel: ")
-            log(c"  [Tunnel]  ${triple(tunnel)}")
-            log(c"  [Tunnel] schedule: ")
-            schedule.foreach { stm => log(c"  [Tunnel]  ${triple(stm)}") }
-            log(c"  [Tunnel] dependents: ")
-            forward.foreach { stm => log(c"  [Tunnel]  ${triple(stm)}") }
-          }
-
-          schedule intersect forward
-        }
-      }
-      boundDependents ++ tunnelDependents
-    }
 
     //val mustInside = getBoundDependentsDEBUG(scope.toSet)
     //log("Must inside: ")
@@ -506,7 +450,7 @@ class Graph[E<:Edge,N<:Node] {
 
     scope.flatMap{node =>
       val pseudoSet = Set(node)
-      val binds = getBoundDependentsDEBUG(pseudoSet, scopeSet, verbose=false)
+      val binds = getBoundDependents(pseudoSet, scopeSet)
       if ((binds intersect givenSet).nonEmpty) {
         val cache = buildScopeIndex(binds)
         val path = getSchedule(givenSet, cache, checkAcyclic = false)

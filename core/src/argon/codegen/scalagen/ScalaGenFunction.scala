@@ -17,7 +17,7 @@ trait ScalaGenFunction extends ScalaCodegen {
     case FunDeclJJ$JJ$1to22(argII$II$1toJJ, block) =>
       val args = List(argII$II$1toJJ).map(x => quote(x) +": " + remap(x.tp)).mkString(",")
       val rt = remap(block.result.tp)
-      val name = metadata[CtxName](lhs).get.name
+      val name = lhs.name.get
       open(src"def $name($args): $rt = {")
       emitBlock(block)
       close("}")

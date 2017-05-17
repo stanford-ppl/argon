@@ -59,7 +59,7 @@ object FltPt {
     }
   }
   @internal def const[G:INT,E:INT](x: Any, force: CBoolean = true): Const[FltPt[G,E]] = {
-    constant(literalToBigDecimal[G,E](x, force))
+    constant(FltPtType[G,E])(literalToBigDecimal[G,E](x, force))
   }
 
   @internal def string2fltpt[G:INT,E:INT](x: CString): FltPt[G,E] = FltPt(const[G,E](x))

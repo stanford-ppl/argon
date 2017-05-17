@@ -5,7 +5,6 @@ import argon.typeclasses._
 import forge._
 
 case class Tuple2Type[A,B](m1: Type[A], m2: Type[B]) extends StructType[MTuple2[A,B]] with CanBits[MTuple2[A,B]] {
-  def fake: MTuple2[A,B] =
   override def wrapped(x: Exp[MTuple2[A,B]]): MTuple2[A,B] = new MTuple2[A,B](x)(m1,m2)
   override def typeArguments = List(m1, m2)
   override def stagedClass = classOf[MTuple2[A,B]]

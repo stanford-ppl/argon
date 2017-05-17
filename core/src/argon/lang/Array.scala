@@ -3,31 +3,29 @@ package argon.lang
 import argon._
 import argon.nodes._
 import forge._
-import org.virtualized.EmptyContext
 
 case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
-  private val mT = implicitly[Type[T]]
+  val mT = implicitly[Type[T]]
   override type Internal = scala.Array[mT.Internal]
 
-  protected val array = Array
-  @api def length: Index = wrap{ array.length(this.s) }
+  @api def length: Index = wrap{ MArray.length(this.s) }
 
-  @api def apply(i: Index): T = wrap{ array.apply(this.s, i.s) }
+  @api def apply(i: Index): T = wrap{ MArray.apply(this.s, i.s) }
   @api def update[A](i: Index, data: A)(implicit lift: Lift[A,T]): MUnit
-    = wrap{ array.update(this.s,i.s,lift(data).s) }
+    = MUnit(MArray.update(this.s,i.s,lift(data).s))
 
   @api def foreach(func: T => MUnit): MUnit
-    = wrap{ array.foreach(this.s, {t => func(wrap(t)).s}, fresh[Index]) }
+    = MUnit(MArray.foreach(this.s, {t: Exp[T] => func(wrap(t)).s}, fresh[Index]))
   @api def map[R:Type](func: T => R): Array[R]
-    = Array(array.map(this.s, {t => func(wrap(t)).s}, fresh[Index]))
+    = MArray(MArray.map(this.s, {t: Exp[T] => func(wrap(t)).s}, fresh[Index]))
   @api def zip[S:Type,R:Type](that: Array[S])(func: (T,S) => R): Array[R]
-    = Array(array.zip(this.s, that.s, {(a,b) => func(wrap(a), wrap(b)).s }, fresh[Index]))
+    = MArray(MArray.zip(this.s, that.s, {(a:Exp[T],b:Exp[S]) => func(wrap(a), wrap(b)).s }, fresh[Index]))
   @api def reduce(rfunc: (T,T) => T): T
-    = wrap{ array.reduce(this.s,{(a,b) => rfunc(wrap(a),wrap(b)).s}, fresh[Index], (fresh[T],fresh[T])) }
+    = wrap{ MArray.reduce(this.s,{(a:Exp[T],b:Exp[T]) => rfunc(wrap(a),wrap(b)).s}, fresh[Index], (fresh[T],fresh[T])) }
   @api def filter(cond: T => MBoolean): Array[T]
-    = Array(array.filter(this.s, {t => cond(wrap(t)).s}, fresh[Index]))
+    = MArray(MArray.filter(this.s, {t:Exp[T] => cond(wrap(t)).s}, fresh[Index]))
   @api def flatMap[R:Type](func: T => Array[R]): Array[R]
-    = Array(array.flatmap(this.s,{t => func(wrap(t)).s}, fresh[Index]))
+    = MArray(MArray.flatmap(this.s,{t:Exp[T] => func(wrap(t)).s}, fresh[Index]))
 
   @api def ===(that: Array[T]): MBoolean = this.zip(that){(x,y) => x === y }.reduce{_ && _}
   @api def =!=(that: Array[T]): MBoolean = this.zip(that){(x,y) => x =!= y }.reduce{_ || _}
@@ -35,34 +33,34 @@ case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
 }
 
 object Array {
-  @api def tabulate[T:Type](size: Index)(func: Index => T): Array[T]
-    = Array(mapindices(size.s, {i => func(wrap(i)).s}, fresh[Index]))
-  @api def fill[T:Type](size: Index)(func: => T): Array[T] = this.tabulate(size){ _ => func}
-  @api def empty[T:Type](size: Index): Array[T] = Array(mutable[T](size.s))
+  @api def tabulate[T:Type](size: Index)(func: Index => T): MArray[T]
+    = MArray(mapindices(size.s, {i => func(wrap(i)).s}, fresh[Index]))
+  @api def fill[T:Type](size: Index)(func: => T): MArray[T] = this.tabulate(size){ _ => func}
+  @api def empty[T:Type](size: Index): MArray[T] = MArray(mutable[T](size.s))
 
 
   /** Constructors **/
-  @internal def length(array: Exp[Array[_]]): Sym[Index] = stage(ArrayLength(array))(ctx)
+  @internal def length[T:Type](array: Exp[MArray[T]]): Sym[Index] = stage(ArrayLength(array))(ctx)
 
-  @internal def apply[T:Type](array: Exp[Array[T]], i: Exp[Index]): Sym[T] = stage(ArrayApply(array,i))(ctx)
-  @internal def update[T:Type](array: Exp[Array[T]], i: Exp[Index], e: Exp[T]): Sym[MUnit] = {
+  @internal def apply[T:Type](array: Exp[MArray[T]], i: Exp[Index]): Sym[T] = stage(ArrayApply(array,i))(ctx)
+  @internal def update[T:Type](array: Exp[MArray[T]], i: Exp[Index], e: Exp[T]): Sym[MUnit] = {
     stageWrite(array)(ArrayUpdate(array,i,e))(ctx)
   }
 
-  @internal def mutable[T:Type](size: Exp[Index]): Sym[Array[T]] = stageMutable(ArrayNew[T](size))(ctx)
+  @internal def mutable[T:Type](size: Exp[Index]): Sym[MArray[T]] = stageMutable(ArrayNew[T](size))(ctx)
 
   @internal def mapindices[T:Type](
     size: Exp[Index],
     func: Exp[Index] => Exp[T],
     i:    Bound[Index]
-  ): Sym[Array[T]] = {
+  ): Sym[MArray[T]] = {
     val blk = stageLambda(i){ func(i) }
     val effects = blk.effects
     stageEffectful(MapIndices(size, blk, i), effects.star)(ctx)
   }
 
   @internal def foreach[T:Type](
-    array: Exp[Array[T]],
+    array: Exp[MArray[T]],
     func:  Exp[T] => Exp[MUnit],
     i:     Bound[Index]
   ): Sym[MUnit] = {
@@ -73,7 +71,7 @@ object Array {
   }
 
   @internal def map[T:Type,R:Type](
-    array: Exp[Array[T]],
+    array: Exp[MArray[T]],
     func:  Exp[T] => Exp[R],
     i:     Bound[Index]
   ): Sym[Array[R]] = {
@@ -84,20 +82,20 @@ object Array {
   }
 
   @internal def zip[A:Type,B:Type,C:Type](
-    a:    Exp[Array[A]],
-    b:    Exp[Array[B]],
+    a:    Exp[MArray[A]],
+    b:    Exp[MArray[B]],
     func: (Exp[A], Exp[B]) => Exp[C],
     i:    Bound[Index]
-  ): Sym[Array[C]] = {
+  ): Sym[MArray[C]] = {
     val aBlk = stageLambda(a,i) { apply(a,i) }
-    val bBlk = stageLambda(b,i) { apply(a,i) }
+    val bBlk = stageLambda(b,i) { apply(b,i) }
     val fBlk = stageLambda(aBlk.result, bBlk.result) { func(aBlk.result,bBlk.result) }
     val effects = aBlk.effects andAlso bBlk.effects andAlso fBlk.effects
     stageEffectful(ArrayZip(a, b, aBlk, bBlk, fBlk, i), effects.star)(ctx)
   }
 
   @internal def reduce[A:Type](
-    array:  Exp[Array[A]],
+    array:  Exp[MArray[A]],
     rfunc: (Exp[A], Exp[A]) => Exp[A],
     i:      Bound[Index],
     rV:     (Bound[A],Bound[A])
@@ -109,10 +107,10 @@ object Array {
   }
 
   @internal def filter[A:Type](
-    array: Exp[Array[A]],
+    array: Exp[MArray[A]],
     cond:  Exp[A] => Exp[MBoolean],
     i:     Bound[Index]
-  ): Sym[Array[A]] = {
+  ): Sym[MArray[A]] = {
     val aBlk = stageLambda(array, i) { apply(array, i) }
     val cBlk = stageLambda(aBlk.result) { cond(aBlk.result) }
     val effects = aBlk.effects andAlso cBlk.effects
@@ -120,17 +118,17 @@ object Array {
   }
 
   @internal def flatmap[A:Type,B:Type](
-    array: Exp[Array[A]],
-    func:  Exp[A] => Exp[Array[B]],
+    array: Exp[MArray[A]],
+    func:  Exp[A] => Exp[MArray[B]],
     i:     Bound[Index]
-  ): Sym[Array[B]] = {
+  ): Sym[MArray[B]] = {
     val aBlk = stageLambda(array, i) { apply(array, i) }
     val fBlk = stageLambda(aBlk.result) { func(aBlk.result) }
     val effects = aBlk.effects andAlso fBlk.effects
     stageEffectful(ArrayFlatMap(array,aBlk,fBlk,i), effects.star)(ctx)
   }
 
-  @internal private[argon] def input_arguments(ctx: SrcCtx, state: State): Array[MString] = wrap(stage(InputArguments())(ctx))
+  @internal private[argon] def input_arguments(): MArray[MString] = MArray(stage(InputArguments())(ctx))
 }
 
 

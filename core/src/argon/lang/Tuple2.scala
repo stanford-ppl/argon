@@ -6,8 +6,8 @@ import argon.typeclasses._
 import forge._
 
 case class Tuple2[A:Type,B:Type](s: Exp[Tuple2[A,B]]) extends Struct[Tuple2[A,B]] {
-  private val mA: MetaAny[A] = typ[A].fake
-  private val mB: MetaAny[B] = typ[B].fake
+  val mA: MetaAny[A] = typ[A].fake
+  val mB: MetaAny[B] = typ[B].fake
   override type Internal = scala.Tuple2[mA.Internal,mB.Internal]
 
   @api def _1: A = field[A]("_1")

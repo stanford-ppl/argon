@@ -88,7 +88,7 @@ trait Transformer { self =>
       metadata.get(s).foreach{m => log(c" - ${m._1}: ${m._2}") }
     }
 
-    val (lhs2, _) = transferMetadataIfNew(lhs){ rhs.mirrorNode(lhs, self) }
+    val (lhs2, _) = transferMetadataIfNew(lhs){ rhs.mirrorNode(self) }
 
     log(c"Result: ${str(lhs2)}")
     lhs2.foreach{s2 =>
