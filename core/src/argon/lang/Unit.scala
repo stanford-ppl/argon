@@ -18,17 +18,17 @@ object Unit {
 }
 
 trait UnitExp {
-  implicit val voidIsStaged: Type[Unit] = UnitType
+  implicit val voidIsStaged: Type[MUnit] = UnitType
 
   /** Lifting **/
-  @api implicit def unit2void(x: Unit): Unit = Unit()
+  @api implicit def unit2void(x: CUnit): MUnit = MUnit()
 
-  implicit object LiftUnit2Unit extends Lift[Unit,Unit] {
-    @internal override def apply(x: Unit) = Unit()
+  implicit object LiftUnit2Unit extends Lift[CUnit,MUnit] {
+    @internal override def apply(x: CUnit) = MUnit()
   }
 
   /** Casting **/
-  implicit object CastUnit2Unit extends Cast[Unit,Unit] {
-    @internal override def apply(x: Unit) = Unit()
+  implicit object CastUnit2Unit extends Cast[CUnit,MUnit] {
+    @internal override def apply(x: CUnit) = MUnit()
   }
 }

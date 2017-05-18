@@ -5,7 +5,7 @@ import org.virtualized.SourceContext
 import org.scalatest.{FlatSpec, Matchers}
 
 object UpdateTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
     val array = Array.empty[Int](16)
@@ -16,7 +16,7 @@ object UpdateTest extends Test {
 }
 
 object FillTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
     val array = Array.fill(10){ random[Int] }
@@ -26,7 +26,7 @@ object FillTest extends Test {
 }
 
 object TabulateTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
     val array = Array.tabulate(16){i => i + 1 }
@@ -40,7 +40,7 @@ object TabulateTest extends Test {
 }
 
 object ForeachTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
     val array = Array.tabulate(16){i => random[Int](10) }
@@ -51,10 +51,10 @@ object ForeachTest extends Test {
 }
 
 object MapTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
-    val array = Array.tabulate(16){i => random[Int](10) }
+    val array = Array.tabulate(16){_ => random[Int](10) }
     val array2 = array.map{x => x + 5 }
 
     for (i <- 0 until 16) {
@@ -65,7 +65,7 @@ object MapTest extends Test {
 }
 
 object ZipTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
     val a = Array.tabulate(16){i => random[Int](10) }
@@ -79,7 +79,7 @@ object ZipTest extends Test {
 }
 
 object ReduceTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
     val a = Array.tabulate(16){i => i}
@@ -90,7 +90,7 @@ object ReduceTest extends Test {
 }
 
 object FilterTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
     val a = Array.tabulate(16){i => i}
@@ -102,7 +102,7 @@ object FilterTest extends Test {
 }
 
 object FlatMapTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
     val a = Array.tabulate(16){i => i}
@@ -112,7 +112,7 @@ object FlatMapTest extends Test {
   }
 }
 
-class ArrayTests extends FlatSpec with Matchers with argon.core.Exceptions {
+class ArrayTests extends FlatSpec with Matchers {
   val noargs = Array[String]()
   "UpdateTest" should "compile" in { UpdateTest.main(noargs) }
   "FillTest" should "compile" in { FillTest.main(noargs) }

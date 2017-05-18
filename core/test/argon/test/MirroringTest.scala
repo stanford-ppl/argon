@@ -1,27 +1,23 @@
 package argon.test
 
+import argon._
 import argon.transform.ForwardTransformer
 import org.virtualized.SourceContext
 
-/**
-  * Created by david on 1/30/17.
-  */
-
-
 object MirroringTest extends Test { self =>
+  import api._
   override def main() = {}
 
   // Note: All of this internal stuff shouldn't necessarily be visible to the user, just need it for debugging for now
   override def main(args: scala.Array[java.lang.String]) = {
-    context = Nil
+    super.main(args)
+    IR.context = Nil
     argon.Config.verbosity = 3
     withLog(argon.Config.logDir, "MirroringTest.log") {
       val x = Array.empty[Int](1)
-      val y = array_update(x.s, int32(0), int32(16))
+      val y = Array.update(x.s, FixPt.int32(0), FixPt.int32(16))
       val z = Array.empty[Int](2)
-      val tx = new ForwardTransformer {
-        val IR: self.IR.type = self.IR
-      }
+      val tx = new ForwardTransformer { val IR: State = self.IR }
 
       val y2 = tx.withSubstScope(x.s -> z.s) {
         val y2 = tx.mirror(y, getDef(y).get.asInstanceOf[Op[MUnit]])

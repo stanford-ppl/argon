@@ -10,7 +10,7 @@ trait CppGenBool extends CppCodegen {
     case _ => super.remap(tp)
   }
 
-  override protected def quoteConst(c: Const[?]): String = c match {
+  override protected def quoteConst(c: Const[_]): String = c match {
     case Const(c: Boolean) => c.toString
     case _ => super.quoteConst(c)
   }

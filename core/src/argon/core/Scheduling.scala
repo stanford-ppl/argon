@@ -57,9 +57,9 @@ trait Scheduling { this: ArgonCore =>
         error(c"Violated ordering of effects while traversing block result: ")
         error(str(block.result))
         error("expected: ")
-        observable.foreach{stm => error(c"  $stm")}
+        expectedStms.foreach{stm => error(c"  $stm")}
         error("actual: ")
-        actual.foreach{stm => error(c"  $stm")}
+        actualStms.foreach{stm => error(c"  $stm")}
         error("missing: ")
         //missing.foreach{stm => error(c"  $stm")}
         binding.foreach{case (stm, bindedby) =>

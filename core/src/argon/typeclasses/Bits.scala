@@ -8,7 +8,7 @@ trait Bits[T] {
   @api def zero: T
   @api def one: T
   @api def random(max: Option[T]): T
-  @api def length: Int
+  def length: Int
 }
 
 trait CanBits[T] { this: Type[T] =>
@@ -24,12 +24,14 @@ object Bits {
 }
 
 trait BitsExp {
+  def bits[T:Bits] = implicitly[Bits[T]]
+  def mbits[T,R](s: Bits[T]): Bits[R] = s.asInstanceOf[Bits[R]]
+}
+
+trait BitsApi {
   @api def zero[T:Bits]: T = implicitly[Bits[T]].zero
   @api def one[T:Bits]: T = implicitly[Bits[T]].one
   @api def random[T:Bits]: T = implicitly[Bits[T]].random(None)
   @api def random[T:Bits](max: T): T = implicitly[Bits[T]].random(Some(max))
-
-  def bits[T:Bits] = implicitly[Bits[T]]
-  def mbits[T,R](s: Bits[T]): Bits[R] = s.asInstanceOf[Bits[R]]
 }
 

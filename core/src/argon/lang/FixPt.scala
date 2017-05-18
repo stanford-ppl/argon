@@ -2,7 +2,6 @@ package argon.lang
 
 import argon._
 import argon.nodes._
-import argon.typeclasses._
 import argon.utils.escapeConst
 import forge._
 
@@ -51,13 +50,14 @@ case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt
 object FixPt {
   /** Static methods **/
   @internal def wrap[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) = new FixPt[S,I,F](s)
-  @api def apply[S:BOOL,I:INT,F:INT](x: Int, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: Long, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: Float, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: Double, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: CString, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: BigInt, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: BigDecimal, force: CBoolean = false): FixPt[S,I,F] = FixPt.wrap[S,I,F](const(x, force))
+  @internal def lift[S:BOOL,I:INT,F:INT](s: Any, force: CBoolean) = wrap(const[S,I,F](s, force))
+  @api def apply[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: Float): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: Double): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: CString): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: BigInt): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: BigDecimal): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
 
 
   /** Constants **/
@@ -115,17 +115,17 @@ object FixPt {
 
   /** Constructors **/
   @internal def neg[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = x match {
-    case Const(c) => const[S,I,F](-c)
+    case Const(c: BigDecimal) => const[S,I,F](-c)
     case Op(FixNeg(x)) => x
     case _ => stage(FixNeg(x))(ctx)
   }
   @internal def inv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = x match {
-    case Const(c) if c.isWhole => const[S,I,F](BigDecimal(~c.toBigInt))
+    case Const(c: BigDecimal) if c.isWhole => const[S,I,F](BigDecimal(~c.toBigInt))
     case Op(FixInv(x)) => x
     case _ => stage(FixInv(x))(ctx)
   }
   @internal def add[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a), Const(b)) => const[S,I,F](a + b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[S,I,F](a + b)
     case (a, Const(0)) => a                               // a + 0 => a
     case (Const(0), b) => b                               // 0 + a => a
     case (a, Op(FixNeg(b))) if a == b => const[S,I,F](0)  // a + -a => 0
@@ -226,52 +226,52 @@ object FixPt {
     case _ => stage(FixAnd(x,y))(ctx)
   }
   @internal def or[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a), Const(b)) if a.isWhole && b.isWhole => const[S,I,F](BigDecimal(a.toBigInt | b.toBigInt))
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isWhole => const[S,I,F](BigDecimal(a.toBigInt | b.toBigInt))
     case (a, Const(0)) => a
     case (Const(0), b) => b
     case _ => stage(FixOr(x,y))(ctx)
   }
   @internal def xor[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a), Const(b)) if a.isWhole && b.isWhole => const[S,I,F](BigDecimal(a.toBigInt ^ b.toBigInt))
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isWhole => const[S,I,F](BigDecimal(a.toBigInt ^ b.toBigInt))
     case (a, Const(0)) => a
     case (Const(0), b) => b
     case _ => stage(FixXor(x,y))(ctx)
   }
   @internal def lt[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a), Const(b)) => MBoolean.const(a < b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a < b)
     case _ => stage( FixLt(x,y))(ctx)
   }
 
   @internal def leq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a), Const(b)) => MBoolean.const(a <= b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a <= b)
     case _ => stage(FixLeq(x,y))(ctx)
   }
   @internal def neq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a), Const(b)) => MBoolean.const(a != b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a != b)
     case _ => stage(FixNeq(x,y))(ctx)
   }
   @internal def eql[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a), Const(b)) => MBoolean.const(a == b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a == b)
     case _ => stage(FixEql(x,y))(ctx)
   }
   @internal def mod[S:BOOL,I:INT](x: Exp[FixPt[S,I,_0]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,_0]] = (x,y) match {
-    case (Const(a), Const(b)) => const[S,I,_0](a % b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[S,I,_0](a % b)
     case (a, Const(1)) => const[S,I,_0](0)
     case _ => stage(FixMod(x,y))(ctx)
   }
 
   @internal def lsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a), Const(b)) if a.isWhole && b.isValidInt => const[S,I,F](BigDecimal(a.toBigInt << b.toInt))
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isValidInt => const[S,I,F](BigDecimal(a.toBigInt << b.toInt))
     case (a, Const(0)) => a
     case _ => stage(FixLsh(x,y))(ctx)
   }
   @internal def rsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a), Const(b)) if a.isWhole && b.isValidInt => const[S,I,F](BigDecimal(a.toBigInt >> b.toInt))
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isValidInt => const[S,I,F](BigDecimal(a.toBigInt >> b.toInt))
     case (a, Const(0)) => a
     case _ => stage(FixRsh(x,y))(ctx)
   }
   @internal def ursh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a), Const(b)) if a.isValidLong && b.isValidInt => const[S,I,F](BigDecimal(a.toLong >>> b.toInt))
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isValidLong && b.isValidInt => const[S,I,F](BigDecimal(a.toLong >>> b.toInt))
     case (a, Const(0)) => a
     case _ => stage(FixURsh(x,y))(ctx)
   }
@@ -289,7 +289,7 @@ object FixPt {
   }
 
   @internal def from_text[S:BOOL,I:INT,F:INT](x: Exp[MString]): Exp[FixPt[S,I,F]] = x match {
-    case Const(c) => FixPt[S,I,F](c).s
+    case Const(c: CString) => FixPt[S,I,F](c).s
     case _ => stage(StringToFixPt[S,I,F](x))(ctx)
   }
 }
@@ -330,8 +330,8 @@ trait FixPtExp {
 
 
   /** Lifting **/
-  @api implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt[S,I,F](x, force = false)
-  @api implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt[S,I,F](x, force = false)
+  @api implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
+  @api implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
 
   implicit object LiftInt extends Lift[Int,Int32] {
     @internal def apply(x: Int): Int32 = int2fixpt(x)
@@ -342,10 +342,10 @@ trait FixPtExp {
 
   /** Casting **/
   implicit def int_cast_fixpt[S:BOOL,I:INT,F:INT]: Cast[Int,FixPt[S,I,F]] = new Cast[Int,FixPt[S,I,F]] {
-    @internal def apply(x: Int): FixPt[S,I,F] = FixPt[S,I,F](x, force=true)
+    @internal def apply(x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
   }
   implicit def long_cast_fixpt[S:BOOL,I:INT,F:INT]: Cast[Long,FixPt[S,I,F]] = new Cast[Long,FixPt[S,I,F]] {
-    @internal def apply(x: Long): FixPt[S,I,F] = FixPt[S,I,F](x, force=true)
+    @internal def apply(x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
   }
   implicit def fixpt2fixpt[S:BOOL,I:INT,F:INT, S2:BOOL,I2:INT,F2:INT] = new Cast[FixPt[S,I,F],FixPt[S2,I2,F2]] {
     @internal def apply(x: FixPt[S,I,F]): FixPt[S2,I2,F2] = wrap(FixPt.convert[S,I,F,S2,I2,F2](x.s))

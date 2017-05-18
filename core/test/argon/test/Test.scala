@@ -2,17 +2,11 @@ package argon.test
 
 import argon._
 import argon.codegen.scalagen._
-import argon.lang.{AssertExp,PrintExp,VarExp}
 import argon.transform.ForwardTransformer
 import argon.traversal.IRPrinter
 import forge._
-import scala.runtime._
 
-trait TestExp
-  extends ArgonExp
-  with AssertExp
-  with PrintExp
-  with VarExp
+import scala.runtime._
 
 trait LowPriorityImplicits {
   implicit def int2RichInt(x: Int): RichInt = new RichInt(x)
@@ -21,10 +15,7 @@ trait LowPriorityImplicits {
   implicit def double2RichDouble(x: Double): RichDouble = new RichDouble(x)
 }
 
-trait TestApi
-  extends TestExp
-  with ArgonApi
-  with LowPriorityImplicits {
+trait TestApi extends ArgonExternal with LowPriorityImplicits {
 
   implicit class intWrapper(x: scala.Int) extends {
     @api def to[B:Type](implicit cast: Cast[scala.Int,B]): B = cast(x)
@@ -43,7 +34,7 @@ trait TestApi
 /** In DSLs, this can be the package object for the top package **/
 object api extends TestApi
 
-case class ScalaGen(IR: State) extends ScalaCodegen with ScalaFileGen
+trait ScalaGenBase extends ScalaCodegen with ScalaFileGen
   with ScalaGenArray with ScalaGenAssert with ScalaGenBoolean with ScalaGenFixPt with ScalaGenFltPt
   with ScalaGenHashMap with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenStructs
   with ScalaGenString with ScalaGenUnit with ScalaGenFunction with ScalaGenVariables
@@ -70,6 +61,8 @@ trait TestBase extends AppRunner {
     super.settings()
   }
 }
+
+case class ScalaGen(IR: State) extends ScalaGenBase
 
 trait Test extends TestBase {
   override protected def createTraversalSchedule(state: State) = {

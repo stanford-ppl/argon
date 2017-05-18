@@ -2,7 +2,6 @@ package argon.nodes
 
 import argon._
 import argon.core.UserFacing
-import argon.typeclasses._
 import forge._
 
 sealed class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Type[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] {
@@ -31,10 +30,10 @@ class FixPtNum[S:BOOL,I:INT,F:INT] extends Num[FixPt[S,I,F]] {
   @api def times(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x * y
   @api def divide(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x / y
 
-  @api def zero = FixPt(FixPt.const[S,I,F](0))
-  @api def one = FixPt(FixPt.const[S,I,F](0))
-  @api def random(max: Option[FixPt[S,I,F]]): FixPt[S,I,F] = FixPt[S,I,F](FixPt.random[S, I, F](max.map(_.s)))
-  @api def length: Int = INT[I].v + INT[F].v
+  @api def zero = FixPt.lift[S,I,F](0,force=true)
+  @api def one = FixPt.lift[S,I,F](1,force=true)
+  @api def random(max: Option[FixPt[S,I,F]]): FixPt[S,I,F] = FixPt(FixPt.random[S,I,F](max.map(_.s)))
+  def length: Int = INT[I].v + INT[F].v
 
   @api def lessThan(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x < y
   @api def lessThanOrEqual(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x <= y
@@ -43,10 +42,10 @@ class FixPtNum[S:BOOL,I:INT,F:INT] extends Num[FixPt[S,I,F]] {
   @api def toFixPt[S2:BOOL,I2:INT,F2:INT](x: FixPt[S,I,F]): FixPt[S2,I2,F2] = FixPt(FixPt.convert[S,I,F,S2,I2,F2](x.s))
   @api def toFltPt[G:INT,E:INT](x: FixPt[S,I,F]): FltPt[G,E] = FltPt(FixPt.to_flt[S,I,F,G,E](x.s))
 
-  @api def fromInt(x: Int, force: CBoolean = true) = FixPt[S,I,F](x, force)
-  @api def fromLong(x: Long, force: CBoolean = true) = FixPt[S,I,F](x, force)
-  @api def fromFloat(x: Float, force: CBoolean = true) = FixPt[S,I,F](x, force)
-  @api def fromDouble(x: Double, force: CBoolean = true) = FixPt[S,I,F](x, force)
+  @api def fromInt(x: Int, force: CBoolean = true) = FixPt.lift[S,I,F](x, force)
+  @api def fromLong(x: Long, force: CBoolean = true) = FixPt.lift[S,I,F](x, force)
+  @api def fromFloat(x: Float, force: CBoolean = true) = FixPt.lift[S,I,F](x, force)
+  @api def fromDouble(x: Double, force: CBoolean = true) = FixPt.lift[S,I,F](x, force)
 }
 
 object FixPtNum {

@@ -2,7 +2,6 @@ package argon.lang
 
 import argon._
 import argon.nodes._
-import argon.typeclasses._
 import forge._
 
 case class Tuple2[A:Type,B:Type](s: Exp[Tuple2[A,B]]) extends Struct[Tuple2[A,B]] {

@@ -41,7 +41,6 @@ object Struct {
     case _ => None
   }
 
-  @internal def struct[T:StructType](fields: (CString, Exp[_])*): T = wrap(struct_new[T](fields))
   @internal def field[T:StructType,R](struct: T, name: CString, typ: Type[R]): R = {
     implicit val mR: Type[R] = typ
     typ.wrapped(field_apply[T,R](struct.s, name))
@@ -98,4 +97,7 @@ object Struct {
   }
 }
 
+trait StructExp {
+  @internal def struct[T:StructType](fields: (CString, Exp[_])*): T = wrap(Struct.struct_new[T](fields))
+}
 

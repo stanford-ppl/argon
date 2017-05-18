@@ -19,7 +19,7 @@ case class ArrayNew[T:Type](size: Exp[Index]) extends Op2[T,MArray[T]] {
   def mirror(f:Tx) = MArray.mutable[T](f(size))
 }
 
-case class ArrayApply[T:Type](coll: Exp[MArray[T]], i: Exp[Index]) extends Op[T] with AtomicRead[Array[T]] {
+case class ArrayApply[T:Type](coll: Exp[MArray[T]], i: Exp[Index]) extends Op[T] with AtomicRead[MArray[T]] {
   def mirror(f:Tx) = MArray.apply(f(coll),f(i))
   override def aliases = Nil
   //override def extracts = dyns(array) TODO: Why does this cause issues?

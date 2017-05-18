@@ -6,7 +6,7 @@ import argon.utils.escapeString
 
 trait DotGenString extends DotCodegen {
 
-  override protected def quoteConst(c: Const[?]): String = c match {
+  override protected def quoteConst(c: Const[_]): String = c match {
     case Const(c: String) => escapeString(c)
     case _ => super.quoteConst(c)
   }

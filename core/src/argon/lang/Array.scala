@@ -54,7 +54,7 @@ object Array {
     func: Exp[Index] => Exp[T],
     i:    Bound[Index]
   ): Sym[MArray[T]] = {
-    val blk = stageLambda(i){ func(i) }
+    val blk = stageLambda1(i){ func(i) }
     val effects = blk.effects
     stageEffectful(MapIndices(size, blk, i), effects.star)(ctx)
   }
@@ -64,8 +64,8 @@ object Array {
     func:  Exp[T] => Exp[MUnit],
     i:     Bound[Index]
   ): Sym[MUnit] = {
-    val aBlk = stageLambda(array, i){ apply(array,i) }
-    val fBlk = stageLambda(aBlk.result){ func(aBlk.result) }
+    val aBlk = stageLambda2(array, i){ apply(array,i) }
+    val fBlk = stageLambda1(aBlk.result){ func(aBlk.result) }
     val effects = aBlk.effects andAlso fBlk.effects
     stageEffectful(ArrayForeach(array, aBlk, fBlk, i), effects.star)(ctx)
   }
@@ -75,8 +75,8 @@ object Array {
     func:  Exp[T] => Exp[R],
     i:     Bound[Index]
   ): Sym[Array[R]] = {
-    val aBlk = stageLambda(array, i) { apply(array,i) }
-    val fBlk = stageLambda(aBlk.result) { func(aBlk.result) }
+    val aBlk = stageLambda2(array, i) { apply(array,i) }
+    val fBlk = stageLambda1(aBlk.result) { func(aBlk.result) }
     val effects = aBlk.effects andAlso fBlk.effects
     stageEffectful(ArrayMap(array, aBlk, fBlk, i), effects.star)(ctx)
   }
@@ -87,9 +87,9 @@ object Array {
     func: (Exp[A], Exp[B]) => Exp[C],
     i:    Bound[Index]
   ): Sym[MArray[C]] = {
-    val aBlk = stageLambda(a,i) { apply(a,i) }
-    val bBlk = stageLambda(b,i) { apply(b,i) }
-    val fBlk = stageLambda(aBlk.result, bBlk.result) { func(aBlk.result,bBlk.result) }
+    val aBlk = stageLambda2(a,i) { apply(a,i) }
+    val bBlk = stageLambda2(b,i) { apply(b,i) }
+    val fBlk = stageLambda2(aBlk.result, bBlk.result) { func(aBlk.result,bBlk.result) }
     val effects = aBlk.effects andAlso bBlk.effects andAlso fBlk.effects
     stageEffectful(ArrayZip(a, b, aBlk, bBlk, fBlk, i), effects.star)(ctx)
   }
@@ -100,8 +100,8 @@ object Array {
     i:      Bound[Index],
     rV:     (Bound[A],Bound[A])
   ): Sym[A] = {
-    val aBlk = stageLambda(array,i) { apply(array,i) }
-    val rBlk = stageLambda(rV._1,rV._2) { rfunc(rV._1,rV._2) }
+    val aBlk = stageLambda2(array,i) { apply(array,i) }
+    val rBlk = stageLambda2(rV._1,rV._2) { rfunc(rV._1,rV._2) }
     val effects = aBlk.effects andAlso rBlk.effects
     stageEffectful(ArrayReduce(array,aBlk,rBlk,i,rV), effects.star)(ctx)
   }
@@ -111,8 +111,8 @@ object Array {
     cond:  Exp[A] => Exp[MBoolean],
     i:     Bound[Index]
   ): Sym[MArray[A]] = {
-    val aBlk = stageLambda(array, i) { apply(array, i) }
-    val cBlk = stageLambda(aBlk.result) { cond(aBlk.result) }
+    val aBlk = stageLambda2(array, i) { apply(array, i) }
+    val cBlk = stageLambda1(aBlk.result) { cond(aBlk.result) }
     val effects = aBlk.effects andAlso cBlk.effects
     stageEffectful(ArrayFilter(array,aBlk,cBlk,i), effects.star)(ctx)
   }
@@ -122,8 +122,8 @@ object Array {
     func:  Exp[A] => Exp[MArray[B]],
     i:     Bound[Index]
   ): Sym[MArray[B]] = {
-    val aBlk = stageLambda(array, i) { apply(array, i) }
-    val fBlk = stageLambda(aBlk.result) { func(aBlk.result) }
+    val aBlk = stageLambda2(array, i) { apply(array, i) }
+    val fBlk = stageLambda1(aBlk.result) { func(aBlk.result) }
     val effects = aBlk.effects andAlso fBlk.effects
     stageEffectful(ArrayFlatMap(array,aBlk,fBlk,i), effects.star)(ctx)
   }

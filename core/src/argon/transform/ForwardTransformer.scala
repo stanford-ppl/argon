@@ -5,6 +5,7 @@ import argon.core.{IllegalSubstException,IllegalMirrorExpException}
 import argon.traversal.Traversal
 
 trait ForwardTransformer extends Traversal with SubstTransformer {
+  override implicit val state: State = IR
 
   val allowPretransform = false       // Need to explicitly enable this
   final override val recurse = Never  // Mirroring already guarantees we always recursively visit scopes
@@ -34,8 +35,8 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
   /**
     * Visit and transform each statement in the given block WITHOUT creating a staging scope
     */
-  override protected def inlineBlock[T:Type](b: Block[T]): Exp[T] = {
-    inlineBlock(b, {stms => visitStms(stms); f(b.result) })
+  override protected def inlineBlock[T:Type](b: Block[T]): () => Exp[T] = {
+    () => inlineBlock(b, {stms => visitStms(stms); f(b.result) })
   }
 
   /**
@@ -66,10 +67,10 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
     * new block.
     */
   final protected def transformBlock[T:Type](block: Block[T], func: Seq[Stm] => Exp[T]): Block[T] = block match {
-    case Lambda1(input,_,_,_,temp)   => stageLambda(f(input))({ inlineBlock(block,func) }, temp)
-    case Lambda2(a,b, _,_,_,temp)    => stageLambda(f(a),f(b))({ inlineBlock(block,func) }, temp)
-    case Lambda3(a,b,c,_,_,_,temp)   => stageLambda(f(a),f(b),f(c))( {inlineBlock(block,func) }, temp)
-    case Lambda4(a,b,c,d,_,_,_,temp) => stageLambda(f(a),f(b),f(c),f(d))({ inlineBlock(block, func)}, temp)
+    case Lambda1(input,_,_,_,temp)   => stageLambda1(f(input))({ inlineBlock(block,func) }, temp)
+    case Lambda2(a,b, _,_,_,temp)    => stageLambda2(f(a),f(b))({ inlineBlock(block,func) }, temp)
+    case Lambda3(a,b,c,_,_,_,temp)   => stageLambda3(f(a),f(b),f(c))( {inlineBlock(block,func) }, temp)
+    case Lambda4(a,b,c,d,_,_,_,temp) => stageLambda4(f(a),f(b),f(c),f(d))({ inlineBlock(block, func)}, temp)
     case Block(inputs,_,_,_,temp)    => stageLambdaN(f.tx(inputs), { inlineBlock(block, func) }, temp)
   }
 

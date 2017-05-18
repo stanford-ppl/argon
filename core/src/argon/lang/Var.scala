@@ -24,8 +24,7 @@ object Var {
   @internal def assign_var[T:Type](v: Exp[Var[T]], x: Exp[T]): Exp[MUnit] = stageWrite(v)(AssignVar(v, x))(ctx)
 }
 
-trait LowPriorityVarImplicits { this: VarExp =>
-
+trait LowPriorityVarImplicits {
   class FakeVarLift[T:Type] extends Lift[Var[T],T] {
     @internal def apply(x: Var[T]): T = readVar(x)
   }

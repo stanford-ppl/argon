@@ -1,11 +1,11 @@
 package argon.test
 
 import org.scalatest.{FlatSpec, Matchers}
-import org.virtualized.{SourceContext, virtualize}
+import org.virtualized._
 import argon.core.TestBenchFailed
 
 object Test1 extends Test {
-  import IR._
+  import api._
   def main() {
     val x = random[Boolean]
     val y = random[Boolean]
@@ -14,7 +14,7 @@ object Test1 extends Test {
 }
 
 object Test2 extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     val x = random[Boolean]
@@ -24,7 +24,7 @@ object Test2 extends Test {
 }
 
 object Test3 extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     val x = !random[Boolean]
@@ -34,7 +34,7 @@ object Test3 extends Test {
 }
 
 object Test4 extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     val x = random[Boolean] && random[Boolean]
@@ -44,7 +44,7 @@ object Test4 extends Test {
 }
 
 object Test5 extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     val x = random[Boolean] && random[Boolean]
@@ -54,7 +54,7 @@ object Test5 extends Test {
 }
 
 object Test6 extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     val x = random[Boolean]
@@ -65,7 +65,7 @@ object Test6 extends Test {
 }
 
 object Test7 extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     val x = random[Boolean]
@@ -84,7 +84,7 @@ object Test7 extends Test {
 }
 
 object Test8 extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     val x = random[Int]
@@ -98,7 +98,7 @@ object Test8 extends Test {
 }
 
 object Test9 extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     val x = random[Int]
@@ -108,7 +108,7 @@ object Test9 extends Test {
 }
 
 object OverflowLiftTest extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     type Nibble = FixPt[TRUE,_4,_0]
@@ -119,7 +119,7 @@ object OverflowLiftTest extends Test {
   }
 }
 object UnderflowLiftTest extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     type Nibble = FixPt[TRUE,_4,_0]
@@ -130,7 +130,7 @@ object UnderflowLiftTest extends Test {
 }
 
 object IgnoreOverflowTest extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     val c = 2147483648L
@@ -140,7 +140,7 @@ object IgnoreOverflowTest extends Test {
 }
 
 object SimpleCastTest extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
 
@@ -157,7 +157,7 @@ object SimpleCastTest extends Test {
 }
 
 object UnstagedToStringTest extends Test {
-  import IR._
+  import api._
   @virtualize
   def main() {
     val x = 0
@@ -166,7 +166,7 @@ object UnstagedToStringTest extends Test {
 }
 
 object StagedStringTest extends Test {
-  import IR._
+  import api._
 
   @virtualize def main(): Unit = {
     val cst1 = 32
@@ -186,8 +186,10 @@ object StagedStringTest extends Test {
 
 class StringStagingTests extends FlatSpec with Matchers {
   "StagedStringTest" should "compile" in {
+    import argon.nodes.ToString
     StagedStringTest.main(Array.empty)
-    val tostr = StagedStringTest.IR.NodeData.value.collect{case d: StagedStringTest.IR.ToString[_] => d }
+    val IR = StagedStringTest.IR.graph
+    val tostr = IR.NodeData.value.collect{case d: ToString[_] => d }
     tostr.length should be >= 2
   }
 }

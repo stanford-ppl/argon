@@ -72,7 +72,7 @@ abstract class Def extends Node with Product {
 
   /** Mirroring and Mutating **/
   // HACK to avoid having to have @stateful or @internal on every mirror method name
-  final protected implicit val src: SourceContext = EmptyContext
+  final protected implicit val here: SourceContext = EmptyContext
   protected implicit var IR: State = _
 
   def mutate(f:Tx): Unit = throw new Exception("Cannot mutate immutable node")

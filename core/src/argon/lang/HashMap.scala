@@ -52,10 +52,10 @@ object HashMap {
     rV:      (Bound[V],Bound[V]),
     i:       Bound[Index]
   ): (Exp[Array[K]], Exp[Array[V]], Exp[HashIndex[K]]) = {
-    val aBlk = stageLambda(in, i) { Array.apply(in, i) }
-    val kBlk = stageLambda(aBlk.result){ keyFunc(aBlk.result) }
-    val vBlk = stageLambda(aBlk.result){ valFunc(aBlk.result) }
-    val rBlk = stageLambda(rV._1,rV._2) { reduce(rV._1,rV._2) }
+    val aBlk = stageLambda2(in, i) { Array.apply(in, i) }
+    val kBlk = stageLambda1(aBlk.result){ keyFunc(aBlk.result) }
+    val vBlk = stageLambda1(aBlk.result){ valFunc(aBlk.result) }
+    val rBlk = stageLambda2(rV._1,rV._2) { reduce(rV._1,rV._2) }
     val effects = aBlk.effects andAlso kBlk.effects andAlso vBlk.effects andAlso rBlk.effects
     val out = stageDefEffectful( BuildHashMap(in, aBlk, kBlk, vBlk, rBlk, rV, i), effects.star)(ctx)
 

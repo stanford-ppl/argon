@@ -29,17 +29,17 @@ object String {
     case _ => stage(ToString(x))(ctx)
   }
   @internal def concat(x: Exp[MString], y: Exp[MString]): Exp[MString] = (x,y) match {
-    case (Const(a), Const(b)) => String.const(a + b)
+    case (Const(a: CString), Const(b: CString)) => String.const(a + b)
     case (Const(""), b) => b
     case (a, Const("")) => a
     case _ => stage( StringConcat(x,y) )(ctx)
   }
   @internal def equals(x: Exp[MString], y: Exp[MString]): Exp[MBoolean] = (x,y) match {
-    case (Const(a), Const(b)) => Boolean.const(a == b)
+    case (Const(a: CString), Const(b: CString)) => Boolean.const(a == b)
     case _ => stage( StringEquals(x,y) )(ctx)
   }
   @internal def differ(x: Exp[MString], y: Exp[MString]): Exp[MBoolean] = (x,y) match {
-    case (Const(a), Const(b)) => Boolean.const(a == b)
+    case (Const(a: CString), Const(b: CString)) => Boolean.const(a != b)
     case _ => stage( StringDiffer(x,y) )(ctx)
   }
 }

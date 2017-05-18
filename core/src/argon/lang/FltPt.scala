@@ -2,7 +2,6 @@ package argon.lang
 
 import argon._
 import argon.nodes._
-import argon.typeclasses._
 import forge._
 
 case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) extends MetaAny[FltPt[G,E]] {
@@ -27,13 +26,14 @@ case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) extends MetaAny[FltPt[G,E]] {
 object FltPt {
   /** Static methods **/
   @internal def wrap[G:INT,E:INT](s: Exp[FltPt[G,E]]): FltPt[G,E] = new FltPt[G,E](s)
-  @api def apply[G:INT,E:INT](x: Int, force: CBoolean = false): FltPt[G,E] = FltPt.wrap[G,E](const(x, force))
-  @api def apply[G:INT,E:INT](x: Long, force: CBoolean = false): FltPt[G,E] = FltPt.wrap[G,E](const(x, force))
-  @api def apply[G:INT,E:INT](x: Float, force: CBoolean = false): FltPt[G,E] = FltPt.wrap[G,E](const(x, force))
-  @api def apply[G:INT,E:INT](x: Double, force: CBoolean = false): FltPt[G,E] = FltPt.wrap[G,E](const(x, force))
-  @api def apply[G:INT,E:INT](x: CString, force: CBoolean = false): FltPt[G,E] = FltPt.wrap[G,E](const(x, force))
-  @api def apply[G:INT,E:INT](x: BigInt, force: CBoolean = false): FltPt[G,E] = FltPt.wrap[G,E](const(x, force))
-  @api def apply[G:INT,E:INT](x: BigDecimal, force: CBoolean = false): FltPt[G,E] = FltPt.wrap[G,E](const(x, force))
+  @internal def lift[G:INT,E:INT](x: Any, force: CBoolean): FltPt[G,E] = FltPt.wrap(const[G,E](x, force))
+  @api def apply[G:INT,E:INT](x: Int): FltPt[G,E] = FltPt.wrap(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: Long): FltPt[G,E] = FltPt.wrap(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: Float): FltPt[G,E] = FltPt.wrap(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: Double): FltPt[G,E] = FltPt.wrap(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: CString): FltPt[G,E] = FltPt.wrap(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: BigInt): FltPt[G,E] = FltPt.wrap(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: BigDecimal): FltPt[G,E] = FltPt.wrap(const[G,E](x))
 
 
   /** Constants **/
@@ -67,40 +67,40 @@ object FltPt {
 
   /** Constructors **/
   @internal def neg[G:INT,E:INT](x: Exp[FltPt[G,E]]): Exp[FltPt[G,E]] = x match {
-    case Const(c) => const[G,E](-c)
+    case Const(c: BigDecimal) => const[G,E](-c)
     case Op(FltNeg(x)) => x
     case _ => stage(FltNeg(x))(ctx)
   }
   @internal def add[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[FltPt[G,E]] = (x,y) match {
-    case (Const(a), Const(b)) => const[G,E](a + b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[G,E](a + b)
     case _ => stage(FltAdd(x,y))(ctx)
   }
   @internal def sub[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[FltPt[G,E]] = (x,y) match {
-    case (Const(a), Const(b)) => const[G,E](a - b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[G,E](a - b)
     case _ => stage(FltSub(x,y))(ctx)
   }
   @internal def mul[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[FltPt[G,E]] = (x,y) match {
-    case (Const(a), Const(b)) => const[G,E](a * b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[G,E](a * b)
     case _ => stage(FltMul(x,y))(ctx)
   }
   @internal def div[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[FltPt[G,E]] = (x,y) match {
-    case (Const(a), Const(b)) => const[G,E](a / b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[G,E](a / b)
     case _ => stage(FltDiv(x,y))(ctx)
   }
   @internal def lt[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a), Const(b)) => MBoolean.const(a < b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a < b)
     case _ => stage(FltLt(x,y))(ctx)
   }
   @internal def leq[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a), Const(b)) => MBoolean.const(a <= b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a <= b)
     case _ => stage(FltLeq(x,y))(ctx)
   }
   @internal def neq[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a), Const(b)) => MBoolean.const(a != b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a != b)
     case _ => stage(FltNeq(x,y))(ctx)
   }
   @internal def eql[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a), Const(b)) => MBoolean.const(a == b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a == b)
     case _ => stage(FltEql(x,y))(ctx)
   }
   @internal def random[G:INT,E:INT](max: Option[Exp[FltPt[G,E]]]): Exp[FltPt[G,E]] = {
@@ -114,7 +114,7 @@ object FltPt {
     stage(FltPtToFixPt[G,E,S,I,F](x.asInstanceOf[Exp[FltPt[G,E]]]))(ctx)
   }
   @internal def from_string[G:INT,E:INT](x: Exp[MString]): Exp[FltPt[G,E]] = x match {
-    case Const(c) => string2fltpt[G,E](c).s
+    case Const(c: CString) => string2fltpt[G,E](c).s
     case _ => stage(StringToFltPt[G,E](x))(ctx)
   }
 }
@@ -150,10 +150,10 @@ trait FltPtExp {
     @internal def apply(x: Double): Float64 = double2fltpt(x)
   }
 
-  @api implicit def int2fltpt[G:INT,E:INT](x: Int): FltPt[G,E] = FltPt[G,E](x, force=false)
-  @api implicit def long2fltpt[G:INT,E:INT](x: Long): FltPt[G,E] = FltPt[G,E](x, force=false)
-  @api implicit def float2fltpt[G:INT,E:INT](x: Float): FltPt[G,E] = FltPt[G,E](x, force=false)
-  @api implicit def double2fltpt[G:INT,E:INT](x: Double): FltPt[G,E] = FltPt[G,E](x, force=false)
+  @api implicit def int2fltpt[G:INT,E:INT](x: Int): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
+  @api implicit def long2fltpt[G:INT,E:INT](x: Long): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
+  @api implicit def float2fltpt[G:INT,E:INT](x: Float): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
+  @api implicit def double2fltpt[G:INT,E:INT](x: Double): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
 
 
   /** Casting **/

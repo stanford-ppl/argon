@@ -2,7 +2,6 @@ package argon.nodes
 
 import argon._
 import argon.core.UserFacing
-import argon.typeclasses._
 import forge._
 
 class FltPtType[G,E](val mG: INT[G], val mE: INT[E]) extends Type[FltPt[G,E]] with CanBits[FltPt[G,E]] {
@@ -30,10 +29,10 @@ class FltPtNum[G:INT,E:INT] extends Num[FltPt[G,E]] {
   @api def times(x: FltPt[G,E], y: FltPt[G,E]) = x * y
   @api def divide(x: FltPt[G,E], y: FltPt[G,E]) = x / y
 
-  @api def zero: FltPt[G,E] = FltPt(FltPt.const[G,E](0))
-  @api def one: FltPt[G,E] = FltPt(FltPt.const[G,E](1))
+  @api def zero: FltPt[G,E] = FltPt.lift[G,E](0,force=true)
+  @api def one: FltPt[G,E] = FltPt.lift[G,E](1,force=true)
   @api def random(max: Option[FltPt[G,E]]): FltPt[G,E] = FltPt(FltPt.random[G,E](max.map(_.s)))
-  @api def length: Int = INT[G].v + INT[E].v
+  def length: Int = INT[G].v + INT[E].v
 
   @api def lessThan(x: FltPt[G,E], y: FltPt[G,E]) = x < y
   @api def lessThanOrEqual(x: FltPt[G,E], y: FltPt[G,E]) = x <= y
@@ -42,10 +41,10 @@ class FltPtNum[G:INT,E:INT] extends Num[FltPt[G,E]] {
   @api def toFixPt[S:BOOL,I:INT,F:INT](x: FltPt[G,E]): FixPt[S,I,F] = FixPt(FltPt.to_fix[G,E,S,I,F](x.s))
   @api def toFltPt[G2:INT,E2:INT](x: FltPt[G,E]): FltPt[G2,E2] = FltPt(FltPt.convert[G,E,G2,E2](x.s))
 
-  @api def fromInt(x: Int, force: CBoolean = true) = FltPt[G,E](x, force)
-  @api def fromLong(x: Long, force: CBoolean = true) = FltPt[G,E](x, force)
-  @api def fromFloat(x: Float, force: CBoolean = true) = FltPt[G,E](x, force)
-  @api def fromDouble(x: Double, force: CBoolean = true) = FltPt[G,E](x, force)
+  @api def fromInt(x: Int, force: CBoolean = true) = FltPt.lift[G,E](x, force)
+  @api def fromLong(x: Long, force: CBoolean = true) = FltPt.lift[G,E](x, force)
+  @api def fromFloat(x: Float, force: CBoolean = true) = FltPt.lift[G,E](x, force)
+  @api def fromDouble(x: Double, force: CBoolean = true) = FltPt.lift[G,E](x, force)
 }
 
 object FltPtNum {

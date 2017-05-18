@@ -1,7 +1,6 @@
 package argon.nodes
 
 import argon._
-import argon.typeclasses._
 import forge._
 
 case object BooleanType extends Type[MBoolean] with CanBits[MBoolean] {
@@ -17,7 +16,7 @@ object BooleanBits extends Bits[MBoolean] {
   @internal def zero: MBoolean = MBoolean(false)
   @internal def one: MBoolean = MBoolean(true)
   @internal def random(max: Option[MBoolean]): MBoolean = MBoolean(MBoolean.random(max.map(_.s)))
-  @internal def length = 1
+  def length = 1
 }
 
 /** IR Nodes **/

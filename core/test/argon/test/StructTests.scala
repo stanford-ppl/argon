@@ -1,4 +1,5 @@
 package argon.test
+
 import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized._
 
@@ -6,7 +7,7 @@ class StructTests extends FlatSpec with Matchers {
 
   "StructTest" should "compile" in {
     class StructTest extends Test {
-      import IR._
+      import api._
 
       @struct class MyStruct(x: Int, y: Int)
 
@@ -30,7 +31,7 @@ class StructTests extends FlatSpec with Matchers {
 
   "StructDefaultArgsTest" should "compile" in {
     class StructTest extends Test {
-      import IR._
+      import api._
 
       @struct class MyStruct(x: Int = 13, y: Int = 12)
 

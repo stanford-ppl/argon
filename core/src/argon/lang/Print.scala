@@ -11,6 +11,10 @@ object PrintOps {
 }
 
 trait PrintExp {
+
+}
+
+trait PrintApi {
   /** Static methods **/
   @api def println(): MUnit = println("")
 

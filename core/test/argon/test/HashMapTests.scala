@@ -5,7 +5,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized._
 
 object GroupByReduceTest extends Test {
-  import IR._
+  import argon.test.api._
 
   @virtualize
   def main() {
@@ -35,8 +35,8 @@ object GroupByReduceTest extends Test {
 
 
 object Kmeans extends Test {
-  import IR._
-  IR.testArgs = List("1", "8")
+  import argon.test.api._
+  testArgs = List("1", "8")
 
   @virtualize
   def main() {
@@ -92,8 +92,8 @@ object Kmeans extends Test {
 }
 
 object CodeMotionTest extends Test {
-  import IR._
-  IR.testArgs = List("8")
+  import argon.test.api._
+  testArgs = List("8")
 
   @virtualize
   def main() {

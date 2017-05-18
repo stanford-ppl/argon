@@ -1,7 +1,6 @@
 package argon.nodes
 
 import argon._
-import argon.typeclasses._
 import forge._
 
 case class Tuple2Type[A,B](m1: Type[A], m2: Type[B]) extends StructType[MTuple2[A,B]] with CanBits[MTuple2[A,B]] {
@@ -22,7 +21,7 @@ class Tuple2Bits[A:Type:Bits,B:Type:Bits] extends Bits[MTuple2[A,B]] {
   @api def random(max: Option[MTuple2[A, B]]): MTuple2[A,B] = {
     MTuple2.pack(bits[A].random(max.map(_._1)), bits[B].random(max.map(_._2)))
   }
-  @api def length: Int = bits[A].length + bits[B].length
+  def length: Int = bits[A].length + bits[B].length
 }
 
 class Tuple2Arith[A:Type:Arith,B:Type:Arith] extends Arith[MTuple2[A,B]] {

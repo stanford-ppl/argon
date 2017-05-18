@@ -1,5 +1,7 @@
 package argon.typeclasses
 
+import argon._
+import argon.lang.MetaAnyApi
 import forge._
 
 trait Arith[T] {
@@ -11,6 +13,10 @@ trait Arith[T] {
 }
 
 trait ArithExp {
+  def arith[T:Arith] = implicitly[Arith[T]]
+}
+
+trait ArithApi extends MetaAnyApi {
   implicit class ArithOps[T:Arith](lhs: T) {
     @api def unary_-(): T = arith[T].negate(lhs)
     @api def +(rhs: T): T = arith[T].plus(lhs, rhs)
@@ -18,7 +24,5 @@ trait ArithExp {
     @api def *(rhs: T): T = arith[T].times(lhs, rhs)
     @api def /(rhs: T): T = arith[T].divide(lhs, rhs)
   }
-
-  def arith[T:Arith] = implicitly[Arith[T]]
 }
 

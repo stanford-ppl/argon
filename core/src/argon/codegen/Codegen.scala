@@ -119,7 +119,7 @@ trait Codegen extends Traversal {
   }
 
   protected def remap(tp: Type[_]): String = tp.toString
-  protected def quoteConst(c: Const[?]): String = {
+  protected def quoteConst(c: Const[_]): String = {
     if (Config.emitDevel > 0) {
       if (emitEn) { // Want to emit but can't
         Console.println(s"[ ${lang}gen-ERROR ] No quote for $c")  

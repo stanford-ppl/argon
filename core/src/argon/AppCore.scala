@@ -16,7 +16,7 @@ trait AppCore { self =>
     */
   def main(): Unit
 
-  protected implicit var IR: State = _
+  implicit var IR: State = _
 
   private var __stagingArgs: Array[String] = _
   private var __args: MArray[MString] = _
@@ -122,7 +122,7 @@ trait AppCore { self =>
 
     val block = stageProgram{ MUnit(blk) }
 
-    if (state.graph.curEdgeId == 0) {
+    if (state.graph.curEdgeId == 0 && !testbench) {
       warn("Nothing staged, nothing gained.")
     }
     // Exit now if errors were found during staging
@@ -162,7 +162,7 @@ trait AppCore { self =>
   /**
     * The "real" entry point for the application
     */
-  final def main(sargs: Array[String]): Unit = {
+  def main(sargs: Array[String]): Unit = {
     __stagingArgs = sargs
     initConfig(sargs)
 
