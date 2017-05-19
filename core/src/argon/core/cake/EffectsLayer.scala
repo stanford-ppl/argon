@@ -1,9 +1,9 @@
 package argon.core
+package cake
 
-import argon._
 import forge._
 
-trait EffectsCore { this: ArgonCore =>
+trait EffectsLayer { this: ArgonCore =>
 
   object depsOf {
     @stateful def apply(x: Exp[_]): Seq[Exp[_]] = metadata[AntiDeps](x).map(_.syms).getOrElse(Nil)
@@ -44,28 +44,32 @@ trait EffectsCore { this: ArgonCore =>
     * simple - include the *most recent* previous simple effect as a scheduling dependency of a simple effect
     * global - include ALL global effects as scheduling dependencies of a global effect
     */
-  @stateful final def effectDependencies(effects: Effects): Seq[Sym[_]] = if (effects.global) state.context else {
-    val read = effects.reads
-    val write = effects.writes
-    val accesses = read ++ write  // Cannot read/write prior to allocation
+  @stateful final def effectDependencies(effects: Effects)(implicit state: State): Seq[Sym[_]] = {
+    if (effects.global)
+      state.context
+    else {
+      val read = effects.reads
+      val write = effects.writes
+      val accesses = read ++ write  // Cannot read/write prior to allocation
 
-    def isWARHazard(u: Effects) = u.mayRead(write)
+      def isWARHazard(u: Effects) = u.mayRead(write)
 
-    // RAW / WAW
-    var unwrittenAccesses = accesses // Reads/writes for which we have not yet found a previous writer
-    def isAAWHazard(u: Effects) = {
-      if (unwrittenAccesses.nonEmpty) {
-        val (written, unwritten) = unwrittenAccesses.partition(u.writes.contains)
-        unwrittenAccesses = unwritten
-        written.nonEmpty
+      // RAW / WAW
+      var unwrittenAccesses = accesses // Reads/writes for which we have not yet found a previous writer
+      def isAAWHazard(u: Effects) = {
+        if (unwrittenAccesses.nonEmpty) {
+          val (written, unwritten) = unwrittenAccesses.partition(u.writes.contains)
+          unwrittenAccesses = unwritten
+          written.nonEmpty
+        }
+        else false
       }
-      else false
+
+      val hazards = state.context.filter{case e@Effectful(u,_) => isWARHazard(u) || isAAWHazard(u) || (accesses contains e) }
+      val simpleDep = if (effects.simple) state.context.find{case Effectful(u,_) => u.simple } else None // simple
+      val globalDep = state.context.find{case Effectful(u,_) => u.global } // global
+
+      hazards ++ simpleDep ++ globalDep
     }
-
-    val hazards = state.context.filter{case e@Effectful(u,_) => isWARHazard(u) || isAAWHazard(u) || (accesses contains e) }
-    val simpleDep = if (effects.simple) state.context.find{case Effectful(u,_) => u.simple } else None // simple
-    val globalDep = state.context.find{case Effectful(u,_) => u.global } // global
-
-    hazards ++ simpleDep ++ globalDep
   }
 }

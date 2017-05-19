@@ -1,6 +1,6 @@
 package argon.util
 
-import argon.core.Reporting
+import argon.core.cake.Reporting
 import scopt._
 
 trait ArgParser extends Reporting {

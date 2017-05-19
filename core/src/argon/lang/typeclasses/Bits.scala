@@ -1,6 +1,6 @@
-package argon.typeclasses
+package argon.lang.typeclasses
 
-import argon._
+import argon.compiler._
 import forge._
 
 /** Types which are represented by a static number of bits **/

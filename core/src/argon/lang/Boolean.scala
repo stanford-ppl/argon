@@ -1,25 +1,26 @@
 package argon.lang
 
-import argon._
+import typeclasses.Bits
+import argon.compiler._
 import argon.nodes._
 import forge._
 
 case class Boolean(s: Exp[Boolean]) extends MetaAny[Boolean] {
   override type Internal = scala.Boolean
   protected val bool = Boolean
-  @api def unary_!(): MBoolean = MBoolean(bool.not(this.s))
-  @api def &&(that: MBoolean): MBoolean = MBoolean(bool.and(this.s, that.s))
-  @api def ||(that: MBoolean): MBoolean = MBoolean(bool.or(this.s, that.s))
-  @api def ^ (that: MBoolean): MBoolean = MBoolean(bool.xor(this.s, that.s))
+  @api def unary_!(): MBoolean = Boolean(bool.not(this.s))
+  @api def &&(that: MBoolean): MBoolean = Boolean(bool.and(this.s, that.s))
+  @api def ||(that: MBoolean): MBoolean = Boolean(bool.or(this.s, that.s))
+  @api def ^ (that: MBoolean): MBoolean = Boolean(bool.xor(this.s, that.s))
 
-  @api def ===(that: MBoolean): MBoolean = MBoolean(bool.xnor(this.s, that.s))
-  @api def =!=(that: MBoolean): MBoolean = MBoolean(bool.xor(this.s, that.s))
+  @api def ===(that: MBoolean): MBoolean = Boolean(bool.xnor(this.s, that.s))
+  @api def =!=(that: MBoolean): MBoolean = Boolean(bool.xor(this.s, that.s))
   @api def toText: MString = String.ify(this)
 }
 
 object Boolean {
-  @api def apply(x: CBoolean): MBoolean = MBoolean(const(x))
-  @internal def lift(x: CBoolean): MBoolean = MBoolean(const(x))
+  @api def apply(x: CBoolean): MBoolean = Boolean(const(x))
+  @internal def lift(x: CBoolean): MBoolean = Boolean(const(x))
   @internal def const(x: CBoolean): Exp[MBoolean] = constant(BooleanType)(x)
 
   /** Constructors **/
@@ -77,17 +78,17 @@ trait BooleanExp {
   implicit def boolIsBits: Bits[MBoolean] = BooleanBits
 
   /** Lifting **/
-  @api implicit def boolean2bool(x: CBoolean): MBoolean = MBoolean(x)
+  @api implicit def boolean2bool(x: CBoolean): MBoolean = Boolean(x)
 
   implicit object LiftBoolean2Bool extends Lift[CBoolean,MBoolean] {
-    @internal def apply(x: CBoolean): MBoolean = MBoolean(x)
+    @internal def apply(x: CBoolean): MBoolean = Boolean(x)
   }
   /** Casting **/
   implicit object CastBoolean2Bool extends Cast[CBoolean,MBoolean] {
-    @internal def apply(x: CBoolean): MBoolean = MBoolean(x)
+    @internal def apply(x: CBoolean): MBoolean = Boolean(x)
   }
   implicit object String2Boolean extends Cast[MString,MBoolean] {
-    @internal def apply(x: MString): MBoolean = MBoolean(MBoolean.from_string(x.s))
+    @internal def apply(x: MString): MBoolean = Boolean(Boolean.from_string(x.s))
   }
 }
 

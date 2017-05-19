@@ -1,10 +1,10 @@
 package argon.core
+package cake
 
-import argon._
 import argon.utils.recursive
 import forge._
 
-trait DefsCore { this: ArgonCore =>
+trait DefsLayer { this: ArgonCore =>
   // --- Helper functions
   @stateful def defOf(s:Sym[_]): Def = defFromSymId(s.id).get
   @stateful def getDef(s: Exp[_]): Option[Def] = s match { case s: Sym[_] => Some(defOf(s)); case _ => None }
@@ -42,7 +42,7 @@ trait DefsCore { this: ArgonCore =>
   final def copySyms(a: Any): Set[Dyn[_]]    = recursive.collectSets{case d: Def => d.copies}(a)
 
   implicit class DefOps(x: Def) {
-    @stateful def allInputs: Seq[Dyn[_]] = state.graph.nodeInputs(x.id).map{id => symFromSymId(id) }
+    @stateful def allInputs(implicit state: State): Seq[Dyn[_]] = state.graph.nodeInputs(x.id).map{id => symFromSymId(id) }
   }
 
 }

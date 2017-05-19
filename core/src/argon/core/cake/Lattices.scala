@@ -1,4 +1,5 @@
 package argon.core
+package cake
 
 /**
   *          Top (⊤)

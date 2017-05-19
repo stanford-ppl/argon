@@ -1,6 +1,6 @@
 package argon.core
 
-import argon._
+import ops._
 import scala.util.control.NoStackTrace
 
 abstract class CompilerException(id: Int, msg: String, console: => Unit) extends

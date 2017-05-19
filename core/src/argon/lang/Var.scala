@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon._
+import argon.compiler._
 import argon.nodes._
 import forge._
 
@@ -24,7 +24,7 @@ object Var {
   @internal def assign_var[T:Type](v: Exp[Var[T]], x: Exp[T]): Exp[MUnit] = stageWrite(v)(AssignVar(v, x))(ctx)
 }
 
-trait LowPriorityVarImplicits {
+trait LowPriorityVarImplicits { self: VarExp =>
   class FakeVarLift[T:Type] extends Lift[Var[T],T] {
     @internal def apply(x: Var[T]): T = readVar(x)
   }
@@ -60,10 +60,10 @@ trait VarExp extends LowPriorityVarImplicits {
 
   @internal def __readVar[T:Type](v: Var[T]): T = readVar(v)
 
-  @internal def __assign[T<:MetaAny[T]:Type](lhs: Var[T], rhs: T): MUnit = MUnit(Var.assign_var(lhs.s, rhs.s))
+  @internal def __assign[T<:MetaAny[T]:Type](lhs: Var[T], rhs: T): MUnit = Unit(Var.assign_var(lhs.s, rhs.s))
   @internal def __assign[A,T<:MetaAny[T]](lhs: Var[T], rhs: A)(implicit lift: Lift[A,T]): MUnit = {
     implicit val mT = lift.staged
-    MUnit(Var.assign_var(lhs.s, lift(rhs).s))
+    Unit(Var.assign_var(lhs.s, lift(rhs).s))
   }
 }
 

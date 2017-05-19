@@ -1,6 +1,7 @@
-package argon.typeclasses
+package argon.lang.typeclasses
 
-import argon._
+import argon.lang.{FixPt,FltPt}
+import argon.compiler._
 import argon.nodes._
 import forge._
 
@@ -15,8 +16,7 @@ trait Num[T] extends Bits[T] with Arith[T] with Order[T] {
 }
 
 
-trait LowPriorityNumImplicits {
-
+trait LowPriorityNumImplicits { self: NumExp =>
   // FIXME: Users may want to write x.to[T], where T is a generic type with evidence of Num
   // Should this be allowed? Better way to support in general?
   implicit def num2num[T:Type:Num,R:Type:Num] = new Cast[T,R] {
@@ -34,9 +34,11 @@ trait LowPriorityNumImplicits {
     }
   }
 }
-trait NumApi extends LowPriorityNumImplicits
-
 trait NumExp {
+  def num[T:Num]: Num[T] = implicitly[Num[T]]
+}
+
+trait NumApi extends LowPriorityNumImplicits { this: NumExp =>
   implicit def num2fltpt[T:Num,G:INT,E:INT] = new Cast[T,FltPt[G,E]] {
     @internal def apply(x: T): FltPt[G,E] = num[T].toFltPt[G,E](x)
   }
@@ -56,6 +58,4 @@ trait NumExp {
   implicit def double2numT[T:Type:Num] = new Cast[Double,T] {
     @internal def apply(x: Double): T = num[T].fromDouble(x)
   }
-
-  def num[T:Num]: Num[T] = implicitly[Num[T]]
 }

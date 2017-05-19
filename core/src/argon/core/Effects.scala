@@ -1,6 +1,6 @@
-package argon
+package argon.core
 
-import argon.core.CompilerFacing
+import ops._
 import forge._
 
 case class AntiDeps(syms: Seq[Exp[_]]) extends Metadata[AntiDeps] with CompilerFacing {

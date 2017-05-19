@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon._
+import argon.compiler._
 import argon.nodes._
 import forge._
 
@@ -28,7 +28,7 @@ trait IfThenElseExp {
     wrap(ifThenElse[T](cond.s, unwrapThen, unwrapElse))
   }
 
-  @internal def __ifThenElse[A, T<:MetaAny[T]](cond: MBoolean, thenp: => A, elsep: => T)(implicit lift: Cast[A, T], x1: Overload1): T = {
+  @internal def __ifThenElse[A, T<:MetaAny[T]](cond: MBoolean, thenp: => A, elsep: => T)(implicit lift: Cast[A,T], x1: Overload1): T = {
     implicit val staged: Type[T] = lift.staged
     val unwrapThen = () => lift(thenp).s // directly calling unwrap(thenp) forces thenp to be evaluated here
     val unwrapElse = () => elsep.s // wrapping it as a Function0 allows it to be delayed

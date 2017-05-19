@@ -1,4 +1,4 @@
-package argon.typeclasses
+package argon.lang.typeclasses
 
 sealed trait BOOL[T] {
   val v: Boolean
@@ -149,16 +149,14 @@ trait _128
 /** Hack for working with customized bit widths, since Scala doesn't support integers as template parameters **/
 object BOOL {
   def apply[T:BOOL]: BOOL[T] = implicitly[BOOL[T]]
+
+  implicit object BOOL_TRUE extends BOOL[TRUE] { val v = true }
+  implicit object BOOL_FALSE extends BOOL[FALSE] { val v = false }
 }
 
 object INT {
   def apply[T: INT]: INT[T] = implicitly[INT[T]]
   def from[T](x: Int): INT[T] = new INT[T] { val v = x }
-}
-
-trait CustomBitWidthsExp {
-  implicit object BOOL_TRUE extends BOOL[TRUE] { val v = true }
-  implicit object BOOL_FALSE extends BOOL[FALSE] { val v = false }
 
   implicit object INT0  extends INT[_0]  { val v = 0  }
   implicit object INT1  extends INT[_1]  { val v = 1  }

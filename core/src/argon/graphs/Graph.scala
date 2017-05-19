@@ -2,8 +2,9 @@ package argon.graphs
 
 import java.io.PrintStream
 
-import argon._
-import argon.core.RecursiveScheduleException
+import argon.Config
+import argon.core.{Freq, RecursiveScheduleException}
+import argon.util.Report._
 import forge.stateful
 
 import scala.collection.mutable
@@ -11,6 +12,9 @@ import scala.collection.mutable
 class Graph[E<:Edge,N<:Node] {
   type EdgeId = Int
   type NodeId = Int
+  type OrderCache = scala.collection.mutable.LongMap[(NodeId,Int)] // EdgeId -> (NodeId,Int)
+  def OrderCache() = new scala.collection.mutable.LongMap[(NodeId,Int)]()
+
   final val VERBOSE_SCHEDULING = false
   var glog: PrintStream = if (VERBOSE_SCHEDULING) createLog(Config.logDir + "/sched/", "0000 Staging.log") else null
   @inline private def xlog(x: => Any) = if (VERBOSE_SCHEDULING) glog.println(x)

@@ -1,6 +1,6 @@
 package argon.nodes
 
-import argon._
+import argon.compiler._
 
 object UnitType extends Type[MUnit] {
   override def wrapped(x: Exp[MUnit]) = MUnit(x)

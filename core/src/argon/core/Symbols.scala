@@ -1,6 +1,6 @@
-package argon
+package argon.core
 
-import argon.core.UserFacing
+import ops._
 import argon.graphs.{Edge, EdgeLike}
 import argon.utils.escapeConst
 import forge._
@@ -8,11 +8,11 @@ import forge._
 import scala.annotation.unchecked.uncheckedVariance
 
 /** Any staged symbol **/
-sealed abstract class Exp[+T] extends EdgeLike with UserFacing {
+sealed abstract class Exp[+T] extends EdgeLike with FrontendFacing {
   def tp: Type[T @uncheckedVariance]
 
   var name: Option[String] = None
-  override def toStringUser = name match {
+  override def toStringFrontend = name match {
     case Some(name) => name + " (" + this.toString + ")"
     case None => this.toString
   }
@@ -60,7 +60,7 @@ class Const[+T](val tp: Type[T@uncheckedVariance])(x: Any) extends Exp[T] {
   }
 
   override def toString = s"Const(${escapeConst(_c)})"
-  override def toStringUser = escapeConst(_c)
+  override def toStringFrontend = escapeConst(_c)
 }
 
 /** A Staged, mutable constant **/
@@ -80,7 +80,7 @@ class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid:
   }
 
   override def toString = s"Param(#${-pid})"
-  override def toStringUser = this.toString   // TODO: Is this what is we want here?
+  override def toStringFrontend = this.toString   // TODO: Is this what is we want here?
 }
 
 // TODO: Investigate why this still gives back Any even when T#Internal is used

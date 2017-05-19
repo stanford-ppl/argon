@@ -1,6 +1,7 @@
 package argon.traversal
 
-import argon._
+import argon.Config
+import argon.compiler._
 
 trait BlockTraversal {
   val IR: State

@@ -1,22 +1,21 @@
 package argon.core
+package cake
 
-import argon._
 import forge._
 
 trait Scheduling { this: ArgonCore =>
   // TODO: Awkward placement for this - better spot?
   // Based on performance testing LongMap is slightly faster than others (even with casting)
-  type OrderCache = scala.collection.mutable.LongMap[(NodeId,Int)] // EdgeId -> (NodeId,Int)
-  def OrderCache() = new scala.collection.mutable.LongMap[(NodeId,Int)]()
 
-  @stateful def makeScopeIndex(scope: Iterable[Stm])(implicit state: State): OrderCache = {
+
+  @stateful def makeScopeIndex(scope: Iterable[Stm])(implicit state: State): state.graph.OrderCache = {
     state.graph.buildScopeIndex(scope.map(_.rhs.id))
   }
-  @stateful def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache)(implicit state: State): Seq[Stm] = {
+  @stateful def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache): Seq[Stm] = {
     state.graph.scheduleDepsWithIndex(dyns(roots).map(_.id), cache).flatMap(stmFromNodeId)
   }
 
-  @stateful def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => Seq[Stm])(implicit state: State): Seq[Stm] = {
+  @stateful def schedule(roots: Iterable[Stm], checkAcyclic: Boolean = true)(next: Exp[_] => Seq[Stm]): Seq[Stm] = {
 
     def succ(node: NodeId): Iterable[NodeId] = state.graph.nodeOutputs(node).map(symFromSymId).flatMap(next).map(_.rhs.id)
 
@@ -33,7 +32,7 @@ trait Scheduling { this: ArgonCore =>
     ids.flatMap(stmFromNodeId)
   }
 
-  @stateful def scheduleBlock(availNodes: Seq[NodeId], block: Block[_])(implicit state: State): Seq[Stm] = state.scopeCache.getOrElseUpdate(block, {
+  @stateful def scheduleBlock(availNodes: Seq[NodeId], block: Block[_]): Seq[Stm] = state.scopeCache.getOrElseUpdate(block, {
     val allDependencies = dyns(block.result +: block.effectful)
     val result = allDependencies.map(_.id)
     /**

@@ -1,14 +1,23 @@
 package argon.core
 
-trait ArgonCore
+import argon.core.cake._
+
+abstract class ArgonCore
   extends Reporting
-  with StagedTypes
-  with BlocksCore
-  with DefsCore
-  with ExpsCore
-  with EffectsCore
+  with BlocksLayer
+  with DefsLayer
+  with EffectsLayer
   with Lattices
-  with MetadataCore
+  with MetadataLayer
   with Scheduling
+  with StagedTypes
   with Staging
   with Statements
+  with SymbolsLayer
+{
+  type SrcCtx = org.virtualized.SourceContext
+  def ctx(implicit context: SrcCtx): SrcCtx = context
+  def state(implicit state: State): State = state
+}
+
+private[argon] object ops extends ArgonCore

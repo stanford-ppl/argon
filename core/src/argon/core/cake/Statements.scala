@@ -1,6 +1,7 @@
 package argon.core
+package cake
 
-import argon._
+import argon.Config
 import forge._
 
 trait Statements { this: ArgonCore =>

@@ -1,6 +1,8 @@
 package argon.lang
 
-import argon._
+import typeclasses._
+
+import argon.compiler._
 import argon.nodes._
 import argon.utils.escapeConst
 import forge._
@@ -19,10 +21,10 @@ case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt
   @api def & (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.and(this.s,that.s))
   @api def | (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.or(this.s,that.s))
   @api def ^ (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.xor(this.s,that.s))
-  @api def < (that: FixPt[S,I,F]): MBoolean     = MBoolean( fix.lt(this.s,that.s))
-  @api def <=(that: FixPt[S,I,F]): MBoolean     = MBoolean(fix.leq(this.s,that.s))
-  @api def > (that: FixPt[S,I,F]): MBoolean     = MBoolean( fix.lt(that.s,this.s))
-  @api def >=(that: FixPt[S,I,F]): MBoolean     = MBoolean(fix.leq(that.s,this.s))
+  @api def < (that: FixPt[S,I,F]): MBoolean     = Boolean( fix.lt(this.s,that.s))
+  @api def <=(that: FixPt[S,I,F]): MBoolean     = Boolean(fix.leq(this.s,that.s))
+  @api def > (that: FixPt[S,I,F]): MBoolean     = Boolean( fix.lt(that.s,this.s))
+  @api def >=(that: FixPt[S,I,F]): MBoolean     = Boolean(fix.leq(that.s,this.s))
 
   // Unbiased rounding operators
   @api def *& (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul_unbias(this.s,that.s))
@@ -42,8 +44,8 @@ case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt
   @api def >>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix.rsh(this.s, that.s))  // Right shift (signed)
   @api def >>>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix.ursh(this.s, that.s)) // Right shift (unsigned)
 
-  @api def ===(that: FixPt[S,I,F]) = MBoolean(fix.eql(this.s, that.s))
-  @api def =!=(that: FixPt[S,I,F]) = MBoolean(fix.neq(this.s, that.s))
+  @api def ===(that: FixPt[S,I,F]) = Boolean(fix.eql(this.s, that.s))
+  @api def =!=(that: FixPt[S,I,F]) = Boolean(fix.neq(this.s, that.s))
   @api override def toText = String.ify(this)
 }
 
@@ -110,8 +112,6 @@ object FixPt {
   @internal def const[S:BOOL,I:INT,F:INT](x: Any, force: CBoolean = true): Const[FixPt[S,I,F]] = {
     constant(FixPtType[S,I,F])(literalToBigDecimal[S,I,F](x,force))
   }
-  @internal def int32(x: BigDecimal): Const[Int32] = const[TRUE,_32,_0](x, force = false)
-  @internal def int64(x: BigDecimal): Const[Int64] = const[TRUE,_64,_0](x, force = false)
 
   /** Constructors **/
   @internal def neg[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = x match {
@@ -238,20 +238,20 @@ object FixPt {
     case _ => stage(FixXor(x,y))(ctx)
   }
   @internal def lt[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a < b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a < b)
     case _ => stage( FixLt(x,y))(ctx)
   }
 
   @internal def leq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a <= b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a <= b)
     case _ => stage(FixLeq(x,y))(ctx)
   }
   @internal def neq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a != b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a != b)
     case _ => stage(FixNeq(x,y))(ctx)
   }
   @internal def eql[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a == b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a == b)
     case _ => stage(FixEql(x,y))(ctx)
   }
   @internal def mod[S:BOOL,I:INT](x: Exp[FixPt[S,I,_0]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,_0]] = (x,y) match {
@@ -311,6 +311,9 @@ trait FixPtExp {
   def isFixPtType(x: Type[_]) = FixPtType.unapply(x).isDefined
   def isInt32Type(x: Type[_]) = IntType.unapply(x)
   @internal def intParam(c: Int): Param[Int32] = parameter(IntType)(FixPt.literalToBigDecimal[TRUE,_32,_0](c, force=true))
+  @internal def int32(x: BigDecimal): Const[Int32] = FixPt.const[TRUE,_32,_0](x, force = false)
+  @internal def int64(x: BigDecimal): Const[Int64] = FixPt.const[TRUE,_64,_0](x, force = false)
+
 
   implicit class FixPtIntLikeOps[S:BOOL,I:INT](x: FixPt[S,I,_0]) {
     @api def %(y: FixPt[S,I,_0]): FixPt[S,I,_0] = FixPt(FixPt.mod(x.s, y.s))
@@ -333,27 +336,27 @@ trait FixPtExp {
   @api implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
   @api implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
 
-  implicit object LiftInt extends Lift[Int,Int32] {
+  implicit object LiftInt extends cake.Lift[Int,Int32] {
     @internal def apply(x: Int): Int32 = int2fixpt(x)
   }
-  implicit object LiftLong extends Lift[Long,Int64] {
+  implicit object LiftLong extends cake.Lift[Long,Int64] {
     @internal def apply(x: Long): Int64 = long2fixpt(x)
   }
 
   /** Casting **/
-  implicit def int_cast_fixpt[S:BOOL,I:INT,F:INT]: Cast[Int,FixPt[S,I,F]] = new Cast[Int,FixPt[S,I,F]] {
+  implicit def int_cast_fixpt[S:BOOL,I:INT,F:INT]: cake.Cast[Int,FixPt[S,I,F]] = new cake.Cast[Int,FixPt[S,I,F]] {
     @internal def apply(x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
   }
-  implicit def long_cast_fixpt[S:BOOL,I:INT,F:INT]: Cast[Long,FixPt[S,I,F]] = new Cast[Long,FixPt[S,I,F]] {
+  implicit def long_cast_fixpt[S:BOOL,I:INT,F:INT]: cake.Cast[Long,FixPt[S,I,F]] = new cake.Cast[Long,FixPt[S,I,F]] {
     @internal def apply(x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
   }
-  implicit def fixpt2fixpt[S:BOOL,I:INT,F:INT, S2:BOOL,I2:INT,F2:INT] = new Cast[FixPt[S,I,F],FixPt[S2,I2,F2]] {
+  implicit def fixpt2fixpt[S:BOOL,I:INT,F:INT, S2:BOOL,I2:INT,F2:INT] = new cake.Cast[FixPt[S,I,F],FixPt[S2,I2,F2]] {
     @internal def apply(x: FixPt[S,I,F]): FixPt[S2,I2,F2] = wrap(FixPt.convert[S,I,F,S2,I2,F2](x.s))
   }
-  implicit def fixpt2fltpt[S:BOOL,I:INT,F:INT, G:INT,E:INT] = new Cast[FixPt[S,I,F],FltPt[G,E]] {
+  implicit def fixpt2fltpt[S:BOOL,I:INT,F:INT, G:INT,E:INT] = new cake.Cast[FixPt[S,I,F],FltPt[G,E]] {
     @internal def apply(x: FixPt[S,I,F]): FltPt[G,E] = wrap(FixPt.to_flt[S,I,F,G,E](x.s))
   }
-  implicit def string2fixpt[S:BOOL,I:INT,F:INT] = new Cast[MString,FixPt[S,I,F]] {
+  implicit def string2fixpt[S:BOOL,I:INT,F:INT] = new cake.Cast[MString,FixPt[S,I,F]] {
     @internal def apply(x: MString): FixPt[S,I,F] = wrap(FixPt.from_text[S,I,F](x.s))
   }
 }

@@ -1,6 +1,7 @@
 package argon.nodes
 
-import argon._
+import argon.compiler._
+import argon.lang.compiler._
 import org.virtualized.EmptyContext
 
 case class ArrayType[T](child: Type[T]) extends Type[MArray[T]] {

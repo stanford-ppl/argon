@@ -1,6 +1,6 @@
 package argon.nodes
 
-import argon._
+import argon.compiler._
 
 abstract class StructType[T](override implicit val ev: T <:< Struct[T]) extends Type[T] {
   override def isPrimitive = false

@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon._
+import argon.compiler._
 import argon.nodes._
 import forge._
 
@@ -8,24 +8,24 @@ case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
   val mT = implicitly[Type[T]]
   override type Internal = scala.Array[mT.Internal]
 
-  @api def length: Index = wrap{ MArray.length(this.s) }
+  @api def length: Index = wrap{ Array.length(this.s) }
 
-  @api def apply(i: Index): T = wrap{ MArray.apply(this.s, i.s) }
+  @api def apply(i: Index): T = wrap{ Array.apply(this.s, i.s) }
   @api def update[A](i: Index, data: A)(implicit lift: Lift[A,T]): MUnit
-    = MUnit(MArray.update(this.s,i.s,lift(data).s))
+    = Unit(Array.update(this.s,i.s,lift(data).s))
 
   @api def foreach(func: T => MUnit): MUnit
-    = MUnit(MArray.foreach(this.s, {t: Exp[T] => func(wrap(t)).s}, fresh[Index]))
+    = Unit(Array.foreach(this.s, {t: Exp[T] => func(wrap(t)).s}, fresh[Index]))
   @api def map[R:Type](func: T => R): Array[R]
-    = MArray(MArray.map(this.s, {t: Exp[T] => func(wrap(t)).s}, fresh[Index]))
+    = Array(Array.map(this.s, {t: Exp[T] => func(wrap(t)).s}, fresh[Index]))
   @api def zip[S:Type,R:Type](that: Array[S])(func: (T,S) => R): Array[R]
-    = MArray(MArray.zip(this.s, that.s, {(a:Exp[T],b:Exp[S]) => func(wrap(a), wrap(b)).s }, fresh[Index]))
+    = Array(Array.zip(this.s, that.s, {(a:Exp[T],b:Exp[S]) => func(wrap(a), wrap(b)).s }, fresh[Index]))
   @api def reduce(rfunc: (T,T) => T): T
-    = wrap{ MArray.reduce(this.s,{(a:Exp[T],b:Exp[T]) => rfunc(wrap(a),wrap(b)).s}, fresh[Index], (fresh[T],fresh[T])) }
+    = wrap{ Array.reduce(this.s,{(a:Exp[T],b:Exp[T]) => rfunc(wrap(a),wrap(b)).s}, fresh[Index], (fresh[T],fresh[T])) }
   @api def filter(cond: T => MBoolean): Array[T]
-    = MArray(MArray.filter(this.s, {t:Exp[T] => cond(wrap(t)).s}, fresh[Index]))
+    = Array(Array.filter(this.s, {t:Exp[T] => cond(wrap(t)).s}, fresh[Index]))
   @api def flatMap[R:Type](func: T => Array[R]): Array[R]
-    = MArray(MArray.flatmap(this.s,{t:Exp[T] => func(wrap(t)).s}, fresh[Index]))
+    = Array(Array.flatmap(this.s,{t:Exp[T] => func(wrap(t)).s}, fresh[Index]))
 
   @api def ===(that: Array[T]): MBoolean = this.zip(that){(x,y) => x === y }.reduce{_ && _}
   @api def =!=(that: Array[T]): MBoolean = this.zip(that){(x,y) => x =!= y }.reduce{_ || _}
@@ -33,10 +33,12 @@ case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
 }
 
 object Array {
+  implicit def arrayType[T:Type]: Type[Array[T]] = ArrayType(typ[T])
+
   @api def tabulate[T:Type](size: Index)(func: Index => T): MArray[T]
-    = MArray(mapindices(size.s, {i => func(wrap(i)).s}, fresh[Index]))
+    = Array(mapindices(size.s, {i => func(wrap(i)).s}, fresh[Index]))
   @api def fill[T:Type](size: Index)(func: => T): MArray[T] = this.tabulate(size){ _ => func}
-  @api def empty[T:Type](size: Index): MArray[T] = MArray(mutable[T](size.s))
+  @api def empty[T:Type](size: Index): MArray[T] = Array(mutable[T](size.s))
 
 
   /** Constructors **/
@@ -128,12 +130,5 @@ object Array {
     stageEffectful(ArrayFlatMap(array,aBlk,fBlk,i), effects.star)(ctx)
   }
 
-  @internal private[argon] def input_arguments(): MArray[MString] = MArray(stage(InputArguments())(ctx))
+  @internal private[argon] def input_arguments(): MArray[MString] = Array(stage(InputArguments())(ctx))
 }
-
-
-trait ArrayExp {
-  /** Type **/
-  implicit def arrayType[T:Type]: Type[Array[T]] = ArrayType(typ[T])
-}
-

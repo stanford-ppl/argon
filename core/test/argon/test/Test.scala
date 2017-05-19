@@ -2,6 +2,7 @@ package argon.test
 
 import argon._
 import argon.codegen.scalagen._
+import argon.core.cake
 import argon.transform.ForwardTransformer
 import argon.traversal.IRPrinter
 import forge._
@@ -18,16 +19,16 @@ trait LowPriorityImplicits {
 trait TestApi extends ArgonExternal with LowPriorityImplicits {
 
   implicit class intWrapper(x: scala.Int) extends {
-    @api def to[B:Type](implicit cast: Cast[scala.Int,B]): B = cast(x)
+    @api def to[B:Type](implicit cast: cake.Cast[scala.Int,B]): B = cast(x)
   }
   implicit class longWrapper(x: scala.Long) {
-    @api def to[B:Type](implicit cast: Cast[scala.Long,B]): B = cast(x)
+    @api def to[B:Type](implicit cast: cake.Cast[scala.Long,B]): B = cast(x)
   }
   implicit class floatWrapper(x: scala.Float) {
-    @api def to[B:Type](implicit cast: Cast[scala.Float,B]): B = cast(x)
+    @api def to[B:Type](implicit cast: cake.Cast[scala.Float,B]): B = cast(x)
   }
   implicit class doubleWrapper(x: scala.Double) {
-    @api def to[B:Type](implicit cast: Cast[scala.Double,B]): B = cast(x)
+    @api def to[B:Type](implicit cast: cake.Cast[scala.Double,B]): B = cast(x)
   }
 }
 

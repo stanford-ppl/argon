@@ -1,6 +1,6 @@
 package argon.nodes
 
-import argon._
+import argon.compiler._
 
 /** IR Nodes **/
 case class IfThenElse[T:Type](cond: Exp[MBoolean], thenp: Block[T], elsep: Block[T]) extends Op[T] {

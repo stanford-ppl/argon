@@ -1,11 +1,9 @@
-package argon
+package argon.core
 
-import java.io.PrintStream
-
-import argon.core.UninitializedEffectContextException
 import argon.graphs.Graph
 import argon.util.NullOutputStream
 
+import java.io.PrintStream
 import scala.collection.mutable
 
 /**

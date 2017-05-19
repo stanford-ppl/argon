@@ -1,7 +1,7 @@
 package argon.nodes
 
-import argon._
-import argon.core.UserFacing
+import argon.compiler._
+import argon.lang.compiler._
 import forge._
 
 class FltPtType[G,E](val mG: INT[G], val mE: INT[E]) extends Type[FltPt[G,E]] with CanBits[FltPt[G,E]] {
@@ -60,19 +60,19 @@ object FltPtType {
   }
 }
 
-object FloatType extends FltPtType(INT[_24],INT[_8]) with UserFacing {
+object FloatType extends FltPtType(INT[_24],INT[_8]) with FrontendFacing {
   def unapply(x: Type[_]): Boolean = x match {
     case FltPtType(24, 8) => true
     case _ => false
   }
-  override def toStringUser = "Float"
+  override def toStringFrontend = "Float"
 }
-object DoubleType extends FltPtType(INT[_53],INT[_11]) with UserFacing {
+object DoubleType extends FltPtType(INT[_53],INT[_11]) with FrontendFacing {
   def unapply(x: Type[_]): Boolean = x match {
     case FltPtType(53, 11) => true
     case _ => false
   }
-  override def toStringUser = "Double"
+  override def toStringFrontend = "Double"
 }
 
 

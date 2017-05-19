@@ -1,6 +1,6 @@
 package argon.nodes
 
-import argon._
+import argon.compiler._
 
 /** IR Nodes **/
 case class Print(x: Exp[MString]) extends Op[MUnit] { def mirror(f:Tx) = lang.PrintOps.print(f(x)) }

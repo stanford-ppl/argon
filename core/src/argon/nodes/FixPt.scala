@@ -1,7 +1,8 @@
 package argon.nodes
 
-import argon._
-import argon.core.UserFacing
+import argon.compiler._
+import argon.lang.{FixPt, FltPt}
+import argon.lang.typeclasses._
 import forge._
 
 sealed class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Type[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] {
@@ -61,20 +62,20 @@ object FixPtType {
   }
 }
 
-object IntType extends FixPtType(BOOL[TRUE],INT[_32],INT[_0]) with UserFacing {
+object IntType extends FixPtType(BOOL[TRUE],INT[_32],INT[_0]) with FrontendFacing {
   def unapply(x: Type[_]): CBoolean = x match {
     case FixPtType(true, 32, 0) => true
     case _ => false
   }
-  override def toStringUser = "Int"
+  override def toStringFrontend = "Int"
 }
 
-object LongType extends FixPtType(BOOL[TRUE],INT[_64],INT[_0]) with UserFacing {
+object LongType extends FixPtType(BOOL[TRUE],INT[_64],INT[_0]) with FrontendFacing {
   def unapply(x: Type[_]): CBoolean = x match {
     case FixPtType(true, 64, 0) => true
     case _ => false
   }
-  override def toStringUser = "Long"
+  override def toStringFrontend = "Long"
 }
 
 

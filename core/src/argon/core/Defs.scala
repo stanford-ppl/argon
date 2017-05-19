@@ -1,9 +1,10 @@
-package argon
+package argon.core
 
-import org.virtualized.{SourceContext, EmptyContext}
+import ops._
+import argon.graphs._
+import argon.utils.recursive
 import forge._
-import graphs._
-import utils.recursive
+import org.virtualized.{SourceContext, EmptyContext}
 
 /** Generalized Def representation which can have arbitrary output(s) -- roughly equivalent to LMS's FatDef **/
 abstract class Def extends Node with Product {

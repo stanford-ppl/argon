@@ -1,7 +1,6 @@
-package argon.typeclasses
+package argon.lang.typeclasses
 
-import argon._
-import argon.nodes._
+import argon.lang.MBoolean
 import forge._
 
 /** Staged types with ordering **/

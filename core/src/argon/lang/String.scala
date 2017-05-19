@@ -1,14 +1,14 @@
 package argon.lang
 
-import argon._
+import argon.compiler._
 import argon.nodes._
 import forge._
 
 case class String(s: Exp[String]) extends MetaAny[String] {
   override type Internal = java.lang.String
-  @api def +(rhs: CString): MString = this + MString(rhs)
-  @api def +(rhs: MString): MString = MString(String.concat(this.toText.s, rhs.s))
-  @api def +[R](rhs: MetaAny[R]): MString = MString(String.concat(this.s, rhs.toText.s))
+  @api def +(rhs: CString): MString = this + String(rhs)
+  @api def +(rhs: MString): MString = String(String.concat(this.toText.s, rhs.s))
+  @api def +[R](rhs: MetaAny[R]): MString = String(String.concat(this.s, rhs.toText.s))
 
   @api def =!=(that: MString): MBoolean = Boolean(String.differ(this.s, that.s))
   @api def ===(that: MString): MBoolean = Boolean(String.equals(this.s, that.s))
@@ -17,10 +17,10 @@ case class String(s: Exp[String]) extends MetaAny[String] {
 }
 
 object String {
-  @api def apply(s: CString): MString = MString(const(s))
+  @api def apply(s: CString): MString = String(const(s))
   @internal def const(s: CString): Const[MString] = constant(StringType)(s)
 
-  @internal def ify[T:Type](x: T): MString = MString(sym_tostring(x.s))
+  @internal def ify[T:Type](x: T): MString = String(sym_tostring(x.s))
 
   /** Constructors **/
   @internal def sym_tostring[T:Type](x: Exp[T]): Exp[MString] = x match {
@@ -46,7 +46,7 @@ object String {
 
 trait StringExp {
   /** Static methods **/
-  @internal def infix_+[R<:MetaAny[R]](x1: CString, x2: R): MString = MString(x1) + x2.toText
+  @internal def infix_+[R<:MetaAny[R]](x1: CString, x2: R): MString = String(x1) + x2.toText
 
   /** Rewrite Rules **/
   /*@rewrite def Bool$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
@@ -58,14 +58,14 @@ trait StringExp {
   implicit val stringIsStaged: Type[String] = StringType
 
   /** Lifting **/
-  @api implicit def string2text(x: CString): MString = MString(x)
+  @api implicit def string2text(x: CString): MString = String(x)
 
   implicit object LiftString extends Lift[CString,MString] {
-    @internal def apply(x: CString): MString = MString(x)
+    @internal def apply(x: CString): MString = String(x)
   }
 
   /** Casting **/
   implicit object CastStringLift extends Cast[CString,MString] {
-    @internal def apply(x: CString): MString = MString(x)
+    @internal def apply(x: CString): MString = String(x)
   }
 }

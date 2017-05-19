@@ -1,6 +1,6 @@
 package argon.traversal
 
-import argon._
+import argon.compiler._
 
 // Print IR + metadata for each encountered symbol
 case class IRPrinter(IR: State) extends Traversal {

@@ -3,9 +3,28 @@ package argon
 import argon.lang.ArgonApi
 import forge._
 
-trait ArgonExternal extends ArgonApi with ArgonCommon {
+trait LowPriorityImplicits {
+  // Has to be an implicit class to not conflict with higher priority implicits on +
+  class ConcatOps(lhs: MetaAny[_]) {
+    @api def +(rhs: CString): MString = lhs.toText + MString(rhs)
+    @api def +(rhs: MString): MString = lhs.toText + rhs
+    //@api def +(rhs: MetaAny[_]): MString = lhs.toText + rhs.toText
+  }
+  implicit def concatOps(lhs: MetaAny[_]): ConcatOps = new ConcatOps(lhs)
+}
+
+trait ArgonExternal extends ArgonApi with ArgonCommon with LowPriorityImplicits {
   type Type[T] = argon.Type[T]
   type Exp[T] = argon.Exp[T]
+
+  class ArithOps[T:Arith](lhs: T) {
+    @api def unary_-(): T = arith[T].negate(lhs)
+    @api def +(rhs: T): T = arith[T].plus(lhs, rhs)
+    @api def -(rhs: T): T = arith[T].minus(lhs, rhs)
+    @api def *(rhs: T): T = arith[T].times(lhs, rhs)
+    @api def /(rhs: T): T = arith[T].divide(lhs, rhs)
+  }
+  implicit def arithOps[T:Arith](lhs: T): ArithOps[T] = new ArithOps[T](lhs)
 
   type MetaAny[T] = argon.lang.MetaAny[T]
   type Any = argon.lang.MetaAny[_]

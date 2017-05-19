@@ -1,6 +1,8 @@
 package argon.lang
 
-import argon._
+import argon.Globals
+import argon.compiler._
+import argon.nodes._
 import forge._
 import org.virtualized.EmbeddedControls
 
@@ -11,6 +13,7 @@ import scala.language.experimental.macros
 abstract class MetaAny[T:Type] extends Product {
   type Internal
   def s: Exp[T]
+  final def getOrElseCreate(func: => T): T = if (s == null) func else this.asInstanceOf[T]
 
   private def isEqual(that: Any): CBoolean = that match {
     case x: MetaAny[_] => this.s == x.s
@@ -47,16 +50,8 @@ abstract class MetaAny[T:Type] extends Product {
 
 trait MetaAnyExp { }
 
-trait LowPriorityMetaAnyImplicits {
-  // Has to be an implicit class to not conflict with higher priority implicits on +
-  implicit class ConcatOps[T<:MetaAny[T]](lhs: T) {
-    @api def +(rhs: CString): MString = lhs.toText + MString(rhs)
-    @api def +(rhs: MString): MString = lhs.toText + rhs
-    @api def +[R](rhs: MetaAny[R]): MString = lhs.toText + rhs.toText
-  }
-}
+trait MetaAnyApi extends EmbeddedControls {
 
-trait MetaAnyApi extends EmbeddedControls with LowPriorityMetaAnyImplicits {
   @internal def infix_toString(x: MetaAny[_]): MString = x.toText
 
   def __valDef[T<:MetaAny[T]](init: T, name: CString): CUnit = { init.s.name = Some(name) }

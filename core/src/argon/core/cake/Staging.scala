@@ -1,8 +1,9 @@
 package argon.core
+package cake
 
-import argon._
 import argon.utils.escapeConst
 import forge._
+import org.virtualized.{SourceContext => SrcCtx}
 
 trait Staging { this: ArgonCore =>
 

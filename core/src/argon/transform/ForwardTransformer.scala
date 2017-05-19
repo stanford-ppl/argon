@@ -1,6 +1,6 @@
 package argon.transform
 
-import argon._
+import argon.compiler._
 import argon.core.{IllegalSubstException,IllegalMirrorExpException}
 import argon.traversal.Traversal
 

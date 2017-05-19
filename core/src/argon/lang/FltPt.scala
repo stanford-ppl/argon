@@ -1,6 +1,7 @@
 package argon.lang
 
-import argon._
+import typeclasses._
+import argon.compiler._
 import argon.nodes._
 import forge._
 
@@ -12,12 +13,12 @@ case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) extends MetaAny[FltPt[G,E]] {
   @api def - (that: FltPt[G,E]): FltPt[G,E] = FltPt(flt.sub(this.s,that.s))
   @api def * (that: FltPt[G,E]): FltPt[G,E] = FltPt(flt.mul(this.s,that.s))
   @api def / (that: FltPt[G,E]): FltPt[G,E] = FltPt(flt.div(this.s,that.s))
-  @api def < (that: FltPt[G,E]): MBoolean   = MBoolean( flt.lt(this.s,that.s))
-  @api def <=(that: FltPt[G,E]): MBoolean   = MBoolean(flt.leq(this.s,that.s))
-  @api def > (that: FltPt[G,E]): MBoolean   = MBoolean( flt.lt(that.s,this.s))
-  @api def >=(that: FltPt[G,E]): MBoolean   = MBoolean(flt.leq(that.s,this.s))
-  @api def ===(that: FltPt[G,E]): MBoolean  = MBoolean(flt.eql(this.s,that.s))
-  @api def =!=(that: FltPt[G,E]): MBoolean  = MBoolean(flt.neq(this.s,that.s))
+  @api def < (that: FltPt[G,E]): MBoolean   = Boolean( flt.lt(this.s,that.s))
+  @api def <=(that: FltPt[G,E]): MBoolean   = Boolean(flt.leq(this.s,that.s))
+  @api def > (that: FltPt[G,E]): MBoolean   = Boolean( flt.lt(that.s,this.s))
+  @api def >=(that: FltPt[G,E]): MBoolean   = Boolean(flt.leq(that.s,this.s))
+  @api def ===(that: FltPt[G,E]): MBoolean  = Boolean(flt.eql(this.s,that.s))
+  @api def =!=(that: FltPt[G,E]): MBoolean  = Boolean(flt.neq(this.s,that.s))
 
   @api override def toText = String.ify(this)
 }
@@ -88,19 +89,19 @@ object FltPt {
     case _ => stage(FltDiv(x,y))(ctx)
   }
   @internal def lt[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a < b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a < b)
     case _ => stage(FltLt(x,y))(ctx)
   }
   @internal def leq[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a <= b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a <= b)
     case _ => stage(FltLeq(x,y))(ctx)
   }
   @internal def neq[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a != b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a != b)
     case _ => stage(FltNeq(x,y))(ctx)
   }
   @internal def eql[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => MBoolean.const(a == b)
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a == b)
     case _ => stage(FltEql(x,y))(ctx)
   }
   @internal def random[G:INT,E:INT](max: Option[Exp[FltPt[G,E]]]): Exp[FltPt[G,E]] = {
@@ -143,10 +144,10 @@ trait FltPtExp {
 
 
   /** Lifting **/
-  implicit object Float2FltPt extends Lift[Float,Float32] {
+  implicit object Float2FltPt extends cake.Lift[Float,Float32] {
     @internal def apply(x: Float): Float32 = float2fltpt(x)
   }
-  implicit object Double2FltPt extends Lift[Double,Float64] {
+  implicit object Double2FltPt extends cake.Lift[Double,Float64] {
     @internal def apply(x: Double): Float64 = double2fltpt(x)
   }
 
@@ -176,7 +177,7 @@ trait FltPtExp {
   implicit def fltpt2fixpt[G:INT,E:INT,S:BOOL,I:INT,F:INT] = new Cast[FltPt[G,E],FixPt[S,I,F]] {
     @internal def apply(x: FltPt[G,E]): FixPt[S,I,F] = FixPt(FltPt.to_fix[G,E,S,I,F](x.s))
   }
-  implicit def string2fltpt[G:INT,E:INT] = new Cast[MString,FltPt[G,E]] {
+  implicit def string2fltpt[G:INT,E:INT] = new cake.Cast[MString,FltPt[G,E]] {
     @internal def apply(x: MString): FltPt[G,E] = FltPt(FltPt.from_string[G,E](x.s))
   }
 }

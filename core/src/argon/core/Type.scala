@@ -1,19 +1,20 @@
-package argon
+package argon.core
 
-import argon.core.{UserFacing,CompilerFacing}
+import ops._
+import argon.lang.MetaAny
 
 import scala.annotation.implicitNotFound
 
 /** Type evidence for staged types **/
 @implicitNotFound(msg = "Type ${T} is not a staged type. Try adding an explicit lift() call?")
-abstract class Type[T](implicit val ev: T <:< MetaAny[T]) extends UserFacing with CompilerFacing {
+abstract class Type[T](implicit val ev: T <:< MetaAny[T]) extends FrontendFacing with CompilerFacing {
 
-  private def fakeT: T = wrapped(null)
+  def fakeT: T = wrapped(null)
   val fake: MetaAny[T] = ev(fakeT)
   type Internal = fake.Internal
 
   // TODO: In the future we may want to refactor these two methods out
-  def unwrapped(x: T): Exp[T] = x.s
+  def unwrapped(x: T): Exp[T] = ev(x).s
   def wrapped(x: Exp[T]): T
 
   def typeArguments: List[Type[_]] = Nil
@@ -35,7 +36,7 @@ abstract class Type[T](implicit val ev: T <:< MetaAny[T]) extends UserFacing wit
     val tArgs = if (typeArguments.nonEmpty) typeArguments.map(t => c"$t").mkString("[",",","]") else ""
     c"$stagedClass$tArgs"
   }
-  override def toStringUser = {
+  override def toStringFrontend = {
     val tArgs = if (typeArguments.nonEmpty) typeArguments.map(t => u"$t").mkString("[",",","]") else ""
     c"$stagedClass$tArgs"
   }

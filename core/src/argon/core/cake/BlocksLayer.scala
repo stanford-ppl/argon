@@ -1,11 +1,10 @@
 package argon.core
-
-import scala.collection.mutable
+package cake
 
 import forge._
-import argon._
+import scala.collection.mutable
 
-trait BlocksCore { self: ArgonCore =>
+trait BlocksLayer { self: ArgonCore =>
   /**
     * Computes an *external* summary for a sequence of nodes
     * (Ignores reads/writes on data allocated within the scope)

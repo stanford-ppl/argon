@@ -1,6 +1,7 @@
 package argon.traversal
 
-import argon._
+import argon.Config
+import argon.compiler._
 
 /**
   * Common trait for all passes which can be run by the compiler,
@@ -13,7 +14,7 @@ trait CompilerPass { self =>
   val IR: State
   implicit val state: State = IR
 
-  def name: String = readable(self.getClass)
+  def name: String = c"${self.getClass}"
 
   // --- Options
   var verbosity: Int = Config.verbosity

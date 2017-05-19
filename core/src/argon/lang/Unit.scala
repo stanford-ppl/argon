@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon._
+import argon.compiler._
 import argon.nodes._
 import forge._
 
@@ -12,23 +12,23 @@ case class Unit(s: Exp[Unit]) extends MetaAny[Unit] {
 }
 
 object Unit {
-  @internal def apply(): MUnit = MUnit(const())
-  @internal def apply(s: CUnit): MUnit = MUnit(const())
+  implicit val unitIsStaged: Type[MUnit] = UnitType
+
+  @internal def apply(): MUnit = Unit(const())
+  @internal def apply(s: CUnit): MUnit = Unit(const())
   @internal def const(): Exp[MUnit] = constant(UnitType)(())
 }
 
 trait UnitExp {
-  implicit val voidIsStaged: Type[MUnit] = UnitType
-
   /** Lifting **/
-  @api implicit def unit2void(x: CUnit): MUnit = MUnit()
+  @api implicit def liftUnit(x: CUnit): MUnit = Unit()
 
-  implicit object LiftUnit2Unit extends Lift[CUnit,MUnit] {
-    @internal override def apply(x: CUnit) = MUnit()
+  implicit object UnitLift extends Lift[CUnit,MUnit] {
+    @internal override def apply(x: CUnit) = Unit()
   }
 
   /** Casting **/
-  implicit object CastUnit2Unit extends Cast[CUnit,MUnit] {
-    @internal override def apply(x: CUnit) = MUnit()
+  implicit object UnitCast extends Cast[CUnit,MUnit] {
+    @internal override def apply(x: CUnit) = Unit()
   }
 }

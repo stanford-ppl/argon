@@ -1,6 +1,7 @@
 package argon.lang
 
-import argon._
+import argon.Config
+import argon.compiler._
 import argon.core.NoFieldException
 import argon.nodes._
 import forge._
@@ -28,7 +29,7 @@ abstract class Struct[T:StructType] extends MetaAny[T]{ self =>
   @api def ===(that: T): MBoolean = Struct.equals(this.asInstanceOf[T],that)
   @api def toText = {
     val fields = tp.fields.map{case (name,fieldTyp) => fieldToText(name,fieldTyp) }
-    MString(tp.prefix + "(") + fields.reduceLeft{(a,b) => a + "," + b } + ")"
+    String(tp.prefix + "(") + fields.reduceLeft{(a,b) => a + "," + b } + ")"
   }
 }
 
