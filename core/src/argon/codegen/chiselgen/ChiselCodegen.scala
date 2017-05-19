@@ -15,6 +15,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   var controllerStack = scala.collection.mutable.Stack[Exp[_]]()
 
   var alphaconv = HashMap[String, String]() // Map for tracking defs of nodes and if they get redeffed anywhere, we map it to a suffix
+  var maxretime: Int = 0
 
   final def alphaconv_register(xx: String): Unit = {
     val x = "_reuse.*".r.replaceAllIn(xx, "")
@@ -112,12 +113,6 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       case _ => throw new NoBitWidthException(tp)
     }
   }
-
-  final protected def emitModule(lhs: String, x: String, args: String*): Unit = {
-    // dependencies ::= AlwaysDep("chiselgen", "template-level/templates/$x.scala")
-
-    emit(src"""val $lhs = Module(new ${x}(${args.mkString}))""")
-  } 
 
   override def copyDependencies(out: String): Unit = {
     // s"mkdir ${out}${java.io.File.separator}templates" !
