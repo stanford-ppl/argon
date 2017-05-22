@@ -96,7 +96,8 @@ trait ChiselGenFixPt extends ChiselCodegen {
           emit(src"${lhs}.r := ${x}.r.apply(${bitWidth(lhs.tp)-1}, 0)")
         }
       case FixPtType(s,d,f) => 
-        emit(src"val $lhs = ${x}.r.FP($s, $d, $f)")
+        emit(src"val $lhs = Wire(new FixedPoint($s, $d, $f))")
+        emit(src"${x}.cast($lhs)")
     }
     case FixPtToFltPt(x) => lhs.tp match {
       case DoubleType() => emit(src"val $lhs = $x.toDouble")
