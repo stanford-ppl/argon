@@ -50,7 +50,43 @@ trait Scheduling extends Statements { this: Staging =>
             stm -> binders.flatMap(stmFromNodeId)
           }
         }
-        throw new EffectsOrderException(block.result, expectedStms, actualStms, missingStms, binding)
+        if (argon.Config.verbosity > 1) {
+          log(s"Symbol table dump: ")
+          dumpSymbolTable{(lhs,rhs) =>
+            if (lhs.size == 1) {
+              log(c"  ${lhs.head} = $rhs")
+            }
+            else {
+              log(c"  $lhs = $rhs")
+            }
+            val left = lhs.head.asInstanceOf[Exp[_]]
+            val ctx = left.ctx
+            error(c"    ${ctx.fileName}:${ctx.line}:${ctx.column}: ")
+            error(ctx, showCaret = true)
+            if (nameOf(left).isDefined) error(c"    Name: ${nameOf(left).get}")
+          }
+        }
+
+        error(c"Violated ordering of effects while traversing block result: ")
+        error(c"${str(block.result)}")
+        error("expected: ")
+        expectedStms.foreach{stm => error(c"  $stm")}
+        error("actual: ")
+        actualStms.foreach{stm => error(c"  $stm")}
+        error("missing: ")
+        //missing.foreach{stm => error(c"  $stm")}
+        binding.foreach { case (stm, bindedby) =>
+          error(c"  $stm")
+          error("  appears to be bound by: ")
+          bindedby.foreach { s =>
+            error(c"    $s")
+            error(c"    ${s.lhs.head.ctx}")
+            if (nameOf(s.lhs.head).isDefined) error(c"    Name: ${nameOf(s.lhs.head).get}")
+          }
+          error("")
+          error("")
+        }
+        throw new EffectsOrderException()
       }
     }
 
