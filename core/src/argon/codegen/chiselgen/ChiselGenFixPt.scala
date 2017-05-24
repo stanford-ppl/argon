@@ -38,16 +38,12 @@ trait ChiselGenFixPt extends ChiselCodegen {
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     case (FixPtType(s,d,f), Const(cc: BigDecimal)) => 
-      if (s) {
-        cc.toInt.toString + src".FP(true, $d, $f)"
-      } else {
-        cc.toInt.toString + ".U(32.W)"        
-      }
+      cc.toString + src".FP($s, $d, $f)"
     case (IntType(), Const(cc: BigDecimal)) => 
       if (cc >= 0) {
-        cc.toInt.toString + ".U(32.W)"  
+        cc.toString + ".toInt.U(32.W)"  
       } else {
-        cc.toInt.toString + ".S(32.W).asUInt"
+        cc.toString + ".toInt.S(32.W).asUInt"
       }
       
     case (LongType(), Const(cc: BigDecimal)) => cc.toLong.toString + ".L"
@@ -79,6 +75,9 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case SatSub(x,y) => emit(src"val $lhs = $x <-> $y")
     case SatMul(x,y) => emit(src"val $lhs = $x <*> $y")
     case SatDiv(x,y) => emit(src"val $lhs = $x </> $y")
+    case FixLsh(x,y) => emit(s"val ${quote(lhs)} = ${quote(x)} << $y")
+    case FixRsh(x,y) => emit(s"val ${quote(lhs)} = ${quote(x)} >> $y")
+    case FixURsh(x,y) => emit(s"val ${quote(lhs)} = ${quote(x)} >>> $y")
     case UnbSatMul(x,y) => emit(src"val $lhs = $x <*&> $y")
     case UnbSatDiv(x,y) => emit(src"val $lhs = $x </&> $y")
     case FixRandom(x) => 
@@ -95,12 +94,13 @@ trait ChiselGenFixPt extends ChiselCodegen {
         val pad = bitWidth(lhs.tp) - bitWidth(x.tp)
         emitGlobalWire(src"val $lhs = Wire(new FixedPoint(true, 64, 0))")
         if (pad > 0) {
-          emit(src"${lhs}.r := Utils.Cat(0.U(${pad}.W), ${x}.r)")
+          emit(src"${lhs}.r := chisel3.util.Cat(0.U(${pad}.W), ${x}.r)")
         } else {
           emit(src"${lhs}.r := ${x}.r.apply(${bitWidth(lhs.tp)-1}, 0)")
         }
       case FixPtType(s,d,f) => 
-        emit(src"val $lhs = ${x}.r.FP($s, $d, $f)")
+        emit(src"val $lhs = Wire(new FixedPoint($s, $d, $f))")
+        emit(src"${x}.cast($lhs)")
     }
     case FixPtToFltPt(x) => lhs.tp match {
       case DoubleType() => emit(src"val $lhs = $x.toDouble")
