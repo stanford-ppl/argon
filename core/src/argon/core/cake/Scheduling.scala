@@ -54,17 +54,21 @@ trait Scheduling { this: ArgonCore =>
           }
         }
         error(c"Violated ordering of effects while traversing block result: ")
-        error(str(block.result))
+        error(c"${str(block.result)}")
         error("expected: ")
         expectedStms.foreach{stm => error(c"  $stm")}
         error("actual: ")
         actualStms.foreach{stm => error(c"  $stm")}
         error("missing: ")
         //missing.foreach{stm => error(c"  $stm")}
-        binding.foreach{case (stm, bindedby) =>
+        binding.foreach { case (stm, bindedby) =>
           error(c"  $stm")
           error("  appears to be bound by: ")
-          bindedby.foreach{s => error(c"    $s")}
+          bindedby.foreach { s =>
+            error(c"    $s")
+            error(c"    ${s.lhs.head.ctx}")
+            if (s.lhs.head.name.isDefined) error(c"    Name: ${s.lhs.head.name.get}")
+          }
           error("")
           error("")
         }

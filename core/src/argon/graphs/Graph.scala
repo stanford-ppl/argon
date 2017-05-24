@@ -53,6 +53,10 @@ class Graph[E<:Edge,N<:Node] {
     val freqs   = mutable.ArrayBuffer[Seq[Freq]]()                   // Frequency hints for code motion
   }
 
+  def dumpSymbolTable(func: (Iterable[Edge], Node) => Unit): Unit = {
+    (0 until curNodeId.toInt).foreach{i => val t = triple(i.toNodeId); func(t._1, t._2) }
+  }
+
   def reset(): Unit = {
     curEdgeId = 0.toEdgeId
     curNodeId = 0.toNodeId
@@ -270,7 +274,7 @@ class Graph[E<:Edge,N<:Node] {
     *   - tunnel symbols: ANY dependents of tunnel symbols which are also dependencies of the binder
     * Note that while it would be nice to only do one DFS, we need to track which nodes are bound where.
     */
-  def getBoundDependents(nodes: Set[NodeId], scope: Set[NodeId]): Set[NodeId] = {
+  def getBoundDependents(scope: Set[NodeId], nodes: Set[NodeId]): Set[NodeId] = {
     def getDependents(root: NodeId) = {
       val rootEdges = nodeOutputs(root)
 
@@ -303,7 +307,7 @@ class Graph[E<:Edge,N<:Node] {
       sched
     }
 
-    val tunnelDependents = scope.flatMap{node =>
+    val tunnelDependents = nodes.flatMap{node =>
       /*if (VERBOSE_SCHEDULING) {
         if (nodeTunnels(node).nonEmpty) xlog(c"  [Tunnel] node: ${triple(node)}: ")
       }*/
@@ -445,26 +449,21 @@ class Graph[E<:Edge,N<:Node] {
     val givenSet = given.toSet
 
     val scope = localNodes
-
-    //val mustInside = getBoundDependentsDEBUG(scope.toSet)
-    //log("Must inside: ")
-    //mustInside.foreach{stm => log(c"  ${triple(stm)}")}
-
     val scopeSet = scope.toSet
 
     scope.flatMap{node =>
       val pseudoSet = Set(node)
-      val binds = getBoundDependents(pseudoSet, scopeSet)
+      val binds = getBoundDependents(scopeSet, pseudoSet)
       if ((binds intersect givenSet).nonEmpty) {
         val cache = buildScopeIndex(binds)
         val path = getSchedule(givenSet, cache, checkAcyclic = false)
         //getBoundDependentsDEBUG(pseudoSet,scopeSet,verbose=true)
-        log(c"Found binding: ${triple(node)}")
-        log(c"  bound syms:")
+        msg(c"Binding: ${triple(node)}")
+        msg(c"  bound syms:")
         val bindsL1 = nodeBounds(node)
-        bindsL1.foreach{bound => log(c"  ${triple(producerOf(bound))}") }
-        log(c"  path: ")
-        path.foreach{p => log(c"  ${triple(p)}")}
+        bindsL1.foreach{bound => msg(c"  ${triple(producerOf(bound))}") }
+        msg(c"  path: ")
+        path.foreach{p => msg(c"  ${triple(p)}")}
         // TODO: This part appears to be broken right now
         /*val otherParents = path.find{node => nodeBounds(node).nonEmpty }
         if (otherParents.nonEmpty) {

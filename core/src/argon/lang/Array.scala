@@ -39,7 +39,14 @@ object Array {
     = Array(mapindices(size.s, {i => func(wrap(i)).s}, fresh[Index]))
   @api def fill[T:Type](size: Index)(func: => T): MArray[T] = this.tabulate(size){ _ => func}
   @api def empty[T:Type](size: Index): MArray[T] = Array(mutable[T](size.s))
-
+  @api def const[T:Type](elements: T*): MArray[T] = {
+    val arr = empty(elements.length)
+    (0 until elements.length).foreach{ i =>
+      arr(i) = elements(i)
+      ()
+    }
+    arr
+  }
 
   /** Constructors **/
   @internal def length[T:Type](array: Exp[MArray[T]]): Sym[Index] = stage(ArrayLength(array))(ctx)

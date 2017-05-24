@@ -15,9 +15,7 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
     * By default, the rule is to mirror the node and symbol
     * @return the symbol which should replace lhs
     */
-  def transform[T:Type](lhs: Sym[T], rhs: Op[T])(implicit ctx: SrcCtx): Exp[T] = {
-    mirror(List(lhs), rhs).head.asInstanceOf[Exp[T]]
-  }
+  def transform[T:Type](lhs: Sym[T], rhs: Op[T])(implicit ctx: SrcCtx): Exp[T] = mirror(lhs, rhs)
 
   /**
     * Determine and register substitution rules for the given "fat" definition
