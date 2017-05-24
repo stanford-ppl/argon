@@ -59,6 +59,7 @@ abstract class Transformer { self =>
     }
   }
 
+  final def mirror[T](lhs: Sym[T], rhs: Op[T]): Exp[T] = mirror(Seq(lhs),rhs).head.asInstanceOf[Exp[T]]
 
   def mirror(lhs: Seq[Sym[_]], rhs: Def): Seq[Exp[_]] = {
     log(c"Mirror: $lhs = $rhs")
