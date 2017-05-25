@@ -1,6 +1,6 @@
 package argon.nodes
 
-import argon.compiler._
+import argon.core.compiler._
 import argon.lang.compiler._
 import forge._
 

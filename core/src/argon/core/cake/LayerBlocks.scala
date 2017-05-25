@@ -4,7 +4,7 @@ package cake
 import forge._
 import scala.collection.mutable
 
-trait BlocksLayer { self: ArgonCore =>
+trait LayerBlocks { self: ArgonCore =>
   /**
     * Computes an *external* summary for a sequence of nodes
     * (Ignores reads/writes on data allocated within the scope)

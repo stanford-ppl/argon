@@ -1,4 +1,4 @@
-package argon.ops
+package argon.lang
 
 /*
 trait PatternApi extends PatternExp

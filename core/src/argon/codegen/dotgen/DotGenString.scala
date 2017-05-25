@@ -2,7 +2,7 @@ package argon.codegen.dotgen
 
 import argon._
 import argon.nodes._
-import argon.utils.escapeString
+import argon.util.escapeString
 
 trait DotGenString extends DotCodegen {
 

@@ -4,7 +4,7 @@ package cake
 import argon.util._
 import forge._
 
-trait Reporting { self: ArgonCore =>
+trait LayerReporting { self: ArgonCore =>
   type Log = java.io.PrintStream
 
   def plural(x: Int, singular: String, plur: String): String = if (x == 1) singular else plur

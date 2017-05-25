@@ -1,7 +1,7 @@
 package argon.lang.typeclasses
 
 import argon.lang.{FixPt,FltPt}
-import argon.compiler._
+import argon.core.compiler._
 import argon.nodes._
 import forge._
 

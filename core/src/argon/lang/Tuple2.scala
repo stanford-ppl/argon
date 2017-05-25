@@ -1,6 +1,7 @@
 package argon.lang
 
-import argon.compiler._
+import typeclasses._
+import argon.core.compiler._
 import argon.nodes._
 import forge._
 
@@ -14,9 +15,8 @@ case class Tuple2[A:Type,B:Type](s: Exp[Tuple2[A,B]]) extends Struct[Tuple2[A,B]
 }
 
 object Tuple2 {
-  import Struct._
-  @internal def pack[A:Type,B:Type](a: A, b: B): Tuple2[A,B] = struct[Tuple2[A,B]]("_1" -> a.s, "_2" -> b.s)
-  @internal def pack[A:Type,B:Type](t: (A, B)): Tuple2[A,B] = struct[Tuple2[A,B]]("_1" -> t._1.s, "_2" -> t._2.s)
+  @internal def pack[A:Type,B:Type](a: A, b: B): Tuple2[A,B] = Struct[Tuple2[A,B]]("_1" -> a.s, "_2" -> b.s)
+  @internal def pack[A:Type,B:Type](t: (A, B)): Tuple2[A,B] = Struct[Tuple2[A,B]]("_1" -> t._1.s, "_2" -> t._2.s)
 }
 
 

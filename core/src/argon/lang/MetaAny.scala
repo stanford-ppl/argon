@@ -1,8 +1,7 @@
 package argon.lang
 
 import argon.Globals
-import argon.compiler._
-import argon.nodes._
+import argon.core.compiler._
 import forge._
 import org.virtualized.EmbeddedControls
 
@@ -46,6 +45,16 @@ abstract class MetaAny[T:Type] extends Product {
   @api def ===(that: T): MBoolean
   @api def =!=(that: T): MBoolean
   @api def toText: MString
+}
+
+trait MetaAnyLowPriorityImplicits {
+  // Has to be an implicit class to not conflict with higher priority implicits on +
+  class ConcatOps(lhs: MetaAny[_]) {
+    @api def +(rhs: CString): MString = lhs.toText + String(rhs)
+    @api def +(rhs: MString): MString = lhs.toText + rhs
+    //@api def +(rhs: MetaAny[_]): MString = lhs.toText + rhs.toText
+  }
+  implicit def concatOps(lhs: MetaAny[_]): ConcatOps = new ConcatOps(lhs)
 }
 
 trait MetaAnyExp { }

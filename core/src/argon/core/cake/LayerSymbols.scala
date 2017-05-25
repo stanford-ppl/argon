@@ -4,7 +4,7 @@ package cake
 import forge._
 import org.virtualized.EmptyContext
 
-trait SymbolsLayer { self: ArgonCore =>
+trait LayerSymbols { self: ArgonCore =>
 
   case class SymbolContext(pos: List[SrcCtx]) extends Metadata[SymbolContext] with CompilerFacing {
     def mirror(f:Tx) = this

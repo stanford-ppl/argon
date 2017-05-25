@@ -1,6 +1,7 @@
 package argon.nodes
 
-import argon.compiler._
+import argon.core.compiler._
+import argon.lang.compiler._
 import forge._
 
 case class Tuple2Type[A,B](m1: Type[A], m2: Type[B]) extends StructType[MTuple2[A,B]] with CanBits[MTuple2[A,B]] {

@@ -6,7 +6,7 @@ import forge._
 
 import scala.annotation.implicitNotFound
 
-trait StagedTypes { this: ArgonCore =>
+trait LayerStagedTypes { this: ArgonCore =>
   implicit def subTypeEv[T:Type](x: T): MetaAny[T] = typ[T].ev(x)
 
   def typ[T:Type] = implicitly[Type[T]]

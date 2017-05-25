@@ -1,7 +1,7 @@
 package argon.lang
 
 import typeclasses._
-import argon.compiler._
+import argon.core.compiler._
 import argon.nodes._
 import forge._
 
@@ -144,10 +144,10 @@ trait FltPtExp {
 
 
   /** Lifting **/
-  implicit object Float2FltPt extends cake.Lift[Float,Float32] {
+  implicit object Float2FltPt extends Lift[Float,Float32] {
     @internal def apply(x: Float): Float32 = float2fltpt(x)
   }
-  implicit object Double2FltPt extends cake.Lift[Double,Float64] {
+  implicit object Double2FltPt extends Lift[Double,Float64] {
     @internal def apply(x: Double): Float64 = double2fltpt(x)
   }
 
@@ -177,7 +177,7 @@ trait FltPtExp {
   implicit def fltpt2fixpt[G:INT,E:INT,S:BOOL,I:INT,F:INT] = new Cast[FltPt[G,E],FixPt[S,I,F]] {
     @internal def apply(x: FltPt[G,E]): FixPt[S,I,F] = FixPt(FltPt.to_fix[G,E,S,I,F](x.s))
   }
-  implicit def string2fltpt[G:INT,E:INT] = new cake.Cast[MString,FltPt[G,E]] {
+  implicit def string2fltpt[G:INT,E:INT] = new Cast[MString,FltPt[G,E]] {
     @internal def apply(x: MString): FltPt[G,E] = FltPt(FltPt.from_string[G,E](x.s))
   }
 }

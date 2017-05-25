@@ -1,9 +1,8 @@
 package argon
 
-import argon._
+import argon.core.compiler._
 import argon.core.RunningFailed
 import argon.codegen.FileGen
-import forge._
 import scala.sys.process._
 
 trait AppRunner extends AppCore { self =>

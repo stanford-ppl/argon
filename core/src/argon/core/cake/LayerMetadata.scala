@@ -3,7 +3,7 @@ package cake
 
 import forge._
 
-trait MetadataLayer { this: ArgonCore =>
+trait LayerMetadata { this: ArgonCore =>
 
   implicit def metadataHasLattice[T <: Metadata[T]]: Lattice[T] = new Lattice[T] {
     override def meet(a: T, b: T): T = a.meet(b)

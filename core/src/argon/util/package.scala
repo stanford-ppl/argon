@@ -1,11 +1,12 @@
 package argon
 
 import java.io.File
+
 import org.apache.commons.lang3.StringEscapeUtils.escapeJava
 
 import scala.collection.mutable
 
-object utils {
+package object util {
 
   def escapeString(raw: String): String = "\"" + escapeJava(raw) + "\""
   def escapeChar(raw: Char): String = "'"+escapeJava(raw.toString)+"'"

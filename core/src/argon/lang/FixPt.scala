@@ -2,9 +2,9 @@ package argon.lang
 
 import typeclasses._
 
-import argon.compiler._
+import argon.core.compiler._
 import argon.nodes._
-import argon.utils.escapeConst
+import argon.util.utils.escapeConst
 import forge._
 
 /** All Fixed Point Types **/
@@ -336,27 +336,27 @@ trait FixPtExp {
   @api implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
   @api implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
 
-  implicit object LiftInt extends cake.Lift[Int,Int32] {
+  implicit object LiftInt extends Lift[Int,Int32] {
     @internal def apply(x: Int): Int32 = int2fixpt(x)
   }
-  implicit object LiftLong extends cake.Lift[Long,Int64] {
+  implicit object LiftLong extends Lift[Long,Int64] {
     @internal def apply(x: Long): Int64 = long2fixpt(x)
   }
 
   /** Casting **/
-  implicit def int_cast_fixpt[S:BOOL,I:INT,F:INT]: cake.Cast[Int,FixPt[S,I,F]] = new cake.Cast[Int,FixPt[S,I,F]] {
+  implicit def int_cast_fixpt[S:BOOL,I:INT,F:INT]: Cast[Int,FixPt[S,I,F]] = new Cast[Int,FixPt[S,I,F]] {
     @internal def apply(x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
   }
-  implicit def long_cast_fixpt[S:BOOL,I:INT,F:INT]: cake.Cast[Long,FixPt[S,I,F]] = new cake.Cast[Long,FixPt[S,I,F]] {
+  implicit def long_cast_fixpt[S:BOOL,I:INT,F:INT]: Cast[Long,FixPt[S,I,F]] = new Cast[Long,FixPt[S,I,F]] {
     @internal def apply(x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
   }
-  implicit def fixpt2fixpt[S:BOOL,I:INT,F:INT, S2:BOOL,I2:INT,F2:INT] = new cake.Cast[FixPt[S,I,F],FixPt[S2,I2,F2]] {
+  implicit def fixpt2fixpt[S:BOOL,I:INT,F:INT, S2:BOOL,I2:INT,F2:INT] = new Cast[FixPt[S,I,F],FixPt[S2,I2,F2]] {
     @internal def apply(x: FixPt[S,I,F]): FixPt[S2,I2,F2] = wrap(FixPt.convert[S,I,F,S2,I2,F2](x.s))
   }
-  implicit def fixpt2fltpt[S:BOOL,I:INT,F:INT, G:INT,E:INT] = new cake.Cast[FixPt[S,I,F],FltPt[G,E]] {
+  implicit def fixpt2fltpt[S:BOOL,I:INT,F:INT, G:INT,E:INT] = new Cast[FixPt[S,I,F],FltPt[G,E]] {
     @internal def apply(x: FixPt[S,I,F]): FltPt[G,E] = wrap(FixPt.to_flt[S,I,F,G,E](x.s))
   }
-  implicit def string2fixpt[S:BOOL,I:INT,F:INT] = new cake.Cast[MString,FixPt[S,I,F]] {
+  implicit def string2fixpt[S:BOOL,I:INT,F:INT] = new Cast[MString,FixPt[S,I,F]] {
     @internal def apply(x: MString): FixPt[S,I,F] = wrap(FixPt.from_text[S,I,F](x.s))
   }
 }

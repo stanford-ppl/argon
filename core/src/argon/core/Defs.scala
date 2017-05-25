@@ -2,7 +2,7 @@ package argon.core
 
 import ops._
 import argon.graphs._
-import argon.utils.recursive
+import argon.util.recursive
 import forge._
 import org.virtualized.{SourceContext, EmptyContext}
 

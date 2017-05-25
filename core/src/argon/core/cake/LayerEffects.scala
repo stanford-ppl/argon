@@ -3,7 +3,7 @@ package cake
 
 import forge._
 
-trait EffectsLayer { this: ArgonCore =>
+trait LayerEffects { this: ArgonCore =>
 
   object depsOf {
     @stateful def apply(x: Exp[_]): Seq[Exp[_]] = metadata[AntiDeps](x).map(_.syms).getOrElse(Nil)

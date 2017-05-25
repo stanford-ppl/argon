@@ -2,7 +2,7 @@ package argon.codegen.scalagen
 
 import argon._
 import argon.nodes._
-import argon.utils.escapeString
+import argon.util.utils.escapeString
 
 trait ScalaGenString extends ScalaCodegen {
 

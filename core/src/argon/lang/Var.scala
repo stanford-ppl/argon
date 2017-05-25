@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon.compiler._
+import argon.core.compiler._
 import argon.nodes._
 import forge._
 
@@ -33,6 +33,8 @@ trait LowPriorityVarImplicits { self: VarExp =>
 
 
 trait VarExp extends LowPriorityVarImplicits {
+  // NOTE: NO implicit evidence of being staged (otherwise could have something like Array[Var[T]])
+
   /** Static methods **/
   import StagedVariables._
   @internal def infix_==[T:Type](lhs: Var[T], rhs: Var[T]): MBoolean = readVar(lhs) === readVar(rhs)

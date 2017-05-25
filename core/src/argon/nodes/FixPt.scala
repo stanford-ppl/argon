@@ -1,8 +1,7 @@
 package argon.nodes
 
-import argon.compiler._
-import argon.lang.{FixPt, FltPt}
-import argon.lang.typeclasses._
+import argon.core.compiler._
+import argon.lang.compiler._
 import forge._
 
 sealed class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Type[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] {

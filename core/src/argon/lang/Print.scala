@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon.compiler._
+import argon.core.compiler._
 import argon.nodes._
 import forge._
 
@@ -21,8 +21,8 @@ trait PrintApi {
   @api def print[T:Type](x: T): MUnit = Unit(PrintOps.print(x.toText.s))
   @api def println[T:Type](x: T): MUnit = Unit(PrintOps.println(x.toText.s))
 
-  @api def print(x: java.lang.String): MUnit = print(string2text(x))
-  @api def println(x: java.lang.String): MUnit = println(string2text(x))
+  @api def print(x: CString): MUnit = print(String(x))
+  @api def println(x: CString): MUnit = println(String(x))
 }
 
 

@@ -1,7 +1,7 @@
 package argon.nodes
 
-import argon.compiler._
-import argon.lang.Var
+import argon.core.compiler._
+import argon.lang.compiler._
 
 case class VarType[T](child: Type[T]) extends Type[Var[T]] {
   override def wrapped(x: Exp[Var[T]]) = Var(x)(child,this)
@@ -9,7 +9,6 @@ case class VarType[T](child: Type[T]) extends Type[Var[T]] {
   override def typeArguments = List(child)
   override def isPrimitive = false // Should NOT be primitive -- used to check aliases / mutable symbols
 }
-// NOTE: NO implicit evidence of being staged (otherwise could have something like Array[Var[T]])
 
 
 /** IR Nodes **/

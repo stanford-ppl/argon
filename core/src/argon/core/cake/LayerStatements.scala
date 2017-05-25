@@ -4,7 +4,7 @@ package cake
 import argon.Config
 import forge._
 
-trait Statements { this: ArgonCore =>
+trait LayerStatements { this: ArgonCore =>
   type NodeId = Int
   type EdgeId = Int
 

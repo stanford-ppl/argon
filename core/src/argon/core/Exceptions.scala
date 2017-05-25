@@ -3,6 +3,8 @@ package argon.core
 import ops._
 import scala.util.control.NoStackTrace
 
+// TODO: Move these elsewhere?
+
 abstract class CompilerException(id: Int, msg: String, console: => Unit) extends
   Exception(s"Internal exception #$id: $msg") { console }
 

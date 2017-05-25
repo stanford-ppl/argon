@@ -1,6 +1,6 @@
 package argon.traversal
 
-import argon.compiler._
+import argon.core.compiler._
 import argon.core.TraversalFailedToCompleteException
 import argon.core.TraversalFailedToConvergeException
 

@@ -2,7 +2,7 @@ package argon.codegen.cppgen
 
 import argon._
 import argon.nodes._
-import argon.utils.escapeString
+import argon.util.escapeString
 
 trait CppGenString extends CppCodegen {
 

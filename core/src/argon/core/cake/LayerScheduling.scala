@@ -3,12 +3,9 @@ package cake
 
 import forge._
 
-trait Scheduling { this: ArgonCore =>
-  // TODO: Awkward placement for this - better spot?
-  // Based on performance testing LongMap is slightly faster than others (even with casting)
+trait LayerScheduling { this: ArgonCore =>
 
-
-  @stateful def makeScopeIndex(scope: Iterable[Stm])(implicit state: State): state.graph.OrderCache = {
+  @stateful def makeScopeIndex(scope: Iterable[Stm])(implicit state: State): OrderCache = {
     state.graph.buildScopeIndex(scope.map(_.rhs.id))
   }
   @stateful def orderedInputs(roots: Iterable[Exp[_]], cache: OrderCache): Seq[Stm] = {

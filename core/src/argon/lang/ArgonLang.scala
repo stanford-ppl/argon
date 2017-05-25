@@ -1,18 +1,69 @@
-package argon
+package argon.lang
 
-trait ArgonCommon extends ArgonCore {
+import typeclasses._
+import forge.api
 
+/** Internal, language type aliases (no cyclic aliases allowed, e.g. cannot have "type X = argon.lang.X") **/
+trait LangAliases {
+  /**
+    * Convention (adapted from Forge):
+    * M- prefix: "Meta" (staged types)
+    * C- prefix: "Constant" (unstaged types)
+    */
+  type Index = FixPt[TRUE,_32,_0]
+
+  type MArray[T] = argon.lang.Array[T]
+  type CArray[T] = scala.Array[T]
+
+  type MHashMap[K, V] = argon.lang.HashMap[K, V]
+
+  type MBoolean = argon.lang.Boolean
+  type CBoolean = scala.Boolean
+
+  type MString = argon.lang.String
+  type CString = java.lang.String
+
+  type MTuple2[A,B] = argon.lang.Tuple2[A,B]
+  type CTuple2[A,B] = scala.Tuple2[A,B]
+
+  type MUnit = argon.lang.Unit
+  type CUnit = scala.Unit
+}
+
+
+/** All common type aliases, not used inside lang **/
+trait CommonAliases extends LangAliases {
+  type FixPt[S,I,F] = argon.lang.FixPt[S,I,F]
+  type FltPt[G,E] = argon.lang.FltPt[G,E]
+
+  type Func1[A,R] = argon.lang.Func1[A,R]
+  type Func2[A,B,R] = argon.lang.Func2[A,B,R]
+  type Func3[A,B,C,R] = argon.lang.Func3[A,B,C,R]
+  type Func4[A,B,C,D,R] = argon.lang.Func4[A,B,C,D,R]
+  type Func5[A,B,C,D,E,R] = argon.lang.Func5[A,B,C,D,E,R]
+  type Func6[A,B,C,D,E,F,R] = argon.lang.Func6[A,B,C,D,E,F,R]
+  type Func7[A,B,C,D,E,F,G,R] = argon.lang.Func7[A,B,C,D,E,F,G,R]
+  type Func8[A,B,C,D,E,F,G,H,R] = argon.lang.Func8[A,B,C,D,E,F,G,H,R]
+  type Func9[A,B,C,D,E,F,G,H,I,R] = argon.lang.Func9[A,B,C,D,E,F,G,H,I,R]
+  type Func10[A,B,C,D,E,F,G,H,I,J,R] = argon.lang.Func10[A,B,C,D,E,F,G,H,I,J,R]
+
+  type HashIndex[K] = argon.lang.HashIndex[K]
+
+  type MetaAny[T] = argon.lang.MetaAny[T]
+
+  type Struct[S] = argon.lang.Struct[S]
+
+  type Var[T] = argon.lang.Var[T]
+
+  type Arith[T] = argon.lang.typeclasses.Arith[T]
   type Bits[T] = argon.lang.typeclasses.Bits[T]
-  val Bits = argon.typeclasses.Bits
+  val Bits = argon.lang.typeclasses.Bits
   type CanBits[T] = argon.lang.typeclasses.CanBits[T]
-
   type Num[T] = argon.lang.typeclasses.Num[T]
   type Order[T] = argon.lang.typeclasses.Order[T]
-  type Arith[T] = argon.lang.typeclasses.Arith[T]
+
   type INT[T] = argon.lang.typeclasses.INT[T]
-  val INT = argon.typeclasses.INT
   type BOOL[T] = argon.lang.typeclasses.BOOL[T]
-  val BOOL = argon.typeclasses.BOOL
 
   type TRUE = argon.lang.typeclasses.TRUE
   type FALSE = argon.lang.typeclasses.FALSE
@@ -147,3 +198,101 @@ trait ArgonCommon extends ArgonCore {
   type _127 = argon.lang.typeclasses._127
   type _128 = argon.lang.typeclasses._128
 }
+
+/** Implicit typeclass evidence, (optionally) implicit conversions **/
+trait ArgonExp
+  extends CommonAliases
+    with AssertExp
+    with BooleanExp
+    with FixPtExp
+    with FltPtExp
+    with FunctionExp
+    with HashMapExp
+    with IfThenElseExp
+    with MetaAnyExp
+    with OverloadHackExp
+    with PrintExp
+    with StringExp
+    with StructExp
+    with Tuple2Exp
+    with UnitExp
+    with VarExp
+    with ArithExp
+    with BitsExp
+    with NumExp
+    with OrderExp
+
+trait ArgonApi
+  extends ArgonExp
+    with AssertApi
+    with CastsApi
+    with FixPtApi
+    with FltPtApi
+    with HashMapApi
+    with IfThenElseApi
+    with PrintApi
+    with BitsApi
+    with NumApi
+    with MetaAnyLowPriorityImplicits
+
+/** Static functions, implicit conversions, app-facing type aliases **/
+trait ArgonLangExternal extends ArgonApi {
+  type Type[T] = argon.core.Type[T]
+  type Exp[T] = argon.core.Exp[T]
+
+  type Any = argon.lang.MetaAny[_]
+
+  type Array[T] = argon.lang.Array[T]
+  val Array = argon.lang.Array
+
+  type Boolean = argon.lang.Boolean
+
+  type HashMap[K, V] = argon.lang.HashMap[K, V]
+
+  type String = argon.lang.String
+
+  type Tuple2[A, B] = argon.lang.Tuple2[A, B]
+  val Tuple2 = argon.lang.Tuple2
+
+  type Unit = argon.lang.Unit
+
+  class ArithOps[T:Arith](lhs: T) {
+    @api def unary_-(): T = arith[T].negate(lhs)
+    @api def +(rhs: T): T = arith[T].plus(lhs, rhs)
+    @api def -(rhs: T): T = arith[T].minus(lhs, rhs)
+    @api def *(rhs: T): T = arith[T].times(lhs, rhs)
+    @api def /(rhs: T): T = arith[T].divide(lhs, rhs)
+  }
+  implicit def arithOps[T:Arith](lhs: T): ArithOps[T] = new ArithOps[T](lhs)
+}
+
+/** Aliases that are only internally facing (no frontend view required) **/
+trait ArgonLangInternal extends ArgonExp {
+  val INT = argon.lang.typeclasses.INT
+  val BOOL = argon.lang.typeclasses.BOOL
+
+  val MArray = argon.lang.Array
+  val MHashMap = argon.lang.HashMap
+  val MBoolean = argon.lang.Boolean
+
+  val FixPt = argon.lang.FixPt
+  val FltPt = argon.lang.FltPt
+
+  val MString = argon.lang.String
+  val MTuple2 = argon.lang.Tuple2
+
+  val Struct = argon.lang.Struct
+
+  val MUnit = argon.lang.Unit
+
+  val Var = argon.lang.Var
+
+  val Func = argon.lang.Func
+
+  val AssertOps = argon.lang.AssertOps
+  val IfThenElseOps = argon.lang.IfThenElseOps
+  val PrintOps = argon.lang.PrintOps
+}
+
+
+object compiler extends ArgonLangInternal

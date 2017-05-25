@@ -1,10 +1,3 @@
-import argon.core.cake.{Cast, Lift}
 
-package object argon extends ArgonInternal {
-
-  type Lift[A,B] = Lift[A,B]
-  type Cast[A,B] = Cast[A,B]
-  //type ? = MetaAny[_]
-
-
-}
+// For a DSL, this would be the external code, not the internal code
+package object argon extends core.ArgonCoreAliases with lang.ArgonLangInternal

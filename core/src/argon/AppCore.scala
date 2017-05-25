@@ -1,10 +1,10 @@
 package argon
 
-import argon._
+import argon.core.compiler._
 import argon.core.TestBenchFailed
 import argon.traversal.CompilerPass
 import argon.transform.Transformer
-import argon.utils.deleteExts
+import argon.util.deleteExts
 
 import scala.collection.mutable.ArrayBuffer
 import org.virtualized.SourceContext

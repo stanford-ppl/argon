@@ -1,7 +1,7 @@
 package argon.lang
 
 import argon.Config
-import argon.compiler._
+import argon.core.compiler._
 import argon.core.NoFieldException
 import argon.nodes._
 import forge._
@@ -36,6 +36,8 @@ abstract class Struct[T:StructType] extends MetaAny[T]{ self =>
 
 
 object Struct {
+  @internal def apply[T:StructType](fields: (CString, Exp[_])*): T = wrap(struct_new[T](fields))
+
   /** Static methods **/
   def unapply(x: Op[_]): Option[Map[CString,Exp[_]]] = x match {
     case s: StructAlloc[_] => Some(s.elems.toMap)
@@ -99,6 +101,6 @@ object Struct {
 }
 
 trait StructExp {
-  @internal def struct[T:StructType](fields: (CString, Exp[_])*): T = wrap(Struct.struct_new[T](fields))
+  @internal def struct[T:StructType](fields: (CString, Exp[_])*): T = Struct[T](fields:_*)
 }
 
