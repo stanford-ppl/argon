@@ -58,24 +58,8 @@ trait ArgonExceptions extends Exceptions { this: Statements =>
       error(c"[$codegen] Don't know how to generate code for $lhs = $rhs")
     })
 
-  class EffectsOrderException(res: Exp[_], expected: Seq[Stm], actual: Seq[Stm], missing: Seq[Stm], binders: Seq[(Stm,Seq[Stm])]) extends
-    CompilerException(5, c"Violated ordering of effects", {
-      error(c"Violated ordering of effects while traversing block result: ")
-      error(str(res))
-      error("expected: ")
-      expected.foreach{stm => error(c"  $stm")}
-      error("actual: ")
-      actual.foreach{stm => error(c"  $stm")}
-      error("missing: ")
-      //missing.foreach{stm => error(c"  $stm")}
-      binders.foreach{case (stm, bindedby) =>
-        error(c"  $stm")
-        error("  appears to be bound by: ")
-        bindedby.foreach{s => error(c"    $s")}
-        error("")
-        error("")
-      }
-    })
+  class EffectsOrderException() extends
+    CompilerException(5, c"Violated ordering of effects", {})
 
   class FlexEvaluationException(s: Sym[_]) extends
     CompilerException(6, c"Unable to evaluate $s", {error(c"Unable to flex evaluate ${str(s)}") })

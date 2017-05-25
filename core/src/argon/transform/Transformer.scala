@@ -26,11 +26,6 @@ abstract class Transformer { self =>
 
   /** Helper functions for mirroring **/
 
-  // Assumes an Op is never mirrored to a Def with multiple lhs...
-  final def mirror[T:Type](lhs: Sym[T], rhs: Op[T]): Exp[T] = {
-    mirror(List(lhs), rhs).head.asInstanceOf[Exp[T]]
-  }
-
   def transferMetadata(a: Exp[_], b: Exp[_]): Unit = {
     val m2 = mirror(metadata.get(a))
     metadata.add(b, m2) // Want to preserve effects, dependencies set during mirroring
@@ -64,6 +59,7 @@ abstract class Transformer { self =>
     }
   }
 
+  final def mirror[T](lhs: Sym[T], rhs: Op[T]): Exp[T] = mirror(Seq(lhs),rhs).head.asInstanceOf[Exp[T]]
 
   def mirror(lhs: Seq[Sym[_]], rhs: Def): Seq[Exp[_]] = {
     log(c"Mirror: $lhs = $rhs")

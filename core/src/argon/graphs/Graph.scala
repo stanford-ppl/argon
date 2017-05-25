@@ -63,6 +63,10 @@ trait Graph extends Exceptions {
     val freqs   = mutable.ArrayBuffer[Seq[UseFreq]]()                // Frequency hints for code motion
   }
 
+  def dumpSymbolTable(func: (Iterable[Edge], Node) => Unit): Unit = {
+    (0 until curNodeId.toInt).foreach{i => val t = triple(i.toNodeId); func(t._1, t._2) }
+  }
+
   override def reset(): Unit = {
     super.reset()
     curEdgeId = 0.toEdgeId
@@ -285,7 +289,7 @@ trait Graph extends Exceptions {
     *   - tunnel symbols: ANY dependents of tunnel symbols which are also dependencies of the binder
     * Note that while it would be nice to only do one DFS, we need to track which nodes are bound where.
     */
-  def getBoundDependents(scope: Set[NodeId]): Set[NodeId] = {
+  def getBoundDependents(scope: Set[NodeId], nodes: Set[NodeId]): Set[NodeId] = {
     def getDependents(root: NodeId) = {
       val rootEdges = nodeOutputs(root)
 
@@ -301,7 +305,7 @@ trait Graph extends Exceptions {
       dfs(List(root))(uses)
     }
 
-    val boundDependents = scope.flatMap{node =>
+    val boundDependents = nodes.flatMap{node =>
       val bounds = nodeBounds(node).map(producerOf)
       val sched = bounds.flatMap(getDependents)
 
@@ -318,7 +322,7 @@ trait Graph extends Exceptions {
       sched
     }
 
-    val tunnelDependents = scope.flatMap{node =>
+    val tunnelDependents = nodes.flatMap{node =>
       /*if (VERBOSE_SCHEDULING) {
         if (nodeTunnels(node).nonEmpty) xlog(c"  [Tunnel] node: ${triple(node)}: ")
       }*/
@@ -354,7 +358,7 @@ trait Graph extends Exceptions {
     // But that appears to cause things to leak out of cold blocks...
     val roots = result.map(producerOf) //scheduleDepsWithIndex(result, localCache)
 
-    val mustInside = getBoundDependents(scope)
+    val mustInside = getBoundDependents(scope, scope)
 
     val mayOutside = scope diff mustInside
     val fringe = mustInside.flatMap(reverse) intersect mayOutside
@@ -460,83 +464,21 @@ trait Graph extends Exceptions {
     val givenSet = given.toSet
 
     val scope = localNodes
-
-    def getBoundDependentsDEBUG(nodes: Set[NodeId], scope: Set[NodeId], verbose: Boolean): Set[NodeId] = {
-      def getDependents(root: NodeId) = {
-        val rootEdges = nodeOutputs(root)
-
-        // All nodes that depend on this node except nodes which bind the given root
-        def uses(node: NodeId) = {
-          /*if (VERBOSE_SCHEDULING) {
-            forward(node, scope).foreach{next => xlog(c"[USES] ${triple(next)} (bounds = " + nodeBounds(next).mkString(",") + ")") }
-          }*/
-
-          forward(node,scope) filterNot {next => nodeBounds(next) exists (rootEdges contains _) }
-        }
-
-        dfs(List(root))(uses)
-      }
-
-      val boundDependents = nodes.flatMap{node =>
-        val bounds = nodeBounds(node).map(producerOf)
-        val sched = bounds.flatMap(getDependents)
-
-        if (bounds.nonEmpty && verbose) {
-          log(c"  [Bounds] node: ${triple(node)}")
-          log(c"  [Bounds] bounds:")
-          bounds.foreach{bnd => log(c"  [Bounds]  ${triple(bnd)}")}
-          log(c"  [Bounds] binded: ")
-          sched.foreach{s => log(c"  [Bounds]  ${triple(s)}") }
-        }
-
-        sched
-      }
-
-      val tunnelDependents = scope.flatMap{node =>
-        if (verbose && nodeTunnels(node).nonEmpty) log(c"  [Tunnel] node: ${triple(node)}: ")
-
-        nodeTunnels(node).flatMap{case (tun,res) =>
-          val tunnel = producerOf(tun)
-          // Everything upstream of (prior to) the block results for this tunnel
-          val results = res.map(producerOf)
-          // Everything downstream of (depending on) the tunnel
-          val schedule = dfs(results){node => reverse(node,scope) }
-          val forward  = getDependents(tunnel) filterNot (_ == tunnel)
-
-          if (verbose) {
-            log(c"  [Tunnel] tunnel: ")
-            log(c"  [Tunnel]  ${triple(tunnel)}")
-            log(c"  [Tunnel] schedule: ")
-            schedule.foreach { stm => log(c"  [Tunnel]  ${triple(stm)}") }
-            log(c"  [Tunnel] dependents: ")
-            forward.foreach { stm => log(c"  [Tunnel]  ${triple(stm)}") }
-          }
-
-          schedule intersect forward
-        }
-      }
-      boundDependents ++ tunnelDependents
-    }
-
-    //val mustInside = getBoundDependentsDEBUG(scope.toSet)
-    //log("Must inside: ")
-    //mustInside.foreach{stm => log(c"  ${triple(stm)}")}
-
     val scopeSet = scope.toSet
 
     scope.flatMap{node =>
       val pseudoSet = Set(node)
-      val binds = getBoundDependentsDEBUG(pseudoSet, scopeSet, verbose=false)
+      val binds = getBoundDependents(scopeSet, pseudoSet)
       if ((binds intersect givenSet).nonEmpty) {
         val cache = buildScopeIndex(binds)
         val path = getSchedule(givenSet, cache, checkAcyclic = false)
         //getBoundDependentsDEBUG(pseudoSet,scopeSet,verbose=true)
-        log(c"Found binding: ${triple(node)}")
-        log(c"  bound syms:")
+        msg(c"Binding: ${triple(node)}")
+        msg(c"  bound syms:")
         val bindsL1 = nodeBounds(node)
-        bindsL1.foreach{bound => log(c"  ${triple(producerOf(bound))}") }
-        log(c"  path: ")
-        path.foreach{p => log(c"  ${triple(p)}")}
+        bindsL1.foreach{bound => msg(c"  ${triple(producerOf(bound))}") }
+        msg(c"  path: ")
+        path.foreach{p => msg(c"  ${triple(p)}")}
         // TODO: This part appears to be broken right now
         /*val otherParents = path.find{node => nodeBounds(node).nonEmpty }
         if (otherParents.nonEmpty) {
