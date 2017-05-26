@@ -12,7 +12,7 @@ trait ArrayExtApi extends ArrayExtExp with ArrayApi { self: ArgonApi =>
     @api def tabulate[T:Meta](size: Index)(func: Index => T): MetaArray[T] = array_from_function[T](size, func)
     @api def fill[T:Meta](size: Index)(func: => T): MetaArray[T] = Array.tabulate(size){i => func}
     @api def empty[T:Meta](size: Index): MetaArray[T] = MetaArray(array_new[T](size.s))
-    @api def const[T:Meta](elements: T*): MetaArray[T] = {
+    @api def apply[T:Meta](elements: T*): MetaArray[T] = {
       val arr = empty(elements.length)
       (0 until elements.length).foreach{ i => 
         arr(i) = elements(i)

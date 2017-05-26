@@ -11,13 +11,14 @@ trait CppGenFixPt extends CppCodegen {
     case IntType() => "int32_t"
     case LongType() => "int32_t"
     case FixPtType(s,d,f) => 
+      val u = if (!s) "u" else ""
       if (f > 0) {"double"} else {
-        if (d > 32) "int64_t"
-        else if (d > 16) "int32_t"
-        else if (d > 8) "int16_t"
-        else if (d > 4) "int8_t"
-        else if (d > 2) "int8_t"
-        else if (d == 2) "int8_t"
+        if (d > 32) s"${u}int64_t"
+        else if (d > 16) s"${u}int32_t"
+        else if (d > 8) s"${u}int16_t"
+        else if (d > 4) s"${u}int8_t"
+        else if (d > 2) s"${u}int8_t"
+        else if (d == 2) s"${u}int8_t"
         else "bool"
       }
     case _ => super.remap(tp)

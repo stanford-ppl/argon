@@ -456,7 +456,15 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
   }
 
   def text_to_fixpt[S:BOOL,I:INT,F:INT](x: Exp[Text])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = x match {
-    case Const(c: String) => string2fixpt[S,I,F](c).s
+    case Const(c: String) => 
+      if (c.indexOf("0x") == 0) {
+        val raw = c.replace("0x","")
+        val digits = raw.length
+        val dec = raw.zipWithIndex.map{case (d, i) => scala.math.pow(16, digits-1-i).toInt*d.toInt}.reduce{_+_}
+        int2fixpt[S,I,F](dec).s
+      } else {
+        string2fixpt[S,I,F](c).s
+      }
     case _ => stage(StringToFixPt[S,I,F](x))(ctx)
   }
 
