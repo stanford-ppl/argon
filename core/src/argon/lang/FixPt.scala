@@ -289,7 +289,16 @@ object FixPt {
   }
 
   @internal def from_text[S:BOOL,I:INT,F:INT](x: Exp[MString]): Exp[FixPt[S,I,F]] = x match {
-    case Const(c: CString) => FixPt[S,I,F](c).s
+    case Const(c: CString) =>
+      if (c.indexOf("0x") == 0) {
+        val raw = c.replace("0x","")
+        val digits = raw.length
+        val dec = raw.zipWithIndex.map{case (d, i) => scala.math.pow(16, digits-1-i).toInt*d.toInt}.reduce{_+_}
+        FixPt[S,I,F](dec).s
+      }
+      else {
+        FixPt[S,I,F](c).s
+      }
     case _ => stage(StringToFixPt[S,I,F](x))(ctx)
   }
 }
