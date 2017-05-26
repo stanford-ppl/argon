@@ -1,6 +1,7 @@
 package argon.analysis
 
-import argon._
+import argon.core.compiler._
+import argon.lang.compiler._
 import argon.core.UndefinedAccessPatternException
 import argon.traversal.Traversal
 import forge._

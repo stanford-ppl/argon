@@ -1,14 +1,14 @@
 package argon.test
 
-import argon._
+import argon.core.compiler._
+import argon.lang.compiler._
 import argon.codegen.scalagen.ScalaCodegen
 import forge._
-import org.scalatest.{FlatSpec, Matchers}
-import org.virtualized.{SourceContext, virtualize}
+import org.virtualized._
 
 object SimpleLambdaOps {
   /** Constructors **/
-  @internal def map2[T: Type](n: Exp[Int32], map1: Exp[Int32] => Exp[T], map2: Exp[T] => Exp[T], i: Bound[Int32]): Sym[T] = {
+  @internal def map2[T:Type](n: Exp[Int32], map1: Exp[Int32] => Exp[T], map2: Exp[T] => Exp[T], i: Bound[Int32]): Sym[T] = {
     val m1Blk = stageLambda1(i){ map1(i) }
     val m2Blk = stageLambda1(m1Blk.result) { map2(m1Blk.result) }
     val effects = m1Blk.effects andAlso m2Blk.effects
@@ -43,8 +43,8 @@ trait ScalaGenLambda extends ScalaCodegen {
 
 case class ScalaGenLambdaTest(IR: State) extends ScalaGenBase with ScalaGenLambda
 
-object LambdaApi extends TestApi with SimpleLambdaApi
 
+object LambdaApi extends TestApi with SimpleLambdaApi
 trait LambdaTest extends TestBase {
   override protected def createTraversalSchedule(state: State) = {
     lazy val scalagen = ScalaGenLambdaTest(state)

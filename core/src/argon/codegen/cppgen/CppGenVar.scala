@@ -1,6 +1,6 @@
 package argon.codegen.cppgen
 
-import argon._
+import argon.core.compiler._
 import argon.nodes._
 
 trait CppGenVar extends CppCodegen {

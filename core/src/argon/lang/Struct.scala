@@ -1,8 +1,7 @@
 package argon.lang
 
-import argon.Config
 import argon.core.compiler._
-import argon.core.NoFieldException
+import argon.core.{Config, NoFieldException}
 import argon.nodes._
 import forge._
 

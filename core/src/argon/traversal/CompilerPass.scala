@@ -1,6 +1,5 @@
 package argon.traversal
 
-import argon.Config
 import argon.core.compiler._
 
 /**

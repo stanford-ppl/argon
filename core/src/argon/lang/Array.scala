@@ -39,8 +39,9 @@ object Array {
     = Array(mapindices(size.s, {i => func(wrap(i)).s}, fresh[Index]))
   @api def fill[T:Type](size: Index)(func: => T): MArray[T] = this.tabulate(size){ _ => func}
   @api def empty[T:Type](size: Index): MArray[T] = Array(mutable[T](size.s))
+  // TODO: This should probably be its own node
   @api def apply[T:Type](elements: T*): MArray[T] = {
-    val arr = empty(elements.length)
+    val arr = empty[T](elements.length)
     (0 until elements.length).foreach{ i =>
       arr(i) = elements(i)
       ()

@@ -4,7 +4,7 @@ import typeclasses._
 
 import argon.core.compiler._
 import argon.nodes._
-import argon.util.utils.escapeConst
+import argon.util.escapeConst
 import forge._
 
 /** All Fixed Point Types **/
@@ -60,6 +60,10 @@ object FixPt {
   @api def apply[S:BOOL,I:INT,F:INT](x: CString): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
   @api def apply[S:BOOL,I:INT,F:INT](x: BigInt): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
   @api def apply[S:BOOL,I:INT,F:INT](x: BigDecimal): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
+
+  @internal def intParam(c: Int): Param[Int32] = parameter(IntType)(FixPt.literalToBigDecimal[TRUE,_32,_0](c, force=true))
+  @internal def int32(x: BigDecimal): Const[Int32] = FixPt.const[TRUE,_32,_0](x, force = false)
+  @internal def int64(x: BigDecimal): Const[Int64] = FixPt.const[TRUE,_64,_0](x, force = false)
 
 
   /** Constants **/
@@ -293,7 +297,7 @@ object FixPt {
       if (c.indexOf("0x") == 0) {
         val raw = c.replace("0x","")
         val digits = raw.length
-        val dec = raw.zipWithIndex.map{case (d, i) => scala.math.pow(16, digits-1-i).toInt*d.toInt}.reduce{_+_}
+        val dec = raw.zipWithIndex.map{case (d, i) => scala.math.pow(16, digits-1-i).toInt*d.toInt}.sum
         FixPt[S,I,F](dec).s
       }
       else {
@@ -305,24 +309,13 @@ object FixPt {
 
 /** Static methods and implicits **/
 trait FixPtExp {
-  /** Type Aliases **/
-  type Index = FixPt[TRUE,_32,_0]
-  type Int64 = FixPt[TRUE,_64,_0]
-  type Int32 = FixPt[TRUE,_32,_0]
-  type Int16 = FixPt[TRUE,_16,_0]
-  type  Int8 = FixPt[TRUE, _8,_0]
-
-  @generate
-  type UIntJJ$JJ$2to128 = FixPt[FALSE,_JJ,_0]
-
 
   /** Static methods **/
   def isFixPtType(x: Type[_]) = FixPtType.unapply(x).isDefined
   def isInt32Type(x: Type[_]) = IntType.unapply(x)
-  @internal def intParam(c: Int): Param[Int32] = parameter(IntType)(FixPt.literalToBigDecimal[TRUE,_32,_0](c, force=true))
-  @internal def int32(x: BigDecimal): Const[Int32] = FixPt.const[TRUE,_32,_0](x, force = false)
-  @internal def int64(x: BigDecimal): Const[Int64] = FixPt.const[TRUE,_64,_0](x, force = false)
-
+  @internal def intParam(c: Int): Param[Int32] = FixPt.intParam(c)
+  @internal def int32(x: BigDecimal): Const[Int32] = FixPt.int32(x)
+  @internal def int64(x: BigDecimal): Const[Int64] = FixPt.int64(x)
 
   implicit class FixPtIntLikeOps[S:BOOL,I:INT](x: FixPt[S,I,_0]) {
     @api def %(y: FixPt[S,I,_0]): FixPt[S,I,_0] = FixPt(FixPt.mod(x.s, y.s))

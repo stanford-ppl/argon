@@ -1,8 +1,10 @@
 package argon.test
 
-import argon._
+import argon.core
+import argon.core.compiler._
+import argon.lang.compiler._
 import argon.transform.ForwardTransformer
-import org.virtualized.SourceContext
+import org.virtualized._
 
 object MirroringTest extends Test { self =>
   import api._
@@ -12,8 +14,8 @@ object MirroringTest extends Test { self =>
   override def main(args: scala.Array[java.lang.String]) = {
     super.main(args)
     IR.context = Nil
-    argon.Config.verbosity = 3
-    withLog(argon.Config.logDir, "MirroringTest.log") {
+    core.Config.verbosity = 3
+    withLog(core.Config.logDir, "MirroringTest.log") {
       val x = Array.empty[Int](1)
       val y = Array.update(x.s, FixPt.int32(0), FixPt.int32(16))
       val z = Array.empty[Int](2)

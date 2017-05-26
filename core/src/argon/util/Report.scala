@@ -1,10 +1,10 @@
 package argon.util
 
-import argon.Config
-import argon.core._
+import argon.core.{Config, _}
 import forge._
 import java.io.PrintStream
 import java.nio.file.{Files, Paths}
+
 import org.virtualized.{SourceContext => SrcCtx}
 
 object Report {

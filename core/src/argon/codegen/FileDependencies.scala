@@ -1,6 +1,6 @@
 package argon.codegen
 
-import argon._
+import argon.core.compiler._
 import sys.process._
 import scala.language.postfixOps
 import org.apache.commons.io._

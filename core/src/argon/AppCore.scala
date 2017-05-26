@@ -1,6 +1,7 @@
 package argon
 
 import argon.core.compiler._
+import argon.lang.compiler._
 import argon.core.TestBenchFailed
 import argon.traversal.CompilerPass
 import argon.transform.Transformer
@@ -44,16 +45,16 @@ trait AppCore { self =>
   }
 
   protected def onException(t: Throwable): Unit = {
-    withLog(Config.cwd, Config.name + "_exception.log") {
-      Config.verbosity = 10
+    withLog(core.Config.cwd, core.Config.name + "_exception.log") {
+      core.Config.verbosity = 10
       log(t.getMessage)
       log("")
       t.getStackTrace.foreach{elem => log(elem.toString) }
     }
-    error(s"An exception was encountered while compiling ${Config.name}: ")
+    error(s"An exception was encountered while compiling ${core.Config.name}: ")
     error(s"  ${t.getMessage}")
     error(s"This is likely a compiler bug. A log file has been created at: ")
-    error(s"  ${Config.cwd}/${Config.name}_exception.log")
+    error(s"  ${core.Config.cwd}/${core.Config.name}_exception.log")
   }
 
   protected def settings(): Unit = { }
@@ -66,18 +67,18 @@ trait AppCore { self =>
 
     __args = MArray.input_arguments()
 
-    if (Config.clearLogs) deleteExts(Config.logDir, ".log")
-    report(c"Compiling ${Config.name} to ${Config.genDir}")
-    if (Config.verbosity >= 2) report(c"Logging ${Config.name} to ${Config.logDir}")
+    if (core.Config.clearLogs) deleteExts(core.Config.logDir, ".log")
+    report(c"Compiling ${core.Config.name} to ${core.Config.genDir}")
+    if (core.Config.verbosity >= 2) report(c"Logging ${core.Config.name} to ${core.Config.logDir}")
   }
 
   /**
     * Stage block
     */
   final protected def stageProgram[R:Type](blk: => R): Block[R] = {
-    Globals.staging = true
-    val block: Block[R] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { blk.s } }
-    Globals.staging = false
+    core.Globals.staging = true
+    val block: Block[R] = withLog(core.Config.logDir, "0000 Staging.log") { stageBlock { blk.s } }
+    core.Globals.staging = false
     block
   }
 
@@ -87,7 +88,7 @@ trait AppCore { self =>
     for (t <- passes) {
       if (state.graph.VERBOSE_SCHEDULING) {
         state.graph.glog.close()
-        state.graph.glog = createLog(Config.logDir + "/sched/", state.paddedPass + " " + t.name + ".log")
+        state.graph.glog = createLog(core.Config.logDir + "/sched/", state.paddedPass + " " + t.name + ".log")
         withLog(state.graph.glog) {
           log(s"${state.pass} ${t.name}")
           log(s"===============================================")
@@ -98,7 +99,7 @@ trait AppCore { self =>
       // After each traversal, check whether there were any reported errors
       checkErrors(state, startTime, t.name)
 
-      if (Config.verbosity >= 1) withLog(timingLog) {
+      if (core.Config.verbosity >= 1) withLog(timingLog) {
         msg(s"  ${t.name}: " + "%.4f".format(t.lastTime / 1000))
       }
 
@@ -128,12 +129,12 @@ trait AppCore { self =>
     // Exit now if errors were found during staging
     checkErrors(state, startTime, "staging")
 
-    val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
+    val timingLog = createLog(core.Config.logDir, "9999 CompilerTiming.log")
     runTraversals(startTime, block, timingLog)
 
     val time = (System.currentTimeMillis - startTime).toFloat
 
-    if (Config.verbosity >= 1) {
+    if (core.Config.verbosity >= 1) {
       withLog(timingLog) {
         msg(s"  Total: " + "%.4f".format(time / 1000))
         msg(s"")
@@ -153,8 +154,8 @@ trait AppCore { self =>
   protected def initConfig(sargs: Array[String]): Unit = {
     val defaultName = self.getClass.getName.replace("class ", "").replace('.','-').replace("$","") //.split('$').head
     System.setProperty("argon.name", defaultName)
-    Config.name = defaultName
-    Config.init()
+    core.Config.name = defaultName
+    core.Config.init()
 
     parseArguments(sargs.toSeq)
   }
@@ -170,7 +171,7 @@ trait AppCore { self =>
       compileProgram(main())
     }
     catch {case t: Throwable =>
-      if (Config.verbosity > 0) {
+      if (core.Config.verbosity > 0) {
         report(t.getMessage)
         t.getStackTrace.foreach{elem => report(elem.toString) }
       }

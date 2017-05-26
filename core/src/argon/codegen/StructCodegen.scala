@@ -1,6 +1,6 @@
 package argon.codegen
 
-import argon._
+import argon.core.compiler._
 import argon.nodes._
 import scala.collection.mutable
 

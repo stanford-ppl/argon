@@ -1,7 +1,6 @@
 package argon.test
 
-import argon._
-import argon.core.TestBenchFailed
+import argon.core.{Config, TestBenchFailed}
 import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized._
 

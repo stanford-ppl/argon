@@ -1,4 +1,4 @@
-package argon
+package argon.core
 
 import com.typesafe.config.ConfigFactory
 import pureconfig._

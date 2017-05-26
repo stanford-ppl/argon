@@ -2,9 +2,8 @@ package argon.graphs
 
 import java.io.PrintStream
 
-import argon.Config
 import argon.core.compiler._
-import argon.core.{Freq, RecursiveScheduleException}
+import argon.core.{Config, Freq, RecursiveScheduleException}
 import forge.stateful
 
 import scala.collection.mutable

@@ -9,7 +9,7 @@ trait LayerReporting { self: ArgonCore =>
 
   def plural(x: Int, singular: String, plur: String): String = if (x == 1) singular else plur
 
-  @stateful def createLog(dir: String, filename: String): Log = Report.createLog(dir, filename)
+  def createLog(dir: String, filename: String): Log = Report.createLog(dir, filename)
   @stateful def withLog[T](log: Log)(blk: => T): T = Report.withLog(log)(blk)
   @stateful def withLog[T](dir: String, filename: String)(blk: => T): T = Report.withLog(dir, filename)(blk)
 

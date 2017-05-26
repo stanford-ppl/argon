@@ -1,6 +1,6 @@
 package argon.codegen.chiselgen
 
-import argon._
+import argon.core.compiler._
 import argon.core.NoWireConstructorException
 import argon.nodes._
 import scala.math._

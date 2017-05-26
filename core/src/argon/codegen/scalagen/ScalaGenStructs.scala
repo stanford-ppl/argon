@@ -1,6 +1,6 @@
 package argon.codegen.scalagen
 
-import argon._
+import argon.core.compiler._
 import argon.codegen.StructCodegen
 import argon.nodes._
 

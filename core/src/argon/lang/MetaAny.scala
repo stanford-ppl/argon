@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon.Globals
+import argon.core.Globals
 import argon.core.compiler._
 import forge._
 import org.virtualized.EmbeddedControls

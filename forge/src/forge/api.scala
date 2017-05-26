@@ -104,7 +104,7 @@ object StateAnnotation {
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
     import c.universe._
 
-    val state = q"state: argon.State"
+    val state = q"state: argon.core.State"
 
     val tree = annottees.head match {
       case DefDef(mods,name,tparams,vparamss,tpt,rhs) =>
@@ -113,7 +113,7 @@ object StateAnnotation {
         })
         val params = if (hasImplicits) {
           val hasCtx = vparamss.lastOption.exists(_.exists{
-            case ValDef(_,_,Ident(TypeName(n)),_) => n == "State" || n == "argon.State"
+            case ValDef(_,_,Ident(TypeName(n)),_) => n == "State" || n == "argon.core.State"
             case _ => false
           })
           if (!hasCtx) {

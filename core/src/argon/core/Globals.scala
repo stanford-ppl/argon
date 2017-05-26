@@ -1,4 +1,4 @@
-package argon
+package argon.core
 
 /**
   * Non-threadsafe compiler state.

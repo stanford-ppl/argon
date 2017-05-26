@@ -1,7 +1,7 @@
 package argon.lang
 
 import typeclasses._
-import forge.api
+import forge._
 
 /** Internal, language type aliases (no cyclic aliases allowed, e.g. cannot have "type X = argon.lang.X") **/
 trait LangAliases {
@@ -11,6 +11,12 @@ trait LangAliases {
     * C- prefix: "Constant" (unstaged types)
     */
   type Index = FixPt[TRUE,_32,_0]
+  type Int64 = FixPt[TRUE,_64,_0]
+  type Int32 = FixPt[TRUE,_32,_0]
+  type Int16 = FixPt[TRUE,_16,_0]
+  type  Int8 = FixPt[TRUE, _8,_0]
+  @generate
+  type UIntJJ$JJ$2to128 = FixPt[FALSE,_JJ,_0]
 
   type MArray[T] = argon.lang.Array[T]
   type CArray[T] = scala.Array[T]
@@ -230,6 +236,7 @@ trait ArgonApi
     with FltPtApi
     with HashMapApi
     with IfThenElseApi
+    with MetaAnyApi
     with PrintApi
     with BitsApi
     with NumApi
@@ -238,6 +245,8 @@ trait ArgonApi
 /** Static functions, implicit conversions, app-facing type aliases **/
 trait ArgonLangExternal extends ArgonApi {
   type Type[T] = argon.core.Type[T]
+  type Lift[A,B] = argon.core.Lift[A,B]
+  type Cast[A,B] = argon.core.Cast[A,B]
   type Exp[T] = argon.core.Exp[T]
 
   type Any = argon.lang.MetaAny[_]

@@ -72,6 +72,8 @@ trait ArgonCoreAliases extends ArgonCore {
   val TTP = argon.core.TTP
 
   type State = argon.core.State
+  val Config = argon.core.Config
+  val Globals = argon.core.Globals
 }
 
 /** Internal use (everything inside argon.core) **/

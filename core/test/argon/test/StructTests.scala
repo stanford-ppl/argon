@@ -5,7 +5,7 @@ import org.virtualized._
 import api._
 
 @struct case class MyStruct(x: Int, y: Int)
-@struct case class MyStruct2(x: Int = lift(13), y: Int = lift(12))
+@struct case class MyStruct2(x: Int = 13, y: Int = 12)
 
 class StructTests extends FlatSpec with Matchers {
 

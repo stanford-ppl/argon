@@ -1,6 +1,6 @@
 package argon.codegen
 
-import argon._
+import argon.core.compiler._
 
 // Currently unused
 trait KernelCodegen extends Codegen {

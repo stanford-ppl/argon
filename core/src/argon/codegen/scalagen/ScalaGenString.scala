@@ -1,8 +1,8 @@
 package argon.codegen.scalagen
 
-import argon._
+import argon.core.compiler._
 import argon.nodes._
-import argon.util.utils.escapeString
+import argon.util.escapeString
 
 trait ScalaGenString extends ScalaCodegen {
 

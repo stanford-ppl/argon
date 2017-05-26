@@ -1,9 +1,10 @@
 package argon.codegen.chiselgen
 
-import argon._
+import argon.core.compiler._
 import argon.codegen.{Codegen, FileDependencies}
 import argon.core.NoBitWidthException
-import scala.collection.mutable.HashMap
+
+import scala.collection.mutable
 import scala.language.postfixOps
 import sys.process._
 
@@ -13,7 +14,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   override val ext: String = "scala"
   var controllerStack = scala.collection.mutable.Stack[Exp[_]]()
 
-  var alphaconv = HashMap[String, String]() // Map for tracking defs of nodes and if they get redeffed anywhere, we map it to a suffix
+  var alphaconv = mutable.HashMap[String, String]() // Map for tracking defs of nodes and if they get redeffed anywhere, we map it to a suffix
   var maxretime: Int = 0
 
   final def alphaconv_register(xx: String): Unit = {

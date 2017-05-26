@@ -2,7 +2,7 @@ package argon.core
 
 import ops._
 import argon.graphs.{Edge, EdgeLike}
-import argon.util.utils.escapeConst
+import argon.util.escapeConst
 import forge._
 
 import scala.annotation.unchecked.uncheckedVariance

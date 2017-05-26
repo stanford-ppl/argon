@@ -1,6 +1,6 @@
 package argon.codegen
 
-import argon._
+import argon.core.compiler._
 import argon.core.{ConstantGenFailedException, GenerationFailedException}
 import argon.traversal.Traversal
 
