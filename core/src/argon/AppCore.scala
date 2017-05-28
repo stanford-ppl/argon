@@ -178,7 +178,7 @@ trait AppCore { self =>
       else {
         onException(t)
       }
-      sys.exit(-1)
+      if (!testbench) sys.exit(-1) else { throw t /* Rethrow exception during testbench compilation */ }
     }
   }
 }

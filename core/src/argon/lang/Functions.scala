@@ -195,6 +195,37 @@ object Func {
   }
 }
 
+object Func1 {
+  implicit def func1IsStaged[A:Type,R:Type]: Type[Func1[A,R]] = Func1Type(typ[A],typ[R])
+}
+object Func2 {
+  implicit def func2IsStaged[A:Type,B:Type,R:Type]: Type[Func2[A,B,R]] = Func2Type(typ[A],typ[B],typ[R])
+}
+object Func3 {
+  implicit def func3IsStaged[A:Type,B:Type,C:Type,R:Type]: Type[Func3[A,B,C,R]] = Func3Type(typ[A],typ[B],typ[C],typ[R])
+}
+object Func4 {
+  implicit def func4IsStaged[A:Type,B:Type,C:Type,D:Type,R:Type]: Type[Func4[A,B,C,D,R]] = Func4Type(typ[A],typ[B],typ[C],typ[D],typ[R])
+}
+object Func5 {
+  implicit def func5IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,R:Type]: Type[Func5[A,B,C,D,E,R]] = Func5Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[R])
+}
+object Func6 {
+  implicit def func6IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,R:Type]: Type[Func6[A,B,C,D,E,F,R]] = Func6Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[F],typ[R])
+}
+object Func7 {
+  implicit def func7IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,R:Type]: Type[Func7[A,B,C,D,E,F,G,R]] = Func7Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[F],typ[G],typ[R])
+}
+object Func8 {
+  implicit def func8IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,R:Type]: Type[Func8[A,B,C,D,E,F,G,H,R]] = Func8Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[F],typ[G],typ[H],typ[R])
+}
+object Func9 {
+  implicit def func9IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type,R:Type]: Type[Func9[A,B,C,D,E,F,G,H,I,R]] = Func9Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[F],typ[G],typ[H],typ[I],typ[R])
+}
+object Func10 {
+  implicit def func10IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type,J:Type,R:Type]: Type[Func10[A,B,C,D,E,F,G,H,I,J,R]] = Func10Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[F],typ[G],typ[H],typ[I],typ[J],typ[R])
+}
+
 trait FunctionExp {
   @internal def fun[A:Type,R:Type](func: Function1[A,R]): Func1[A,R] = Func.decl1(func)
   @internal def fun[A:Type,B:Type,R:Type](func: Function2[A,B,R]): Func2[A,B,R] = Func.decl2(func)
@@ -206,17 +237,6 @@ trait FunctionExp {
   @internal def fun[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,R:Type](func: Function8[A,B,C,D,E,F,G,H,R]): Func8[A,B,C,D,E,F,G,H,R] = Func.decl8(func)
   @internal def fun[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type,R:Type](func: Function9[A,B,C,D,E,F,G,H,I,R]): Func9[A,B,C,D,E,F,G,H,I,R] = Func.decl9(func)
   @internal def fun[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type,J:Type,R:Type](func: Function10[A,B,C,D,E,F,G,H,I,J,R]): Func10[A,B,C,D,E,F,G,H,I,J,R] = Func.decl10(func)
-
-  implicit def func1IsStaged[A:Type,R:Type]: Type[Func1[A,R]] = Func1Type(typ[A],typ[R])
-  implicit def func2IsStaged[A:Type,B:Type,R:Type]: Type[Func2[A,B,R]] = Func2Type(typ[A],typ[B],typ[R])
-  implicit def func3IsStaged[A:Type,B:Type,C:Type,R:Type]: Type[Func3[A,B,C,R]] = Func3Type(typ[A],typ[B],typ[C],typ[R])
-  implicit def func4IsStaged[A:Type,B:Type,C:Type,D:Type,R:Type]: Type[Func4[A,B,C,D,R]] = Func4Type(typ[A],typ[B],typ[C],typ[D],typ[R])
-  implicit def func5IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,R:Type]: Type[Func5[A,B,C,D,E,R]] = Func5Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[R])
-  implicit def func6IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,R:Type]: Type[Func6[A,B,C,D,E,F,R]] = Func6Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[F],typ[R])
-  implicit def func7IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,R:Type]: Type[Func7[A,B,C,D,E,F,G,R]] = Func7Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[F],typ[G],typ[R])
-  implicit def func8IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,R:Type]: Type[Func8[A,B,C,D,E,F,G,H,R]] = Func8Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[F],typ[G],typ[H],typ[R])
-  implicit def func9IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type,R:Type]: Type[Func9[A,B,C,D,E,F,G,H,I,R]] = Func9Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[F],typ[G],typ[H],typ[I],typ[R])
-  implicit def func10IsStaged[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type,J:Type,R:Type]: Type[Func10[A,B,C,D,E,F,G,H,I,J,R]] = Func10Type(typ[A],typ[B],typ[C],typ[D],typ[E],typ[F],typ[G],typ[H],typ[I],typ[J],typ[R])
 }
 
 /*@generate

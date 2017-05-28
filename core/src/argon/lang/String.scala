@@ -22,6 +22,12 @@ object String {
 
   @internal def ify[T:Type](x: T): MString = String(sym_tostring(x.s))
 
+  /** Type classes **/
+  implicit def stringIsStaged: Type[String] = StringType
+
+  @api implicit def string2text(x: CString): MString = String(x)
+
+
   /** Constructors **/
   @internal def sym_tostring[T:Type](x: Exp[T]): Exp[MString] = x match {
     case Const(c: CString) => String.const(c)
@@ -48,18 +54,7 @@ trait StringExp {
   /** Static methods **/
   @internal def infix_+[R<:MetaAny[R]](x1: CString, x2: R): MString = String(x1) + x2.toText
 
-  /** Rewrite Rules **/
-  /*@rewrite def Bool$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
-    case Op(TextEquals(a,b)) => text_differ(a,b)
-    case Op(TextDiffer(a,b)) => text_equals(a,b)
-  }*/
-
-  /** Type classes **/
-  implicit val stringIsStaged: Type[String] = StringType
-
   /** Lifting **/
-  @api implicit def string2text(x: CString): MString = String(x)
-
   implicit object LiftString extends Lift[CString,MString] {
     @internal def apply(x: CString): MString = String(x)
   }
@@ -68,4 +63,10 @@ trait StringExp {
   implicit object CastStringLift extends Cast[CString,MString] {
     @internal def apply(x: CString): MString = String(x)
   }
+
+  /** Rewrite Rules **/
+  /*@rewrite def Bool$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
+    case Op(TextEquals(a,b)) => text_differ(a,b)
+    case Op(TextDiffer(a,b)) => text_equals(a,b)
+  }*/
 }

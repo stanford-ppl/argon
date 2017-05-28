@@ -19,9 +19,16 @@ case class Boolean(s: Exp[Boolean]) extends MetaAny[Boolean] {
 }
 
 object Boolean {
+  /** Static functions **/
   @api def apply(x: CBoolean): MBoolean = Boolean(const(x))
   @internal def lift(x: CBoolean): MBoolean = Boolean(const(x))
   @internal def const(x: CBoolean): Exp[MBoolean] = constant(BooleanType)(x)
+
+  /** Type **/
+  implicit def boolIsStaged: Type[MBoolean] = BooleanType
+  implicit def boolIsBits: Bits[MBoolean] = BooleanBits
+
+  @api implicit def boolean2bool(x: CBoolean): MBoolean = Boolean(x)
 
   /** Constructors **/
   @internal def not(x: Exp[MBoolean]): Exp[MBoolean] = x match {
@@ -73,13 +80,7 @@ object Boolean {
 }
 
 trait BooleanExp {
-  /** Type **/
-  implicit def boolIsStaged: Type[MBoolean] = BooleanType
-  implicit def boolIsBits: Bits[MBoolean] = BooleanBits
-
   /** Lifting **/
-  @api implicit def boolean2bool(x: CBoolean): MBoolean = Boolean(x)
-
   implicit object LiftBoolean2Bool extends Lift[CBoolean,MBoolean] {
     @internal def apply(x: CBoolean): MBoolean = Boolean(x)
   }

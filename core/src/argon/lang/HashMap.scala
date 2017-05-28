@@ -5,18 +5,22 @@ import argon.nodes._
 import forge._
 
 case class HashIndex[K:Type](s: Exp[HashIndex[K]]) extends MetaAny[HashIndex[K]] {
-  val mK: MetaAny[K] = typ[K].fake
-  override type Internal = scala.collection.immutable.HashMap[mK.Internal,scala.Int]
+  //val mK: MetaAny[K] = typ[K].fake
+  override type Internal = scala.collection.immutable.HashMap[Any,scala.Int]
 
   @api def =!=(x: HashIndex[K]): MBoolean = ??? // TODO! but never seen by user currently
   @api def ===(x: HashIndex[K]): MBoolean = ??? // TODO! but never seen by user currently
   @api def toText: MString = String.ify(this)
 }
 
+object HashIndex {
+  implicit def hashIndexIsStaged[K:Type]: Type[HashIndex[K]] = HashIndexType(typ[K])
+}
+
 case class HashMap[K:Type,V:Type](s: Exp[HashMap[K,V]]) extends Struct[HashMap[K,V]] {
-  val mK: MetaAny[K] = typ[K].fake
-  val mV: MetaAny[V] = typ[V].fake
-  override type Internal = scala.collection.immutable.HashMap[mK.Internal,mV.Internal]
+  //val mK: MetaAny[K] = typ[K].fake
+  //val mV: MetaAny[V] = typ[V].fake
+  override type Internal = scala.collection.immutable.HashMap[Any,Any]
 
   @api def keys: Array[K]   = field[Array[K]]("keys")
   @api def values: Array[V] = field[Array[V]]("values")
@@ -30,6 +34,8 @@ case class HashMap[K:Type,V:Type](s: Exp[HashMap[K,V]]) extends Struct[HashMap[K
 }
 
 object HashMap {
+  implicit def hashMapIsStaged[K:Type,V:Type]: StructType[HashMap[K,V]] = HashMapType(typ[K],typ[V])
+
   /** Constructors **/
   @internal def hash_index_apply[K:Type](index: Exp[HashIndex[K]], key: Exp[K]): Exp[Index] = {
     stage( HashIndexApply(index, key) )(ctx)
@@ -64,12 +70,6 @@ object HashMap {
     val index  = out(2).asInstanceOf[Exp[HashIndex[K]]]
     (keys, values, index)
   }
-}
-
-trait HashMapExp {
-  /** Type classes **/
-  implicit def hashIndexIsStaged[K:Type]: Type[HashIndex[K]] = HashIndexType(typ[K])
-  implicit def hashMapIsStaged[K:Type,V:Type]: StructType[HashMap[K,V]] = HashMapType(typ[K],typ[V])
 }
 
 trait HashMapApi {

@@ -51,19 +51,38 @@ case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt
 
 object FixPt {
   /** Static methods **/
-  @internal def wrap[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) = new FixPt[S,I,F](s)
-  @internal def lift[S:BOOL,I:INT,F:INT](s: Any, force: CBoolean) = wrap(const[S,I,F](s, force))
-  @api def apply[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
-  @api def apply[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
-  @api def apply[S:BOOL,I:INT,F:INT](x: Float): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
-  @api def apply[S:BOOL,I:INT,F:INT](x: Double): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
-  @api def apply[S:BOOL,I:INT,F:INT](x: CString): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
-  @api def apply[S:BOOL,I:INT,F:INT](x: BigInt): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
-  @api def apply[S:BOOL,I:INT,F:INT](x: BigDecimal): FixPt[S,I,F] = FixPt.wrap(const[S,I,F](x))
+  @internal def wrapped[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) = new FixPt[S,I,F](s)
+  @internal def lift[S:BOOL,I:INT,F:INT](s: Any, force: CBoolean) = FixPt.wrapped(const[S,I,F](s, force))
+  @api def apply[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt.wrapped(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt.wrapped(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: Float): FixPt[S,I,F] = FixPt.wrapped(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: Double): FixPt[S,I,F] = FixPt.wrapped(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: CString): FixPt[S,I,F] = FixPt.wrapped(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: BigInt): FixPt[S,I,F] = FixPt.wrapped(const[S,I,F](x))
+  @api def apply[S:BOOL,I:INT,F:INT](x: BigDecimal): FixPt[S,I,F] = FixPt.wrapped(const[S,I,F](x))
 
   @internal def intParam(c: Int): Param[Int32] = parameter(IntType)(FixPt.literalToBigDecimal[TRUE,_32,_0](c, force=true))
-  @internal def int32(x: BigDecimal): Const[Int32] = FixPt.const[TRUE,_32,_0](x, force = false)
-  @internal def int64(x: BigDecimal): Const[Int64] = FixPt.const[TRUE,_64,_0](x, force = false)
+  @internal def int32(x: BigDecimal): Const[Int32] = const[TRUE,_32,_0](x, force = false)
+  @internal def int64(x: BigDecimal): Const[Int64] = const[TRUE,_64,_0](x, force = false)
+
+  implicit class FixPtIntLikeOps[S:BOOL,I:INT](x: FixPt[S,I,_0]) {
+    @api def %(y: FixPt[S,I,_0]): FixPt[S,I,_0] = FixPt(FixPt.mod(x.s, y.s))
+  }
+
+  /** Type classes **/
+  implicit def fixPtIsStaged[S:BOOL,I:INT,F:INT]: Type[FixPt[S,I,F]] = FixPtType[S,I,F](BOOL[S],INT[I],INT[F])
+  implicit def fixPtIsNum[S:BOOL,I:INT,F:INT]: Num[FixPt[S,I,F]] = FixPtNum[S,I,F]
+
+  @api implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
+  @api implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
+
+  /** Rewrite rules **/
+  /*@rewrite def Bool$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
+    case Def(node@FixNeq(a,b)) => stage( FixEql(a,b)(node.mS,node.mI,node.mF) )(ctx)
+    case Def(node@FixEql(a,b)) => stage( FixNeq(a,b)(node.mS,node.mI,node.mF) )(ctx)
+    case Def( node@FixLt(a,b)) => stage( FixLeq(b,a)(node.mS,node.mI,node.mF) )(ctx)
+    case Def(node@FixLeq(a,b)) => stage(  FixLt(b,a)(node.mS,node.mI,node.mF) )(ctx)
+  }*/
 
 
   /** Constants **/
@@ -288,8 +307,8 @@ object FixPt {
     stage(FixConvert[S,I,F,S2,I2,F2](x.asInstanceOf[Exp[FixPt[S,I,F]]]))(ctx)
   }
 
-  @internal def to_flt[S:BOOL,I:INT,F:INT,G:INT,E:INT](x: Exp[FixPt[_,_,_]]): Exp[FltPt[G,E]] = {
-    stage(FixPtToFltPt[S,I,F,G,E](x.asInstanceOf[Exp[FixPt[S,I,F]]]))(ctx)
+  @internal def to_flt[S:BOOL,I:INT,F:INT,G:INT,E:INT](x: Exp[FixPt[S,I,F]]): Exp[FltPt[G,E]] = {
+    stage(FixPtToFltPt[S,I,F,G,E](x))(ctx)
   }
 
   @internal def from_text[S:BOOL,I:INT,F:INT](x: Exp[MString]): Exp[FixPt[S,I,F]] = x match {
@@ -307,50 +326,29 @@ object FixPt {
   }
 }
 
-/** Static methods and implicits **/
+/** Direct methods **/
 trait FixPtExp {
-
-  /** Static methods **/
   def isFixPtType(x: Type[_]) = FixPtType.unapply(x).isDefined
   def isInt32Type(x: Type[_]) = IntType.unapply(x)
+
   @internal def intParam(c: Int): Param[Int32] = FixPt.intParam(c)
   @internal def int32(x: BigDecimal): Const[Int32] = FixPt.int32(x)
   @internal def int64(x: BigDecimal): Const[Int64] = FixPt.int64(x)
 
-  implicit class FixPtIntLikeOps[S:BOOL,I:INT](x: FixPt[S,I,_0]) {
-    @api def %(y: FixPt[S,I,_0]): FixPt[S,I,_0] = FixPt(FixPt.mod(x.s, y.s))
-  }
-
-  /** Type classes **/
-  implicit def fixPtIsStaged[S:BOOL,I:INT,F:INT]: Type[FixPt[S,I,F]] = FixPtType[S,I,F](BOOL[S],INT[I],INT[F])
-  implicit def fixPtIsNum[S:BOOL,I:INT,F:INT]: Num[FixPt[S,I,F]] = FixPtNum[S,I,F]
-
-  /** Rewrite rules **/
-  /*@rewrite def Bool$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
-    case Def(node@FixNeq(a,b)) => stage( FixEql(a,b)(node.mS,node.mI,node.mF) )(ctx)
-    case Def(node@FixEql(a,b)) => stage( FixNeq(a,b)(node.mS,node.mI,node.mF) )(ctx)
-    case Def( node@FixLt(a,b)) => stage( FixLeq(b,a)(node.mS,node.mI,node.mF) )(ctx)
-    case Def(node@FixLeq(a,b)) => stage(  FixLt(b,a)(node.mS,node.mI,node.mF) )(ctx)
-  }*/
-
-
   /** Lifting **/
-  @api implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
-  @api implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
-
   implicit object LiftInt extends Lift[Int,Int32] {
-    @internal def apply(x: Int): Int32 = int2fixpt(x)
+    @internal def apply(x: Int): Int32 = FixPt.int2fixpt(x)
   }
   implicit object LiftLong extends Lift[Long,Int64] {
-    @internal def apply(x: Long): Int64 = long2fixpt(x)
+    @internal def apply(x: Long): Int64 = FixPt.long2fixpt(x)
   }
 
   /** Casting **/
   implicit def int_cast_fixpt[S:BOOL,I:INT,F:INT]: Cast[Int,FixPt[S,I,F]] = new Cast[Int,FixPt[S,I,F]] {
-    @internal def apply(x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
+    @internal def apply(x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=true)
   }
   implicit def long_cast_fixpt[S:BOOL,I:INT,F:INT]: Cast[Long,FixPt[S,I,F]] = new Cast[Long,FixPt[S,I,F]] {
-    @internal def apply(x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
+    @internal def apply(x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=true)
   }
   implicit def fixpt2fixpt[S:BOOL,I:INT,F:INT, S2:BOOL,I2:INT,F2:INT] = new Cast[FixPt[S,I,F],FixPt[S2,I2,F2]] {
     @internal def apply(x: FixPt[S,I,F]): FixPt[S2,I2,F2] = wrap(FixPt.convert[S,I,F,S2,I2,F2](x.s))

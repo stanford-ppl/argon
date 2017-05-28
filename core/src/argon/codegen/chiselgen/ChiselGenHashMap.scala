@@ -1,6 +1,7 @@
 package argon.codegen.chiselgen
 
 import argon.core.compiler._
+import argon.lang.compiler._
 import argon.nodes._
 
 trait ChiselGenHashMap extends ChiselCodegen {

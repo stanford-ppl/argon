@@ -1,6 +1,7 @@
 package argon
 
-import argon.core.{Config, RunningFailed}
+import argon.core.compiler._
+import argon.core.RunningFailed
 import argon.codegen.FileGen
 
 import scala.sys.process._

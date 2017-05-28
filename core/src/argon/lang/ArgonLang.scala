@@ -18,6 +18,10 @@ trait LangAliases {
   @generate
   type UIntJJ$JJ$2to128 = FixPt[FALSE,_JJ,_0]
 
+  type Float64 = FltPt[_53,_11]
+  type Float32 = FltPt[_24, _8]
+  type Float16 = FltPt[_11, _5]
+
   type MArray[T] = argon.lang.Array[T]
   type CArray[T] = scala.Array[T]
 
@@ -213,7 +217,6 @@ trait ArgonExp
     with FixPtExp
     with FltPtExp
     with FunctionExp
-    with HashMapExp
     with IfThenElseExp
     with MetaAnyExp
     with OverloadHackExp

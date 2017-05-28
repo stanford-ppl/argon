@@ -5,7 +5,7 @@ import argon.lang.compiler._
 import org.virtualized.EmptyContext
 
 case class ArrayType[T](child: Type[T]) extends Type[MArray[T]] {
-  override def wrapped(s: Exp[MArray[T]]): MArray[T] = MArray(s)(child)
+  override def wrapped(s: Exp[MArray[T]]): MArray[T] = new MArray(s)(child)
   override def typeArguments = List(child)
   override def stagedClass = classOf[MArray[T]]
   override def isPrimitive = false

@@ -90,17 +90,15 @@ object Report {
   def readable(x: Any): String = x match {
     case c: CompilerFacing => c.toStringCompiler
     case x: Tuple3[_,_,_]  => s"${readable(x._1)} = ${readable(x._2)} [inputs = ${readable(x._3)}]"
-    case c:Class[_]        => c.getName.split('$').last.replace("class ", "")
-    case p:Iterable[_]     => if (p.isEmpty) "Nil" else p.map(readable).mkString("Seq(", ",", ")")
-    case p:Product         => if (p.productIterator.isEmpty) s"${p.productPrefix}"
-    else s"""${p.productPrefix}(${p.productIterator.map(readable).mkString(", ")})"""
+    case c: Class[_]       => c.getName.split('$').last.replace("class ", "")
+    case p: Iterable[_]    => if (p.isEmpty) "Nil" else p.map(readable).mkString("Seq(", ",", ")")
     case _ =>
       if (x == null) "null" else x.toString
   }
 
   def userReadable(x: Any): String = x match {
     case c: FrontendFacing => c.toStringFrontend
-    case c:Class[_]  => c.getName.split('$').last.replace("class ", "")
+    case c: Class[_]  => c.getName.split('$').last.replace("class ", "")
     case _ => readable(x)
   }
 

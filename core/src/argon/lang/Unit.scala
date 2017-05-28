@@ -12,7 +12,8 @@ case class Unit(s: Exp[Unit]) extends MetaAny[Unit] {
 }
 
 object Unit {
-  implicit val unitIsStaged: Type[MUnit] = UnitType
+  implicit def unitIsStaged: Type[MUnit] = UnitType
+  @api implicit def liftUnit(x: CUnit): MUnit = Unit()
 
   @internal def apply(): MUnit = Unit(const())
   @internal def apply(s: CUnit): MUnit = Unit(const())
@@ -21,8 +22,6 @@ object Unit {
 
 trait UnitExp {
   /** Lifting **/
-  @api implicit def liftUnit(x: CUnit): MUnit = Unit()
-
   implicit object UnitLift extends Lift[CUnit,MUnit] {
     @internal override def apply(x: CUnit) = Unit()
   }

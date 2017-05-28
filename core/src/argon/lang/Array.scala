@@ -6,7 +6,7 @@ import forge._
 
 case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
   val mT = implicitly[Type[T]]
-  override type Internal = scala.Array[mT.Internal]
+  override type Internal = scala.Array[Any] // TODO: Way to fix this?
 
   @api def length: Index = wrap{ Array.length(this.s) }
 
@@ -33,8 +33,7 @@ case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
 }
 
 object Array {
-  implicit def arrayType[T:Type]: Type[Array[T]] = ArrayType(typ[T])
-
+  /** Static functions **/
   @api def tabulate[T:Type](size: Index)(func: Index => T): MArray[T]
     = Array(mapindices(size.s, {i => func(wrap(i)).s}, fresh[Index]))
   @api def fill[T:Type](size: Index)(func: => T): MArray[T] = this.tabulate(size){ _ => func}
@@ -48,6 +47,9 @@ object Array {
     }
     arr
   }
+
+  /** Type **/
+  implicit def arrayType[T:Type]: Type[Array[T]] = ArrayType(typ[T])
 
   /** Constructors **/
   @internal def length[T:Type](array: Exp[MArray[T]]): Sym[Index] = stage(ArrayLength(array))(ctx)

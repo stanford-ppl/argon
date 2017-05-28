@@ -26,16 +26,24 @@ case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) extends MetaAny[FltPt[G,E]] {
 
 object FltPt {
   /** Static methods **/
-  @internal def wrap[G:INT,E:INT](s: Exp[FltPt[G,E]]): FltPt[G,E] = new FltPt[G,E](s)
-  @internal def lift[G:INT,E:INT](x: Any, force: CBoolean): FltPt[G,E] = FltPt.wrap(const[G,E](x, force))
-  @api def apply[G:INT,E:INT](x: Int): FltPt[G,E] = FltPt.wrap(const[G,E](x))
-  @api def apply[G:INT,E:INT](x: Long): FltPt[G,E] = FltPt.wrap(const[G,E](x))
-  @api def apply[G:INT,E:INT](x: Float): FltPt[G,E] = FltPt.wrap(const[G,E](x))
-  @api def apply[G:INT,E:INT](x: Double): FltPt[G,E] = FltPt.wrap(const[G,E](x))
-  @api def apply[G:INT,E:INT](x: CString): FltPt[G,E] = FltPt.wrap(const[G,E](x))
-  @api def apply[G:INT,E:INT](x: BigInt): FltPt[G,E] = FltPt.wrap(const[G,E](x))
-  @api def apply[G:INT,E:INT](x: BigDecimal): FltPt[G,E] = FltPt.wrap(const[G,E](x))
+  @internal def wrapped[G:INT,E:INT](s: Exp[FltPt[G,E]]): FltPt[G,E] = new FltPt[G,E](s)
+  @internal def lift[G:INT,E:INT](x: Any, force: CBoolean): FltPt[G,E] = FltPt.wrapped(const[G,E](x, force))
+  @api def apply[G:INT,E:INT](x: Int): FltPt[G,E] = FltPt.wrapped(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: Long): FltPt[G,E] = FltPt.wrapped(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: Float): FltPt[G,E] = FltPt.wrapped(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: Double): FltPt[G,E] = FltPt.wrapped(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: CString): FltPt[G,E] = FltPt.wrapped(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: BigInt): FltPt[G,E] = FltPt.wrapped(const[G,E](x))
+  @api def apply[G:INT,E:INT](x: BigDecimal): FltPt[G,E] = FltPt.wrapped(const[G,E](x))
 
+  /** Type classes **/
+  implicit def fltPtIsStaged[G:INT,E:INT]: Type[FltPt[G,E]] = FltPtType(INT[G],INT[E])
+  implicit def fltPtIsNum[G:INT,E:INT]: Num[FltPt[G,E]] = new FltPtNum[G,E]
+
+  @api implicit def int2fltpt[G:INT,E:INT](x: Int): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
+  @api implicit def long2fltpt[G:INT,E:INT](x: Long): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
+  @api implicit def float2fltpt[G:INT,E:INT](x: Float): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
+  @api implicit def double2fltpt[G:INT,E:INT](x: Double): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
 
   /** Constants **/
   @internal def literalToBigDecimal[G:INT,E:INT](x: Any, force: CBoolean): BigDecimal = {
@@ -121,54 +129,29 @@ object FltPt {
 }
 
 trait FltPtExp {
-  /** Type aliases **/
-  type Float64 = FltPt[_53,_11]
-  type Float32 = FltPt[_24, _8]
-  type Float16 = FltPt[_11, _5]
-
-  /** Static methods **/
+  /** Direct methods **/
   def isFltPtType(x: Type[_]) = FltPtType.unapply(x).isDefined
-
-
-  /** Rewrite rules **/
-  /*@rewrite def Bool$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
-    case Op(node@FltNeq(a,b)) => stage( FltEql(a,b)(node.mG,node.mE) )(ctx)
-    case Op(node@FltEql(a,b)) => stage( FltNeq(a,b)(node.mG,node.mE) )(ctx)
-    case Op( node@FltLt(a,b)) => stage( FltLeq(b,a)(node.mG,node.mE) )(ctx)
-    case Op(node@FltLeq(a,b)) => stage(  FltLt(b,a)(node.mG,node.mE) )(ctx)
-  }*/
-
-  /** Type classes **/
-  implicit def fltPtIsStaged[G:INT,E:INT]: Type[FltPt[G,E]] = FltPtType(INT[G],INT[E])
-  implicit def fltPtIsNum[G:INT,E:INT]: Num[FltPt[G,E]] = new FltPtNum[G,E]
-
 
   /** Lifting **/
   implicit object Float2FltPt extends Lift[Float,Float32] {
-    @internal def apply(x: Float): Float32 = float2fltpt(x)
+    @internal def apply(x: Float): Float32 = FltPt.float2fltpt(x)
   }
   implicit object Double2FltPt extends Lift[Double,Float64] {
-    @internal def apply(x: Double): Float64 = double2fltpt(x)
+    @internal def apply(x: Double): Float64 = FltPt.double2fltpt(x)
   }
-
-  @api implicit def int2fltpt[G:INT,E:INT](x: Int): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
-  @api implicit def long2fltpt[G:INT,E:INT](x: Long): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
-  @api implicit def float2fltpt[G:INT,E:INT](x: Float): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
-  @api implicit def double2fltpt[G:INT,E:INT](x: Double): FltPt[G,E] = FltPt.lift[G,E](x, force=false)
-
 
   /** Casting **/
   implicit def int_cast_fltpt[G:INT,E:INT]: Cast[Int,FltPt[G,E]] = new Cast[Int,FltPt[G,E]] {
-    @internal def apply(x: Int): FltPt[G,E] = int2fltpt[G,E](x)
+    @internal def apply(x: Int): FltPt[G,E] = FltPt.lift[G,E](x, force=true)
   }
   implicit def long_cast_fltpt[G:INT,E:INT]: Cast[Long,FltPt[G,E]] = new Cast[Long,FltPt[G,E]] {
-    @internal def apply(x: Long): FltPt[G,E] = long2fltpt[G,E](x)
+    @internal def apply(x: Long): FltPt[G,E] = FltPt.lift[G,E](x, force=true)
   }
   implicit def float_cast_fltpt[G:INT,E:INT]: Cast[Float,FltPt[G,E]] = new Cast[Float,FltPt[G,E]] {
-    @internal def apply(x: Float): FltPt[G,E] = float2fltpt[G,E](x)
+    @internal def apply(x: Float): FltPt[G,E] = FltPt.lift[G,E](x, force=true)
   }
   implicit def double_cast_fltpt[G:INT,E:INT]: Cast[Double,FltPt[G,E]] = new Cast[Double,FltPt[G,E]] {
-    @internal def apply(x: Double): FltPt[G,E] = double2fltpt[G,E](x)
+    @internal def apply(x: Double): FltPt[G,E] = FltPt.lift[G,E](x, force=true)
   }
 
   implicit def fltpt2fltpt[G:INT,E:INT, G2:INT,E2:INT] = new Cast[FltPt[G,E],FltPt[G2,E2]] {
@@ -180,6 +163,15 @@ trait FltPtExp {
   implicit def string2fltpt[G:INT,E:INT] = new Cast[MString,FltPt[G,E]] {
     @internal def apply(x: MString): FltPt[G,E] = FltPt(FltPt.from_string[G,E](x.s))
   }
+
+
+  /** Rewrite rules **/
+  /*@rewrite def Bool$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
+    case Op(node@FltNeq(a,b)) => stage( FltEql(a,b)(node.mG,node.mE) )(ctx)
+    case Op(node@FltEql(a,b)) => stage( FltNeq(a,b)(node.mG,node.mE) )(ctx)
+    case Op( node@FltLt(a,b)) => stage( FltLeq(b,a)(node.mG,node.mE) )(ctx)
+    case Op(node@FltLeq(a,b)) => stage(  FltLt(b,a)(node.mG,node.mE) )(ctx)
+  }*/
 }
 
 trait FltPtApi {
