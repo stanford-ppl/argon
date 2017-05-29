@@ -7,7 +7,8 @@ import argon.traversal.Traversal
 trait ForwardTransformer extends Traversal with SubstTransformer {
   override implicit val state: State = IR
 
-  val allowPretransform = false       // Need to explicitly enable this
+  //val allowPretransform = false     // Need to explicitly enable this
+  val allowDuplication = false        // Allow old symbols with mirroring rules to persist in the IR
   final override val recurse = Never  // Mirroring already guarantees we always recursively visit scopes
 
   /**
@@ -142,6 +143,23 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
   override protected def preprocess[S:Type](block: Block[S]) = {
     subst = Map.empty // Reset substitutions across runs (if transformer used more than once)
     super.preprocess(block)
+  }
+
+  override protected def postprocess[S:Type](block: Block[S]) = {
+    // Somewhat expensive sanity check
+    val b = super.postprocess(block)
+    if (Config.verbosity > 2 && !allowDuplication) {
+      val (_, contents) = blockInputsAndNestedContents(block)
+      val symbols = contents.flatMap(_.lhs.asInstanceOf[Seq[Exp[_]]]).toSet
+      val duplicated = symbols intersect subst.keySet
+      if (duplicated.nonEmpty) {
+        error(s"[Compiler] The following symbols appear to have been duplicated by transformer $name:")
+        duplicated.foreach{x => error(c"[Compiler]  ${str(x)}")}
+        error(s"[Compiler] If this behavior is expected, enable it by setting allowDuplication to true")
+        state.logError()
+      }
+    }
+    b
   }
 
   /**

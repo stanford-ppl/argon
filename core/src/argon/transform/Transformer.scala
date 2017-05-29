@@ -28,13 +28,13 @@ trait Transformer { self =>
   def txSyms(xs: Set[Sym[_]]): Set[Sym[_]] = syms(xs.map{x => f(x)}).toSet
 
   protected def inlineBlock[R:Type](b: Block[R]): () => Exp[R]
-  final protected def inlineLambda[A,R:Type](b: Lambda1[A,R]): Exp[A] => Exp[R]
+  protected def inlineLambda[A,R:Type](b: Lambda1[A,R]): Exp[A] => Exp[R]
     = {_: Exp[A] => val result = inlineBlock(b); result() }
-  final protected def inlineLambda[A,B,R:Type](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R]
+  protected def inlineLambda[A,B,R:Type](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R]
     = {(_:Exp[A],_:Exp[B]) => val result = inlineBlock(b); result() }
-  final protected def inlineLambda[A,B,C,R:Type](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R]
+  protected def inlineLambda[A,B,C,R:Type](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R]
     = {(_:Exp[A],_:Exp[B],_:Exp[C]) => val result = inlineBlock(b); result() }
-  final protected def inlineLambda[A,B,C,D,R:Type](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R]
+  protected def inlineLambda[A,B,C,D,R:Type](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R]
     = {(_:Exp[A],_:Exp[B],_:Exp[C],_:Exp[D]) => val result = inlineBlock(b); result() }
 
   protected def transformBlock[T:Type](b: Block[T]): Block[T]
