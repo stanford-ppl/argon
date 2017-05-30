@@ -26,10 +26,13 @@ trait Blocks extends Effects { self: Staging =>
     effects
   }
 
-  def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]], temp: UseFreq): Block[T] = {
+  def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]], temp: UseFreq, isolated: Boolean = false): Block[T] = {
     val saveContext = context
     val saveCache = defCache
     context = Nil
+
+    // In an isolated block, don't allow CSE with outside statements either
+    if (isolated) defCache = Map.empty
 
     val result = block
     val deps = context
@@ -47,6 +50,8 @@ trait Blocks extends Effects { self: Staging =>
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
     */
+  def stageIsolatedBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Cold, isolated = true)
+
   def stageBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Normal)
   def stageLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Normal)
 
