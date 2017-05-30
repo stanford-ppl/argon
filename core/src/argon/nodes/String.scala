@@ -1,7 +1,7 @@
 package argon.nodes
 
 import argon.core.compiler._
-import argon.lang.compiler._
+import argon.compiler._
 
 object StringType extends Type[MString] {
   def wrapped(x: Exp[MString]) = MString(x)

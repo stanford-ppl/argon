@@ -1,7 +1,7 @@
 package argon.nodes
 
 import argon.core.compiler._
-import argon.lang.compiler._
+import argon.compiler._
 import forge._
 
 class FltPtType[G,E](val mG: INT[G], val mE: INT[E]) extends Type[FltPt[G,E]] with CanBits[FltPt[G,E]] {

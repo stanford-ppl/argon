@@ -1,7 +1,7 @@
 package argon.codegen.scalagen
 
 import argon.core.compiler._
-import argon.lang.compiler._
+import argon.compiler._
 import argon.nodes._
 
 trait ScalaGenHashMap extends ScalaCodegen {

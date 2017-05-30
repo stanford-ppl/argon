@@ -1,7 +1,7 @@
 package argon.nodes
 
 import argon.core.compiler._
-import argon.lang.compiler._
+import argon.compiler._
 
 case class Func1Type[A,R](a: Type[A], r: Type[R]) extends Type[Func1[A,R]] {
   override def wrapped(x: Exp[Func1[A,R]]) = new Func1(x)(a, r)

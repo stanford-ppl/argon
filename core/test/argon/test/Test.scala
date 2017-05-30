@@ -1,8 +1,7 @@
 package argon.test
 
-import argon.AppRunner
+import argon.{AppRunner, ArgonLangExternal}
 import argon.core.{ArgonCore, Config, State}
-import argon.lang.ArgonLangExternal
 import argon.codegen.scalagen._
 import argon.transform.ForwardTransformer
 import argon.traversal.IRPrinter

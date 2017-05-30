@@ -1,7 +1,7 @@
 package argon.nodes
 
 import argon.core.compiler._
-import argon.lang.compiler._
+import argon.compiler._
 
 case class VarType[T](child: Type[T]) extends Type[Var[T]] {
   override def wrapped(x: Exp[Var[T]]) = Var(x)(child,this)

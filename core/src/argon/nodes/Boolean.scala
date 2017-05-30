@@ -1,7 +1,7 @@
 package argon.nodes
 
 import argon.core.compiler._
-import argon.lang.compiler._
+import argon.compiler._
 import forge._
 
 case object BooleanType extends Type[MBoolean] with CanBits[MBoolean] {

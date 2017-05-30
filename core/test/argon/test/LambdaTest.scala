@@ -1,7 +1,7 @@
 package argon.test
 
 import argon.core.compiler._
-import argon.lang.compiler._
+import argon.compiler._
 import argon.codegen.scalagen.ScalaCodegen
 import forge._
 import org.virtualized._

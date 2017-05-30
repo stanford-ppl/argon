@@ -1,7 +1,7 @@
 package argon.nodes
 
 import argon.core.compiler._
-import argon.lang.compiler._
+import argon.compiler._
 
 case class HashIndexType[K](mK: Type[K]) extends Type[HashIndex[K]] {
   override def wrapped(x: Exp[HashIndex[K]]) = new HashIndex(x)(mK)

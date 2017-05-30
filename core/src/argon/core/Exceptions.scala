@@ -8,6 +8,16 @@ import scala.util.control.NoStackTrace
 abstract class CompilerException(id: Int, msg: String, console: => Unit) extends
   Exception(s"Internal exception #$id: $msg") { console }
 
+abstract class UserError(ctx: SrcCtx, err: => Unit)(implicit state: State) {
+  err
+  error(ctx)
+}
+abstract class ProgramError(err: => Unit)(implicit state: State) {
+  err
+  state.logError()
+}
+
+
 class RecursiveScheduleException(result: Any, xs: List[String]) extends
   CompilerException(0, c"Recursive schedule while scheduling result $result", {
     error(c"Recursive schedule while scheduling result $result:")

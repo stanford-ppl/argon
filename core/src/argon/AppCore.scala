@@ -1,7 +1,7 @@
 package argon
 
 import argon.core.compiler._
-import argon.lang.compiler._
+import compiler._
 import argon.core.TestBenchFailed
 import argon.traversal.CompilerPass
 import argon.transform.Transformer

@@ -32,6 +32,10 @@ trait ArgonCoreAliases extends ArgonCore {
   type FrontendFacing = argon.core.FrontendFacing
   type CompilerFacing = argon.core.CompilerFacing
 
+  type CompilerException = argon.core.CompilerException
+  type UserError = argon.core.UserError
+  type ProgramError = argon.core.ProgramError
+
   type Exp[+T] = argon.core.Exp[T]
   type Dyn[+T] = argon.core.Dyn[T]
   type Sym[+T] = argon.core.Sym[T]
@@ -80,4 +84,4 @@ trait ArgonCoreAliases extends ArgonCore {
 private[core] object ops extends ArgonCore
 
 /** External use (everything outside argon.core) **/
-private[argon] object compiler extends ArgonCoreAliases
+object compiler extends ArgonCoreAliases
