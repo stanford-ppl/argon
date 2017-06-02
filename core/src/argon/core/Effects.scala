@@ -14,7 +14,7 @@ trait Effects extends Symbols { this: Staging =>
   }
 
   case class Effects(
-    cold:    Boolean = false,           // Should not be code motioned or CSEd
+    cold:    Boolean = false,           // Should not be code motioned out of blocks
     simple:  Boolean = false,           // Requires ordering with respect to other simple effects
     global:  Boolean = false,           // Modifies execution of entire program (e.g. exceptions, exiting)
     mutable: Boolean = false,           // Allocates a mutable structure
@@ -41,7 +41,7 @@ trait Effects extends Symbols { this: Staging =>
 
     def isPure = this == Pure
     def isMutable = mutable
-    def isIdempotent = !cold && !simple && !global && !mutable && writes.isEmpty
+    def isIdempotent = !simple && !global && !mutable && writes.isEmpty
 
     def onlyThrows = this == Throws
     def mayWrite(ss: Set[Sym[_]]) = global || ss.exists { s => writes contains s }
