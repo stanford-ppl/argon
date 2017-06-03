@@ -24,6 +24,7 @@ sealed class Block[+R](
     case _ => false
   }
 }
+
 object Block {
   def apply[R](inputs: Seq[Exp[_]], result: Exp[R], effects: Effects, effectful: Seq[Sym[_]], temp: Freq): Block[R] = {
     new Block(inputs, result, effects, effectful, temp)

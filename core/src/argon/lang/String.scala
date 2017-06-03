@@ -14,6 +14,10 @@ case class String(s: Exp[String]) extends MetaAny[String] {
   @api def ===(that: MString): MBoolean = Boolean(String.equals(this.s, that.s))
   @api def equals(that: MString): MBoolean = Boolean(String.equals(this.s, that.s))
   @api def toText = this
+
+  @api def length: Int32 = wrap(String.length(this.s))
+  @api def apply(id: Index): MString = wrap(String.slice(this.s, id.s, (id+1).s))
+  @api def apply(start: Index, end: Index): MString = wrap(String.slice(this.s, start.s, end.s))
 }
 
 object String {
@@ -48,6 +52,14 @@ object String {
     case (Const(a: CString), Const(b: CString)) => Boolean.const(a != b)
     case _ => stage( StringDiffer(x,y) )(ctx)
   }
+
+  @internal def slice(x: Exp[MString], start: Exp[Index], end: Exp[Index])(implicit ctx: SrcCtx): Exp[MString] = {
+    stage( StringSlice(x,start,end) )(ctx)
+  }
+  @internal def length(x: Exp[MString])(implicit ctx: SrcCtx): Exp[Int32] = {
+    stage( StringLength(x) )(ctx)
+  }
+
 }
 
 trait StringExp {
@@ -65,7 +77,7 @@ trait StringExp {
   }
 
   /** Rewrite Rules **/
-  /*@rewrite def Bool$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
+  /*@rewrite def MBoolean$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
     case Op(TextEquals(a,b)) => text_differ(a,b)
     case Op(TextDiffer(a,b)) => text_equals(a,b)
   }*/
