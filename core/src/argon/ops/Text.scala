@@ -24,6 +24,9 @@ trait TextExp extends BoolExp { self: ArgonExp =>
     @api def ===(that: Text): Bool = Bool(text_equals(this.s, that.s))
     @api def equals(that: Text): Bool = Bool(text_equals(this.s, that.s))
     @api def toText = this
+    @api def length: Int32 = wrap(text_length(this.s))
+    @api def apply(id: Index): Text = wrap(text_slice(this.s, id.s, (id+1).s))
+    @api def apply(start: Index, end: Index): Text = wrap(text_slice(this.s, start.s, end.s))
   }
 
   /** Direct methods **/
@@ -55,6 +58,8 @@ trait TextExp extends BoolExp { self: ArgonExp =>
     val mT = typ[T]
   }
   case class TextConcat(x: Exp[Text], y: Exp[Text]) extends Op[Text] { def mirror(f:Tx) = text_concat(f(x),f(y)) }
+  case class TextSlice(x: Exp[Text], start: Exp[Index], end: Exp[Index]) extends Op[Text] { def mirror(f:Tx) = text_slice(f(x),f(start),f(end)) }
+  case class TextLength(x: Exp[Text]) extends Op[Int32] { def mirror(f:Tx) = text_length(f(x)) }
   case class TextEquals(x: Exp[Text], y: Exp[Text]) extends Op[Bool] { def mirror(f:Tx) = text_equals(f(x),f(y)) }
   case class TextDiffer(x: Exp[Text], y: Exp[Text]) extends Op[Bool] { def mirror(f:Tx) = text_differ(f(x),f(y)) }
 
@@ -70,6 +75,11 @@ trait TextExp extends BoolExp { self: ArgonExp =>
     case (a, Const("")) => a
     case _ => stage( TextConcat(x,y) )(ctx)
   }
+
+  // TODO: Optimize these constructors
+  def text_slice(x: Exp[Text], start: Exp[Index], end: Exp[Index])(implicit ctx: SrcCtx): Exp[Text] = stage( TextSlice(x,start,end) )(ctx)
+  def text_length(x: Exp[Text])(implicit ctx: SrcCtx): Exp[Int32] = stage( TextLength(x) )(ctx)
+
   def text_equals(x: Exp[Text], y: Exp[Text])(implicit ctx: SrcCtx): Exp[Bool] = (x,y) match {
     case (Const(a: String), Const(b: String)) => bool(a == b)
     case _ => stage( TextEquals(x,y) )(ctx)
