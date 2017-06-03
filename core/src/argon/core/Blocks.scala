@@ -27,7 +27,7 @@ trait Blocks extends Effects { self: Staging =>
     effects
   }
 
-  def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]], temp: UseFreq, isolated: Boolean = false): Block[T] = {
+  def createBlock[T:Type](block: => Exp[T], inputs: Seq[Sym[_]], temp: UseFreq, isolated: Boolean = false, seal: Boolean = false): Block[T] = {
     val saveContext = context
     val saveCache = defCache
     context = Nil
@@ -36,7 +36,8 @@ trait Blocks extends Effects { self: Staging =>
     if (isolated) defCache = Map.empty
 
     val result = block
-    val deps = context
+    val deps = if (seal) context.collect{case sym@Effectful(eff,_) if eff != Pure => sym}
+               else      context.collect{case sym@Effectful(eff,_) if eff != Sticky && eff != Pure => sym}
     context = saveContext
 
     // Reset contents of defCache when staging cold blocks
@@ -56,7 +57,7 @@ trait Blocks extends Effects { self: Staging =>
   def stageSealedBlock[T:Type](block: => Exp[T]): Block[T] = {
     var prevEffects = blockEffects
     blockEffects = prevEffects andAlso Sticky
-    val result = createBlock[T](block, Nil, Freq.Normal)
+    val result = createBlock[T](block, Nil, Freq.Cold, isolated = false, seal = true)
     blockEffects = prevEffects
     result
   }
