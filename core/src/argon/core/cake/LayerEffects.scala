@@ -24,7 +24,8 @@ trait LayerEffects { this: ArgonCore =>
   }
 
   final val Pure = Effects()
-  final val Cold = Effects(cold = true)
+  final val Sticky = Effects(sticky = true)
+  final val Unique = Effects(unique = true)
   final val Simple = Effects(simple = true)
   final val Global = Effects(global = true)
   final val Mutable = Effects(mutable = true)

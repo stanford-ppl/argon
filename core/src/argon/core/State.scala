@@ -17,6 +17,9 @@ class State {
   var context: List[Sym[_]] = _
   final def checkContext(): Unit = if (context == null) throw new UninitializedEffectContextException()
 
+  /** Effects for all statements staged in the current scope **/
+  var blockEffects: Effects = Effects()
+
   /** Definition cache used for CSE **/
   var defCache: Map[Def, Seq[Sym[_]]] = Map.empty
 

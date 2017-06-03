@@ -31,16 +31,18 @@ trait LayerStaging { this: ArgonCore =>
 
   @stateful def stageDef(d: Def)(ctx: SrcCtx): Seq[Sym[_]]                   = stageDefPure(d)(ctx)
   @stateful def stageDefPure(d: Def)(ctx: SrcCtx): Seq[Sym[_]]               = stageDefEffectful(d, Pure)(ctx)
-  @stateful def stageDefCold(d: Def)(ctx: SrcCtx): Seq[Sym[_]]               = stageDefEffectful(d, Cold)(ctx)
   @stateful def stageDefWrite(ss: Exp[_]*)(d: Def)(ctx: SrcCtx): Seq[Sym[_]] = stageDefEffectful(d, Write(ss:_*))(ctx)
+  @stateful def stageDefSticky(d: Def)(ctx: SrcCtx): Seq[Sym[_]]             = stageDefEffectful(d, Sticky)(ctx)
+  @stateful def stageDefUnique(d: Def)(ctx: SrcCtx): Seq[Sym[_]]             = stageDefEffectful(d, Unique)(ctx)
   @stateful def stageDefSimple(d: Def)(ctx: SrcCtx): Seq[Sym[_]]             = stageDefEffectful(d, Simple)(ctx)
   @stateful def stageDefGlobal(d: Def)(ctx: SrcCtx): Seq[Sym[_]]             = stageDefEffectful(d, Global)(ctx)
   @stateful def stageDefMutable(d: Def)(ctx: SrcCtx): Seq[Sym[_]]            = stageDefEffectful(d, Mutable)(ctx)
 
   @stateful def stage[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                      = single[T](stageDef(op)(ctx))
   @stateful def stagePure[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stageDefPure(op)(ctx))
-  @stateful def stageCold[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stageDefCold(op)(ctx))
   @stateful def stageWrite[T:Type](ss: Exp[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T]    = single[T](stageDefWrite(ss:_*)(op)(ctx))
+  @stateful def stageSticky[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefSticky(op)(ctx))
+  @stateful def stageUnique[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefUnique(op)(ctx))
   @stateful def stageSimple[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefSimple(op)(ctx))
   @stateful def stageGlobal[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefGlobal(op)(ctx))
   @stateful def stageMutable[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]               = single[T](stageDefMutable(op)(ctx))
@@ -119,7 +121,7 @@ trait LayerStaging { this: ArgonCore =>
         ss
       }
 
-      if (effects.isIdempotent) {
+      if (effects.mayCSE) {
         // CSE statements which are idempotent and have identical effect summaries (e.g. repeated reads w/o writes)
         val symsWithSameDef = state.defCache.getOrElse(d, Nil) intersect state.context
         val symsWithSameEffects = symsWithSameDef.filter { case Effectful(u2, es) => u2 == effects && es == deps }

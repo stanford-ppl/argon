@@ -46,6 +46,14 @@ trait LayerBlocks { self: ArgonCore =>
     (result, effects, deps)
   }
 
+  @stateful def stageSealedBlock[T:Type](block: => Exp[T]): Block[T] = {
+    var prevEffects = state.blockEffects
+    state.blockEffects = prevEffects andAlso Sticky
+    val result = stageBlock[T](block)
+    state.blockEffects = prevEffects
+    result
+  }
+
   @stateful def stageBlock[R](block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false): Block[R] = {
     val (result, effects, effectful) = stageScope(block, temp)
     Block(Nil, result, effects, effectful, temp)
