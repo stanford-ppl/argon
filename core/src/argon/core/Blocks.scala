@@ -5,6 +5,7 @@ import scala.collection.mutable
 
 trait Blocks extends Effects { self: Staging =>
   type Pass = CompilerPass{ val IR: self.type }
+  var blockEffects: Effects = Pure
 
   /** Class representing the result of a staged scope. */
   case class Block[+T](result: Exp[T], summary: Effects, effectful: Seq[Sym[_]], inputs: Seq[Sym[_]], temp: UseFreq) {
@@ -51,6 +52,14 @@ trait Blocks extends Effects { self: Staging =>
     * No assumptions about the current context remain valid.
     */
   def stageIsolatedBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Cold, isolated = true)
+
+  def stageSealedBlock[T:Type](block: => Exp[T]): Block[T] = {
+    var prevEffects = blockEffects
+    blockEffects = prevEffects andAlso Sticky
+    val result = createBlock[T](block, Nil, Freq.Normal)
+    blockEffects = prevEffects
+    result
+  }
 
   def stageBlock[T:Type](block: => Exp[T]): Block[T] = createBlock[T](block, Nil, Freq.Normal)
   def stageLambda[T:Type](inputs: Exp[_]*)(block: => Exp[T]): Block[T] = createBlock[T](block, syms(inputs), Freq.Normal)

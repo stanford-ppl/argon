@@ -26,16 +26,18 @@ trait Staging extends Scheduling {
 
   def stageDef(d: Def)(ctx: SrcCtx): Seq[Sym[_]]                   = stageDefPure(d)(ctx)
   def stageDefPure(d: Def)(ctx: SrcCtx): Seq[Sym[_]]               = stageDefEffectful(d, Pure)(ctx)
-  def stageDefCold(d: Def)(ctx: SrcCtx): Seq[Sym[_]]               = stageDefEffectful(d, Cold)(ctx)
   def stageDefWrite(ss: Exp[_]*)(d: Def)(ctx: SrcCtx): Seq[Sym[_]] = stageDefEffectful(d, Write(ss:_*))(ctx)
+  def stageDefSticky(d: Def)(ctx: SrcCtx): Seq[Sym[_]]             = stageDefEffectful(d, Sticky)(ctx)
+  def stageDefUnique(d: Def)(ctx: SrcCtx): Seq[Sym[_]]             = stageDefEffectful(d, Unique)(ctx)
   def stageDefSimple(d: Def)(ctx: SrcCtx): Seq[Sym[_]]             = stageDefEffectful(d, Simple)(ctx)
   def stageDefGlobal(d: Def)(ctx: SrcCtx): Seq[Sym[_]]             = stageDefEffectful(d, Global)(ctx)
   def stageDefMutable(d: Def)(ctx: SrcCtx): Seq[Sym[_]]            = stageDefEffectful(d, Mutable)(ctx)
 
   def stage[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                      = single[T](stageDef(op)(ctx))
   def stagePure[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stageDefPure(op)(ctx))
-  def stageCold[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                  = single[T](stageDefCold(op)(ctx))
   def stageWrite[T:Type](ss: Exp[_]*)(op: Op[T])(ctx: SrcCtx): Sym[T]    = single[T](stageDefWrite(ss:_*)(op)(ctx))
+  def stageSticky[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefSticky(op)(ctx))
+  def stageUnique[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefUnique(op)(ctx))
   def stageSimple[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefSimple(op)(ctx))
   def stageGlobal[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]                = single[T](stageDefGlobal(op)(ctx))
   def stageMutable[T:Type](op: Op[T])(ctx: SrcCtx): Sym[T]               = single[T](stageDefMutable(op)(ctx))
@@ -81,7 +83,7 @@ trait Staging extends Scheduling {
     log(c"  mutable inputs = ${mutableInputs(d)}")
     log(c"  actual writes = ${atomicEffects.writes}")
 
-    val effects = atomicEffects andAlso Read(mutableInputs(d))
+    val effects = atomicEffects andAlso Read(mutableInputs(d)) andAlso blockEffects
     log(c"  full effects = $effects")
     log(c"  isIdempotent = ${effects.isIdempotent}")
 
@@ -108,7 +110,7 @@ trait Staging extends Scheduling {
         ss
       }
 
-      if (effects.isIdempotent) {
+      if (effects.mayCSE) {
         // CSE statements which are idempotent and have identical effect summaries (e.g. repeated reads w/o writes)
         val symsWithSameDef = defCache.getOrElse(d, Nil) intersect context
         val symsWithSameEffects = symsWithSameDef.filter { case Effectful(u2, es) => u2 == effects && es == deps }
