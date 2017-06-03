@@ -14,7 +14,8 @@ trait Effects extends Symbols { this: Staging =>
   }
 
   case class Effects(
-    cold:    Boolean = false,           // Should not be code motioned out of blocks
+    unique:  Boolean = false,           // Should not be CSEd
+    sticky:  Boolean = false,           // Should not be code motioned out of blocks
     simple:  Boolean = false,           // Requires ordering with respect to other simple effects
     global:  Boolean = false,           // Modifies execution of entire program (e.g. exceptions, exiting)
     mutable: Boolean = false,           // Allocates a mutable structure
@@ -22,11 +23,12 @@ trait Effects extends Symbols { this: Staging =>
     reads:   Set[Sym[_]] = Set.empty,   // Reads given mutable symbols
     writes:  Set[Sym[_]] = Set.empty    // Writes given mutable symbols
   ) extends Metadata[Effects] {
-    def mirror(f: Tx) = Effects(cold, simple, global, mutable, throws, f.txSyms(reads), f.txSyms(writes))
+    def mirror(f: Tx) = Effects(unique, sticky, simple, global, mutable, throws, f.txSyms(reads), f.txSyms(writes))
     override val ignoreOnTransform = true // Mirroring already takes care of effects
 
     private def combine(that: Effects, m1: Boolean, m2: Boolean) = Effects(
-      cold    = this.cold || that.cold,
+      unique  = this.unique || that.unique,
+      sticky  = this.sticky || that.sticky,
       simple  = this.simple || that.simple,
       global  = this.global || that.global,
       mutable = (m1 && this.mutable) || (m2 && that.mutable),
@@ -42,13 +44,15 @@ trait Effects extends Symbols { this: Staging =>
     def isPure = this == Pure
     def isMutable = mutable
     def isIdempotent = !simple && !global && !mutable && writes.isEmpty
+    def mayCSE = isIdempotent && !unique
 
     def onlyThrows = this == Throws
     def mayWrite(ss: Set[Sym[_]]) = global || ss.exists { s => writes contains s }
     def mayRead(ss: Set[Sym[_]]) = global || ss.exists { s => reads contains s }
   }
   val Pure    = Effects()
-  val Cold    = Effects(cold = true)
+  val Unique  = Effects(unique = true)
+  val Sticky  = Effects(sticky = true)
   val Simple  = Effects(simple = true)
   val Global  = Effects(global = true)
   val Mutable = Effects(mutable = true)
@@ -110,14 +114,16 @@ trait Effects extends Symbols { this: Staging =>
     case d: Dependencies => c"${d.deps}"
     case e: Effects =>
       if (e == Pure) "Pure"
-      else if (e == Cold) "Cold"
+      else if (e == Unique)  "Unique"
+      else if (e == Sticky)  "Sticky"
       else if (e == Mutable) "Mutable"
       else if (e == Simple)  "Simple"
       else if (e == Global)  "Global"
       else if (e == Throws)  "Throws"
       else {
         "(" +
-           ((if (e.cold) List(c"cold=${e.cold}") else Nil) ++
+           ((if (e.unique) List(c"unique=${e.unique}") else Nil) ++
+            (if (e.sticky) List(c"sticky=${e.sticky}") else Nil) ++
             (if (e.simple) List(c"simple=${e.simple}") else Nil) ++
             (if (e.global) List(c"global=${e.global}") else Nil) ++
             (if (e.mutable)  List("mutable") else Nil) ++

@@ -55,7 +55,7 @@ trait Blocks extends Effects { self: Staging =>
 
   def stageSealedBlock[T:Type](block: => Exp[T]): Block[T] = {
     var prevEffects = blockEffects
-    blockEffects = Cold
+    blockEffects = prevEffects andAlso Sticky
     val result = createBlock[T](block, Nil, Freq.Normal)
     blockEffects = prevEffects
     result
