@@ -14,7 +14,7 @@ trait CppGenText extends CppCodegen {
   }
 
   override protected def quoteConst(c: Const[_]): String = c match {
-    case Const(c: String) => escapeString(c)
+    case Const(c: String) => "string(" + escapeString(c) + ")"
     case _ => super.quoteConst(c)
   }
 
@@ -24,7 +24,7 @@ trait CppGenText extends CppCodegen {
     case TextEquals(x,y) => emit(src"${lhs.tp} $lhs = $x == $y;")
     case TextDiffer(x,y) => emit(src"${lhs.tp} $lhs = $x != $y;")
     case TextSlice(x,start,end) => emit(src"${lhs.tp} $lhs = ${x}.substr($start,${end}-${start});")
-    case TextLength(x) => emit(src"${lhs.tp} $lhs = ${x}.length;")
+    case TextLength(x) => emit(src"${lhs.tp} $lhs = ${x}.length();")
     case _ => super.emitNode(lhs, rhs)
   }
 
