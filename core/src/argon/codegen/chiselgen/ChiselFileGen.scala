@@ -76,6 +76,7 @@ import chisel3.util._""")
 import templates._
 import templates.ops._
 import chisel3._
+import chisel3.util._
 import types._""")
       open(s"""trait GlobalWires extends IOModule{""")
     }
@@ -85,6 +86,7 @@ import types._""")
 import templates._
 import templates.ops._
 import chisel3._
+import chisel3.util._
 import types._ """)
       open(s"""trait GlobalModules extends GlobalWiresMixer {""")
     }
@@ -240,19 +242,19 @@ import types._ """)
       close("}")
       emit("var outStreamMuxMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map[String,Int]()")
       open("def getStreamOutLane(id: String): Int = {")
-        emit("val lane = outStreamMuxMap(id)")
+        emit("val lane = outStreamMuxMap.getOrElse(id, 0)")
         emit("outStreamMuxMap += (id -> {lane + 1})")
         emit("lane")
       close("}")
       emit("var outBuffMuxMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map[String,Int]()")
       open("def getBuffOutLane(id: String): Int = {")
-        emit("val lane = outBuffMuxMap(id)")
+        emit("val lane = outBuffMuxMap.getOrElse(id, 0)")
         emit("outBuffMuxMap += (id -> {lane + 1})")
         emit("lane")
       close("}")
       emit("var inStreamMuxMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map[String,Int]()")
       open("def getStreamInLane(id: String): Int = {")
-        emit("val lane = inStreamMuxMap(id)")
+        emit("val lane = inStreamMuxMap.getOrElse(id, 0)")
         emit("inStreamMuxMap += (id -> {lane + 1})")
         emit("lane")
       close("}")
