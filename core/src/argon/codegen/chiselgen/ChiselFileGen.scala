@@ -71,6 +71,7 @@ import chisel3.util._""")
 import templates._
 import templates.ops._
 import chisel3._
+import chisel3.util._
 import types._""")
       open(s"""trait GlobalWires extends IOModule{""")
     }
@@ -80,6 +81,7 @@ import types._""")
 import templates._
 import templates.ops._
 import chisel3._
+import chisel3.util._
 import types._ """)
       open(s"""trait GlobalModules extends GlobalWiresMixer {""")
     }
@@ -226,11 +228,29 @@ import types._ """)
 //	      emit("val gpo2_streamout_write      = Output(UInt(1.W))")
         emit("")
       close("})")
-      emit("var outMuxMap: scala.collection.mutable.Map[Int, Int] = scala.collection.mutable.Map[Int,Int]()")
-      emit("(0 until io_numArgOuts).foreach{ i => outMuxMap += (i -> 0) }")
+      emit("var outArgMuxMap: scala.collection.mutable.Map[Int, Int] = scala.collection.mutable.Map[Int,Int]()")
+      emit("(0 until io_numArgOuts).foreach{ i => outArgMuxMap += (i -> 0) }")
       open("def getArgOutLane(id: Int): Int = {")
-        emit("val lane = outMuxMap(id)")
-        emit("outMuxMap += (id -> {lane + 1})")
+        emit("val lane = outArgMuxMap(id)")
+        emit("outArgMuxMap += (id -> {lane + 1})")
+        emit("lane")
+      close("}")
+      emit("var outStreamMuxMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map[String,Int]()")
+      open("def getStreamOutLane(id: String): Int = {")
+        emit("val lane = outStreamMuxMap.getOrElse(id, 0)")
+        emit("outStreamMuxMap += (id -> {lane + 1})")
+        emit("lane")
+      close("}")
+      emit("var outBuffMuxMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map[String,Int]()")
+      open("def getBuffOutLane(id: String): Int = {")
+        emit("val lane = outBuffMuxMap.getOrElse(id, 0)")
+        emit("outBuffMuxMap += (id -> {lane + 1})")
+        emit("lane")
+      close("}")
+      emit("var inStreamMuxMap: scala.collection.mutable.Map[String, Int] = scala.collection.mutable.Map[String,Int]()")
+      open("def getStreamInLane(id: String): Int = {")
+        emit("val lane = inStreamMuxMap.getOrElse(id, 0)")
+        emit("inStreamMuxMap += (id -> {lane + 1})")
         emit("lane")
       close("}")
       // emit("var loadMuxMap: scala.collection.mutable.Map[Int, Int] = scala.collection.mutable.Map[Int,Int]()")
