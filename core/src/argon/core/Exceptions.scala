@@ -109,37 +109,14 @@ class TupleSizeUnsupported(element: String, x: Exp[_]) extends
     error(c"FieldApply $x has no rule for $element element")
   })
 
-class AccumWithoutReduceFunctionException(reg: Exp[_], lhs: Exp[_]) extends
-  CompilerException(19, c"Register $reg claims to be an accumulator but has no reduction function assigned", {
-    error(c"Register $reg has claims to be an accumulator but has no reduction function")
-  })
-
-class UnusedDRAMException(dram: Exp[_], name: String) extends
-  CompilerException(20, c"DRAM $dram ($name) was declared as a DRAM in app but is not used by the accel", {
-    error(c"DRAM $dram ($name) was declared as a DRAM in app but is not used by the accel")
-  })
-
 class NDArrayException(array: Exp[_], name: String) extends
   CompilerException(21, c"Array ${array} ($name) has no good codegen for CPP", {
     error(c"Array ${array} ($name) has no good codegen for CPP")
   })
 
-class OuterLevelInnerStyleException(name: String) extends
-  CompilerException(22, c"Controller ${name} claims to be an outer level controller but has style of an innerpipe", {
-    error(c"Controller ${name} claims to be an outer level controller but has style of an innerpipe")
+class AccumWithoutReduceFunctionException(reg: Exp[_], lhs: Exp[_]) extends
+  CompilerException(19, c"Register $reg claims to be an accumulator but has no reduction function assigned", {
+    error(c"Register $reg has claims to be an accumulator but has no reduction function")
   })
 
-class DoublyUsedDRAMException(dram: Exp[_], name: String) extends
-  CompilerException(23, c"DRAM $dram is used twice as a $name.  Please only load from a DRAM once, or else stream signals will interfere", {
-    error(c"DRAM $dram is used twice as a $name.  Please only load from a DRAM once, or else stream signals will interfere")
-  })
 
-class TrigInAccelException(lhs: Exp[_]) extends
-  CompilerException(24, c"""Cannot handle trig functions inside of accel block! ${lhs.name.getOrElse("")}""", {
-    error(c"""Cannot handle trig functions inside of accel block! ${lhs.name.getOrElse("")}""")
-  })
-
-class NoWireConstructorException(lhs: String) extends
-  CompilerException(25, c"""Cannot create new wire for $lhs""", {
-    error(c"""Cannot create new wire for $lhs""")
-  })
