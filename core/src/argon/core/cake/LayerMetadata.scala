@@ -18,6 +18,7 @@ trait LayerMetadata { this: ArgonCore =>
     @stateful def apply[M<:Metadata[M]:Manifest](edge: Exp[_])(implicit state: State): Option[M] = state.metadata[M](edge)
     @stateful def add[M<:Metadata[M]:Manifest](edge: Exp[_], m: M)(implicit state: State): Unit = state.metadata.add[M](edge, m)
     @stateful def get(edge: Exp[_])(implicit state: State): Map[Class[_],Metadata[_]] = state.metadata.get(edge)
+    @stateful def clearAll[M<:Metadata[M]:Manifest] = state.metadata.clearAll[M]
   }
 
 }

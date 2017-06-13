@@ -9,6 +9,7 @@ trait LayerStatements { this: ArgonCore =>
 
   // --- Helper functions
   // Getting statement returns Option to account for Bounds, but this is known to be a Sym
+  @stateful def getStm(e: Exp[_]): Option[Stm] = e match {case s: Sym[_] => Some(stmOf(s)); case _ => None }
   @stateful def stmOf(sym: Sym[_]): Stm = stmFromSymId(sym.id).get
 
   @stateful def stmFromNodeId(id: Int): Option[Stm] = {

@@ -38,6 +38,7 @@ class State {
   var pass: Int = 1
 
   def paddedPass: String = { val p = pass.toString; "0"*(4-p.length) + p }
+  def paddedPass(pass: Int): String = { val p = pass.toString; "0"*(4-p.length) + p }
 
   /** The current stream being used for logging **/
   var logstream: PrintStream = new PrintStream(new NullOutputStream)
