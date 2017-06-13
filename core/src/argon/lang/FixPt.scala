@@ -77,7 +77,7 @@ object FixPt {
   @api implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
 
   /** Rewrite rules **/
-  /*@rewrite def Bool$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
+  /*@rewrite def MBoolean$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
     case Def(node@FixNeq(a,b)) => stage( FixEql(a,b)(node.mS,node.mI,node.mF) )(ctx)
     case Def(node@FixEql(a,b)) => stage( FixNeq(a,b)(node.mS,node.mI,node.mF) )(ctx)
     case Def( node@FixLt(a,b)) => stage( FixLeq(b,a)(node.mS,node.mI,node.mF) )(ctx)
@@ -330,6 +330,7 @@ object FixPt {
 trait FixPtExp {
   def isFixPtType(x: Type[_]) = FixPtType.unapply(x).isDefined
   def isInt32Type(x: Type[_]) = IntType.unapply(x)
+  def isIndexType(x: Type[_]) = x == FixPtType[TRUE,_32,_0]
 
   @internal def intParam(c: Int): Param[Int32] = FixPt.intParam(c)
   @internal def int32(x: BigDecimal): Const[Int32] = FixPt.int32(x)

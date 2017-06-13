@@ -20,6 +20,14 @@ trait LayerBlocks { self: ArgonCore =>
     effects
   }
 
+  @stateful private def inSealed[T](x: => T): T = {
+    var prevEffects = state.blockEffects
+    state.blockEffects = prevEffects andAlso Sticky
+    val result = x
+    state.blockEffects = prevEffects
+    result
+  }
+
   /**
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
@@ -34,7 +42,7 @@ trait LayerBlocks { self: ArgonCore =>
     // In an isolated block, don't allow CSE with outside statements
     if (isolated) defCache = Map.empty
 
-    val result = block
+    val result = if (seal) inSealed{ block } else block
 
     val deps = if (seal) context.collect{case sym@Effectful(eff,_) if eff != Pure => sym}
                else      context.collect{case sym@Effectful(eff,_) if eff != Sticky && eff != Pure => sym}
@@ -47,14 +55,6 @@ trait LayerBlocks { self: ArgonCore =>
 
     val effects = summarizeScope(deps)
     (result, effects, deps)
-  }
-
-  @stateful def stageSealedBlock[T:Type](block: => Exp[T]): Block[T] = {
-    var prevEffects = state.blockEffects
-    state.blockEffects = prevEffects andAlso Sticky
-    val result = stageBlock[T](block, seal = true)
-    state.blockEffects = prevEffects
-    result
   }
 
   @stateful def stageBlock[R](block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Block[R] = {
@@ -84,17 +84,21 @@ trait LayerBlocks { self: ArgonCore =>
 
   @stateful def stageIsolatedBlock[T](block: => Exp[T], seal: Boolean = false): Block[T] = stageBlock[T](block, temp = Freq.Cold, isolated = true, seal)
 
-  @stateful def stageColdBlock[R](block: => Exp[R]) = stageBlock(block, Freq.Cold)
-  @stateful def stageColdLambda1[A,R](a: Exp[A])(block: => Exp[R]) = stageLambda1(a)(block, Freq.Cold)
-  @stateful def stageColdLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R]) = stageLambda2(a,b)(block, Freq.Cold)
-  @stateful def stageColdLambda3[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R])= stageLambda3(a,b,c)(block, Freq.Cold)
-  @stateful def stageColdLambda4[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R])= stageLambda4(a,b,c,d)(block, Freq.Cold)
+  @stateful def stageColdBlock[R](block: => Exp[R]) = stageBlock(block, temp = Freq.Cold)
+  @stateful def stageColdLambda1[A,R](a: Exp[A])(block: => Exp[R]) = stageLambda1(a)(block, temp = Freq.Cold)
+  @stateful def stageColdLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R]) = stageLambda2(a,b)(block, temp = Freq.Cold)
+  @stateful def stageColdLambda3[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R])= stageLambda3(a,b,c)(block, temp = Freq.Cold)
+  @stateful def stageColdLambda4[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R])= stageLambda4(a,b,c,d)(block, temp = Freq.Cold)
 
-  @stateful def stageHotBlock[R](block: => Exp[R]) = stageBlock(block, Freq.Hot)
-  @stateful def stageHotLambda1[A,R](a: Exp[A])(block: => Exp[R]) = stageLambda1(a)(block, Freq.Hot)
-  @stateful def stageHotLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R]) = stageLambda2(a,b)(block, Freq.Hot)
-  @stateful def stageHotLambda3[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R])= stageLambda3(a,b,c)(block, Freq.Hot)
-  @stateful def stageHotLambda4[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R])= stageLambda4(a,b,c,d)(block, Freq.Hot)
+  @stateful def stageHotBlock[R](block: => Exp[R]) = stageBlock(block, temp = Freq.Hot)
+  @stateful def stageHotLambda1[A,R](a: Exp[A])(block: => Exp[R]) = stageLambda1(a)(block, temp = Freq.Hot)
+  @stateful def stageHotLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R]) = stageLambda2(a,b)(block, temp = Freq.Hot)
+  @stateful def stageHotLambda3[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R])= stageLambda3(a,b,c)(block, temp = Freq.Hot)
+  @stateful def stageHotLambda4[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R])= stageLambda4(a,b,c,d)(block, temp = Freq.Hot)
+
+  @stateful def stageSealedBlock[R](block: => Exp[R]): Block[R] = stageBlock[R](block, seal = true)
+  @stateful def stageSealedLambda1[A,R](a: Exp[A])(block: => Exp[R]): Lambda1[A,R] = stageLambda1[A,R](a)(block, seal = true)
+  @stateful def stageSealedLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: Exp[R]): Lambda2[A,B,R] = stageLambda2[A,B,R](a,b)(block, seal = true)
 
   /**
     * Stage the effects of a block that is executed 'here' (if it is executed at all).

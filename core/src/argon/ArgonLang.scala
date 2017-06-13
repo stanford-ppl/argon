@@ -170,6 +170,18 @@ trait ArgonCommonAliases extends ArgonLangAliases {
   type _126 = argon.lang.typeclasses._126
   type _127 = argon.lang.typeclasses._127
   type _128 = argon.lang.typeclasses._128
+
+  type Overload0 = argon.lang.Overload0
+  type Overload1 = argon.lang.Overload1
+  type Overload2 = argon.lang.Overload2
+  type Overload3 = argon.lang.Overload3
+  type Overload4 = argon.lang.Overload4
+  type Overload5 = argon.lang.Overload5
+  type Overload6 = argon.lang.Overload6
+  type Overload7 = argon.lang.Overload7
+  type Overload8 = argon.lang.Overload8
+  type Overload9 = argon.lang.Overload9
+  type Overload10 = argon.lang.Overload10
 }
 
 /** Implicit typeclass evidence, (optionally) implicit conversions **/
