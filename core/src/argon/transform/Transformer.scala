@@ -5,7 +5,6 @@ import argon.core.compiler._
 trait Transformer { self =>
   val IR: State
   implicit val state: State = IR
-  import IR._
 
   protected val f = this //.asInstanceOf[Tx]
   def apply[T](e: Exp[T]): Exp[T] = transformExp(e)(mtyp(e.tp))
