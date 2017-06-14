@@ -9,39 +9,100 @@ trait Transformer { self =>
   protected val f = this //.asInstanceOf[Tx]
   def apply[T](e: Exp[T]): Exp[T] = transformExp(e)(mtyp(e.tp))
 
-  def apply[R:Type](b: Block[R]): () => Exp[R] = inlineBlock(b)
-  def apply[A,R:Type](b: Lambda1[A,R]): Exp[A] => Exp[R] = inlineLambda(b)
-  def apply[A,B,R:Type](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R] = inlineLambda(b)
-  def apply[A,B,C,R:Type](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R] = inlineLambda(b)
-  def apply[A,B,C,D,R:Type](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R] = inlineLambda(b)
+  def apply[R:Type](b: Block[R]): () => Exp[R] = blockToFunction0(b)
+  def apply[A,R:Type](b: Lambda1[A,R]): Exp[A] => Exp[R] = lambda1ToFunction1(b)
+  def apply[A,B,R:Type](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R] = lambda2ToFunction2(b)
+  def apply[A,B,C,R:Type](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R] = lambda3ToFunction3(b)
+  def apply[A,B,C,D,R:Type](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R] = lambda4ToFunction4(b)
 
   def apply[T](xs: List[Exp[T]]): List[Exp[T]] = xs.map{x => this.apply(x)}
   def apply[T](xs: Seq[Exp[T]]): Seq[Exp[T]] = xs.map{x => this.apply(x)}
   def apply[T](x: Option[Exp[T]]): Option[Exp[T]] = x.map{z => this.apply(z) }
 
-  def tx[R:Type](b: Block[R]): Block[R] = transformBlock(b)
+  def tx[R:Type,B[T]<:Block[T]](b: B[R]): B[R] = transformBlock(b)
   def tx(xs: List[Exp[_]]): List[Exp[_]] = xs.map{x => f(x) }
   def tx(xs: Set[Exp[_]]): Set[Exp[_]] = xs.map{x => f(x) }
   def tx(xs: Seq[Exp[_]]): Seq[Exp[_]] = xs.map{x => f(x) }
 
   def txSyms(xs: Set[Sym[_]]): Set[Sym[_]] = syms(xs.map{x => f(x)}).toSet
 
-  protected def inlineBlock[R:Type](b: Block[R]): () => Exp[R]
-  protected def inlineLambda[A,R:Type](b: Lambda1[A,R]): Exp[A] => Exp[R]
-    = {_: Exp[A] => val result = inlineBlock(b); result() }
-  protected def inlineLambda[A,B,R:Type](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R]
-    = {(_:Exp[A],_:Exp[B]) => val result = inlineBlock(b); result() }
-  protected def inlineLambda[A,B,C,R:Type](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R]
-    = {(_:Exp[A],_:Exp[B],_:Exp[C]) => val result = inlineBlock(b); result() }
-  protected def inlineLambda[A,B,C,D,R:Type](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R]
-    = {(_:Exp[A],_:Exp[B],_:Exp[C],_:Exp[D]) => val result = inlineBlock(b); result() }
+  implicit class BlockOps[R](block: Block[R]) {
+    def inline: Exp[R] = { val func = blockToFunction0(block); func() }
+    def restage(): Block[R] = transformBlock(block)
+    def toFunction0: () => Exp[R] = blockToFunction0(block)
+  }
+  implicit class Lambda1Ops[A,R](lambda1: Lambda1[A,R]) {
+    def inline(a: Exp[A]): Exp[R] = { val func = lambda1ToFunction1(lambda1); func(a) }
+    def restage(a: Exp[A]): Lambda1[A,R] = {
+      stageLambda1(a)({ lambda1.inline(a) }, lambda1.temp, lambda1.isolated, lambda1.seal)
+    }
+    def toFunction1: Exp[A] => Exp[R] = lambda1ToFunction1(lambda1)
+  }
+  implicit class Lambda2Ops[A,B,R](lambda2: Lambda2[A,B,R]) {
+    def inline(a: Exp[A], b: Exp[B]): Exp[R] = { val func = lambda2ToFunction2(lambda2); func(a,b) }
+    def restage(a: Exp[A], b: Exp[B]): Lambda2[A,B,R] = {
+      stageLambda2(a,b)({ lambda2.inline(a,b) }, lambda2.temp, lambda2.isolated, lambda2.seal)
+    }
+    def toFunction2: (Exp[A], Exp[B]) => Exp[R] = lambda2ToFunction2(lambda2)
+  }
+  implicit class Lambda3Ops[A,B,C,R](lambda3: Lambda3[A,B,C,R]) {
+    def inline(a: Exp[A], b: Exp[B], c: Exp[C]): Exp[R] = { val func = lambda3ToFunction3(lambda3); func(a,b,c) }
+    def restage(a: Exp[A], b: Exp[B], c: Exp[C]): Lambda3[A,B,C,R] = {
+      stageLambda3(a,b,c)({ lambda3.inline(a,b,c) }, lambda3.temp, lambda3.isolated, lambda3.seal)
+    }
+    def toFunction3: (Exp[A], Exp[B], Exp[C]) => Exp[R] = lambda3ToFunction3(lambda3)
+  }
+  implicit class Lambda4Ops[A,B,C,D,R](lambda4: Lambda4[A,B,C,D,R]) {
+    def inline(a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]): Exp[R] = { val func = lambda4ToFunction4(lambda4); func(a,b,c,d) }
+    def restage(a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]): Lambda4[A,B,C,D,R] = {
+      stageLambda4(a,b,c,d)({ lambda4.inline(a,b,c,d) }, lambda4.temp, lambda4.isolated, lambda4.seal)
+    }
+    def toFunction4: (Exp[A], Exp[B], Exp[C], Exp[D]) => Exp[R] = lambda4ToFunction4(lambda4)
+  }
 
-  protected def transformBlock[T:Type](b: Block[T]): Block[T]
+
+  protected def blockToFunction0[R](b: Block[R]): () => Exp[R] = () => inlineBlock(b)
+  protected def lambda1ToFunction1[A,R](b: Lambda1[A,R]): Exp[A] => Exp[R]
+  protected def lambda2ToFunction2[A,B,R](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R]
+  protected def lambda3ToFunction3[A,B,C,R](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R]
+  protected def lambda4ToFunction4[A,B,C,D,R](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R]
+
+  /**
+    * Visit and transform each statement in the given block WITHOUT creating a staging scope
+    */
+  protected def inlineBlock[T](b: Block[T]): Exp[T]
+
+  /**
+    * Visit and perform some transformation `func` over all statements in the block, returning a result symbol
+    * WITHOUT creating a staging scope.
+    */
+  protected def inlineBlock[T](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T]
+
+  /**
+    * Visit and transform each statement in the given block, creating a new Staged block
+    * with the transformed statements
+    */
+  protected def transformBlock[T, B[T]<:Block[T]](b: B[T]): B[T]
+
+  /**
+    * Visit and perform some transformation `func` over all statements in the block, returning a new staged
+    * block with the resulting transformed statements. The return Exp[T] of func will be the result symbol of the
+    * new block.
+    */
+  final protected def transformBlock[T,B[T]<:Block[T]](block: B[T], func: Seq[Stm] => Exp[T]): B[T] = (block match {
+    case Lambda1(input,_,_,_,temp,isol,seal)   => stageLambda1(f(input))({ inlineBlock(block,func) }, temp, isol, seal)
+    case Lambda2(a,b, _,_,_,temp,isol,seal)    => stageLambda2(f(a),f(b))({ inlineBlock(block,func) }, temp, isol, seal)
+    case Lambda3(a,b,c,_,_,_,temp,isol,seal)   => stageLambda3(f(a),f(b),f(c))( {inlineBlock(block,func) }, temp, isol, seal)
+    case Lambda4(a,b,c,d,_,_,_,temp,isol,seal) => stageLambda4(f(a),f(b),f(c),f(d))({ inlineBlock(block, func)}, temp, isol, seal)
+    case Block(inputs,_,_,_,temp,isol,seal)    => stageLambdaN(f.tx(inputs), { inlineBlock(block, func) }, temp, isol, seal)
+  }).asInstanceOf[B[T]]
+
 
   protected def transformExp[T:Type](s: Exp[T]): Exp[T]
 
-  /** Helper functions for mirroring **/
 
+
+  /** Helper functions for mirroring **/
   def transferMetadata(a: Exp[_], b: Exp[_]): Unit = {
     val m2 = mirror(metadata.get(a))
     metadata.add(b, m2) // Want to preserve effects, dependencies set during mirroring

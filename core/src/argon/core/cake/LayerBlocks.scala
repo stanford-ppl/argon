@@ -59,27 +59,27 @@ trait LayerBlocks { self: ArgonCore =>
 
   @stateful def stageBlock[R](block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Block[R] = {
     val (result, effects, effectful) = stageScope(block, temp, isolated, seal)
-    Block(Nil, result, effects, effectful, temp)
+    Block(Nil, result, effects, effectful, temp, isolated, seal)
   }
   @stateful def stageLambda1[A,R](a: Exp[A])(block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Lambda1[A,R] = {
     val (result, effects, effectful) = stageScope(block, temp, isolated, seal)
-    Lambda1(a, result, effects, effectful, temp)
+    Lambda1(a, result, effects, effectful, temp, isolated, seal)
   }
   @stateful def stageLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Lambda2[A,B,R] = {
     val (result, effects, effectful) = stageScope(block, temp, isolated, seal)
-    Lambda2(a, b, result, effects, effectful, temp)
+    Lambda2(a, b, result, effects, effectful, temp, isolated, seal)
   }
   @stateful def stageLambda3[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Lambda3[A,B,C,R] = {
     val (result, effects, effectful) = stageScope(block, temp, isolated, seal)
-    Lambda3(a, b, c, result, effects, effectful, temp)
+    Lambda3(a, b, c, result, effects, effectful, temp, isolated, seal)
   }
   @stateful def stageLambda4[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Lambda4[A,B,C,D,R] = {
     val (result, effects, effectful) = stageScope(block, temp, isolated, seal)
-    Lambda4(a, b, c, d, result, effects, effectful, temp)
+    Lambda4(a, b, c, d, result, effects, effectful, temp, isolated, seal)
   }
   @stateful def stageLambdaN[R](inputs: Seq[Exp[_]], block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Block[R] = {
     val (result, effects, effectful) = stageScope(block, temp, isolated, seal)
-    Block(inputs, result, effects, effectful, temp)
+    Block(inputs, result, effects, effectful, temp, isolated, seal)
   }
 
   @stateful def stageIsolatedBlock[T](block: => Exp[T], seal: Boolean = false): Block[T] = stageBlock[T](block, temp = Freq.Cold, isolated = true, seal)

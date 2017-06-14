@@ -34,23 +34,15 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
   /**
     * Visit and transform each statement in the given block WITHOUT creating a staging scope
     */
-  override protected def inlineBlock[T:Type](b: Block[T]): () => Exp[T] = {
-    () => inlineBlock(b, {stms => visitStms(stms); f(b.result) })
-  }
-
-  /**
-    * Visit and transform each statement in the given block, creating a new Staged block
-    * with the transformed statements
-    */
-  override protected def transformBlock[T:Type](b: Block[T]): Block[T] = {
-    transformBlock(b, {stms => visitStms(stms); f(b.result) })
+  final override protected def inlineBlock[T](b: Block[T]): Exp[T] = {
+    inlineBlock(b, {stms => visitStms(stms); f(b.result) })
   }
 
   /**
     * Visit and perform some transformation `func` over all statements in the block, returning a result symbol
     * WITHOUT creating a staging scope.
     */
-  final protected def inlineBlock[T:Type](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T] = {
+  final override protected def inlineBlock[T](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T] = {
     tab += 1
     val inputs2 = syms(f.tx(b.inputs)).map(stmOf)
     val result: Exp[T] = withInnerStms(availStms diff inputs2) {
@@ -61,16 +53,11 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
   }
 
   /**
-    * Visit and perform some transformation `func` over all statements in the block, returning a new staged
-    * block with the resulting transformed statements. The return Exp[T] of func will be the result symbol of the
-    * new block.
+    * Visit and transform each statement in the given block, creating a new Staged block
+    * with the transformed statements
     */
-  final protected def transformBlock[T:Type](block: Block[T], func: Seq[Stm] => Exp[T]): Block[T] = block match {
-    case Lambda1(input,_,_,_,temp)   => stageLambda1(f(input))({ inlineBlock(block,func) }, temp)
-    case Lambda2(a,b, _,_,_,temp)    => stageLambda2(f(a),f(b))({ inlineBlock(block,func) }, temp)
-    case Lambda3(a,b,c,_,_,_,temp)   => stageLambda3(f(a),f(b),f(c))( {inlineBlock(block,func) }, temp)
-    case Lambda4(a,b,c,d,_,_,_,temp) => stageLambda4(f(a),f(b),f(c),f(d))({ inlineBlock(block, func)}, temp)
-    case Block(inputs,_,_,_,temp)    => stageLambdaN(f.tx(inputs), { inlineBlock(block, func) }, temp)
+  override protected def transformBlock[T,B[T]<:Block[T]](b: B[T]): B[T] = {
+    transformBlock(b, {stms => visitStms(stms); f(b.result) })
   }
 
 
@@ -93,7 +80,7 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
   /** Traversal functions **/
   final override protected def visitBlock[S](b: Block[S]): Block[S] = {
     tab += 1
-    val b2 = transformBlock(b)(mtyp(b.tp))
+    val b2 = transformBlock(b)
     assert(b2.tp == b.tp)
     tab -= 1
     b2
