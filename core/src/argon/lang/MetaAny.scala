@@ -57,8 +57,6 @@ trait MetaAnyLowPriorityImplicits {
   implicit def concatOps(lhs: MetaAny[_]): ConcatOps = new ConcatOps(lhs)
 }
 
-trait MetaAnyExp { }
-
 trait MetaAnyApi extends EmbeddedControls {
 
   @internal def infix_toString(x: MetaAny[_]): MString = x.toText

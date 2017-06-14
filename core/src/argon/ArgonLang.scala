@@ -187,15 +187,12 @@ trait ArgonCommonAliases extends ArgonLangAliases {
 /** Implicit typeclass evidence, (optionally) implicit conversions **/
 trait ArgonExp
   extends ArgonCommonAliases
-    with AssertExp
     with BooleanExp
     with FixPtExp
     with FltPtExp
     with FunctionExp
     with IfThenElseExp
-    with MetaAnyExp
     with OverloadHackExp
-    with PrintExp
     with StringExp
     with StructExp
     with Tuple2Exp
@@ -208,14 +205,13 @@ trait ArgonExp
 
 trait ArgonApi
   extends ArgonExp
-    with AssertApi
+    with ArrayApi
     with CastsApi
     with FixPtApi
     with FltPtApi
     with HashMapApi
     with IfThenElseApi
     with MetaAnyApi
-    with PrintApi
     with BitsApi
     with NumApi
     with MetaAnyLowPriorityImplicits

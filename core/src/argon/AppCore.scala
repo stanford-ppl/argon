@@ -1,5 +1,6 @@
 package argon
 
+import argon.codegen.Codegen
 import argon.core.compiler._
 import compiler._
 import argon.core.TestBenchFailed
@@ -21,10 +22,12 @@ trait AppCore { self =>
 
   private var __stagingArgs: Array[String] = _
   private var __args: MArray[MString] = _
-  def stagingArgs = __stagingArgs
-  def args = __args
+  def stagingArgs: Array[String] = __stagingArgs
+  def args: MArray[MString] = __args
 
   final protected val passes: ArrayBuffer[CompilerPass] = ArrayBuffer.empty[CompilerPass]
+  final protected def codegenerators = passes.collect{case x: Codegen => x}
+
   protected val testbench: Boolean = false
 
   protected def checkErrors(state: State, start: Long, stageName: String): Unit = if (state.hadErrors) {

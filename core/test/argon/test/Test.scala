@@ -3,6 +3,7 @@ package argon.test
 import argon.{AppRunner, ArgonLangExternal}
 import argon.core.{ArgonCore, Config, State}
 import argon.codegen.scalagen._
+import argon.lang.{AssertApi, PrintApi}
 import argon.transform.ForwardTransformer
 import argon.traversal.IRPrinter
 import forge._
@@ -16,7 +17,10 @@ trait LowPriorityImplicits {
   implicit def double2RichDouble(x: Double): RichDouble = new RichDouble(x)
 }
 
-trait TestApi extends ArgonCore with ArgonLangExternal with LowPriorityImplicits {
+trait TestApi extends ArgonCore with ArgonLangExternal with LowPriorityImplicits
+  with PrintApi
+  with AssertApi
+{
 
   implicit class intWrapper(x: scala.Int) extends {
     @api def to[B:Type](implicit cast: Cast[scala.Int,B]): B = cast(x)

@@ -10,10 +10,6 @@ object PrintOps {
   @internal def println(x: Exp[MString]): Exp[MUnit] = stageSimple(Println(x))(ctx)
 }
 
-trait PrintExp {
-
-}
-
 trait PrintApi {
   /** Static methods **/
   @api def println(): MUnit = println("")
