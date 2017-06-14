@@ -28,7 +28,7 @@ trait PatternExp extends Staging with FltPtExp with FixPtExp with VoidExp with T
   /** Filter - includes always effects, the condition symbol, then effects and else effects **/
   case class CollectFilter(
     otherEffects: Seq[Exp[_]],  // Effects that are always done (i.e. before the condition)
-    cond:         Exp[Bool],    // Result symbol of the condition
+    cond:         Exp[MBoolean],    // Result symbol of the condition
     thenBlock:    Block[_],     // Block for when the condition is true
     thenEffects:  Seq[Exp[_]],  // Effects executed only when `cond` is true
     elseEffects:  Seq[Exp[_]]   // Effects executed only when `cond` is false
