@@ -9,11 +9,12 @@ trait CppGenFixPt extends CppCodegen {
 
   override protected def remap(tp: Type[_]): String = tp match {
     case IntType() => "int32_t"
-    case LongType() => "int32_t"
+    case LongType() => "int64_t"
     case FixPtType(s,d,f) => 
       val u = if (!s) "u" else ""
       if (f > 0) {"double"} else {
-        if (d > 32) s"${u}int64_t"
+        if (d > 64) s"${u}int128_t"
+        else if (d > 32) s"${u}int64_t"
         else if (d > 16) s"${u}int32_t"
         else if (d > 8) s"${u}int16_t"
         else if (d > 4) s"${u}int8_t"
