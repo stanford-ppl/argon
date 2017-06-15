@@ -126,8 +126,16 @@ object StateAnnotation {
         }
         q"$mods def $name[..$tparams](...${params.dropRight(1)})(implicit ..${params.last}): $tpt = $rhs"
 
+
+      case ModuleDef(mods,name,Template(parents, selfType, bodyList)) =>
+        val (fields, methods) = bodyList.partition { case _:ValDef => true case _ => false }
+
+        val methods2 = methods.map{method => StateAnnotation.impl(c)(method) }
+
+        ModuleDef(mods, name, Template(parents, selfType, fields ++ methods2))
+
       case _ =>
-        c.abort(c.enclosingPosition, "API annotation can only be used on Def")
+        c.abort(c.enclosingPosition, "API annotation can only be used on objects and defs")
     }
     tree
   }

@@ -1,6 +1,6 @@
 package argon.codegen.cppgen
 
-import argon.core.compiler._
+import argon.internals._
 import argon.codegen.{Codegen, FileDependencies}
 import sys.process._
 import scala.language.postfixOps

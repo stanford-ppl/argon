@@ -1,8 +1,8 @@
 package argon.analysis
 
-import argon.core.compiler._
+import argon.internals._
 import argon.compiler._
-import argon.core.UndefinedAccessPatternException
+import argon.UndefinedAccessPatternException
 import argon.traversal.Traversal
 import forge._
 
@@ -32,10 +32,10 @@ case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPatt
   })
 }
 
-object accessPatternOf {
-  @stateful def apply(x: Exp[_]): Seq[IndexPattern] = accessPatternOf.get(x).getOrElse{ throw new UndefinedAccessPatternException(x) }
-  @stateful def update(x: Exp[_], indices: Seq[IndexPattern]) { metadata.add(x, AccessPattern(indices)) }
-  @stateful def get(x: Exp[_]): Option[Seq[IndexPattern]] = metadata[AccessPattern](x).map(_.indices)
+@stateful object accessPatternOf {
+  def apply(x: Exp[_]): Seq[IndexPattern] = accessPatternOf.get(x).getOrElse{ throw new UndefinedAccessPatternException(x) }
+  def update(x: Exp[_], indices: Seq[IndexPattern]) { metadata.add(x, AccessPattern(indices)) }
+  def get(x: Exp[_]): Option[Seq[IndexPattern]] = metadata[AccessPattern](x).map(_.indices)
 }
 
 trait AccessPatternAnalyzer extends Traversal {

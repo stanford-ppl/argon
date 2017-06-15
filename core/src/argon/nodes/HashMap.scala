@@ -1,6 +1,6 @@
 package argon.nodes
 
-import argon.core.compiler._
+import argon.internals._
 import argon.compiler._
 
 case class HashIndexType[K](mK: Type[K]) extends Type[HashIndex[K]] {

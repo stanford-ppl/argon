@@ -1,6 +1,6 @@
 package argon.codegen.chiselgen
 
-import argon.core.compiler._
+import argon.internals._
 import argon.nodes._
 
 trait ChiselGenIfThenElse extends ChiselCodegen {

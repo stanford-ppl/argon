@@ -1,8 +1,6 @@
 package argon.traversal
 
-import argon.core.compiler._
-import argon.core.TraversalFailedToCompleteException
-import argon.core.TraversalFailedToConvergeException
+import argon.internals._
 
 /**
   * Single or iterative traversal of the IR with pre- and post- processing
@@ -79,8 +77,8 @@ trait IterativeTraversal extends Traversal {
     * Can also implement auto-increase of MAX_ITERS using retry() in postprocess
     */
   protected def retry() { _retry = true }
-  protected def failedToConverge() = throw new TraversalFailedToConvergeException(c"$name did not converge.")
-  protected def failedToComplete() = throw new TraversalFailedToCompleteException(c"$name did not complete.")
+  protected def failedToConverge() = throw new argon.TraversalFailedToConvergeException(c"$name did not converge.")
+  protected def failedToComplete() = throw new argon.TraversalFailedToCompleteException(c"$name did not complete.")
   final protected def runIterative[S:Type](b: Block[S]): Block[S] = {
     var curBlock = preprocess(b)
     do {

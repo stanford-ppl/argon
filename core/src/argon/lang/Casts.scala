@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon.core.compiler._
+import argon.internals._
 import forge._
 
 trait CastsExp {

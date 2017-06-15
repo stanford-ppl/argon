@@ -1,6 +1,6 @@
 package argon.transform
 
-import argon.core.compiler._
+import argon.internals._
 
 trait SubstTransformer extends Transformer {
   var subst: Map[Exp[_],Exp[_]] = Map.empty

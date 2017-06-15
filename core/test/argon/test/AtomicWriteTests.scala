@@ -1,6 +1,6 @@
 package argon.test
 
-import argon.core.{Config, TestBenchFailed}
+import argon.core.Config
 import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized._
 
@@ -41,7 +41,7 @@ object ArrayNoAtomicWrite extends Test {
 class AtomicWriteTests extends FlatSpec with Matchers {
 
   "Atomic Writes" should "fail when disabled" in {
-    a[TestBenchFailed] should be thrownBy {
+    a[argon.TestBenchFailed] should be thrownBy {
       ArrayNoAtomicWrite.main(Array.empty)
     }
   }

@@ -15,7 +15,7 @@ class State {
 
   /** List of effectful statements in the current scope **/
   var context: List[Sym[_]] = _
-  final def checkContext(): Unit = if (context == null) throw new UninitializedEffectContextException()
+  final def checkContext(): Unit = if (context == null) throw new argon.UninitializedEffectContextException()(this)
 
   /** Effects for all statements staged in the current scope **/
   var blockEffects: Effects = Effects()

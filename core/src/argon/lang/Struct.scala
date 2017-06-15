@@ -1,7 +1,7 @@
 package argon.lang
 
-import argon.core.compiler._
-import argon.core.{Config, NoFieldException}
+import argon.internals._
+import argon.core.Config
 import argon.nodes._
 import forge._
 
@@ -75,7 +75,7 @@ object Struct {
     case Op(Struct(elems)) => elems.get(index) match {
       case Some(x) if x.tp <:< typ[T] => Some(x.asInstanceOf[Exp[T]]) // TODO: Should this be Staged asInstanceOf?
       case None =>
-        throw new NoFieldException(struct, index) // TODO: Should this be a user error?
+        throw new argon.NoFieldException(struct, index) // TODO: Should this be a user error?
     }
     case _ => None
   }

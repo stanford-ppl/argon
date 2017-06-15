@@ -1,9 +1,8 @@
 package argon
 
 import argon.codegen.Codegen
-import argon.core.compiler._
+import argon.internals._
 import compiler._
-import argon.core.TestBenchFailed
 import argon.traversal.CompilerPass
 import argon.transform.Transformer
 import argon.util.deleteExts

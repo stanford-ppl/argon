@@ -1,6 +1,6 @@
 package argon.core
 
-import argon.core.cake._
+import cake._
 
 abstract class ArgonCore
   extends LayerReporting
@@ -32,9 +32,9 @@ trait ArgonCoreAliases extends ArgonCore {
   type FrontendFacing = argon.core.FrontendFacing
   type CompilerFacing = argon.core.CompilerFacing
 
-  type CompilerException = argon.core.CompilerException
-  type UserError = argon.core.UserError
-  type ProgramError = argon.core.ProgramError
+  type CompilerException = argon.CompilerException
+  type UserError = argon.UserError
+  type ProgramError = argon.ProgramError
 
   type Exp[+T] = argon.core.Exp[T]
   type Dyn[+T] = argon.core.Dyn[T]
@@ -83,5 +83,3 @@ trait ArgonCoreAliases extends ArgonCore {
 /** Internal use (everything inside argon.core) **/
 private[core] object ops extends ArgonCore
 
-/** External use (everything outside argon.core) **/
-object compiler extends ArgonCoreAliases

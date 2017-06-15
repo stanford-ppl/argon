@@ -1,6 +1,6 @@
 package argon.nodes
 
-import argon.core.compiler._
+import argon.internals._
 import argon.compiler._
 
 case class Func1Type[A,R](a: Type[A], r: Type[R]) extends Type[Func1[A,R]] {

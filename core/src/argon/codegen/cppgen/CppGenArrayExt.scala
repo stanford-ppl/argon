@@ -1,7 +1,7 @@
 package argon.codegen.cppgen
 
-import argon.core.compiler._
-import argon.core.NDArrayException
+import argon.internals._
+import argon.NDArrayException
 import argon.nodes._
 
 trait CppGenArrayExt extends CppGenArray {

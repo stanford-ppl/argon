@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon.core.compiler._
+import argon.internals._
 import argon.nodes._
 import forge._
 import org.virtualized.EmptyContext

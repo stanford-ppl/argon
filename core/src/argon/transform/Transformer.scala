@@ -1,6 +1,6 @@
 package argon.transform
 
-import argon.core.compiler._
+import argon.internals._
 
 trait Transformer { self =>
   val IR: State

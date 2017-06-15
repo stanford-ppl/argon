@@ -1,6 +1,6 @@
 package argon.nodes
 
-import argon.core.compiler._
+import argon.internals._
 import argon.compiler._
 
 object UnitType extends Type[MUnit] {

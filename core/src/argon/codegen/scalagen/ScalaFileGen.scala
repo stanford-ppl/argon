@@ -1,6 +1,6 @@
 package argon.codegen.scalagen
 
-import argon.core.compiler._
+import argon.internals._
 import argon.codegen.FileGen
 
 trait ScalaFileGen extends FileGen {

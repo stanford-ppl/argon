@@ -1,7 +1,7 @@
 package argon.codegen
 
-import argon.core.compiler._
-import argon.core.{ConstantGenFailedException, GenerationFailedException}
+import argon.internals._
+import argon.{ConstantGenFailedException, GenerationFailedException}
 import argon.traversal.Traversal
 
 import java.nio.file.{Files, Paths}

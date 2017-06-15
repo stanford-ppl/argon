@@ -1,7 +1,6 @@
 package argon.transform
 
-import argon.core.compiler._
-import argon.core.{IllegalSubstException,IllegalMirrorExpException}
+import argon.internals._
 import argon.traversal.Traversal
 
 trait ForwardTransformer extends Traversal with SubstTransformer {
@@ -95,7 +94,7 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
       val lhs2 = transform(lhs, rhs)
 
       // Substitution must not have any rule for lhs besides (optionally) lhs -> lhs2
-      if (f(lhs) != lhs && f(lhs) != lhs2) throw new IllegalSubstException(name, lhs, f(lhs), lhs2)
+      if (f(lhs) != lhs && f(lhs) != lhs2) throw new argon.IllegalSubstException(name, lhs, f(lhs), lhs2)
       lhs2
     }
     else {
@@ -159,7 +158,7 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
       case stm @ TTP(List(lhs), rhs) => mirror(List(lhs), rhs).head.asInstanceOf[Exp[A]]
       case stm @ TTP(lhs, rhs) =>
         // TODO: How to handle this? Is this possible?
-        throw new IllegalMirrorExpException(name, e)
+        throw new argon.IllegalMirrorExpException(name, e)
     }
     case _ => e
   }

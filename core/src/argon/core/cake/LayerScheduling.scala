@@ -69,7 +69,7 @@ trait LayerScheduling { this: ArgonCore =>
           error("")
           error("")
         }
-        throw new EffectsOrderException
+        throw new argon.EffectsOrderException
       }
     }
 

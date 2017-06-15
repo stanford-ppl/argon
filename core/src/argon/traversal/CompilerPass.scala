@@ -1,6 +1,6 @@
 package argon.traversal
 
-import argon.core.compiler._
+import argon.internals._
 
 /**
   * Common trait for all passes which can be run by the compiler,

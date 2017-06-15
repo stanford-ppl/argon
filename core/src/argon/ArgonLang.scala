@@ -221,7 +221,7 @@ trait ArgonLangExternal extends ArgonApi {
   type Type[T] = argon.core.Type[T]
   type Lift[A,B] = argon.core.Lift[A,B]
   type Cast[A,B] = argon.core.Cast[A,B]
-  type Exp[T] = argon.core.Exp[T]
+  type Exp[+T] = argon.core.Exp[T]
 
   type Any = argon.lang.MetaAny[_]
 

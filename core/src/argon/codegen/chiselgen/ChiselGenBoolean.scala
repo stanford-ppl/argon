@@ -1,9 +1,9 @@
 package argon.codegen.chiselgen
 
-import argon.core.compiler._
+import argon.internals._
 import argon.nodes._
 
-trait ChiselGenBool extends ChiselCodegen {
+trait ChiselGenBoolean extends ChiselCodegen {
 
   override protected def remap(tp: Type[_]): String = tp match {
     case BooleanType => "Boolean"

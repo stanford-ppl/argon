@@ -1,8 +1,8 @@
 package argon.codegen.chiselgen
 
-import argon.core.compiler._
+import argon.internals._
 import argon.codegen.{Codegen, FileDependencies}
-import argon.core.NoBitWidthException
+import argon.NoBitWidthException
 
 import scala.collection.mutable
 import scala.language.postfixOps
