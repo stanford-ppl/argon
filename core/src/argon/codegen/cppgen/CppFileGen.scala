@@ -43,6 +43,7 @@ trait CppFileGen extends FileGen {
 #include "functions.h"
 #include <vector>
 using std::vector;
+typedef __int128 int128_t;
 
 """)
 
