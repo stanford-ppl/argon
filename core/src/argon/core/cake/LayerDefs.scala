@@ -1,10 +1,9 @@
-package argon.core
-package cake
+package argon.core.cake
 
 import argon.util.recursive
 import forge._
 
-trait LayerDefs { this: ArgonCore =>
+trait LayerDefs { this: ArgonCake =>
   // --- Helper functions
   @stateful def defOf(s:Sym[_]): Def = defFromSymId(s.id).get
   @stateful def getDef(s: Exp[_]): Option[Def] = s match { case s: Sym[_] => Some(defOf(s)); case _ => None }

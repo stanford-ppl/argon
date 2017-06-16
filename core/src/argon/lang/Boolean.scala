@@ -1,7 +1,7 @@
 package argon.lang
 
 import typeclasses.Bits
-import argon.internals._
+import argon.core._
 import argon.nodes._
 import forge._
 

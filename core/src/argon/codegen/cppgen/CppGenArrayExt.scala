@@ -1,6 +1,6 @@
 package argon.codegen.cppgen
 
-import argon.internals._
+import argon.core._
 import argon.NDArrayException
 import argon.nodes._
 

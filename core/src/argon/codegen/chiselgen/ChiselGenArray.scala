@@ -1,6 +1,6 @@
 package argon.codegen.chiselgen
 
-import argon.internals._
+import argon.core._
 import argon.nodes._
 
 trait ChiselGenArray extends ChiselCodegen {

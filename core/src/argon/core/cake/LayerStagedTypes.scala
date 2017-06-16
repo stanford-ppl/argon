@@ -1,16 +1,15 @@
-package argon.core
-package cake
+package argon.core.cake
 
 import argon.lang.MetaAny
 import forge._
 
-import scala.annotation.implicitNotFound
-
-trait LayerStagedTypes { this: ArgonCore =>
+trait LayerStagedTypes { this: ArgonCake =>
   implicit def subTypeEv[T:Type](x: T): MetaAny[T] = typ[T].ev(x)
 
   def typ[T:Type] = implicitly[Type[T]]
   def mtyp[A,B](x: Type[A]): Type[B] = x.asInstanceOf[Type[B]]
+
+  def opt[T:Type]: T = implicitly[Type[T]].fakeT
 
   def wrap[T:Type](s: Exp[T]): T = typ[T].wrapped(s)
   def wrap[T:Type](xs: List[Exp[T]]): List[T] = xs.map{t => typ[T].wrapped(t) }

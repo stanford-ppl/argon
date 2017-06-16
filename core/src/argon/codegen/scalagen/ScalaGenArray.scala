@@ -1,6 +1,6 @@
 package argon.codegen.scalagen
 
-import argon.internals._
+import argon.core._
 import argon.nodes._
 
 trait ScalaGenArray extends ScalaCodegen {

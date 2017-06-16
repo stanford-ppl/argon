@@ -1,6 +1,6 @@
 package argon.nodes
 
-import argon.internals._
+import argon.core._
 import argon.compiler._
 
 case class VarType[T](child: Type[T]) extends Type[Var[T]] {

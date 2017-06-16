@@ -1,10 +1,10 @@
 package argon.traversal
 
-import argon.internals._
+import argon.core._
 
 trait BlockTraversal {
   val IR: State
-  implicit val state: State = IR
+  implicit val __state: State = IR
 
   /** All statements defined in lower (further nested) blocks within the current traversal scope **/
   private var innerScope: Seq[NodeId] = _

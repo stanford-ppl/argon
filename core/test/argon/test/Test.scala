@@ -1,7 +1,7 @@
 package argon.test
 
-import argon.{AppRunner, ArgonLangExternal}
-import argon.core.{ArgonCore, Config, State}
+import argon.{ArgonAppRunner, ArgonLangExternal}
+import argon.core.{Config, State}
 import argon.codegen.scalagen._
 import argon.lang.{AssertApi, PrintApi}
 import argon.transform.ForwardTransformer
@@ -17,7 +17,7 @@ trait LowPriorityImplicits {
   implicit def double2RichDouble(x: Double): RichDouble = new RichDouble(x)
 }
 
-trait TestApi extends ArgonCore with ArgonLangExternal with LowPriorityImplicits
+trait TestApi extends ArgonLangExternal with LowPriorityImplicits
   with PrintApi
   with AssertApi
 {
@@ -48,7 +48,7 @@ case class IdentityTransformer(IR: State) extends ForwardTransformer {
   override val name = "Identity Transformer"
 }
 
-trait TestBase extends AppRunner {
+trait TestBase extends ArgonAppRunner {
   override val testbench = true
 
   override protected def createTraversalSchedule(state: State) = {

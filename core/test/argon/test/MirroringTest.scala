@@ -1,7 +1,7 @@
 package argon.test
 
 import argon.core
-import argon.internals._
+import argon.core._
 import argon.compiler._
 import argon.transform.ForwardTransformer
 import org.virtualized._

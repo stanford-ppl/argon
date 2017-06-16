@@ -1,30 +1,6 @@
 package argon.core
 
-import cake._
-
-abstract class ArgonCore
-  extends LayerReporting
-  with LayerBlocks
-  with LayerDefs
-  with LayerEffects
-  with LayerLattices
-  with LayerMetadata
-  with LayerScheduling
-  with LayerStagedTypes
-  with LayerStaging
-  with LayerStatements
-  with LayerSymbols
-{
-  type SrcCtx = org.virtualized.SourceContext
-  def ctx(implicit context: SrcCtx): SrcCtx = context
-  def state(implicit state: State): State = state
-
-  // Based on performance testing, LongMap is slightly faster than others (even with casting)
-  type OrderCache = scala.collection.mutable.LongMap[(NodeId,Int)] // EdgeId -> (NodeId,Int)
-  def OrderCache() = new scala.collection.mutable.LongMap[(NodeId,Int)]()
-}
-
-trait ArgonCoreAliases extends ArgonCore {
+package object cake {
   type Type[T] = argon.core.Type[T]
   type Lift[A,B] = argon.core.Lift[A,B]
   type Cast[A,B] = argon.core.Cast[A,B]
@@ -32,9 +8,8 @@ trait ArgonCoreAliases extends ArgonCore {
   type FrontendFacing = argon.core.FrontendFacing
   type CompilerFacing = argon.core.CompilerFacing
 
-  type CompilerException = argon.CompilerException
-  type UserError = argon.UserError
-  type ProgramError = argon.ProgramError
+  type Freq = argon.core.Freq
+  val Freq = argon.core.Freq
 
   type Exp[+T] = argon.core.Exp[T]
   type Dyn[+T] = argon.core.Dyn[T]
@@ -69,9 +44,12 @@ trait ArgonCoreAliases extends ArgonCore {
   type Lattice[T] = argon.core.Lattice[T]
   type Metadata[M] = argon.core.Metadata[M]
   type Effects = argon.core.Effects
+  val Effects = argon.core.Effects
   type AntiDeps = argon.core.AntiDeps
+  val AntiDeps = argon.core.AntiDeps
 
   type Stm = argon.core.Stm
+  val Stm = argon.core.Stm
   val TP = argon.core.TP
   val TTP = argon.core.TTP
 
@@ -79,7 +57,3 @@ trait ArgonCoreAliases extends ArgonCore {
   val Config = argon.core.Config
   val Globals = argon.core.Globals
 }
-
-/** Internal use (everything inside argon.core) **/
-private[core] object ops extends ArgonCore
-

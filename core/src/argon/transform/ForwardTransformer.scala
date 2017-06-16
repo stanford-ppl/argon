@@ -1,10 +1,10 @@
 package argon.transform
 
-import argon.internals._
+import argon.core._
 import argon.traversal.Traversal
 
 trait ForwardTransformer extends Traversal with SubstTransformer {
-  override implicit val state: State = IR
+  override implicit val __state: State = IR
 
   //val allowPretransform = false     // Need to explicitly enable this
   val allowDuplication = false        // Allow old symbols with mirroring rules to persist in the IR
@@ -33,15 +33,13 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
   /**
     * Visit and transform each statement in the given block WITHOUT creating a staging scope
     */
-  final override protected def inlineBlock[T](b: Block[T]): Exp[T] = {
-    inlineBlock(b, {stms => visitStms(stms); f(b.result) })
-  }
+  override protected def inlineBlock[T](b: Block[T]): Exp[T] = inlineBlockWith(b, {stms => visitStms(stms); f(b.result) })
 
   /**
     * Visit and perform some transformation `func` over all statements in the block, returning a result symbol
     * WITHOUT creating a staging scope.
     */
-  final override protected def inlineBlock[T](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T] = {
+  final override protected def inlineBlockWith[T](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T] = {
     tab += 1
     val inputs2 = syms(f.tx(b.inputs)).map(stmOf)
     val result: Exp[T] = withInnerStms(availStms diff inputs2) {
@@ -56,9 +54,8 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
     * with the transformed statements
     */
   override protected def transformBlock[T,B[T]<:Block[T]](b: B[T]): B[T] = {
-    transformBlock(b, {stms => visitStms(stms); f(b.result) })
+    transformBlockWith(b, {stms: Seq[Stm] => visitStms(stms); f(b.result) })
   }
-
 
   /**
     * Perform inlining while "mangling" the given block using the given statement transformation function.

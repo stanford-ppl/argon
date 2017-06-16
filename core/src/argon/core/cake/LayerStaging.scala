@@ -1,11 +1,9 @@
-package argon.core
-package cake
+package argon.core.cake
 
 import argon.util.escapeConst
 import forge._
-import org.virtualized.{SourceContext => SrcCtx}
 
-trait LayerStaging { this: ArgonCore =>
+trait LayerStaging { this: ArgonCake =>
 
   @stateful def fresh[T:Type]: Bound[T] = {
     val bnd = new Bound(typ[T])

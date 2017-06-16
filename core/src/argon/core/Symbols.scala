@@ -1,6 +1,5 @@
 package argon.core
 
-import ops._
 import argon.graphs.{Edge, EdgeLike}
 import argon.util.escapeConst
 import forge._
@@ -13,7 +12,7 @@ sealed abstract class Exp[+T] extends EdgeLike with FrontendFacing {
 
   var name: Option[String] = None
   override def toStringFrontend = name match {
-    case Some(name) => name + " (" + this.toString + ")"
+    case Some(n) => n + " (" + this.toString + ")"
     case None => this.toString
   }
 }

@@ -1,6 +1,6 @@
 package argon.codegen.chiselgen
 
-import argon.internals._
+import argon.core._
 import argon.compiler._
 import argon.nodes._
 

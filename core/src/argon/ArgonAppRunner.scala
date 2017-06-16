@@ -1,11 +1,11 @@
 package argon
 
-import argon.internals._
+import argon.core._
 import argon.codegen.FileGen
 
 import scala.sys.process._
 
-trait AppRunner extends AppCore { self =>
+trait ArgonAppRunner extends ArgonApp { self =>
   var testArgs = List[String]()
 
   final protected def run(out: String): Int = {

@@ -1,7 +1,7 @@
 package argon
 
 import argon.codegen.Codegen
-import argon.internals._
+import argon.core._
 import compiler._
 import argon.traversal.CompilerPass
 import argon.transform.Transformer
@@ -10,7 +10,7 @@ import argon.util.deleteExts
 import scala.collection.mutable.ArrayBuffer
 import org.virtualized.SourceContext
 
-trait AppCore { self =>
+trait ArgonApp { self =>
   /**
     * The entry function for users
     * Allows @virtualize def main(): Unit = { } and [@virtualize] def main() { }

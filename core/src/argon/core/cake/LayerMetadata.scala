@@ -1,9 +1,8 @@
-package argon.core
-package cake
+package argon.core.cake
 
 import forge._
 
-trait LayerMetadata { this: ArgonCore =>
+trait LayerMetadata { this: ArgonCake =>
 
   implicit def metadataHasLattice[T <: Metadata[T]]: Lattice[T] = new Lattice[T] {
     override def meet(a: T, b: T): T = a.meet(b)

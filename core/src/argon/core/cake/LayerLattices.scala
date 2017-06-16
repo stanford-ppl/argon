@@ -1,5 +1,4 @@
-package argon.core
-package cake
+package argon.core.cake
 
 trait LayerLattices {
 

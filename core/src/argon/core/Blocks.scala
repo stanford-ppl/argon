@@ -1,7 +1,5 @@
 package argon.core
 
-import ops._
-
 /** Class representing the result of a staged scope. */
 sealed class Block[+R](
   val inputs:    Seq[Exp[_]],

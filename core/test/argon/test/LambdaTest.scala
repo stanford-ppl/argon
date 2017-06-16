@@ -1,6 +1,6 @@
 package argon.test
 
-import argon.internals._
+import argon.core._
 import argon.compiler._
 import argon.codegen.scalagen.ScalaCodegen
 import forge._

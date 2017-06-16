@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon.internals._
+import argon.core._
 import argon.core.Config
 import argon.nodes._
 import forge._

@@ -1,9 +1,8 @@
-package argon.core
-package cake
+package argon.core.cake
 
 import forge._
 
-trait LayerStatements { this: ArgonCore =>
+trait LayerStatements { this: ArgonCake =>
   type NodeId = Int
   type EdgeId = Int
 

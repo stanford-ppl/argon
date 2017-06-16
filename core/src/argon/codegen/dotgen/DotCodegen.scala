@@ -1,6 +1,6 @@
 package argon.codegen.dotgen
 
-import argon.internals._
+import argon.core._
 import argon.codegen.{Codegen, FileDependencies}
 
 import scala.collection.mutable.{Map, ListBuffer}

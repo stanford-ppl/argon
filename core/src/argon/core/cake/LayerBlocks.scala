@@ -1,10 +1,9 @@
-package argon.core
-package cake
+package argon.core.cake
 
 import forge._
 import scala.collection.mutable
 
-trait LayerBlocks { self: ArgonCore =>
+trait LayerBlocks { self: ArgonCake =>
   /**
     * Computes an *external* summary for a sequence of nodes
     * (Ignores reads/writes on data allocated within the scope)
@@ -21,7 +20,7 @@ trait LayerBlocks { self: ArgonCore =>
   }
 
   @stateful private def inSealed[T](x: => T): T = {
-    var prevEffects = state.blockEffects
+    val prevEffects = state.blockEffects
     state.blockEffects = prevEffects andAlso Sticky
     val result = x
     state.blockEffects = prevEffects

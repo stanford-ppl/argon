@@ -1,9 +1,8 @@
-package argon.core
-package cake
+package argon.core.cake
 
 import forge._
 
-trait LayerEffects { this: ArgonCore =>
+trait LayerEffects { this: ArgonCake =>
 
   object depsOf {
     @stateful def apply(x: Exp[_]): Seq[Exp[_]] = metadata[AntiDeps](x).map(_.syms).getOrElse(Nil)

@@ -1,6 +1,6 @@
 package argon.codegen
 
-import argon.internals._
+import argon.core._
 import org.apache.commons.io.FileUtils
 import java.io.{File, IOException}
 

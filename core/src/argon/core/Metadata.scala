@@ -1,6 +1,5 @@
 package argon.core
 
-import ops._
 import argon.graphs.GraphMetadata
 
 abstract class Metadata[T] { self =>

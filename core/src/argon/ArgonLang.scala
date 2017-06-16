@@ -1,5 +1,6 @@
 package argon
 
+import argon.core.cake.ArgonCake
 import argon.lang.typeclasses._
 import argon.lang._
 import forge._
@@ -217,7 +218,7 @@ trait ArgonApi
     with MetaAnyLowPriorityImplicits
 
 /** Static functions, implicit conversions, app-facing type aliases **/
-trait ArgonLangExternal extends ArgonApi {
+trait ArgonLangExternal extends ArgonApi with ArgonCake {
   type Type[T] = argon.core.Type[T]
   type Lift[A,B] = argon.core.Lift[A,B]
   type Cast[A,B] = argon.core.Cast[A,B]

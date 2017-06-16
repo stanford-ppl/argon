@@ -2,7 +2,7 @@ package argon.lang
 
 import typeclasses._
 
-import argon.internals._
+import argon.core._
 import argon.nodes._
 import argon.util.escapeConst
 import forge._

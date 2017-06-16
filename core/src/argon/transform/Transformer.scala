@@ -1,10 +1,10 @@
 package argon.transform
 
-import argon.internals._
+import argon.core._
 
 trait Transformer { self =>
   val IR: State
-  implicit val state: State = IR
+  implicit val __state: State = IR
 
   protected val f = this //.asInstanceOf[Tx]
   def apply[T](e: Exp[T]): Exp[T] = transformExp(e)(mtyp(e.tp))
@@ -76,7 +76,7 @@ trait Transformer { self =>
     * Visit and perform some transformation `func` over all statements in the block, returning a result symbol
     * WITHOUT creating a staging scope.
     */
-  protected def inlineBlock[T](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T]
+  protected def inlineBlockWith[T](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T]
 
   /**
     * Visit and transform each statement in the given block, creating a new Staged block
@@ -89,12 +89,12 @@ trait Transformer { self =>
     * block with the resulting transformed statements. The return Exp[T] of func will be the result symbol of the
     * new block.
     */
-  final protected def transformBlock[T,B[T]<:Block[T]](block: B[T], func: Seq[Stm] => Exp[T]): B[T] = (block match {
-    case Lambda1(input,_,_,_,temp,isol,seal)   => stageLambda1(f(input))({ inlineBlock(block,func) }, temp, isol, seal)
-    case Lambda2(a,b, _,_,_,temp,isol,seal)    => stageLambda2(f(a),f(b))({ inlineBlock(block,func) }, temp, isol, seal)
-    case Lambda3(a,b,c,_,_,_,temp,isol,seal)   => stageLambda3(f(a),f(b),f(c))( {inlineBlock(block,func) }, temp, isol, seal)
-    case Lambda4(a,b,c,d,_,_,_,temp,isol,seal) => stageLambda4(f(a),f(b),f(c),f(d))({ inlineBlock(block, func)}, temp, isol, seal)
-    case Block(inputs,_,_,_,temp,isol,seal)    => stageLambdaN(f.tx(inputs), { inlineBlock(block, func) }, temp, isol, seal)
+  final protected def transformBlockWith[T,B[T]<:Block[T]](block: B[T], func: Seq[Stm] => Exp[T]): B[T] = (block match {
+    case Lambda1(input,_,_,_,temp,isol,seal)   => stageLambda1(f(input))({ inlineBlockWith(block,func) }, temp, isol, seal)
+    case Lambda2(a,b, _,_,_,temp,isol,seal)    => stageLambda2(f(a),f(b))({ inlineBlockWith(block,func) }, temp, isol, seal)
+    case Lambda3(a,b,c,_,_,_,temp,isol,seal)   => stageLambda3(f(a),f(b),f(c))( {inlineBlockWith(block,func) }, temp, isol, seal)
+    case Lambda4(a,b,c,d,_,_,_,temp,isol,seal) => stageLambda4(f(a),f(b),f(c),f(d))({ inlineBlockWith(block, func)}, temp, isol, seal)
+    case Block(inputs,_,_,_,temp,isol,seal)    => stageLambdaN(f.tx(inputs), { inlineBlockWith(block, func) }, temp, isol, seal)
   }).asInstanceOf[B[T]]
 
 

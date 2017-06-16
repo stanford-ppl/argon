@@ -1,6 +1,5 @@
 package argon.core
 
-import ops._
 import argon.graphs._
 import argon.util.recursive
 import forge._

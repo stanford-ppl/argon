@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon.internals._
+import argon.core._
 import argon.nodes._
 import forge._
 import org.virtualized.EmptyContext
@@ -11,6 +11,7 @@ case class Func1[A:Type,R:Type](s: Exp[Func1[A,R]]) extends MetaAny[Func1[A,R]] 
   @api def toText = String.ify(this)
 
   def apply(a: A, state: State): R = applyArg(a)(state, EmptyContext)
+  @api def apply(a: A): R = applyArg(a)
   @api def applyArg(a: A)(implicit state: State, ctx: SrcCtx): R = wrap(Func.apply1(s, a.s))
 }
 case class Func2[A:Type,B:Type,R:Type](s: Exp[Func2[A,B,R]]) extends MetaAny[Func2[A,B,R]] with Function3[A,B,State,R] {
@@ -19,6 +20,7 @@ case class Func2[A:Type,B:Type,R:Type](s: Exp[Func2[A,B,R]]) extends MetaAny[Fun
   @api def toText = String.ify(this)
 
   def apply(a: A, b: B, state: State): R = applyArg(a: A, b: B)(state, EmptyContext)
+  @api def apply(a: A, b: B): R = applyArg(a, b)
   @api def applyArg(a: A, b: B)(implicit state: State, ctx: SrcCtx): R = wrap(Func.apply2(s, a.s, b.s))
 }
 case class Func3[A:Type,B:Type,C:Type,R:Type](s: Exp[Func3[A,B,C,R]]) extends MetaAny[Func3[A,B,C,R]] with Function4[A,B,C,State,R]  {
@@ -27,6 +29,7 @@ case class Func3[A:Type,B:Type,C:Type,R:Type](s: Exp[Func3[A,B,C,R]]) extends Me
   @api def toText = String.ify(this)
 
   def apply(a: A, b: B, c: C, state: State): R = applyArg(a: A, b: B, c: C)(state, EmptyContext)
+  @api def apply(a: A, b: B, c: C): R = applyArg(a,b,c)
   @api def applyArg(a: A, b: B, c: C)(implicit state: State, ctx: SrcCtx): R = wrap(Func.apply3(s, a.s, b.s, c.s))
 }
 case class Func4[A:Type,B:Type,C:Type,D:Type,R:Type](s: Exp[Func4[A,B,C,D,R]]) extends MetaAny[Func4[A,B,C,D,R]] with Function5[A,B,C,D,State,R]  {
@@ -35,6 +38,7 @@ case class Func4[A:Type,B:Type,C:Type,D:Type,R:Type](s: Exp[Func4[A,B,C,D,R]]) e
   @api def toText = String.ify(this)
 
   def apply(a: A, b: B, c: C, d: D, state: State): R = applyArg(a: A, b: B, c: C, d: D)(state, EmptyContext)
+  @api def apply(a: A, b: B, c: C, d: D): R = applyArg(a,b,c,d)
   @api def applyArg(a: A, b: B, c: C, d: D)(implicit state: State, ctx: SrcCtx): R = wrap(Func.apply4(s, a.s, b.s, c.s, d.s))
 }
 case class Func5[A:Type,B:Type,C:Type,D:Type,E:Type,R:Type](s: Exp[Func5[A,B,C,D,E,R]]) extends MetaAny[Func5[A,B,C,D,E,R]] with Function6[A,B,C,D,E,State,R]  {
@@ -43,6 +47,7 @@ case class Func5[A:Type,B:Type,C:Type,D:Type,E:Type,R:Type](s: Exp[Func5[A,B,C,D
   @api def toText = String.ify(this)
 
   def apply(a: A, b: B, c: C, d: D, e: E, state: State): R = applyArg(a: A, b: B, c: C, d: D, e: E)(state, EmptyContext)
+  @api def apply(a: A, b: B, c: C, d: D, e: E): R = applyArg(a,b,c,d,e)
   @api def applyArg(a: A, b: B, c: C, d: D, e: E)(implicit state: State, ctx: SrcCtx): R = wrap(Func.apply5(s, a.s, b.s, c.s, d.s, e.s))
 }
 case class Func6[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,R:Type](s: Exp[Func6[A,B,C,D,E,F,R]]) extends MetaAny[Func6[A,B,C,D,E,F,R]] with Function7[A,B,C,D,E,F,State,R]  {
@@ -51,6 +56,7 @@ case class Func6[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,R:Type](s: Exp[Func6[
   @api def toText = String.ify(this)
 
   def apply(a: A, b: B, c: C, d: D, e: E, f: F, state: State): R = applyArg(a: A, b: B, c: C, d: D, e: E, f: F)(state, EmptyContext)
+  @api def apply(a: A, b: B, c: C, d: D, e: E, f: F): R = applyArg(a,b,c,d,e,f)
   @api def applyArg(a: A, b: B, c: C, d: D, e: E, f: F)(implicit state: State, ctx: SrcCtx): R = wrap(Func.apply6(s, a.s, b.s, c.s, d.s, e.s, f.s))
 }
 case class Func7[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,R:Type](s: Exp[Func7[A,B,C,D,E,F,G,R]]) extends MetaAny[Func7[A,B,C,D,E,F,G,R]] with Function8[A,B,C,D,E,F,G,State,R]  {
@@ -59,6 +65,7 @@ case class Func7[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,R:Type](s: Exp
   @api def toText = String.ify(this)
 
   def apply(a: A, b: B, c: C, d: D, e: E, f: F, g: G, state: State): R = applyArg(a: A, b: B, c: C, d: D, e: E, f: F, g: G)(state, EmptyContext)
+  @api def apply(a: A, b: B, c: C, d: D, e: E, f: F, g: G): R = applyArg(a,b,c,d,e,f,g)
   @api def applyArg(a: A, b: B, c: C, d: D, e: E, f: F, g: G)(implicit state: State, ctx: SrcCtx): R = wrap(Func.apply7(s, a.s, b.s, c.s, d.s, e.s, f.s, g.s))
 }
 case class Func8[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,R:Type](s: Exp[Func8[A,B,C,D,E,F,G,H,R]]) extends MetaAny[Func8[A,B,C,D,E,F,G,H,R]] with Function9[A,B,C,D,E,F,G,H,State,R]  {
@@ -67,6 +74,7 @@ case class Func8[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,R:Type]
   @api def toText = String.ify(this)
 
   def apply(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, state: State): R = applyArg(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H)(state, EmptyContext)
+  @api def apply(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H): R = applyArg(a,b,c,d,e,f,g,h)
   @api def applyArg(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H)(implicit state: State, ctx: SrcCtx): R = wrap(Func.apply8(s, a.s, b.s, c.s, d.s, e.s, f.s, g.s, h.s))
 }
 case class Func9[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type,R:Type](s: Exp[Func9[A,B,C,D,E,F,G,H,I,R]]) extends MetaAny[Func9[A,B,C,D,E,F,G,H,I,R]] with Function10[A,B,C,D,E,F,G,H,I,State,R]  {
@@ -75,6 +83,7 @@ case class Func9[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type,
   @api def toText = String.ify(this)
 
   def apply(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, state: State): R = applyArg(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I)(state, EmptyContext)
+  @api def apply(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I): R = applyArg(a,b,c,d,e,f,g,h,i)
   @api def applyArg(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I)(implicit state: State, ctx: SrcCtx): R = wrap(Func.apply9(s, a.s, b.s, c.s, d.s, e.s, f.s, g.s, h.s, i.s))
 }
 case class Func10[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type,J:Type,R:Type](s: Exp[Func10[A,B,C,D,E,F,G,H,I,J,R]]) extends MetaAny[Func10[A,B,C,D,E,F,G,H,I,J,R]] with Function11[A,B,C,D,E,F,G,H,I,J,State,R]  {
@@ -83,6 +92,7 @@ case class Func10[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type
   @api def toText = String.ify(this)
 
   def apply(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J, state: State): R = applyArg(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J)(state, EmptyContext)
+  @api def apply(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J): R = applyArg(a,b,c,d,e,f,g,h,i,j)
   @api def applyArg(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H, i: I, j: J)(implicit state: State, ctx: SrcCtx): R = wrap(Func.apply10(s, a.s, b.s, c.s, d.s, e.s, f.s, g.s, h.s, i.s, j.s))
 }
 

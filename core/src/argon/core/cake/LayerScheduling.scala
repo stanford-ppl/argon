@@ -1,9 +1,8 @@
-package argon.core
-package cake
+package argon.core.cake
 
 import forge._
 
-trait LayerScheduling { this: ArgonCore =>
+trait LayerScheduling { this: ArgonCake =>
 
   @stateful def makeScopeIndex(scope: Iterable[Stm])(implicit state: State): OrderCache = {
     state.graph.buildScopeIndex(scope.map(_.rhs.id))

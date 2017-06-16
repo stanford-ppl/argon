@@ -1,6 +1,5 @@
 package argon.core
 
-import ops._
 import argon.lang.MetaAny
 
 import scala.annotation.implicitNotFound

@@ -1,6 +1,6 @@
 package argon.codegen.cppgen
 
-import argon.internals._
+import argon.core._
 import argon.nodes._
 
 trait CppGenBool extends CppCodegen {
