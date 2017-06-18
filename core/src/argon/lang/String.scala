@@ -4,6 +4,7 @@ import argon.core._
 import argon.nodes._
 import forge._
 
+
 case class String(s: Exp[String]) extends MetaAny[String] {
   override type Internal = java.lang.String
   @api def +(rhs: CString): MString = this + String(rhs)
@@ -29,8 +30,11 @@ object String {
   /** Type classes **/
   implicit def stringIsStaged: Type[String] = StringType
 
-  @api implicit def string2text(x: CString): MString = String(x)
-
+  /** Rewrite Rules **/
+  /*@rewrite def MBoolean$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
+    case Op(TextEquals(a,b)) => text_differ(a,b)
+    case Op(TextDiffer(a,b)) => text_equals(a,b)
+  }*/
 
   /** Constructors **/
   @internal def sym_tostring[T:Type](x: Exp[T]): Exp[MString] = x match {
@@ -59,26 +63,4 @@ object String {
   @internal def length(x: Exp[MString])(implicit ctx: SrcCtx): Exp[Int32] = {
     stage( StringLength(x) )(ctx)
   }
-
-}
-
-trait StringExp {
-  /** Static methods **/
-  @internal def infix_+[R<:MetaAny[R]](x1: CString, x2: R): MString = String(x1) + x2.toText
-
-  /** Lifting **/
-  implicit object LiftString extends Lift[CString,MString] {
-    @internal def apply(x: CString): MString = String(x)
-  }
-
-  /** Casting **/
-  implicit object CastStringLift extends Cast[CString,MString] {
-    @internal def apply(x: CString): MString = String(x)
-  }
-
-  /** Rewrite Rules **/
-  /*@rewrite def MBoolean$not(x: Exp[Bool])(implicit ctx: SrcCtx): Exp[Bool] = x match {
-    case Op(TextEquals(a,b)) => text_differ(a,b)
-    case Op(TextDiffer(a,b)) => text_equals(a,b)
-  }*/
 }

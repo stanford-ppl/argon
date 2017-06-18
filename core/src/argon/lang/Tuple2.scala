@@ -23,12 +23,3 @@ object Tuple2 {
   implicit def tup2CanBits[A:Type:Bits,B:Type:Bits]: Bits[Tuple2[A,B]] = new Tuple2Bits[A,B]
   implicit def tup2CanArith[A:Type:Arith,B:Type:Arith]: Arith[Tuple2[A,B]] = new Tuple2Arith[A,B]
 }
-
-
-trait Tuple2Exp {
-  /** Static methods **/
-  @api def pack[A:Type,B:Type](a: A, b: B): Tuple2[A,B] = Tuple2.pack(a,b)
-  @api def pack[A:Type,B:Type](t: (A, B)): Tuple2[A,B] = Tuple2.pack(t)
-  @api def unpack[A:Type,B:Type](t: Tuple2[A,B]): (A,B) = (t._1, t._2)
-}
-

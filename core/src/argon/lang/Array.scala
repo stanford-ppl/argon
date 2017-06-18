@@ -142,11 +142,3 @@ object Array {
 
   @internal private[argon] def input_arguments(): MArray[MString] = Array(stage(InputArguments())(ctx))
 }
-
-
-trait ArrayApi {
-  implicit class NestedArrayInfixOps[T](a: MArray[MArray[T]]) {
-    private implicit val mT = a.s.tp.typeArguments.head.typeArguments.head.asInstanceOf[Type[T]]
-    @api def flatten: MArray[T] = a.flatMap{x => x}
-  }
-}

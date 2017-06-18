@@ -98,8 +98,3 @@ object Struct {
     stageWrite(struct)(FieldUpdate(struct, index, value))(ctx)
   }
 }
-
-trait StructExp {
-  @internal def struct[T:StructType](fields: (CString, Exp[_])*): T = Struct[T](fields:_*)
-}
-

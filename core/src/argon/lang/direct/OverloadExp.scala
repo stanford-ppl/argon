@@ -1,18 +1,6 @@
-package argon.lang
+package argon.lang.direct
 
-class Overload0
-class Overload1
-class Overload2
-class Overload3
-class Overload4
-class Overload5
-class Overload6
-class Overload7
-class Overload8
-class Overload9
-class Overload10
-
-trait OverloadHackExp {
+trait OverloadExp {
   implicit val overload0 = new Overload0
   implicit val overload1 = new Overload1
   implicit val overload2 = new Overload2
@@ -25,5 +13,3 @@ trait OverloadHackExp {
   implicit val overload9 = new Overload9
   implicit val overload10 = new Overload10
 }
-
-trait OverloadHackApi { }

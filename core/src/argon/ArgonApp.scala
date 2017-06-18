@@ -47,16 +47,17 @@ trait ArgonApp { self =>
   }
 
   protected def onException(t: Throwable): Unit = {
-    withLog(core.Config.cwd, core.Config.name + "_exception.log") {
-      core.Config.verbosity = 10
+    withLog(Config.cwd, Config.name + "_exception.log") {
+      Config.verbosity = 10
       log(t.getMessage)
       log("")
       t.getStackTrace.foreach{elem => log(elem.toString) }
     }
-    error(s"An exception was encountered while compiling ${core.Config.name}: ")
-    error(s"  ${t.getMessage}")
+    error(s"An exception was encountered while compiling ${Config.name}: ")
+    if (t.getMessage != null) error(s"  ${t.getMessage}")
+    if (t.getCause != null) error(s"  ${t.getCause}")
     error(s"This is likely a compiler bug. A log file has been created at: ")
-    error(s"  ${core.Config.cwd}/${core.Config.name}_exception.log")
+    error(s"  ${Config.cwd}/${Config.name}_exception.log")
   }
 
   protected def settings(): Unit = { }
@@ -69,9 +70,9 @@ trait ArgonApp { self =>
 
     __args = MArray.input_arguments()
 
-    if (core.Config.clearLogs) deleteExts(core.Config.logDir, ".log")
-    report(c"Compiling ${core.Config.name} to ${core.Config.genDir}")
-    if (core.Config.verbosity >= 2) report(c"Logging ${core.Config.name} to ${core.Config.logDir}")
+    if (Config.clearLogs) deleteExts(Config.logDir, ".log")
+    report(c"Compiling ${Config.name} to ${Config.genDir}")
+    if (Config.verbosity >= 2) report(c"Logging ${Config.name} to ${Config.logDir}")
   }
 
   /**
@@ -79,7 +80,7 @@ trait ArgonApp { self =>
     */
   final protected def stageProgram[R:Type](blk: => R): Block[R] = {
     core.Globals.staging = true
-    val block: Block[R] = withLog(core.Config.logDir, "0000 Staging.log") { stageBlock { blk.s } }
+    val block: Block[R] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { blk.s } }
     core.Globals.staging = false
     block
   }
@@ -90,7 +91,7 @@ trait ArgonApp { self =>
     for (t <- passes) {
       if (state.graph.VERBOSE_SCHEDULING) {
         state.graph.glog.close()
-        state.graph.glog = createLog(core.Config.logDir + "/sched/", state.paddedPass + " " + t.name + ".log")
+        state.graph.glog = createLog(Config.logDir + "/sched/", state.paddedPass + " " + t.name + ".log")
         withLog(state.graph.glog) {
           log(s"${state.pass} ${t.name}")
           log(s"===============================================")
@@ -101,7 +102,7 @@ trait ArgonApp { self =>
       // After each traversal, check whether there were any reported errors
       checkErrors(state, startTime, t.name)
 
-      if (core.Config.verbosity >= 1) withLog(timingLog) {
+      if (Config.verbosity >= 1) withLog(timingLog) {
         msg(s"  ${t.name}: " + "%.4f".format(t.lastTime / 1000))
       }
 
@@ -116,14 +117,14 @@ trait ArgonApp { self =>
   }
 
 
-  protected def compileProgram(blk: => Unit): Unit = {
+  protected def compileProgram(blk: () => Unit): Unit = {
     // Spin up a new compiler state
     IR = new State
     init(state)
 
     val startTime = System.currentTimeMillis()
 
-    val block = stageProgram{ MUnit(blk) }
+    val block = stageProgram{ MUnit(blk()) }
 
     if (state.graph.curEdgeId == 0 && !testbench) {
       warn("Nothing staged, nothing gained.")
@@ -131,12 +132,12 @@ trait ArgonApp { self =>
     // Exit now if errors were found during staging
     checkErrors(state, startTime, "staging")
 
-    val timingLog = createLog(core.Config.logDir, "9999 CompilerTiming.log")
+    val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
     runTraversals(startTime, block, timingLog)
 
     val time = (System.currentTimeMillis - startTime).toFloat
 
-    if (core.Config.verbosity >= 1) {
+    if (Config.verbosity >= 1) {
       withLog(timingLog) {
         msg(s"  Total: " + "%.4f".format(time / 1000))
         msg(s"")
@@ -156,8 +157,8 @@ trait ArgonApp { self =>
   protected def initConfig(sargs: Array[String]): Unit = {
     val defaultName = self.getClass.getName.replace("class ", "").replace('.','-').replace("$","") //.split('$').head
     System.setProperty("argon.name", defaultName)
-    core.Config.name = defaultName
-    core.Config.init()
+    Config.name = defaultName
+    Config.init()
 
     parseArguments(sargs.toSeq)
   }
@@ -170,17 +171,11 @@ trait ArgonApp { self =>
     initConfig(sargs)
 
     try {
-      compileProgram(main())
+      compileProgram(() => main())
     }
     catch {case t: Throwable =>
-      if (core.Config.verbosity > 0) {
-        report(t.getMessage)
-        t.getStackTrace.foreach{elem => report(elem.toString) }
-      }
-      else {
-        onException(t)
-      }
-      if (!testbench) sys.exit(-1) else { throw t /* Rethrow exception during testbench compilation */ }
+      onException(t)
+      if (!testbench && Config.verbosity < 1) sys.exit(-1) else throw t
     }
   }
 }

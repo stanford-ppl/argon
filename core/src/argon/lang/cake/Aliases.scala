@@ -1,12 +1,61 @@
-package argon
+package argon.lang.cake
 
-import argon.core.cake.ArgonCake
-import argon.lang.typeclasses._
-import argon.lang._
+import argon.lang.typeclasses.{FALSE, TRUE, _0, _11, _16, _24, _32, _5, _53, _64, _8}
 import forge._
+
+/** Internal, language type aliases (no cyclic aliases allowed, e.g. cannot have "type X = argon.lang.X") **/
+trait ArgonLangAliases {
+  /**
+    * Convention (adapted from Forge):
+    * M- prefix: "Meta" (staged types)
+    * C- prefix: "Constant" (unstaged types)
+    */
+  type Index = argon.lang.FixPt[TRUE,_32,_0]
+  type Int64 = argon.lang.FixPt[TRUE,_64,_0]
+  type Int32 = argon.lang.FixPt[TRUE,_32,_0]
+  type Int16 = argon.lang.FixPt[TRUE,_16,_0]
+  type  Int8 = argon.lang.FixPt[TRUE,_8, _0]
+  @generate
+  type UIntJJ$JJ$2to128 = argon.lang.FixPt[FALSE,argon.lang.typeclasses._JJ,_0]
+
+  type MInt = Int32
+  type CInt = scala.Int
+  type MLong = Int64
+  type CLong = scala.Long
+
+  type Float64 = argon.lang.FltPt[_53,_11]
+  type Float32 = argon.lang.FltPt[_24, _8]
+  type Float16 = argon.lang.FltPt[_11, _5]
+
+  type MFloat = Float32
+  type CFloat = scala.Float
+  type MDouble = Float64
+  type CDouble = scala.Double
+
+  type MAny[T] = argon.lang.MetaAny[T]
+
+  type MArray[T] = argon.lang.Array[T]
+  type CArray[T] = scala.Array[T]
+
+  type MHashMap[K, V] = argon.lang.HashMap[K, V]
+
+  type MBoolean = argon.lang.Boolean
+  type CBoolean = scala.Boolean
+
+  type MString = argon.lang.String
+  type CString = java.lang.String
+
+  type MTuple2[A,B] = argon.lang.Tuple2[A,B]
+  type CTuple2[A,B] = scala.Tuple2[A,B]
+
+  type MUnit = argon.lang.Unit
+  type CUnit = scala.Unit
+}
 
 /** All common type aliases, used outside argon.lang **/
 trait ArgonCommonAliases extends ArgonLangAliases {
+  type MetaAny[T] = argon.lang.MetaAny[T]
+
   type FixPt[S,I,F] = argon.lang.FixPt[S,I,F]
   type FltPt[G,E] = argon.lang.FltPt[G,E]
 
@@ -22,8 +71,6 @@ trait ArgonCommonAliases extends ArgonLangAliases {
   type Func10[A,B,C,D,E,F,G,H,I,J,R] = argon.lang.Func10[A,B,C,D,E,F,G,H,I,J,R]
 
   type HashIndex[K] = argon.lang.HashIndex[K]
-
-  type MetaAny[T] = argon.lang.MetaAny[T]
 
   type Struct[S] = argon.lang.Struct[S]
 
@@ -185,73 +232,8 @@ trait ArgonCommonAliases extends ArgonLangAliases {
   type Overload10 = argon.lang.Overload10
 }
 
-/** Implicit typeclass evidence, (optionally) implicit conversions **/
-trait ArgonExp
-  extends ArgonCommonAliases
-    with BooleanExp
-    with FixPtExp
-    with FltPtExp
-    with FunctionExp
-    with IfThenElseExp
-    with OverloadHackExp
-    with StringExp
-    with StructExp
-    with Tuple2Exp
-    with UnitExp
-    with VarExp
-    with ArithExp
-    with BitsExp
-    with NumExp
-    with OrderExp
-
-trait ArgonApi
-  extends ArgonExp
-    with ArrayApi
-    with CastsApi
-    with FixPtApi
-    with FltPtApi
-    with HashMapApi
-    with IfThenElseApi
-    with MetaAnyApi
-    with BitsApi
-    with NumApi
-    with MetaAnyLowPriorityImplicits
-
-/** Static functions, implicit conversions, app-facing type aliases **/
-trait ArgonLangExternal extends ArgonApi with ArgonCake {
-  type Type[T] = argon.core.Type[T]
-  type Lift[A,B] = argon.core.Lift[A,B]
-  type Cast[A,B] = argon.core.Cast[A,B]
-  type Exp[+T] = argon.core.Exp[T]
-
-  type Any = argon.lang.MetaAny[_]
-
-  type Array[T] = argon.lang.Array[T]
-  val Array = argon.lang.Array
-
-  type Boolean = argon.lang.Boolean
-
-  type HashMap[K, V] = argon.lang.HashMap[K, V]
-
-  type String = argon.lang.String
-
-  type Tuple2[A, B] = argon.lang.Tuple2[A, B]
-  val Tuple2 = argon.lang.Tuple2
-
-  type Unit = argon.lang.Unit
-
-  class ArithOps[T:Arith](lhs: T) {
-    @api def unary_-(): T = arith[T].negate(lhs)
-    @api def +(rhs: T): T = arith[T].plus(lhs, rhs)
-    @api def -(rhs: T): T = arith[T].minus(lhs, rhs)
-    @api def *(rhs: T): T = arith[T].times(lhs, rhs)
-    @api def /(rhs: T): T = arith[T].divide(lhs, rhs)
-  }
-  implicit def arithOps[T:Arith](lhs: T): ArithOps[T] = new ArithOps[T](lhs)
-}
-
 /** Aliases that are only internally facing (no frontend view required) **/
-trait ArgonLangInternal extends ArgonExp {
+trait ArgonInternalAliases extends ArgonCommonAliases {
   val INT = argon.lang.typeclasses.INT
   val BOOL = argon.lang.typeclasses.BOOL
 
@@ -278,5 +260,32 @@ trait ArgonLangInternal extends ArgonExp {
   val PrintOps = argon.lang.PrintOps
 }
 
-/** Used externally outside argon.lang **/
-object compiler extends ArgonLangInternal
+/** App-facing type aliases **/
+trait ArgonExternalAliases extends ArgonCommonAliases {
+  type Type[T] = argon.core.Type[T]
+  type Lift[A,B] = argon.core.Lift[A,B]
+  type Cast[A,B] = argon.core.Cast[A,B]
+  type Exp[+T] = argon.core.Exp[T]
+
+  type Any = MetaAny[_]
+
+  type Array[T] = argon.lang.Array[T]
+  val Array = argon.lang.Array
+  type Boolean = argon.lang.Boolean
+  type HashMap[K, V] = argon.lang.HashMap[K, V]
+  type String = argon.lang.String
+
+  type Long  = FixPt[TRUE,_64,_0]
+  type Int   = FixPt[TRUE,_32,_0]
+  type Short = FixPt[TRUE,_16,_0]
+  type Char  = FixPt[TRUE, _8,_0]
+
+  type Double = FltPt[_53,_11]
+  type Float  = FltPt[_24, _8]
+  type Half   = FltPt[_11, _5]
+
+  type Tuple2[A, B] = argon.lang.Tuple2[A, B]
+  val Tuple2 = argon.lang.Tuple2
+
+  type Unit = argon.lang.Unit
+}

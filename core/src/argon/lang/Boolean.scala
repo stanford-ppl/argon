@@ -28,8 +28,6 @@ object Boolean {
   implicit def boolIsStaged: Type[MBoolean] = BooleanType
   implicit def boolIsBits: Bits[MBoolean] = BooleanBits
 
-  @api implicit def boolean2bool(x: CBoolean): MBoolean = Boolean(x)
-
   /** Constructors **/
   @internal def not(x: Exp[MBoolean]): Exp[MBoolean] = x match {
     case Const(c: CBoolean) => const(!c)  // Constant propagation
@@ -78,19 +76,3 @@ object Boolean {
     case _ => stage(StringToBoolean(x))(ctx)
   }
 }
-
-trait BooleanExp {
-  /** Lifting **/
-  implicit object LiftBoolean2Bool extends Lift[CBoolean,MBoolean] {
-    @internal def apply(x: CBoolean): MBoolean = Boolean(x)
-  }
-  /** Casting **/
-  implicit object CastBoolean2Bool extends Cast[CBoolean,MBoolean] {
-    @internal def apply(x: CBoolean): MBoolean = Boolean(x)
-  }
-  implicit object String2Boolean extends Cast[MString,MBoolean] {
-    @internal def apply(x: MString): MBoolean = Boolean(Boolean.from_string(x.s))
-  }
-}
-
-

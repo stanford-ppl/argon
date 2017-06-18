@@ -1,3 +1,5 @@
 package argon
 
-package object lang extends ArgonLangAliases
+import argon.lang.direct.ArgonApi
+
+package object lang extends ArgonApi

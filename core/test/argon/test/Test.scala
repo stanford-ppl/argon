@@ -1,9 +1,10 @@
 package argon.test
 
-import argon.{ArgonAppRunner, ArgonLangExternal}
+import argon.ArgonAppRunner
 import argon.core.{Config, State}
 import argon.codegen.scalagen._
-import argon.lang.{AssertApi, PrintApi}
+import argon.lang.cake.ArgonLangExternal
+import argon.lang.direct.{AssertApi, PrintApi}
 import argon.transform.ForwardTransformer
 import argon.traversal.IRPrinter
 import forge._

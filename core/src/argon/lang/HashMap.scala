@@ -4,19 +4,6 @@ import argon.core._
 import argon.nodes._
 import forge._
 
-case class HashIndex[K:Type](s: Exp[HashIndex[K]]) extends MetaAny[HashIndex[K]] {
-  //val mK: MetaAny[K] = typ[K].fake
-  override type Internal = scala.collection.immutable.HashMap[Any,scala.Int]
-
-  @api def =!=(x: HashIndex[K]): MBoolean = ??? // TODO! but never seen by user currently
-  @api def ===(x: HashIndex[K]): MBoolean = ??? // TODO! but never seen by user currently
-  @api def toText: MString = String.ify(this)
-}
-
-object HashIndex {
-  implicit def hashIndexIsStaged[K:Type]: Type[HashIndex[K]] = HashIndexType(typ[K])
-}
-
 case class HashMap[K:Type,V:Type](s: Exp[HashMap[K,V]]) extends Struct[HashMap[K,V]] {
   //val mK: MetaAny[K] = typ[K].fake
   //val mV: MetaAny[V] = typ[V].fake
@@ -71,19 +58,3 @@ object HashMap {
     (keys, values, index)
   }
 }
-
-trait HashMapApi {
-  implicit class ArrayGroupByOps[A](array: Array[A]) {
-    private implicit val mA: Type[A] = array.s.tp.typeArguments.head.asInstanceOf[Type[A]]
-    @api def groupByReduce[K:Type,V:Type](key: A => K)(value: A => V)(reduce: (V,V) => V): HashMap[K,V] = {
-      val i = fresh[Index]
-      val rV = (fresh[V],fresh[V])
-      val (keys, values, index) = {
-        HashMap.build_hashmap(array.s, {a:Exp[A] => key(wrap(a)).s}, {a:Exp[A] => value(wrap(a)).s}, {(a:Exp[V],b:Exp[V]) => reduce(wrap(a),wrap(b)).s}, rV, i)
-      }
-      wrap(HashMap.hashmap_new(keys, values, index, wrap(keys).length.s))
-    }
-  }
-}
-
-

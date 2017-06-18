@@ -27,7 +27,7 @@ trait ArgonAppRunner extends ArgonApp { self =>
     exitCode
   }
 
-  override def compileProgram(blk: => Unit): Unit = {
+  override def compileProgram(blk: () => Unit): Unit = {
     super.compileProgram(blk)
     passes.foreach {
       // TODO: More generic compilation / running

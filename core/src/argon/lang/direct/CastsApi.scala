@@ -1,11 +1,7 @@
-package argon.lang
+package argon.lang.direct
 
 import argon.core._
 import forge._
-
-trait CastsExp {
-
-}
 
 trait CastsApi {
   implicit class CastOps[A](x: A) {
