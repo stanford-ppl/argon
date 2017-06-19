@@ -4,7 +4,7 @@ import argon.core._
 import argon.compiler._
 import forge._
 
-class FltPtType[G,E](val mG: INT[G], val mE: INT[E]) extends Type[FltPt[G,E]] with CanBits[FltPt[G,E]] {
+class FltPtType[G,E](val mG: INT[G], val mE: INT[E]) extends Type[FltPt[G,E]] with CanBits[FltPt[G,E]] with FrontendFacing {
   def wrapped(s: Exp[FltPt[G,E]]): FltPt[G,E] = FltPt[G,E](s)(mG,mE)
   def stagedClass = classOf[FltPt[G,E]]
   def isPrimitive = true
@@ -19,6 +19,11 @@ class FltPtType[G,E](val mG: INT[G], val mE: INT[E]) extends Type[FltPt[G,E]] wi
   def expBits: Int = mE.v
   protected def getBits(children: Seq[Type[_]]) = Some(FltPtNum[G,E](mG,mE))
 
+  override def toStringFrontend = this match {
+    case FltPtType(n,0) => "Int" + n
+    case FltPtType(n,0) => "UInt" + n
+    case _ => this.toString
+  }
   override def toString = s"FltPt[$mG,$mE]"
 }
 

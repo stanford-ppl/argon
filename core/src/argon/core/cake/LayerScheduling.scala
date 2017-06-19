@@ -46,7 +46,7 @@ trait LayerScheduling { this: ArgonCake =>
         val binding = missing.flatMap{id =>
           stmFromNodeId(id).map {stm =>
             val binders = state.graph.getNodesThatBindGiven(availNodes, result, Seq(id))
-            stm -> binders.flatMap(stmFromNodeId)
+            stm -> binders.map{case (node, parent2, bound) => (stmFromNodeId(node), parent2.flatMap(stmFromNodeId), bound.flatMap(stmFromNodeId)) }
           }
         }
         error(c"Violated ordering of effects while traversing block result: ")
@@ -58,15 +58,26 @@ trait LayerScheduling { this: ArgonCake =>
         error("missing: ")
         //missing.foreach{stm => error(c"  $stm")}
         binding.foreach { case (stm, bindedby) =>
-          error(c"  $stm")
-          error("  appears to be bound by: ")
-          bindedby.foreach { s =>
-            error(c"    $s")
-            error(c"    ${s.lhs.head.ctx}")
-            if (s.lhs.head.name.isDefined) error(c"    Name: ${s.lhs.head.name.get}")
+          dbg(c"  $stm")
+          dbg("  appears to be unschedulable because of: ")
+          bindedby.foreach{
+            case (Some(node), p2, bound) =>
+              if (p2.isDefined) dbg("  The pair of nodes:") else dbg("  The node:")
+              dbg(c"    $node")
+              strMeta(node.lhs.head)
+              p2.foreach{otherNode =>
+                dbg(c"    $otherNode")
+                strMeta(otherNode.lhs.head)
+              }
+              bound.foreach{bnd =>
+                dbg("  Binding: ")
+                dbg(c"    $bnd")
+                strMeta(bnd.lhs.head)
+              }
+            case _ =>
           }
-          error("")
-          error("")
+          dbg("")
+          dbg("")
         }
         throw new argon.EffectsOrderException
       }

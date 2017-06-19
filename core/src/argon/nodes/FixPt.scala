@@ -4,7 +4,7 @@ import argon.core._
 import argon.compiler._
 import forge._
 
-sealed class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Type[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] {
+sealed class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Type[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] with FrontendFacing {
   def wrapped(s: Exp[FixPt[S,I,F]]): FixPt[S,I,F] = FixPt[S,I,F](s)(mS,mI,mF)
   def stagedClass = classOf[FixPt[S,I,F]]
   def isPrimitive = true
@@ -20,6 +20,11 @@ sealed class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) e
   override def hashCode() = (mS,mI,mF).##
   protected def getBits(children: Seq[Type[_]]) = Some(FixPtNum[S,I,F](mS,mI,mF))
 
+  override def toStringFrontend = this match {
+    case FixPtType(true,n,0) => "Int" + n
+    case FixPtType(false,n,0) => "UInt" + n
+    case _ => this.toString
+  }
   override def toString = s"FixPt[$mS,$mI,$mF]"
 }
 

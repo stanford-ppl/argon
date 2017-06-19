@@ -439,7 +439,7 @@ class Graph[E<:Edge,N<:Node] {
   /**
     * DEBUGGING
     */
-  @stateful def getNodesThatBindGiven(availableNodes: Seq[NodeId], result: Seq[EdgeId], given: Seq[NodeId]): Seq[NodeId] = {
+  @stateful def getNodesThatBindGiven(availableNodes: Seq[NodeId], result: Seq[EdgeId], given: Seq[NodeId]): Seq[(NodeId, Option[NodeId], Option[NodeId])] = {
     val availCache = buildScopeIndex(availableNodes)
     val availRoots = scheduleDepsWithIndex(result, availCache)
     val localNodes = getSchedule(availRoots, availCache, checkAcyclic = true)
@@ -460,14 +460,30 @@ class Graph[E<:Edge,N<:Node] {
         val bindsL1 = nodeBounds(node)
         bindsL1.foreach{bound => msg(c"  ${triple(producerOf(bound))}") }
         msg(c"  path: ")
-        path.foreach{p => msg(c"  ${triple(p)}")}
-        // TODO: This part appears to be broken right now
-        /*val otherParents = path.find{node => nodeBounds(node).nonEmpty }
-        if (otherParents.nonEmpty) {
-          log(c"  Possible culprit: The following nodes may be bound by x$node and " + otherParents.map{x => s"x$x"}.mkString(", "))
-          (path filter(bindsL1 contains _)).foreach{x => log(c"  ${triple(x)}")}
-        }*/
-        Some(node)
+        path.foreach{p =>
+          msg(c"  ${triple(p)}")
+          val bounds = nodeBounds(p)
+          if (bounds.nonEmpty) {
+            msg(c"  - binds: ")
+            bounds.foreach{b => msg(c"    ${triple(producerOf(b))}")}
+          }
+        }
+
+        val parent2 = path.find{node =>
+          val boundNodes: Set[NodeId] = nodeBounds(node).map(producerOf).toSet
+          boundNodes.intersect(binds).nonEmpty
+        }
+        if (parent2.nonEmpty) {
+          log(c"Possible culprit: The following nodes appear to be bind common symbols: ")
+          log(c"  ${triple(node)}")
+          log(c"  ${triple(parent2.get)}")
+          log(c"Common bound symbol:")
+          log(c"  ${triple(path.head)}")
+          Some((node, parent2, path.headOption))
+        }
+        else {
+          Some((node, None, None))
+        }
       }
       else None
     }

@@ -32,6 +32,11 @@ trait LayerReporting { self: ArgonCake =>
 
   @stateful def str(lhs: Exp[_]): String = Report.str(lhs)
   @stateful def str(lhs: Seq[Exp[_]]): String = Report.str(lhs)
+  @stateful def strMeta(lhs: Exp[_]) {
+    lhs.name.foreach{name => dbg(c" - Name: $name") }
+    dbg(c" - Type: ${lhs.tp}")
+    metadata.get(lhs).foreach{m => dbg(c" - ${m._1}: ${m._2}") }
+  }
 
   implicit def compilerReadable(sc: StringContext): Report.CompilerReportHelper = new Report.CompilerReportHelper(sc)
   implicit def frontendReadable(sc: StringContext): Report.FrontendReportHelper = new Report.FrontendReportHelper(sc)

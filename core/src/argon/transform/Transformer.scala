@@ -26,37 +26,39 @@ trait Transformer { self =>
 
   def txSyms(xs: Set[Sym[_]]): Set[Sym[_]] = syms(xs.map{x => f(x)}).toSet
 
+  // TODO: Something appears to be broken with .restage, not sure what yet though
+
   implicit class BlockOps[R](block: Block[R]) {
     def inline: Exp[R] = { val func = blockToFunction0(block); func() }
-    def restage(): Block[R] = transformBlock(block)
+    //def restage(): Block[R] = transformBlock(block)
     def toFunction0: () => Exp[R] = blockToFunction0(block)
   }
   implicit class Lambda1Ops[A,R](lambda1: Lambda1[A,R]) {
     def inline(a: Exp[A]): Exp[R] = { val func = lambda1ToFunction1(lambda1); func(a) }
-    def restage(a: Exp[A]): Lambda1[A,R] = {
+    /*def restage(a: Exp[A]): Lambda1[A,R] = {
       stageLambda1(a)({ lambda1.inline(a) }, lambda1.temp, lambda1.isolated, lambda1.seal)
-    }
+    }*/
     def toFunction1: Exp[A] => Exp[R] = lambda1ToFunction1(lambda1)
   }
   implicit class Lambda2Ops[A,B,R](lambda2: Lambda2[A,B,R]) {
     def inline(a: Exp[A], b: Exp[B]): Exp[R] = { val func = lambda2ToFunction2(lambda2); func(a,b) }
-    def restage(a: Exp[A], b: Exp[B]): Lambda2[A,B,R] = {
+    /*def restage(a: Exp[A], b: Exp[B]): Lambda2[A,B,R] = {
       stageLambda2(a,b)({ lambda2.inline(a,b) }, lambda2.temp, lambda2.isolated, lambda2.seal)
-    }
+    }*/
     def toFunction2: (Exp[A], Exp[B]) => Exp[R] = lambda2ToFunction2(lambda2)
   }
   implicit class Lambda3Ops[A,B,C,R](lambda3: Lambda3[A,B,C,R]) {
     def inline(a: Exp[A], b: Exp[B], c: Exp[C]): Exp[R] = { val func = lambda3ToFunction3(lambda3); func(a,b,c) }
-    def restage(a: Exp[A], b: Exp[B], c: Exp[C]): Lambda3[A,B,C,R] = {
+    /*def restage(a: Exp[A], b: Exp[B], c: Exp[C]): Lambda3[A,B,C,R] = {
       stageLambda3(a,b,c)({ lambda3.inline(a,b,c) }, lambda3.temp, lambda3.isolated, lambda3.seal)
-    }
+    }*/
     def toFunction3: (Exp[A], Exp[B], Exp[C]) => Exp[R] = lambda3ToFunction3(lambda3)
   }
   implicit class Lambda4Ops[A,B,C,D,R](lambda4: Lambda4[A,B,C,D,R]) {
     def inline(a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]): Exp[R] = { val func = lambda4ToFunction4(lambda4); func(a,b,c,d) }
-    def restage(a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]): Lambda4[A,B,C,D,R] = {
+    /*def restage(a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]): Lambda4[A,B,C,D,R] = {
       stageLambda4(a,b,c,d)({ lambda4.inline(a,b,c,d) }, lambda4.temp, lambda4.isolated, lambda4.seal)
-    }
+    }*/
     def toFunction4: (Exp[A], Exp[B], Exp[C], Exp[D]) => Exp[R] = lambda4ToFunction4(lambda4)
   }
 
@@ -105,6 +107,7 @@ trait Transformer { self =>
   /** Helper functions for mirroring **/
   def transferMetadata(a: Exp[_], b: Exp[_]): Unit = {
     val m2 = mirror(metadata.get(a))
+    b.name = a.name
     metadata.add(b, m2) // Want to preserve effects, dependencies set during mirroring
   }
 
