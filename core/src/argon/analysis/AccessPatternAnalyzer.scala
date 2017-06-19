@@ -32,7 +32,7 @@ case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPatt
   })
 }
 
-@stateful object accessPatternOf {
+@data object accessPatternOf {
   def apply(x: Exp[_]): Seq[IndexPattern] = accessPatternOf.get(x).getOrElse{ throw new UndefinedAccessPatternException(x) }
   def update(x: Exp[_], indices: Seq[IndexPattern]) { metadata.add(x, AccessPattern(indices)) }
   def get(x: Exp[_]): Option[Seq[IndexPattern]] = metadata[AccessPattern](x).map(_.indices)

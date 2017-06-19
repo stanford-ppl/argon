@@ -31,26 +31,26 @@ trait LayerBlocks { self: ArgonCake =>
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
     */
-  @stateful private def stageScope[R](block: => Exp[R], temp: Freq, isolated: Boolean = false, seal: Boolean = false)(implicit state: State): (Exp[R], Effects, Seq[Sym[_]]) = {
-    import state._
+  @stateful private def stageScope[R](block: => Exp[R], temp: Freq, isolated: Boolean = false, seal: Boolean = false): (Exp[R], Effects, Seq[Sym[_]]) = {
+    if (state == null) throw new argon.NullStateException
 
-    val saveContext = context
-    val saveCache = defCache
-    context = Nil
+    val saveContext = state.context
+    val saveCache = state.defCache
+    state.context = Nil
 
     // In an isolated block, don't allow CSE with outside statements
-    if (isolated) defCache = Map.empty
+    if (isolated) state.defCache = Map.empty
 
     val result = if (seal) inSealed{ block } else block
 
-    val deps = if (seal) context.collect{case sym@Effectful(eff,_) if eff != Pure => sym}
-               else      context.collect{case sym@Effectful(eff,_) if eff != Sticky && eff != Pure => sym}
+    val deps = if (seal) state.context.collect{case sym@Effectful(eff,_) if eff != Pure => sym}
+               else      state.context.collect{case sym@Effectful(eff,_) if eff != Sticky && eff != Pure => sym}
 
-    context = saveContext
+    state.context = saveContext
 
     // Reset contents of defCache when staging cold blocks
     // Reasoning here is that statements can't move out of cold blocks, so it makes no sense to CSE across them
-    if (temp == Freq.Cold) defCache = saveCache
+    if (temp == Freq.Cold) state.defCache = saveCache
 
     val effects = summarizeScope(deps)
     (result, effects, deps)

@@ -80,6 +80,8 @@ trait LayerStaging { this: ArgonCake =>
   }
 
   @stateful def stageDefEffectful(d: Def, u: Effects)(ctx: SrcCtx): Seq[Sym[_]] = {
+    if (state == null) throw new argon.NullStateException
+
     val atomicEffects = propagateWrites(u)
 
     log(c"Staging $d, effects = $u")

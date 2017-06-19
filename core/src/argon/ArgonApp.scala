@@ -17,7 +17,9 @@ trait ArgonApp { self =>
     */
   def main(): Unit
 
-  implicit var IR: State = _
+  private var __IR: State = _
+  protected def IR_=(ir: State) = __IR = ir
+  implicit def IR: State = __IR
 
   private var __stagingArgs: Array[String] = _
   private var __args: MArray[MString] = _
@@ -29,16 +31,16 @@ trait ArgonApp { self =>
 
   protected val testbench: Boolean = false
 
-  protected def checkErrors(state: State, start: Long, stageName: String): Unit = if (state.hadErrors) {
+  protected def checkErrors(start: Long, stageName: String): Unit = if (IR.hadErrors) {
     val time = (System.currentTimeMillis - start).toFloat
-    checkWarnings(state)
-    error(s"""${state.errors} ${plural(state.errors,"error","errors")} found during $stageName""")
+    checkWarnings()
+    error(s"""${IR.errors} ${plural(IR.errors,"error","errors")} found during $stageName""")
     error(s"Total time: " + "%.4f".format(time/1000) + " seconds")
-    if (testbench) throw new TestBenchFailed(state.errors)
-    else System.exit(state.errors)
+    if (testbench) throw new TestBenchFailed(IR.errors)
+    else System.exit(IR.errors)
   }
-  protected def checkWarnings(state: State): Unit = if (state.hadWarnings) {
-    warn(s"""${state.warnings} ${plural(state.warnings, "warning","warnings")} found""")
+  protected def checkWarnings(): Unit = if (IR.hadWarnings) {
+    warn(s"""${IR.warnings} ${plural(IR.warnings, "warning","warnings")} found""")
   }
 
   protected def parseArguments(args: Seq[String]): Unit = {
@@ -49,8 +51,8 @@ trait ArgonApp { self =>
   protected def onException(t: Throwable): Unit = {
     withLog(Config.cwd, Config.name + "_exception.log") {
       Config.verbosity = 10
-      log(t.getMessage)
-      log("")
+      if (t.getMessage != null) { log(t.getMessage); log("") }
+      if (t.getCause != null) { log(t.getCause); log("") }
       t.getStackTrace.foreach{elem => log(elem.toString) }
     }
     error(s"An exception was encountered while compiling ${Config.name}: ")
@@ -63,10 +65,10 @@ trait ArgonApp { self =>
   protected def settings(): Unit = { }
   protected def createTraversalSchedule(state: State): Unit = { }
 
-  final protected def init(state: State): Unit = {
-    state.reset() // Reset global state
+  final protected def init(): Unit = {
+    IR.reset() // Reset global state
     settings()
-    createTraversalSchedule(state)
+    createTraversalSchedule(IR)
 
     __args = MArray.input_arguments()
 
@@ -89,18 +91,18 @@ trait ArgonApp { self =>
     var block: Block[R] = b
     // --- Traversals
     for (t <- passes) {
-      if (state.graph.VERBOSE_SCHEDULING) {
-        state.graph.glog.close()
-        state.graph.glog = createLog(Config.logDir + "/sched/", state.paddedPass + " " + t.name + ".log")
-        withLog(state.graph.glog) {
-          log(s"${state.pass} ${t.name}")
+      if (IR.graph.VERBOSE_SCHEDULING) {
+        IR.graph.glog.close()
+        IR.graph.glog = createLog(Config.logDir + "/sched/", IR.paddedPass + " " + t.name + ".log")
+        withLog(IR.graph.glog) {
+          log(s"${IR.pass} ${t.name}")
           log(s"===============================================")
         }
       }
 
       block = t.run(block)
       // After each traversal, check whether there were any reported errors
-      checkErrors(state, startTime, t.name)
+      checkErrors(startTime, t.name)
 
       if (Config.verbosity >= 1) withLog(timingLog) {
         msg(s"  ${t.name}: " + "%.4f".format(t.lastTime / 1000))
@@ -110,27 +112,27 @@ trait ArgonApp { self =>
       // a. didn't exist before
       // b. existed but must be rescheduled now that it has new nodes
       if (t.isInstanceOf[Transformer]) {
-        state.scopeCache.clear()
+        IR.scopeCache.clear()
       }
     }
-    if (state.graph.VERBOSE_SCHEDULING) state.graph.glog.close()
+    if (IR.graph.VERBOSE_SCHEDULING) IR.graph.glog.close()
   }
 
 
   protected def compileProgram(blk: () => Unit): Unit = {
-    // Spin up a new compiler state
+    // Spin up a new compiler IR
     IR = new State
-    init(state)
+    init()
 
     val startTime = System.currentTimeMillis()
 
     val block = stageProgram{ MUnit(blk()) }
 
-    if (state.graph.curEdgeId == 0 && !testbench) {
+    if (IR.graph.curEdgeId == 0 && !testbench) {
       warn("Nothing staged, nothing gained.")
     }
     // Exit now if errors were found during staging
-    checkErrors(state, startTime, "staging")
+    checkErrors(startTime, "staging")
 
     val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
     runTraversals(startTime, block, timingLog)
@@ -149,7 +151,7 @@ trait ArgonApp { self =>
       timingLog.close()
     }
 
-    checkWarnings(state)
+    checkWarnings()
     report(s"[\u001B[32mcompleted\u001B[0m] Total time: " + "%.4f".format(time/1000) + " seconds")
   }
 
@@ -173,9 +175,11 @@ trait ArgonApp { self =>
     try {
       compileProgram(() => main())
     }
-    catch {case t: Throwable =>
-      onException(t)
-      if (!testbench && Config.verbosity < 1) sys.exit(-1) else throw t
+    catch {
+      case t: TestBenchFailed => throw t
+      case t: Throwable =>
+        onException(t)
+        if (!testbench && Config.verbosity < 1) sys.exit(-1) else throw t
     }
   }
 }

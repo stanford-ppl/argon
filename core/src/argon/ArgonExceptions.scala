@@ -25,6 +25,12 @@ class RecursiveScheduleException(result: Any, xs: List[String]) extends
 class TestBenchFailed(errs: Int)(implicit state: State) extends Exception(c"""Compilation failed with $errs ${plural(errs,"error","errors")}""") with NoStackTrace
 class RunningFailed(exit: Int)(implicit state: State) extends Exception(c"Running compiled testbench failed with exit code $exit") with NoStackTrace
 
+case class NullStateException() extends Exception {
+  error("A node or block was staged without any state")
+  error("This usually happens when Def.mirror is used in a Transformer.")
+  error("Use Def.mirrorNode instead to avoid this issue.")
+}
+
 class GenerationFailedException(node: Def) extends Exception(c"Don't know how to generate node $node") with NoStackTrace
 class ConstantGenFailedException(c: Const[_])(implicit state: State) extends Exception(c"Don't know how to generate constant $c (${c.c.getClass}) with type ${c.tp}") with NoStackTrace
 
@@ -121,4 +127,3 @@ class NoWireConstructorException(lhs: String)(implicit state: State) extends
   CompilerException(1025, c"""Cannot create new wire for $lhs"""){
     error(c"""Cannot create new wire for $lhs""")
   }
-

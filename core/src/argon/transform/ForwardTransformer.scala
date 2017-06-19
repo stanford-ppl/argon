@@ -4,7 +4,7 @@ import argon.core._
 import argon.traversal.Traversal
 
 trait ForwardTransformer extends Traversal with SubstTransformer {
-  override implicit val __state: State = IR
+  override implicit def __state: State = IR
 
   //val allowPretransform = false     // Need to explicitly enable this
   val allowDuplication = false        // Allow old symbols with mirroring rules to persist in the IR

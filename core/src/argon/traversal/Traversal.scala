@@ -6,8 +6,8 @@ import argon.core._
   * Single or iterative traversal of the IR with pre- and post- processing
   */
 trait Traversal extends BlockTraversal with CompilerPass { self =>
-  val IR: State
-  override implicit val __state: State = IR
+  var IR: State
+  override implicit def __state: State = IR
 
   sealed abstract class RecurseOpt
   case object Always extends RecurseOpt

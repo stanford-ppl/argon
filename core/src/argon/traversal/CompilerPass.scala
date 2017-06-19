@@ -10,8 +10,8 @@ import argon.core._
   * Otherwise, extend Traversal or IterativeTraversal
   */
 trait CompilerPass { self =>
-  val IR: State
-  implicit val __state: State = IR
+  var IR: State
+  implicit def __state: State = IR
 
   def name: String = c"${self.getClass}"
 

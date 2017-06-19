@@ -15,6 +15,10 @@ final class internal extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro InternalAnnotation.impl
 }
 
+final class data extends StaticAnnotation {
+  def macroTransform(annottees: Any*): Any = macro MetadataAnnotation.impl
+}
+
 /**
   * Requires implicit source context, but not necessarily stateful
   */
@@ -53,6 +57,16 @@ object InternalAnnotation {
   }
 }
 
+object MetadataAnnotation {
+  def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
+    import c.universe._
+    annottees.head match {
+      case ModuleDef(_,_,_) => StateAnnotation.impl(c)(annottees:_*)
+      case _ => c.abort(c.enclosingPosition, "@metadata annotation can only be used on objects")
+    }
+  }
+}
+
 
 object CtxAnnotation {
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
@@ -80,7 +94,8 @@ object FrontendAnnotation {
         })
         val params = if (hasImplicits) {
           val hasCtx = vparamss.lastOption.exists(_.exists{
-            case ValDef(_,_,Ident(TypeName(n)),_) => n == "SrcCtx" || n == "SourceContext" || n == "org.virtualized.SourceContext"
+            case ValDef(_,_,Ident(TypeName(n)),_) => n == "SrcCtx" || n == "SourceContext"
+            case ValDef(_,_,Select(Select(Ident(TermName("org")), TermName("virtualized")), TypeName("SourceContext")), EmptyTree) => true
             case _ => false
           })
           if (!hasCtx) {
@@ -113,7 +128,8 @@ object StateAnnotation {
         })
         val params = if (hasImplicits) {
           val hasCtx = vparamss.lastOption.exists(_.exists{
-            case ValDef(_,_,Ident(TypeName(n)),_) => n == "State" || n == "argon.core.State"
+            case ValDef(_,_,Ident(TypeName("State")),_) => true
+            case ValDef(_,_,Select(Select(Ident(TermName("argon")), TermName("core")), TypeName("State")), EmptyTree) => true
             case _ => false
           })
           if (!hasCtx) {
@@ -129,13 +145,14 @@ object StateAnnotation {
 
       case ModuleDef(mods,name,Template(parents, selfType, bodyList)) =>
         val (fields, methods) = bodyList.partition { case _:ValDef => true case _ => false }
+        val (constructors, defs) = bodyList.partition{ case DefDef(_,defName,_,_,_,_) => defName == termNames.CONSTRUCTOR }
 
-        val methods2 = methods.map{method => StateAnnotation.impl(c)(method) }
+        val defs2 = defs.map{method => StateAnnotation.impl(c)(method) }
 
-        ModuleDef(mods, name, Template(parents, selfType, fields ++ methods2))
+        ModuleDef(mods, name, Template(parents, selfType, fields ++ constructors ++ defs2))
 
       case _ =>
-        c.abort(c.enclosingPosition, "API annotation can only be used on objects and defs")
+        c.abort(c.enclosingPosition, "@stateful annotation can only be used on objects and defs")
     }
     tree
   }

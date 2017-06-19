@@ -22,6 +22,7 @@ trait ArgonExp extends ArgonLangAliases
   with BitsExp
   with NumExp
   with OrderExp
+  with EqualMacros
 
 trait ArgonApi extends ArgonExp
   with ArrayApi
