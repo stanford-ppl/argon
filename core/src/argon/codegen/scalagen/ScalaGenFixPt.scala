@@ -39,6 +39,7 @@ trait ScalaGenFixPt extends ScalaCodegen {
       case IntType()  => emit(src"val $lhs = scala.util.Random.nextInt($max)")
       case LongType() => emit(src"val $lhs = scala.util.Random.nextLong() % $max")
     }
+    case FixUnif() => emit(src"val $lhs = scala.util.Random.nextDouble()")
     case FixRandom(None) => lhs.tp match {
       case IntType()  => emit(src"val $lhs = scala.util.Random.nextInt()")
       case LongType() => emit(src"val $lhs = scala.util.Random.nextLong()")
