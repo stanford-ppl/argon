@@ -118,6 +118,8 @@ case class FixURsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0
 
 case class FixRandom[S:BOOL,I:INT,F:INT](max: Option[Exp[FixPt[S,I,F]]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.random[S,I,F](f(max)) }
 
+case class FixUnif[S:BOOL,I:INT,F:INT]() extends FixPtOp1[S,I,F] { def mirror(f:Tx) = FixPt.unif[S,I,F]() }
+
 case class FixConvert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp1[S2,I2,F2] {
   def mirror(f:Tx) = fix.convert[S,I,F,S2,I2,F2](f(x))
 }

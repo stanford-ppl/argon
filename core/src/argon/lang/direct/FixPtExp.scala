@@ -17,6 +17,7 @@ trait FixPtExp {
   @api implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
   @api implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
 
+  @api def unif[F:INT]()(implicit ctx: SrcCtx): FixPt[FALSE, _0, F] = FixPt[FALSE, _0, F](FixPt.unif[FALSE, _0, F]())
 
   /** Lifting **/
   implicit object LiftInt extends Lift[Int,Int32] {

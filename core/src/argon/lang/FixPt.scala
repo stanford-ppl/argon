@@ -300,6 +300,10 @@ object FixPt {
     stageSimple(FixRandom[S,I,F](max))(ctx)
   }
 
+  @internal def unif[S:BOOL,I:INT,F:INT](): Exp[FixPt[S,I,F]] = {
+    stageSimple(FixUnif[S,I,F]())(ctx)
+  }
+
   @internal def convert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[_,_,_]]): Exp[FixPt[S2,I2,F2]] = {
     stage(FixConvert[S,I,F,S2,I2,F2](x.asInstanceOf[Exp[FixPt[S,I,F]]]))(ctx)
   }
@@ -313,8 +317,8 @@ object FixPt {
       if (c.indexOf("0x") == 0) {
         val raw = c.replace("0x","")
         val digits = raw.length
-        val dec = raw.zipWithIndex.map{case (d, i) => scala.math.pow(16, digits-1-i).toInt*d.toInt}.sum
-        FixPt[S,I,F](dec).s
+        val dec = raw.zipWithIndex.map{case (d, i) => scala.math.pow(16, digits-1-i).toInt*d.toInt}.reduce{_+_}
+        int2fixpt[S,I,F](dec).s
       }
       else {
         FixPt[S,I,F](c).s
