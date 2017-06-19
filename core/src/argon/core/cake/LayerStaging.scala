@@ -88,7 +88,7 @@ trait LayerStaging { this: ArgonCake =>
     log(c"  mutable inputs = ${mutableInputs(d)}")
     log(c"  actual writes = ${atomicEffects.writes}")
 
-    val effects = atomicEffects andAlso Read(mutableInputs(d))
+    val effects = atomicEffects andAlso Read(mutableInputs(d)) andAlso state.blockEffects
     log(c"  full effects = $effects")
     log(c"  isIdempotent = ${effects.isIdempotent}")
 

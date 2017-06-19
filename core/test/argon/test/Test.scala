@@ -45,7 +45,7 @@ trait ScalaGenBase extends ScalaCodegen with ScalaFileGen
   with ScalaGenHashMap with ScalaGenIfThenElse with ScalaGenPrint with ScalaGenStructs
   with ScalaGenString with ScalaGenUnit with ScalaGenFunction with ScalaGenVariables
 
-case class IdentityTransformer(IR: State) extends ForwardTransformer {
+case class IdentityTransformer(var IR: State) extends ForwardTransformer {
   override val name = "Identity Transformer"
 }
 
@@ -68,7 +68,7 @@ trait TestBase extends ArgonAppRunner {
   }
 }
 
-case class ScalaGen(IR: State) extends ScalaGenBase
+case class ScalaGen(var IR: State) extends ScalaGenBase
 
 trait Test extends TestBase {
   override protected def createTraversalSchedule(state: State) = {

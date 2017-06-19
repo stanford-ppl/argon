@@ -17,9 +17,7 @@ trait ArgonApp { self =>
     */
   def main(): Unit
 
-  private var __IR: State = _
-  protected def IR_=(ir: State) = __IR = ir
-  implicit def IR: State = __IR
+  final implicit val IR: State = new State
 
   private var __stagingArgs: Array[String] = _
   private var __args: MArray[MString] = _
@@ -121,7 +119,6 @@ trait ArgonApp { self =>
 
   protected def compileProgram(blk: () => Unit): Unit = {
     // Spin up a new compiler IR
-    IR = new State
     init()
 
     val startTime = System.currentTimeMillis()

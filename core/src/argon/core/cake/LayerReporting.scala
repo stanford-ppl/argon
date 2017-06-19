@@ -23,7 +23,7 @@ trait LayerReporting { self: ArgonCake =>
   def warn(x: => Any): Unit = Report.warn(x)
   def warn(ctx: SrcCtx, showCaret: Boolean): Unit = Report.warn(ctx, showCaret)
   def warn(ctx: SrcCtx): Unit = Report.warn(ctx)
-  @stateful def warn(ctx: SrcCtx, x: => Any, noWarn: Boolean = false): Unit = Report.error(ctx, x, noWarn)
+  @stateful def warn(ctx: SrcCtx, x: => Any, noWarn: Boolean = false): Unit = Report.warn(ctx, x, noWarn)
 
   def error(x: => Any): Unit = Report.error(x)
   def error(ctx: SrcCtx, showCaret: Boolean): Unit = Report.error(ctx, showCaret)

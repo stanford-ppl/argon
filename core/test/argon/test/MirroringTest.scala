@@ -19,7 +19,7 @@ object MirroringTest extends Test { self =>
       val x = Array.empty[Int](1)
       val y = Array.update(x.s, FixPt.int32(0), FixPt.int32(16))
       val z = Array.empty[Int](2)
-      val tx = new ForwardTransformer { val IR: State = self.IR }
+      val tx = new ForwardTransformer { var IR: State = self.IR }
 
       val y2 = tx.withSubstScope(x.s -> z.s) {
         val y2 = tx.mirror(y, getDef(y).get.asInstanceOf[Op[MUnit]])

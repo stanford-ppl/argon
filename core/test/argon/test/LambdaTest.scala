@@ -41,7 +41,7 @@ trait ScalaGenLambda extends ScalaCodegen {
   }
 }
 
-case class ScalaGenLambdaTest(IR: State) extends ScalaGenBase with ScalaGenLambda
+case class ScalaGenLambdaTest(var IR: State) extends ScalaGenBase with ScalaGenLambda
 
 
 object LambdaApi extends TestApi with SimpleLambdaApi

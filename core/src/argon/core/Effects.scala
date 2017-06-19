@@ -17,7 +17,7 @@ case class Effects(
   throws:  Boolean = false,           // May throw exceptions (speculative execution may be unsafe)
   reads:   Set[Sym[_]] = Set.empty,   // Reads given mutable symbols
   writes:  Set[Sym[_]] = Set.empty    // Writes given mutable symbols
-) extends Metadata[Effects] {
+) extends Metadata[Effects] with CompilerFacing {
   def mirror(f: Tx) = Effects(unique, sticky, simple, global, mutable, throws, f.txSyms(reads), f.txSyms(writes))
   override val ignoreOnTransform = true // Mirroring already takes care of effects
 
@@ -44,4 +44,25 @@ case class Effects(
   def onlyThrows = this == Throws
   def mayWrite(ss: Set[Sym[_]]) = global || ss.exists { s => writes contains s }
   def mayRead(ss: Set[Sym[_]]) = global || ss.exists { s => reads contains s }
+
+  override def toStringCompiler = {
+    if (this == Pure) "Pure"
+    else if (this == Unique)  "Unique"
+    else if (this == Sticky)  "Sticky"
+    else if (this == Mutable) "Mutable"
+    else if (this == Simple)  "Simple"
+    else if (this == Global)  "Global"
+    else if (this == Throws)  "Throws"
+    else {
+      "(" +
+        ((if (this.unique) List(c"unique=${this.unique}") else Nil) ++
+          (if (this.sticky) List(c"sticky=${this.sticky}") else Nil) ++
+          (if (this.simple) List(c"simple=${this.simple}") else Nil) ++
+          (if (this.global) List(c"global=${this.global}") else Nil) ++
+          (if (this.mutable)  List("mutable") else Nil) ++
+          (if (this.throws) List("throws") else Nil) ++
+          (if (this.reads.nonEmpty) List(c"""reads={${this.reads.map(x=> c"$x").mkString(",")}}""") else Nil) ++
+          (if (this.writes.nonEmpty) List(c"""writes={${this.writes.map(x=> c"$x").mkString(",")}}""") else Nil)).mkString(", ") + ")"
+    }
+  }
 }
