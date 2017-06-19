@@ -86,6 +86,15 @@ trait ChiselGenFixPt extends ChiselCodegen {
       emitGlobalModule(src"val ${lhs}_rng = Module(new PRNG($seed))")
       emitGlobalModule(src"${lhs}_rng.io.en := true.B")
       emit(src"val ${lhs} = ${lhs}_rng.io.output(${lhs}_bitsize,0)")
+    case FixUnif() => 
+      val bits = lhs.tp match {
+        case FixPtType(s,d,f) => f
+      }
+      val seed = (random*1000).toInt
+      emitGlobalModule(src"val ${lhs}_rng = Module(new PRNG($seed))")
+      emitGlobalModule(src"${lhs}_rng.io.en := true.B")
+      emit(src"val ${lhs} = Wire(new FixedPoint(false, 0, $bits))")
+      emit(src"${lhs}.r := ${lhs}_rng.io.output(${bits},0)")
     case FixConvert(x) => lhs.tp match {
       case IntType()  => 
         emitGlobalWire(src"val $lhs = Wire(new FixedPoint(true, 32, 0))")

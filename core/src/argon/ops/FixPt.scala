@@ -70,6 +70,7 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
 
   /** Direct methods **/
   @api def mod[S:BOOL,I:INT](x: FixPt[S,I,_0], y: FixPt[S,I,_0]): FixPt[S,I,_0] = FixPt[S,I,_0](fix_mod(x.s, y.s))
+  @api def unif[F:INT]()(implicit ctx: SrcCtx): FixPt[FALSE, _0, F] = FixPt[FALSE, _0, F](fix_unif[FALSE, _0, F]())
 
 
   /** Type classes **/
@@ -265,6 +266,7 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
   case class FixURsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_ursh(f(x), f(y)) }
 
   case class FixRandom[S:BOOL,I:INT,F:INT](max: Option[Exp[FixPt[S,I,F]]]) extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_random[S,I,F](f(max)) }
+  case class FixUnif[S:BOOL,I:INT,F:INT]() extends FixPtOp[S,I,F] { def mirror(f:Tx) = fix_unif[S,I,F]() }
 
   case class FixConvert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp[S2,I2,F2] {
     def mirror(f:Tx) = fix_convert[S,I,F,S2,I2,F2](f(x))
@@ -445,6 +447,10 @@ trait FixPtExp extends BoolExp with Reporting { self: ArgonExp =>
 
   def fix_random[S:BOOL,I:INT,F:INT](max: Option[Exp[FixPt[S,I,F]]])(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = {
     stageSimple(FixRandom[S,I,F](max))(ctx)
+  }
+
+  def fix_unif[S:BOOL,I:INT,F:INT]()(implicit ctx: SrcCtx): Exp[FixPt[S,I,F]] = {
+    stageSimple(FixUnif[S,I,F]())(ctx)
   }
 
   def fix_convert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[_,_,_]])(implicit ctx: SrcCtx): Exp[FixPt[S2,I2,F2]] = {
