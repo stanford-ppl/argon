@@ -20,55 +20,37 @@ trait SubstTransformer extends Transformer {
 
   def getSubst[T](key: Exp[T]): Option[Exp[T]] = subst.get(key).asInstanceOf[Option[Exp[T]]]
 
-  override protected def lambda1ToFunction1[A,R](lambda1: Lambda1[A,R]) = {a: Exp[A] =>
-    val prevA = getSubst(lambda1.input)
+  override protected def lambda1ToFunction1[A,R](lambda1: Lambda1[A,R]) = {a: Exp[A] => isolateSubstScope {
     register(lambda1.input -> a)
     val block = blockToFunction0(lambda1)
-    val result = block()
-    registerOrRemove(lambda1.input -> prevA)
-    result
-  }
-  override protected def lambda2ToFunction2[A,B,R](lambda2: Lambda2[A,B,R]) = { (a: Exp[A],b: Exp[B]) =>
-    val prevA = getSubst(lambda2.inputA)
-    val prevB = getSubst(lambda2.inputB)
-    register(lambda2.inputA -> a)
-    register(lambda2.inputB -> b)
-    val block = blockToFunction0(lambda2)
-    val result = block()
-    registerOrRemove(lambda2.inputA -> prevA)
-    registerOrRemove(lambda2.inputB -> prevB)
-    result
+    block()
+  }}
+  override protected def lambda2ToFunction2[A,B,R](lambda2: Lambda2[A,B,R]) = { (a: Exp[A], b: Exp[B]) =>
+    isolateSubstScope {
+      register(lambda2.inputA -> a)
+      register(lambda2.inputB -> b)
+      val block = blockToFunction0(lambda2)
+      block()
+    }
   }
   override protected def lambda3ToFunction3[A,B,C,R](lambda3: Lambda3[A,B,C,R]) = { (a: Exp[A], b: Exp[B], c: Exp[C]) =>
-    val prevA = getSubst(lambda3.inputA)
-    val prevB = getSubst(lambda3.inputB)
-    val prevC = getSubst(lambda3.inputC)
-    register(lambda3.inputA -> a)
-    register(lambda3.inputB -> b)
-    register(lambda3.inputC -> c)
-    val block = blockToFunction0(lambda3)
-    val result = block()
-    registerOrRemove(lambda3.inputA -> prevA)
-    registerOrRemove(lambda3.inputB -> prevB)
-    registerOrRemove(lambda3.inputC -> prevC)
-    result
+    isolateSubstScope {
+      register(lambda3.inputA -> a)
+      register(lambda3.inputB -> b)
+      register(lambda3.inputC -> c)
+      val block = blockToFunction0(lambda3)
+      block()
+    }
   }
   override protected def lambda4ToFunction4[A,B,C,D,R](lambda4: Lambda4[A,B,C,D,R]) = { (a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]) =>
-    val prevA = getSubst(lambda4.inputA)
-    val prevB = getSubst(lambda4.inputB)
-    val prevC = getSubst(lambda4.inputC)
-    val prevD = getSubst(lambda4.inputD)
-    register(lambda4.inputA -> a)
-    register(lambda4.inputB -> b)
-    register(lambda4.inputC -> c)
-    register(lambda4.inputD -> d)
-    val block = blockToFunction0(lambda4)
-    val result = block()
-    registerOrRemove(lambda4.inputA -> prevA)
-    registerOrRemove(lambda4.inputB -> prevB)
-    registerOrRemove(lambda4.inputC -> prevC)
-    registerOrRemove(lambda4.inputD -> prevD)
-    result
+    isolateSubstScope {
+      register(lambda4.inputA -> a)
+      register(lambda4.inputB -> b)
+      register(lambda4.inputC -> c)
+      register(lambda4.inputD -> d)
+      val block = blockToFunction0(lambda4)
+      block()
+    }
   }
 
   override protected def transformExp[T:Type](s: Exp[T]): Exp[T] = subst.get(s) match {

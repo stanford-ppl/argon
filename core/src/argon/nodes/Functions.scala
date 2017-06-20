@@ -141,7 +141,7 @@ case class FunDecl1[A:Type,R:Type](
   block: Block[R]
 ) extends Op[Func1[A,R]] {
   def mirror(tx:Tx) = {
-    val blk = tx.tx(block)
+    val blk = stageBlock { tx.tx(block) }
     stageEffectful(FunDecl1(tx(a), blk), blk.effects)(here)
   }
 }
@@ -150,7 +150,7 @@ case class FunDecl2[A:Type,B:Type,R:Type](
   block: Block[R]
 ) extends Op[Func2[A,B,R]] {
   def mirror(tx:Tx) = {
-    val blk = tx.tx(block)
+    val blk = stageBlock { tx.tx(block) }
     stageEffectful(FunDecl2(tx(a), tx(b), blk), blk.effects)(here)
   }
 }
@@ -159,7 +159,7 @@ case class FunDecl3[A:Type,B:Type,C:Type,R:Type](
   block: Block[R]
 ) extends Op[Func3[A,B,C,R]] {
   def mirror(tx:Tx) = {
-    val blk = tx.tx(block)
+    val blk = stageBlock { tx.tx(block) }
     stageEffectful(FunDecl3(tx(a), tx(b), tx(c), blk), blk.effects)(here)
   }
 }
@@ -168,7 +168,7 @@ case class FunDecl4[A:Type,B:Type,C:Type,D:Type,R:Type](
   block: Block[R]
 ) extends Op[Func4[A,B,C,D,R]] {
   def mirror(tx:Tx) = {
-    val blk = tx.tx(block)
+    val blk = stageBlock { tx.tx(block) }
     stageEffectful(FunDecl4(tx(a), tx(b), tx(c), tx(d), blk), blk.effects)(here)
   }
 }
@@ -177,7 +177,7 @@ case class FunDecl5[A:Type,B:Type,C:Type,D:Type,E:Type,R:Type](
   block: Block[R]
 ) extends Op[Func5[A,B,C,D,E,R]] {
   def mirror(tx:Tx) = {
-    val blk = tx.tx(block)
+    val blk = stageBlock { tx.tx(block) }
     stageEffectful(FunDecl5(tx(a), tx(b), tx(c), tx(d), tx(e), blk), blk.effects)(here)
   }
 }
@@ -186,7 +186,7 @@ case class FunDecl6[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,R:Type](
   block: Block[R]
 ) extends Op[Func6[A,B,C,D,E,F,R]] {
   def mirror(tx:Tx) = {
-    val blk = tx.tx(block)
+    val blk = stageBlock { tx.tx(block) }
     stageEffectful(FunDecl6(tx(a), tx(b), tx(c), tx(d), tx(e), tx(f), blk), blk.effects)(here)
   }
 }
@@ -195,7 +195,7 @@ case class FunDecl7[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,R:Type](
   block: Block[R]
 ) extends Op[Func7[A,B,C,D,E,F,G,R]] {
   def mirror(tx:Tx) = {
-    val blk = tx.tx(block)
+    val blk = stageBlock { tx.tx(block) }
     stageEffectful(FunDecl7(tx(a), tx(b), tx(c), tx(d), tx(e), tx(f), tx(g), blk), blk.effects)(here)
   }
 }
@@ -204,7 +204,7 @@ case class FunDecl8[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,R:Ty
   block: Block[R]
 ) extends Op[Func8[A,B,C,D,E,F,G,H,R]] {
   def mirror(tx:Tx) = {
-    val blk = tx.tx(block)
+    val blk = stageBlock { tx.tx(block) }
     stageEffectful(FunDecl8(tx(a), tx(b), tx(c), tx(d), tx(e), tx(f), tx(g), tx(h), blk), blk.effects)(here)
   }
 }
@@ -213,7 +213,7 @@ case class FunDecl9[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Ty
   block: Block[R]
 ) extends Op[Func9[A,B,C,D,E,F,G,H,I,R]] {
   def mirror(tx:Tx) = {
-    val blk = tx.tx(block)
+    val blk = stageBlock { tx.tx(block) }
     stageEffectful(FunDecl9(tx(a), tx(b), tx(c), tx(d), tx(e), tx(f), tx(g), tx(h), tx(i), blk), blk.effects)(here)
   }
 }
@@ -222,7 +222,7 @@ case class FunDecl10[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:T
   block: Block[R]
 ) extends Op[Func10[A,B,C,D,E,F,G,H,I,J,R]] {
   def mirror(tx:Tx) = {
-    val blk = tx.tx(block)
+    val blk = stageBlock { tx.tx(block) }
     stageEffectful(FunDecl10(tx(a), tx(b), tx(c), tx(d), tx(e), tx(f), tx(g), tx(h), tx(i), tx(j), blk), blk.effects)(here)
   }
 }

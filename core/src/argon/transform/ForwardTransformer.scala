@@ -32,12 +32,16 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
 
   /**
     * Visit and transform each statement in the given block WITHOUT creating a staging scope
+    *
+    * Override this function for custom block transformation rules
     */
   override protected def inlineBlock[T](b: Block[T]): Exp[T] = inlineBlockWith(b, {stms => visitStms(stms); f(b.result) })
 
   /**
     * Visit and perform some transformation `func` over all statements in the block, returning a result symbol
     * WITHOUT creating a staging scope.
+    *
+    * Utility function - should not be overridden
     */
   final override protected def inlineBlockWith[T](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T] = {
     tab += 1
@@ -47,14 +51,6 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
     }
     tab -= 1
     result
-  }
-
-  /**
-    * Visit and transform each statement in the given block, creating a new Staged block
-    * with the transformed statements
-    */
-  override protected def transformBlock[T,B[T]<:Block[T]](b: B[T]): B[T] = {
-    transformBlockWith(b, {stms: Seq[Stm] => visitStms(stms); f(b.result) })
   }
 
   /**
