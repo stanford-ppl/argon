@@ -12,7 +12,7 @@ trait CppGenString extends CppCodegen {
   }
 
   override protected def quoteConst(c: Const[_]): String = c match {
-    case Const(c: String) => escapeString(c)
+    case Const(c: String) => "string(" + escapeString(c) + ")"
     case _ => super.quoteConst(c)
   }
 
@@ -27,3 +27,4 @@ trait CppGenString extends CppCodegen {
   }
 
 }
+
