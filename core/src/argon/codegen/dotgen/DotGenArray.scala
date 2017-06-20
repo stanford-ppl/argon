@@ -1,10 +1,9 @@
 package argon.codegen.dotgen
 
-import argon.ops.ArrayExp
+import argon.core._
+import argon.nodes._
 
 trait DotGenArray extends DotCodegen {
-  val IR: ArrayExp
-  import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case op@ArrayNew(size)      => 

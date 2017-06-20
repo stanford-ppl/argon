@@ -1,11 +1,9 @@
 package argon.codegen.cppgen
 
-import argon.core.Staging
-import argon.ops.{FixPtExp, FltPtExp}
+import argon.core._
+import argon.nodes._
 
 trait CppGenFltPt extends CppCodegen {
-  val IR: FltPtExp with FixPtExp with Staging
-  import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
     case FloatType()  => "float"

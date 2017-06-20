@@ -1,13 +1,9 @@
 package argon.codegen.dotgen
 
-import argon.core.Staging
-import argon.Config
-import argon.ops.FixPtExp
+import argon.core._
+import argon.nodes._
 
 trait DotGenFixPt extends DotCodegen {
-  val IR: Staging with FixPtExp
-  import IR._
-
   override def attr(n:Exp[_]) = n match {
     case lhs: Sym[_] => lhs match {
       case Def(FixAdd(_,_)) => super.attr(n).shape(circle).label("+")
@@ -15,9 +11,9 @@ trait DotGenFixPt extends DotCodegen {
       case Def(FixDiv(_,_)) => super.attr(n).shape(circle).label("/")
       case Def(FixMul(_,_)) => super.attr(n).shape(circle).label("*")
       case Def(FixAnd(_,_)) => super.attr(n).shape(circle).label("&")
-      case Def(FixOr(_,_)) => super.attr(n).shape(circle).label("|")
+      case Def(FixOr(_,_))  => super.attr(n).shape(circle).label("|")
       case Def(FixXor(_,_)) => super.attr(n).shape(circle).label("^")
-      case Def(FixLt(_,_)) => super.attr(n).shape(circle).label("<")
+      case Def(FixLt(_,_))  => super.attr(n).shape(circle).label("<")
       case Def(FixLeq(_,_)) => super.attr(n).shape(circle).label("<=")
       case Def(FixNeq(_,_)) => super.attr(n).shape(circle).label("!=")
       case Def(FixEql(_,_)) => super.attr(n).shape(circle).label("==")
@@ -36,7 +32,7 @@ trait DotGenFixPt extends DotCodegen {
     case FixDiv(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixAnd(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixOr(x,y)  => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixXor(x,y)  => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixXor(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixLt(x,y)  => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixLeq(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixNeq(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}

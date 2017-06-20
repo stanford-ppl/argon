@@ -1,148 +1,107 @@
 package argon.core
 
-import argon.graphs.{Edge, EdgeLike, Graph}
-import argon.utils.escapeConst
-import org.virtualized.EmptyContext
+import argon.graphs.{Edge, EdgeLike}
+import argon.util.escapeConst
+import forge._
 
 import scala.annotation.unchecked.uncheckedVariance
 
+/** Any staged symbol **/
+sealed abstract class Exp[+T] extends EdgeLike with FrontendFacing {
+  def tp: Type[T @uncheckedVariance]
 
-trait Symbols extends StagedTypes with Metadata with Graph { self: Staging =>
-
-  case class SrcCtxs(pos: List[SrcCtx]) extends Metadata[SrcCtxs] { def mirror(f:Tx) = this }
-  object ctxsOf {
-    def apply(x: Exp[_]): List[SrcCtx] = metadata[SrcCtxs](x).map(_.pos).getOrElse(Nil)
-    def update(x: Exp[_], ctx: List[SrcCtx]) = metadata.add(x, SrcCtxs(ctx))
+  var name: Option[String] = None
+  override def toStringFrontend = name match {
+    case Some(n) => n + " (" + this.toString + ")"
+    case None => this.toString
   }
-  def mpos(pos: List[SrcCtx]) = pos.head
-  def mpos(s: Exp[_]) = ctxsOf(s).head
+}
 
-  implicit class SrcCtxOps(x: Exp[_]) {
-    def ctx: SrcCtx = ctxsOf(x).headOption.getOrElse(EmptyContext)
-    def ctxOrElse(els: SrcCtx) = ctxsOf(x).headOption.getOrElse(els)
-    def addCtx(ctx: SrcCtx) { if (ctx != EmptyContext || ctxsOf(x).isEmpty) ctxsOf(x) = ctxsOf(x) :+ ctx }
-    def setCtx(ctx: SrcCtx) { if (ctx != EmptyContext || ctxsOf(x).isEmpty) ctxsOf(x) = List(ctx) }
-  }
-
-  case class CtxName(name: String) extends Metadata[CtxName] { def mirror(f:Tx) = this }
-
-  object nameOf {
-    def apply(x: Exp[_]): Option[String] = metadata[CtxName](x).map(_.name)
-    def update(x: Exp[_], name: String) = metadata.add(x, CtxName(name))
+/** A staged symbol which represents a non-constant value **/
+sealed abstract class Dyn[+T] extends Exp[T] with Edge {
+  override def hashCode(): Int = id
+  override def equals(x: Any) = x match {
+    case that: Dyn[_] => this.id == that.id
+    case _ => false
   }
 
-  def ctx(implicit context: SrcCtx): SrcCtx = context
+  @stateful def dependents: Seq[Exp[_]] = {
+    state.graph.dependentsOf(this.id).flatMap{dep => state.graph.nodeOutputs(dep)}.map(symFromSymId)
+  }
+}
 
+/** Staged symbols created as bound variables **/
+class Bound[+T](val tp: Type[T @ uncheckedVariance]) extends Dyn[T] {
+  override def toString = s"b$id"
+}
 
-  /** Any staged symbol **/
-  sealed abstract class Exp[+T] private[core](staged: Type[T]) extends EdgeLike {
-    def tp: Type[T @uncheckedVariance] = staged
+/** Staged symbols with definitions **/
+class Sym[+T](val tp: Type[T @uncheckedVariance]) extends Dyn[T] {
+  override def toString = s"x$id"
+}
+
+// TODO: Investigate re-adding T<:MetaAny[_] type bound to Const and Param, changing c to T#Internal
+// In compiler API, we want to be specify staged constants:
+//   def foo(x: Const[Int]) ...
+// In compiler, we want to be able to write things like:
+//   case x: Param[_] => x.c = 3
+// and be guaranteed that this is legal
+// :: Param is a special, mutable case of Const
+/** A staged constant **/
+class Const[+T](val tp: Type[T@uncheckedVariance])(x: Any) extends Exp[T] {
+  private val _c: Any = x
+  def c: Any = _c
+
+  override def hashCode() = (tp, c).hashCode()
+  override def equals(x: Any) = x match {
+    case that: Const[_] => this.tp == that.tp && this.c == that.c
+    case _ => false
   }
 
-  /** A staged symbol which represents a non-constant value **/
-  sealed abstract class Dyn[+T] private[core](staged: Type[T]) extends Exp[T](staged) with Edge {
-    override def hashCode(): Int = id
-    override def equals(x: Any) = x match {
-      case that: Dyn[_] => this.id == that.id
-      case _ => false
-    }
+  override def toString = s"Const(${escapeConst(_c)})"
+  override def toStringFrontend = escapeConst(_c)
+}
 
-    def dependents: Seq[Exp[_]] = dependentsOf(this.id).flatMap(nodeOutputs).map(symFromSymId)
+/** A Staged, mutable constant **/
+class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid: Int) extends Const[T](tp)(x) {
+  private var _c: Any = x
+  override def c: Any = _c
+  def c_=(rhs: Any): Unit = if (!isFinal) _c = rhs
+
+  private var _isFinal: Boolean = false
+  def isFinal: Boolean = _isFinal
+  def makeFinal(): Unit = { _isFinal = true }
+
+  override def hashCode() = pid
+  override def equals(x: Any) = x match {
+    case that: Param[_] => this.pid == that.pid
+    case _ => false
   }
 
-  /** Staged symbols created as bound variables **/
-  class Bound[+T] private[core](staged: Type[T]) extends Dyn[T](staged) {
-    override def toString = s"b$id"
+  override def toString = s"Param(#${-pid})"
+  override def toStringFrontend = this.toString   // TODO: Is this what is we want here?
+}
+
+// TODO: Investigate why this still gives back Any even when T#Internal is used
+/*object Lit {
+  def unapply[T<:MetaAny[T]](s: Exp[T]): Option[T#Internal] = s match {
+    case param: Param[_] if param.isFinal => Some(param.c)
+    case const: Const[_] => Some(const.c)
+    case _ => None
   }
+}*/
 
-  /** Staged symbols with definitions **/
-  class Sym[+T] private[core](staged: Type[T]) extends Dyn[T](staged) {
-    override def toString = s"x$id"
+object Const {
+  def unapply(s: Exp[_]): Option[Any] = s match {
+    case param: Param[_] if param.isFinal => Some(param.c)
+    case const: Const[_] => Some(const.c)
+    case _ => None
   }
+}
 
-  // In compiler API, we want to be specify staged constants:
-  //   def foo(x: Const[Int]) ...
-  // In compiler, we want to be able to write things like:
-  //   case x: Param[_] => x.c = 3
-  // and be guaranteed that this is legal
-  // :: Param is a special, mutable case of Const
-  /** A staged constant **/
-  class Const[+T] private[core](x: Any)(staged: Type[T]) extends Exp[T](staged) {
-    private val _c: Any = x
-    def c: Any = _c
-
-    override def hashCode() = (tp, c).hashCode()
-    override def equals(x: Any) = x match {
-      case that: Const[_] => this.tp == that.tp && this.c == that.c
-      case _ => false
-    }
-
-    override def toString = escapeConst(c)
-  }
-
-  /** A Staged, mutable constant **/
-  private var nParams = 0
-
-  class Param[+T] private[core](x: Any)(staged: Type[T]) extends Const[T](x)(staged) {
-    private[argon] val pid = {nParams -= 1; nParams}
-
-    private var _p: Any = x
-    override def c: Any = _p
-    def c_=(rhs: Any) { if (!isFinal) _p = rhs }
-    override def toString = escapeConst(c)
-
-    private var _isFinal: Boolean = false
-    def isFinal: Boolean = _isFinal
-    def makeFinal(): Unit = { _isFinal = true }
-
-    override def hashCode() = pid
-    override def equals(x: Any) = x match {
-      case that: Param[_] => this.pid == that.pid
-      case _ => false
-    }
-  }
-
-  object Const {
-    def unapply(s: Exp[_]): Option[Any] = s match {
-      case param:Param[_] if param.isFinal => Some(param.c)
-      case const:Const[_] => Some(const.c)
-      case _ => None
-    }
-  }
-
-  object Param {
-    def unapply(s: Exp[_]): Option[Any] = s match {
-      case param:Param[_] => Some(param.c) // TODO: Should this only return if isFinal is false?
-      case _ => None
-    }
-  }
-
-  /** Compiler debugging **/
-  override def readable(x: Any): String = x match {
-    case s: Sym[_] => s"x${s.id}"
-    case b: Bound[_] => s"b${b.id}"
-    case p: Param[_] => s"Param(${escapeConst(p)})"
-    case c: Const[_] => s"Const(${escapeConst(c)})"
-    case s: SrcCtxs => mpos(s.pos).toString()
-    case t: Type[_] =>
-      val tArgs = if (t.typeArguments.nonEmpty)
-        t.typeArguments.map(readable).mkString("[",",","]")
-      else ""
-      readable(t.stagedClass) + tArgs
-
-    case _ => super.readable(x)
-  }
-
-  override def userReadable(x: Any): String = x match {
-    case e: Exp[_] => nameOf(e) match {
-      case Some(name) => name + " (" + super.userReadable(e) + ")"
-      case None => super.userReadable(e)
-    }
-    case t: Type[_] =>
-      val tArgs = if (t.typeArguments.nonEmpty)
-        t.typeArguments.map(userReadable).mkString("[",",","]")
-      else ""
-      userReadable(t.stagedClass) + tArgs
-    case _ => super.userReadable(x)
+object Param {
+  def unapply(s: Exp[_]): Option[Any] = s match {
+    case param: Param[_] => Some(param.c)
+    case _ => None
   }
 }

@@ -7,7 +7,7 @@ class IfThenElseTest extends FlatSpec with Matchers{
 
   "Whatever" should "be staged" in {
     class IfThenElseTest extends Test {
-      import IR._
+      import api._
 
       @virtualize
       def main() {

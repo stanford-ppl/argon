@@ -1,16 +1,13 @@
 package argon.codegen
 
+import argon.core._
+import argon.{ConstantGenFailedException, GenerationFailedException}
 import argon.traversal.Traversal
-import argon.core.Staging
-import argon.Config
 
 import java.nio.file.{Files, Paths}
 import java.io.PrintWriter
 
 trait Codegen extends Traversal {
-  val IR: Staging
-  import IR._
-
   override val recurse: RecurseOpt = Never
 
   val lang: String
@@ -37,33 +34,33 @@ trait Codegen extends Traversal {
     if (emitEn | forceful) {
       stream.println(tabbed + x)
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   } 
   protected def open(x: String, forceful: Boolean = false): Unit = {
     if (emitEn | forceful) {
       stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   }
   protected def close(x: String, forceful: Boolean = false): Unit = { 
     if (emitEn | forceful) {
       if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   } 
   protected def closeopen(x: String, forceful: Boolean = false): Unit = { // Good for "} else {" lines
     if (emitEn | forceful) {
       if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x); streamTab(streamName) += 1
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   } 
 
   protected def needsFPType(tp: Type[_]): Boolean = false
-  protected def spatialNeedsFPType(tp: Type[_]): Boolean = false  // TODO: Spatial specific!
+  protected def spatialNeedsFPType(tp: Type[_]): Boolean = false  // TODO: Spatial specific - should not be here!
 
   final protected def toggleEn(): Unit = {
     if (emitEn) {
@@ -94,7 +91,7 @@ trait Codegen extends Traversal {
     streamLines += (name -> 0)
     streamExtensions += (name -> List(0))
     Files.createDirectories(Paths.get(out))
-    val file = new PrintWriter(s"${out}${name}.$exten")
+    val file = new PrintWriter(s"$out$name.$exten")
     streamMap += (file -> fullname)
     streamMapReverse += (fullname -> file)
     file      
@@ -105,7 +102,7 @@ trait Codegen extends Traversal {
     val fullname = name + "." + exten
     streamTab += (fullname -> 0)
     Files.createDirectories(Paths.get(out))
-    val file = new PrintWriter(s"${out}${name}.$exten")
+    val file = new PrintWriter(s"$out$name.$exten")
     streamMap += (file -> fullname)
     streamMapReverse += (fullname -> file)
     file      
@@ -142,6 +139,8 @@ trait Codegen extends Traversal {
   }
 
   protected def quoteOrRemap(arg: Any): String = arg match {
+    case p: Seq[_] => p.map(quoteOrRemap).mkString(", ")  // By default, comma separate Seq
+    case s: Set[_] => s.map(quoteOrRemap).mkString(", ")  // TODO: Is this expected? Sets are unordered..
     case e: Exp[_] => quote(e)
     case m: Type[_] => remap(m)
     case s: String => s
@@ -160,7 +159,7 @@ trait Codegen extends Traversal {
         Console.println(s"[ ${lang}gen-ERROR ] no backend for $lhs = $rhs in $lang")  
       } 
     } else {
-      if (Config.emitDevel == 2) Console.println(s"[ ${lang}gen-NOTE ] Emission of ${lhs} = $rhs does not belong in this backend")
+      if (Config.emitDevel == 2) Console.println(s"[ ${lang}gen-NOTE ] Emission of $lhs = $rhs does not belong in this backend")
     }
   }
 

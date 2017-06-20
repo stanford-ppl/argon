@@ -1,12 +1,9 @@
 package argon.codegen.scalagen
 
-import argon.core.Staging
-import argon.ops.AssertExp
+import argon.core._
+import argon.nodes._
 
 trait ScalaGenAssert extends ScalaCodegen {
-  val IR: AssertExp with Staging
-  import IR._
-
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
     case Assert(cond, Some(msg)) =>
       emit(src"val $lhs = assert($cond, $msg)")

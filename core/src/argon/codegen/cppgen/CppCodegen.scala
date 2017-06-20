@@ -1,15 +1,11 @@
 package argon.codegen.cppgen
 
-import argon.codegen.Codegen
-import argon.Config
-import argon.codegen.FileDependencies
+import argon.core._
+import argon.codegen.{Codegen, FileDependencies}
 import sys.process._
 import scala.language.postfixOps
 
-
-
 trait CppCodegen extends Codegen with FileDependencies  {
-  import IR._
   override val name = "Cpp Codegen"
   override val lang: String = "cpp"
   override val ext: String = "cpp"
@@ -52,9 +48,5 @@ trait CppCodegen extends Codegen with FileDependencies  {
     // moveDependencies ::= AlwaysDep(s"""${out}/DRAM.h""", "datastructures")
     super.copyDependencies(out)
   }
-
-
-
-
 
 }

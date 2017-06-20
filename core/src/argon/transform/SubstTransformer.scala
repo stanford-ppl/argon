@@ -1,8 +1,8 @@
 package argon.transform
 
-trait SubstTransformer extends Transformer {
-  import IR._
+import argon.core._
 
+trait SubstTransformer extends Transformer {
   var subst: Map[Exp[_],Exp[_]] = Map.empty
 
   // Syntax is, e.g.: register(x -> y)
@@ -12,6 +12,46 @@ trait SubstTransformer extends Transformer {
     subst += rule
   }
   def remove[T](key: Exp[T]) = subst -= key
+
+  def registerOrRemove[T](rule: (Exp[T], Option[Exp[T]])) = rule._2 match {
+    case Some(s) => register(rule._1,s)
+    case None => remove(rule._1)
+  }
+
+  def getSubst[T](key: Exp[T]): Option[Exp[T]] = subst.get(key).asInstanceOf[Option[Exp[T]]]
+
+  override protected def lambda1ToFunction1[A,R](lambda1: Lambda1[A,R]) = {a: Exp[A] => isolateSubstScope {
+    register(lambda1.input -> a)
+    val block = blockToFunction0(lambda1)
+    block()
+  }}
+  override protected def lambda2ToFunction2[A,B,R](lambda2: Lambda2[A,B,R]) = { (a: Exp[A], b: Exp[B]) =>
+    isolateSubstScope {
+      register(lambda2.inputA -> a)
+      register(lambda2.inputB -> b)
+      val block = blockToFunction0(lambda2)
+      block()
+    }
+  }
+  override protected def lambda3ToFunction3[A,B,C,R](lambda3: Lambda3[A,B,C,R]) = { (a: Exp[A], b: Exp[B], c: Exp[C]) =>
+    isolateSubstScope {
+      register(lambda3.inputA -> a)
+      register(lambda3.inputB -> b)
+      register(lambda3.inputC -> c)
+      val block = blockToFunction0(lambda3)
+      block()
+    }
+  }
+  override protected def lambda4ToFunction4[A,B,C,D,R](lambda4: Lambda4[A,B,C,D,R]) = { (a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]) =>
+    isolateSubstScope {
+      register(lambda4.inputA -> a)
+      register(lambda4.inputB -> b)
+      register(lambda4.inputC -> c)
+      register(lambda4.inputD -> d)
+      val block = blockToFunction0(lambda4)
+      block()
+    }
+  }
 
   override protected def transformExp[T:Type](s: Exp[T]): Exp[T] = subst.get(s) match {
     case Some(y) => y.asInstanceOf[Exp[T]]
@@ -37,5 +77,13 @@ trait SubstTransformer extends Transformer {
     val result = block
     subst = save
     result
+  }
+  override def mirror(lhs: Seq[Sym[_]], rhs: Def) = {
+    if (Config.verbosity > 2) {
+      for((k,v) <- subst) {
+        log(c"$k -> $v")
+      }
+    }
+    super.mirror(lhs, rhs)
   }
 }

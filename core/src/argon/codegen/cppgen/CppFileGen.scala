@@ -1,18 +1,13 @@
 package argon.codegen.cppgen
 
+import argon.core._
 import argon.codegen.FileGen
-import argon.Config
 
 trait CppFileGen extends FileGen {
-  import IR._
 
-
-  override protected def emitMain[S:Type](b: Block[S]): Unit = {
-    emitBlock(b)
-  }
+  override protected def emitMain[S:Type](b: Block[S]): Unit = emitBlock(b)
 
   override protected def process[S:Type](b: Block[S]): Block[S] = {
-
     // Forcefully create the following streams
     withStream(getStream("TopHost")) {
       if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Begin!")}

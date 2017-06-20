@@ -1,10 +1,9 @@
 package argon.codegen.dotgen
 
+import argon.core._
 import argon.codegen.FileGen
-import argon.Config
 
 trait DotFileGen extends FileGen with DotCodegen {
-  import IR._
 
   override protected def emitMain[S:Type](b: Block[S]): Unit = {
     if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Begin!")}
@@ -12,7 +11,6 @@ trait DotFileGen extends FileGen with DotCodegen {
     emitBlock(b)
     toggleEn() // Turn on
     if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Complete!")}
-
   }
 
   override protected def emitFileHeader(): Unit = {

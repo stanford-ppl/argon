@@ -1,8 +1,8 @@
 package argon.util
-import argon.core.Reporting
+
 import scopt._
 
-trait ArgParser extends Reporting {
+trait ArgParser {
   def description: String
   def scriptName: String
 

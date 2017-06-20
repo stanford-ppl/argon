@@ -1,11 +1,9 @@
 package argon.codegen.cppgen
 
-import argon.ops.{ArrayExtExp, TextExp, FixPtExp, FltPtExp, BoolExp, IfThenElseExp, StructExp, TupleExp, HashMapExp}
-
+import argon.core._
+import argon.nodes._
 
 trait CppGenHashMap extends CppGenArrayExt {
-  val IR: ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp
-  import IR._
 
   // override protected def remap(tp: Type[_]): String = tp match {
   //   case HashIndexType(mK) => src"scala.collection.mutable.HashMap[$mK,${typ[Index]}]"

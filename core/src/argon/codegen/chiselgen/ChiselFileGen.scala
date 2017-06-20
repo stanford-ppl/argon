@@ -1,18 +1,13 @@
 package argon.codegen.chiselgen
 
+import argon.core._
 import argon.codegen.FileGen
-import argon.Config
 
 trait ChiselFileGen extends FileGen {
-  import IR._
 
-
-  override protected def emitMain[S:Type](b: Block[S]): Unit = {
-    emitBlock(b)
-  }
+  override protected def emitMain[S:Type](b: Block[S]): Unit = emitBlock(b)
 
   override protected def process[S:Type](b: Block[S]): Block[S] = {
-
     // // Forcefully create the following streams
     // val baseStream = getStream("GlobalWires")
     // val ioModule = getStream("IOModule")

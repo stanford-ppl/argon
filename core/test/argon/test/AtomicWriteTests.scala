@@ -1,12 +1,11 @@
 package argon.test
 
-import argon.Config
-import argon.core.Exceptions
+import argon.core.Config
 import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized._
 
 object ArrayAtomicWrite extends Test {
-  import IR._
+  import argon.test.api._
 
   @virtualize
   def main() {
@@ -21,7 +20,7 @@ object ArrayAtomicWrite extends Test {
 }
 
 object ArrayNoAtomicWrite extends Test {
-  import IR._
+  import argon.test.api._
 
   @virtualize
   def main() {
@@ -39,10 +38,10 @@ object ArrayNoAtomicWrite extends Test {
 }
 
 
-class AtomicWriteTests extends FlatSpec with Matchers with Exceptions {
+class AtomicWriteTests extends FlatSpec with Matchers {
 
   "Atomic Writes" should "fail when disabled" in {
-    a[TestBenchFailed] should be thrownBy {
+    a[argon.TestBenchFailed] should be thrownBy {
       ArrayNoAtomicWrite.main(Array.empty)
     }
   }

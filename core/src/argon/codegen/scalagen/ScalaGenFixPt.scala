@@ -1,12 +1,12 @@
 package argon.codegen.scalagen
 
-import argon.core.Staging
-import argon.ops.{FixPtExp, FltPtExp}
+import argon.core._
+import argon.nodes._
 
+/**
+  * NOTE TO SPATIAL AUTHORS: NOT USED IN SPATIAL!
+  */
 trait ScalaGenFixPt extends ScalaCodegen {
-  val IR: FixPtExp with FltPtExp with Staging
-  import IR._
-
   override protected def remap(tp: Type[_]): String = tp match {
     case IntType() => "Int"
     case LongType() => "Long"
@@ -19,8 +19,6 @@ trait ScalaGenFixPt extends ScalaCodegen {
     case _ => super.quoteConst(c)
   }
 
-  /* WHY IS THIS FILE BEING IGNORED?! */
-  
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case FixInv(x)   => emit(src"val $lhs = ~$x")
     case FixNeg(x)   => emit(src"val $lhs = -$x")
