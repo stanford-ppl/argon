@@ -139,6 +139,8 @@ trait Codegen extends Traversal {
   }
 
   protected def quoteOrRemap(arg: Any): String = arg match {
+    case p: Seq[_] => p.map(quoteOrRemap).mkString(", ")  // By default, comma separate Seq
+    case s: Set[_] => s.map(quoteOrRemap).mkString(", ")  // TODO: Is this expected? Sets are unordered..
     case e: Exp[_] => quote(e)
     case m: Type[_] => remap(m)
     case s: String => s
