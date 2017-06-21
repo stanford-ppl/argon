@@ -10,6 +10,7 @@ import scala.annotation.unchecked.uncheckedVariance
 sealed abstract class Exp[+T] extends EdgeLike with FrontendFacing {
   def tp: Type[T @uncheckedVariance]
 
+  var prevNames: Seq[(String,String)] = Nil
   var name: Option[String] = None
   override def toStringFrontend = name match {
     case Some(n) => n + " (" + this.toString + ")"

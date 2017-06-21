@@ -5,6 +5,7 @@ import argon.core._
 trait Transformer { self =>
   var IR: State
   implicit def __state: State = IR
+  def name: String
 
   protected val f = this //.asInstanceOf[Tx]
   final def apply[T](e: Exp[T]): Exp[T] = transformExp(e)(mtyp(e.tp))
@@ -106,6 +107,7 @@ trait Transformer { self =>
   def transferMetadata(a: Exp[_], b: Exp[_]): Unit = {
     val m2 = mirror(metadata.get(a))
     b.name = a.name
+    b.prevNames = (state.paddedPass(state.pass-1),a.toString) +: a.prevNames
     metadata.add(b, m2) // Want to preserve effects, dependencies set during mirroring
   }
 

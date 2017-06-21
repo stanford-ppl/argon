@@ -9,6 +9,10 @@ case class IRPrinter(var IR: State) extends Traversal {
 
   def strMeta(lhs: Exp[_]) {
     lhs.name.foreach{name => dbgs(c" - Name: $name") }
+    if (lhs.prevNames.nonEmpty) {
+      val aliases = lhs.prevNames.map{case (tx,alias) => s"$tx: $alias" }.mkString(", ")
+      dbgs(c" - Aliases: $aliases")
+    }
     dbgs(c" - Type: ${lhs.tp}")
     metadata.get(lhs).foreach{m => dbgs(c" - ${m._1}: ${m._2}") }
   }
