@@ -38,8 +38,10 @@ trait LayerBlocks { self: ArgonCake =>
     val saveCache = state.defCache
     state.context = Nil
 
-    // In an isolated block, don't allow CSE with outside statements
-    if (isolated) state.defCache = Map.empty
+    // In an isolated or sealed blocks, don't allow CSE with outside statements
+    // CSE with outer scopes should only occur if symbols are not allowed to escape,
+    // which isn't true in either of these cases
+    if (isolated || seal || temp == Freq.Cold) state.defCache = Map.empty
 
     val result = if (seal) inSealed{ block } else block
 
@@ -48,9 +50,9 @@ trait LayerBlocks { self: ArgonCake =>
 
     state.context = saveContext
 
-    // Reset contents of defCache when staging cold blocks
-    // Reasoning here is that statements can't move out of cold blocks, so it makes no sense to CSE across them
-    if (temp == Freq.Cold) state.defCache = saveCache
+    // Reset contents of defCache
+    // -- prevents CSEing across inescapable blocks
+    if (isolated || seal || temp == Freq.Cold) state.defCache = saveCache
 
     val effects = summarizeScope(deps)
     (result, effects, deps)
