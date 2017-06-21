@@ -73,6 +73,8 @@ trait BlockTraversal {
 
     (inputs, stms)
   }
+  final protected def blockInputs(block: Block[_]): Seq[Exp[_]] = blockInputsAndNestedContents(block)._1
+  final protected def blockNestedContents(block: Block[_]): Seq[Stm] = blockInputsAndNestedContents(block)._2
 
   final protected def traverseStmsInBlock(block: Block[_]): Unit = traverseStmsInBlock(block, visitStms)
   final protected def traverseStmsInBlock[A](block: Block[_], func: Seq[Stm] => A): A = {
