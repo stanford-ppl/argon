@@ -25,7 +25,11 @@ trait ScalaGenString extends ScalaCodegen {
     case StringConcat(x,y) => emit(src"val $lhs = $x + $y")
     case StringEquals(x,y) => emit(src"val $lhs = $x == $y")
     case StringDiffer(x,y) => emit(src"val $lhs = $x != $y")
+    case StringSlice(x,start,end) => emit(src"val $lhs = $x.substring($start,$end);")
+    case StringLength(x) => emit(src"val $lhs = $x.length();")
     case _ => super.emitNode(lhs, rhs)
   }
+
+
 
 }
