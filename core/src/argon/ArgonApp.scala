@@ -47,7 +47,7 @@ trait ArgonApp { self =>
   }
 
   protected def onException(t: Throwable): Unit = {
-    withLog(Config.cwd, Config.name + "_exception.log") {
+    withLog(Config.logDir, Config.name + "_exception.log") {
       Config.verbosity = 10
       if (t.getMessage != null) { log(t.getMessage); log("") }
       if (t.getCause != null) { log(t.getCause); log("") }
@@ -57,7 +57,7 @@ trait ArgonApp { self =>
     if (t.getMessage != null) error(s"  ${t.getMessage}")
     if (t.getCause != null) error(s"  ${t.getCause}")
     error(s"This is likely a compiler bug. A log file has been created at: ")
-    error(s"  ${Config.cwd}/${Config.name}_exception.log")
+    error(s"  ${Config.logDir}/${Config.name}_exception.log")
   }
 
   protected def settings(): Unit = { }
