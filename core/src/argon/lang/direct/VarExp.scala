@@ -16,6 +16,16 @@ trait LowPriorityVarImplicits { self: VarExp =>
 trait VarExp extends LowPriorityVarImplicits {
   // NOTE: NO implicit evidence of being staged (otherwise could have something like Array[Var[T]])
 
+  // TODO: How to virtualize these assignment operators in general?
+  // Should we have a general rewrite rule for x [op]= y ==> x = readVar(X) [op] y?
+  // Should be lower priority than readVar(x) [op]= y ?
+  implicit class VarArithOps[T:Arith:Type](lhs: Var[T]) {
+    @api def +=(rhs: T): MUnit = wrap(Var.assign_var(lhs.s, implicitly[Arith[T]].plus(readVar(lhs), rhs).s))
+    @api def -=(rhs: T): MUnit = wrap(Var.assign_var(lhs.s, implicitly[Arith[T]].minus(readVar(lhs), rhs).s))
+    @api def *=(rhs: T): MUnit = wrap(Var.assign_var(lhs.s, implicitly[Arith[T]].times(readVar(lhs), rhs).s))
+    @api def /=(rhs: T): MUnit = wrap(Var.assign_var(lhs.s, implicitly[Arith[T]].divide(readVar(lhs), rhs).s))
+  }
+
   /** Static methods **/
   @internal def infix_==[T:Type](lhs: Var[T], rhs: Var[T]): MBoolean = readVar(lhs) === readVar(rhs)
 
