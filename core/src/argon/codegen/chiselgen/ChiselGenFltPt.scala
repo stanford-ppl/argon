@@ -33,7 +33,7 @@ trait ChiselGenFltPt extends ChiselCodegen {
     case FltLt(x,y)  => emit(src"val $lhs = $x < $y")
     case FltLeq(x,y) => emit(src"val $lhs = $x <= $y")
     case FltNeq(x,y) => emit(src"val $lhs = $x != $y")
-    case FltEql(x,y) => emit(src"val $lhs = $x == $y")
+    case FltEql(x,y) => emit(src"val $lhs = $x === $y")
     case FltRandom(x) => lhs.tp match {
       case FloatType()  => emit(src"val $lhs = chisel.util.Random.nextFloat()")
       case DoubleType() => emit(src"val $lhs = chisel.util.Random.nextDouble()")
