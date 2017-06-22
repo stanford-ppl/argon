@@ -1,12 +1,12 @@
 package argon.lang.direct
 
 import typeclasses._
-
 import argon.lang.cake.ArgonLangAliases
 import forge._
+import org.virtualized.EmbeddedControls
 
 /** Implicit typeclass evidence, (optionally) implicit conversions **/
-trait ArgonExp extends ArgonLangAliases
+trait ArgonExp extends ArgonLangAliases //with EmbeddedControls
   with BooleanExp
   with FixPtExp
   with FltPtExp
