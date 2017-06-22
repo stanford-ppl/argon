@@ -6,7 +6,7 @@ import argon.nodes._
 trait CppGenFltPt extends CppCodegen {
 
   override protected def remap(tp: Type[_]): String = tp match {
-    case FloatType()  => "double"
+    case FloatType()  => "float"
     case DoubleType() => "double"
     case _ => super.remap(tp)
   }

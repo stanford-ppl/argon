@@ -124,10 +124,12 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     val resourcesPath = s"chiselgen"
 
     dependencies ::= DirDep(resourcesPath, "template-level/templates")
+    // dependencies ::= DirDep(resourcesPath, "template-level/templates/hardfloat")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeHW") 
     dependencies ::= DirDep(resourcesPath, "template-level/fringeZynq")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeDE1SoC")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeVCS")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeAWS")
     
     dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile")) 
     dependencies ::= FileDep(resourcesPath, "app-level/verilator.mk", "../", Some("verilator.mk"))
@@ -165,7 +167,8 @@ import templates._
 import templates.ops._
 import types._
 import chisel3._
-import chisel3.util._""")
+import chisel3.util._
+""")
           val prnt = if (file_num == 1) src"${strip_ext(curStream)}" else src"${strip_ext(curStream)}_${file_num-1}"
           open(src"""trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {""")
         }
@@ -238,7 +241,8 @@ import templates._
 import templates.ops._
 import types._
 import chisel3._
-import chisel3.util._""")
+import chisel3.util._
+""")
           open(src"""trait ${name} extends ${prnts} {""")
           try { body } 
           finally { 
@@ -255,7 +259,8 @@ import chisel3.util._""")
   import templates.ops._
   import types._
   import chisel3._
-  import chisel3.util._""")
+  import chisel3.util._
+  """)
             open(src"""trait ${name} extends RootController {""")
             try { body } 
             finally { 

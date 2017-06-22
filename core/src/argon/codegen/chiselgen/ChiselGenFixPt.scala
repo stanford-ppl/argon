@@ -74,9 +74,9 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case SatSub(x,y) => emit(src"val $lhs = $x <-> $y")
     case SatMul(x,y) => emit(src"val $lhs = $x <*> $y")
     case SatDiv(x,y) => emit(src"val $lhs = $x </> $y")
-    case FixLsh(x,y) => emit(s"val ${quote(lhs)} = ${quote(x)} << $y // TODO: cast to proper type (chisel expands bits)")
-    case FixRsh(x,y) => emit(s"val ${quote(lhs)} = ${quote(x)} >> $y")
-    case FixURsh(x,y) => emit(s"val ${quote(lhs)} = ${quote(x)} >>> $y")
+    case FixLsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} << $yy // TODO: cast to proper type (chisel expands bits)")
+    case FixRsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} >> $yy")
+    case FixURsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} >>> $yy")
     case UnbSatMul(x,y) => emit(src"val $lhs = $x <*&> $y")
     case UnbSatDiv(x,y) => emit(src"val $lhs = $x </&> $y")
     case FixRandom(x) => 

@@ -37,7 +37,8 @@ import templates._
 import templates.ops._
 import chisel3.util._
 import fringe._
-import types._""")
+import types._
+""")
       open("trait IOModule extends Module {")
       emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
       emit("val io_w = 64 // TODO: How to generate these properly?")
@@ -49,7 +50,8 @@ import types._""")
 import templates._
 import templates.ops._
 import fringe._
-import chisel3._""")
+import chisel3._
+""")
       open(s"""trait BufferControlCxns extends RootController {""")
     }
 
@@ -60,7 +62,8 @@ import templates.ops._
 import fringe._
 import types._
 import chisel3._
-import chisel3.util._""")
+import chisel3.util._
+""")
       open(s"trait RootController extends GlobalModulesMixer {")
       emit(src"// Root controller for app: ${Config.name}")
 
@@ -72,7 +75,8 @@ import templates._
 import templates.ops._
 import chisel3._
 import chisel3.util._
-import types._""")
+import types._
+""")
       open(s"""trait GlobalWires extends IOModule{""")
     }
 
@@ -82,7 +86,8 @@ import templates._
 import templates.ops._
 import chisel3._
 import chisel3.util._
-import types._ """)
+import types._ 
+""")
       open(s"""trait GlobalModules extends GlobalWiresMixer {""")
     }
 
