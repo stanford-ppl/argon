@@ -1,6 +1,7 @@
 package argon.lang.direct
 
 import argon.core._
+import org.virtualized.EmbeddedControls
 
 import scala.reflect.macros.whitebox
 import scala.language.experimental.macros
@@ -8,14 +9,13 @@ import scala.language.experimental.macros
 /** MetaAny and Var
   * (Doesn't matter if Var is actually supported in the DSL or not - will never be used if it isn't)
   */
-trait EqualMacros {
-
+// TODO: Why does EmbeddedControls have to be mixed in here?
+trait EqualMacros extends EmbeddedControls {
   import StagedVariables._
   def infix_==[A<:MetaAny[A], B<:MetaAny[B]](x1: Var[A], x2: B): MBoolean = macro equalVarLeft[MBoolean]
   def infix_==[A<:MetaAny[A], B<:MetaAny[B]](x1: A, x2: Var[B]): MBoolean = macro equalVarRight[MBoolean]
   def infix_==[A, B<:MetaAny[B], C<:MetaAny[C]](x1: Var[B], x2: A)(implicit l: Lift[A,C]): MBoolean = macro equalVarLiftRight[MBoolean]
   def infix_==[A, B<:MetaAny[B], C<:MetaAny[C]](x1: A, x2: Var[B])(implicit l: Lift[A,C]): MBoolean = macro equalVarLiftLeft[MBoolean]
-
 
   def infix_!=[A<:MetaAny[A], B<:MetaAny[B]](x1: Var[A], x2: B): MBoolean = macro unequalVarLeft[MBoolean]
   def infix_!=[A<:MetaAny[A], B<:MetaAny[B]](x1: A, x2: Var[B]): MBoolean = macro unequalVarRight[MBoolean]
