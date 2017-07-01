@@ -74,7 +74,9 @@ trait CppGenFixPt extends CppCodegen {
     case Char2Int(x) => 
       emit(src"${lhs.tp} $lhs = (${lhs.tp}) ${x}[0];")
     case Int2Char(x) => 
-      emit(src"${lhs.tp} $lhs = ${x} + '0';")
+      emit(src"char ${lhs}[2]; // Declared as char but becomes string")
+      emit(src"${lhs}[0] = $x + '0';")
+      emit(src"${lhs}[1] = '\0';")
 
     case _ => super.emitNode(lhs, rhs)
   }
