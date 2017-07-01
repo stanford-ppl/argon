@@ -66,6 +66,7 @@ object FixPtType {
   }
 }
 
+
 object IntType extends FixPtType(BOOL[TRUE],INT[_32],INT[_0]) with FrontendFacing {
   def unapply(x: Type[_]): CBoolean = x match {
     case FixPtType(true, 32, 0) => true
@@ -96,6 +97,7 @@ abstract class FixPtOp1[S:BOOL,I:INT,F:INT] extends FixPtOp[S,I,F,FixPt[S,I,F]]
 case class FixInv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.inv(f(x)) }
 case class FixNeg[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.neg(f(x)) }
 
+case class Char2Int(x: Exp[MString]) extends FixPtOp1[TRUE,_8,_0] { def mirror(f:Tx) = fix.char_2_int(f(x)) }
 case class FixAdd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.add(f(x), f(y)) }
 case class SatAdd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.add_sat(f(x), f(y)) }
 case class FixSub[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.sub(f(x), f(y)) }

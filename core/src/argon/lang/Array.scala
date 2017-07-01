@@ -22,6 +22,8 @@ case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
     = Array(Array.zip(this.s, that.s, {(a:Exp[T],b:Exp[S]) => func(wrap(a), wrap(b)).s }, fresh[Index]))
   @api def reduce(rfunc: (T,T) => T): T
     = wrap{ Array.reduce(this.s,{(a:Exp[T],b:Exp[T]) => rfunc(wrap(a),wrap(b)).s}, fresh[Index], (fresh[T],fresh[T])) }
+  @api def mkString(start: MString, delim: MString, stop: MString): MString
+    = wrap(Array.string_mk(this.s, start.s, delim.s, stop.s))
   @api def filter(cond: T => MBoolean): Array[T]
     = Array(Array.filter(this.s, {t:Exp[T] => cond(wrap(t)).s}, fresh[Index]))
   @api def flatMap[R:Type](func: T => Array[R]): Array[R]
@@ -53,6 +55,7 @@ object Array {
 
   /** Constructors **/
   @internal def length[T:Type](array: Exp[MArray[T]]): Sym[Index] = stage(ArrayLength(array))(ctx)
+  @internal def string_mk[T:Type](x: Exp[MArray[T]], start: Exp[MString], delim: Exp[MString], end: Exp[MString]): Exp[MString] = stage(StringMk(x,start,delim,end))(ctx)
 
   @internal def apply[T:Type](array: Exp[MArray[T]], i: Exp[Index]): Sym[T] = stage(ArrayApply(array,i))(ctx)
   @internal def update[T:Type](array: Exp[MArray[T]], i: Exp[Index], e: Exp[T]): Sym[MUnit] = {

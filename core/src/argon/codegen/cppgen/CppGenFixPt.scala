@@ -71,6 +71,10 @@ trait CppGenFixPt extends CppCodegen {
       case LongType() => emit(src"long $lhs = std::stol($x);")
       case FixPtType(s,d,f) => emit(src"float $lhs = std::stof($x);")
     }
+    case Char2Int(x) => 
+      emit(src"${lhs.tp} $lhs = (${lhs.tp}) ${x}[0];")
+    case Int2Char(x) => 
+      emit(src"${lhs.tp} $lhs = ${x} + '0';")
 
     case _ => super.emitNode(lhs, rhs)
   }

@@ -62,6 +62,9 @@ object FixPt {
   @api def apply[S:BOOL,I:INT,F:INT](x: BigDecimal): FixPt[S,I,F] = FixPt.wrapped(const[S,I,F](x))
 
   @internal def intParam(c: Int): Param[Int32] = parameter(IntType)(FixPt.literalToBigDecimal[TRUE,_32,_0](c, force=true))
+  @internal def int8(x: BigDecimal): Const[Int8] = const[TRUE,_8,_0](x, force = false)
+  @internal def int8(x: MString): Int8 = wrap(char_2_int(x.s))
+  @internal def int8(x: CString): Int8 = int8(String(x))
   @internal def int32(x: BigDecimal): Const[Int32] = const[TRUE,_32,_0](x, force = false)
   @internal def int64(x: BigDecimal): Const[Int64] = const[TRUE,_64,_0](x, force = false)
 
@@ -134,6 +137,7 @@ object FixPt {
   }
 
   /** Constructors **/
+  @internal def char_2_int(x: Exp[MString]): Exp[Int8] = stage(Char2Int(x))(ctx)
   @internal def neg[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = x match {
     case Const(c: BigDecimal) => const[S,I,F](-c)
     case Op(FixNeg(x)) => x

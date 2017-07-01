@@ -23,6 +23,7 @@ trait ScalaGenString extends ScalaCodegen {
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case e@ToString(x) => emitToString(lhs, x, e.mT)
     case StringConcat(x,y) => emit(src"val $lhs = $x + $y")
+    case StringMk(x,start,delim,end) => emit(src"""val $lhs = ${x}.mkString($start, $delim, $end)""")
     case StringEquals(x,y) => emit(src"val $lhs = $x == $y")
     case StringDiffer(x,y) => emit(src"val $lhs = $x != $y")
     case StringSlice(x,start,end) => emit(src"val $lhs = $x.substring($start,$end);")

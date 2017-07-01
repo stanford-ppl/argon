@@ -23,6 +23,8 @@ trait StringExp extends StringLowPriorityImplicits {
   /** Static methods **/
   @internal def infix_+[R<:MetaAny[R]](x1: CString, x2: R): MString = MString(x1) + x2.toText
 
+  @internal def char(x: Int8): MString = MString.char(x)
+
   // Shadows Predef method...
   @api implicit def augmentString(x: CString): MString = MString(x)
 

@@ -11,6 +11,9 @@ trait FixPtExp {
   def isIndexType(x: Type[_]) = x == FixPtType[TRUE,_32,_0]
 
   @internal def intParam(c: Int): Param[Int32] = FixPt.intParam(c)
+  @internal def int8(x: BigDecimal): Const[Int8] = FixPt.int8(x)
+  @internal def int8(x: CString): Int8 = FixPt.int8(x)
+  @internal def int8(x: MString): Int8 = FixPt.int8(x)
   @internal def int32(x: BigDecimal): Const[Int32] = FixPt.int32(x)
   @internal def int64(x: BigDecimal): Const[Int64] = FixPt.int64(x)
 

@@ -55,6 +55,11 @@ trait ScalaGenFixPt extends ScalaCodegen {
       case IntType()  => emit(src"val $lhs = $x.toInt")
       case LongType() => emit(src"val $lhs = $x.toLong")
     }
+    // case Char2Int(x) => 
+    //   emit(src"val $lhs = ${x}(0).toInt")
+    // case Int2Char(x) => 
+    //   emit(src"val $lhs = ${x}(0).toChar")
+
     case _ => super.emitNode(lhs, rhs)
   }
 }

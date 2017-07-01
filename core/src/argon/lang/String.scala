@@ -2,8 +2,11 @@ package argon.lang
 
 import argon.core._
 import argon.nodes._
+import argon.util.escapeConst
 import forge._
-
+import argon.lang.AssertOps._
+import argon.lang.IfThenElseOps.{ifThenElse => ite}
+import argon.lang.FixPt._
 
 case class String(s: Exp[String]) extends MetaAny[String] {
   override type Internal = java.lang.String
@@ -19,10 +22,31 @@ case class String(s: Exp[String]) extends MetaAny[String] {
   @api def length: Int32 = wrap(String.length(this.s))
   @api def apply(id: Index): MString = wrap(String.slice(this.s, id.s, (id+1).s))
   @api def apply(start: Index, end: Index): MString = wrap(String.slice(this.s, start.s, end.s))
+
 }
 
 object String {
   @api def apply(s: CString): MString = String(const(s))
+
+  @api def char2num(s: CString): Int8 = char2num(String(const(s)))
+  @api def char2num(s: MString): Int8 = {
+    assert(eql(int32(1), length(s.s)), Some("Must call char2num on a string of length 1".s))
+    int8(s)
+  }
+  @api def string2num(s: CString): MArray[Int8] = string2num(String(s))
+  @api def string2num(s: MString): MArray[Int8] = {
+    Array.tabulate(wrap(length(s.s))){i => char2num(s(i))}
+  }
+
+  @api def num2char(s: Int8): MString = {
+    char(s)
+  }
+  @api def num2string(s: MArray[Int8]): MString = {
+    Array.tabulate(s.length){i => num2char(s(i))}.mkString("","","")
+  }
+
+  @internal def char(x: Int8): MString = wrap(int_2_char(x.s))
+
   @internal def const(s: CString): Const[MString] = constant(StringType)(s)
 
   @internal def ify[T:Type](x: T): MString = String(sym_tostring(x.s))
@@ -37,6 +61,7 @@ object String {
   }*/
 
   /** Constructors **/
+  @internal def int_2_char(x: Exp[Int8]): Exp[MString] = stage(Int2Char(x))(ctx)
   @internal def sym_tostring[T:Type](x: Exp[T]): Exp[MString] = x match {
     case Const(c: CString) => String.const(c)
     case a if a.tp == StringType => a.asInstanceOf[Exp[MString]]
