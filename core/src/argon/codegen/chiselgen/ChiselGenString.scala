@@ -21,6 +21,8 @@ trait ChiselGenString extends ChiselCodegen {
     case StringConcat(x,y) => emit(src"val $lhs = $x + $y")
     case StringEquals(x,y) => emit(src"val $lhs = $x == $y")
     case StringDiffer(x,y) => emit(src"val $lhs = $x != $y")
+    case Char2Int(x) => 
+      emit(src"val $lhs = ${x}(0).toInt.FP(true, 8, 0) // Assume we only convert constants")
     case _ => super.emitNode(lhs, rhs)
   }
 
