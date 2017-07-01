@@ -21,7 +21,7 @@ trait CppGenString extends CppCodegen {
     case StringConcat(x,y) => emit(src"${lhs.tp} $lhs = string_plus($x, $y);")
     case StringMk(x,start,delim,end) => 
       emit(src"""${lhs.tp} $lhs = string($start);""")
-      open(src"""for (int ${lhs}_i = 0; ${lhs}_i < ${x}.length(); ${lhs_i}++) {""")
+      open(src"""for (int ${lhs}_i = 0; ${lhs}_i < ${x}.length(); ${lhs}_i++) {""")
         emit(src"${lhs} = ${lhs} + ${x}[${lhs}_i];")
         emit(src"if (${lhs}_i < ${x}.length() - 1) { ${lhs} = ${lhs} + $delim; }")
       close("}")
