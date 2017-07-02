@@ -37,4 +37,7 @@ trait StringExp extends StringLowPriorityImplicits {
   implicit object CastStringLift extends Cast[CString,MString] {
     @internal def apply(x: CString): MString = MString(x)
   }
+  implicit object CastMStringLift extends Cast[MString,MString] {
+    @internal def apply(x: MString): MString = x
+  }
 }
