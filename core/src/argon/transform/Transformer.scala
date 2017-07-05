@@ -11,11 +11,11 @@ trait Transformer { self =>
   final def apply[T](e: Exp[T]): Exp[T] = transformExp(e)(mtyp(e.tp))
 
   // Transform the given block, converting it to a stageable function
-  final def apply[R:Type](b: Block[R]): () => Exp[R] = blockToFunction0(b)
-  final def apply[A,R:Type](b: Lambda1[A,R]): Exp[A] => Exp[R] = lambda1ToFunction1(b)
-  final def apply[A,B,R:Type](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R] = lambda2ToFunction2(b)
-  final def apply[A,B,C,R:Type](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R] = lambda3ToFunction3(b)
-  final def apply[A,B,C,D,R:Type](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R] = lambda4ToFunction4(b)
+  final def apply[R:Type](b: Block[R]): () => Exp[R] = blockToFunction0(b, copy=false)
+  final def apply[A,R:Type](b: Lambda1[A,R]): Exp[A] => Exp[R] = lambda1ToFunction1(b, copy=false)
+  final def apply[A,B,R:Type](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R] = lambda2ToFunction2(b, copy=false)
+  final def apply[A,B,C,R:Type](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R] = lambda3ToFunction3(b, copy=false)
+  final def apply[A,B,C,D,R:Type](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R] = lambda4ToFunction4(b, copy=false)
 
   final def apply[T](xs: List[Exp[T]]): List[Exp[T]] = xs.map{x => this.apply(x)}
   final def apply[T](xs: Seq[Exp[T]]): Seq[Exp[T]] = xs.map{x => this.apply(x)}
@@ -33,44 +33,44 @@ trait Transformer { self =>
   // TODO: Something appears to be broken with .restage, not sure what yet though
 
   implicit class BlockOps[R](block: Block[R]) {
-    def inline: Exp[R] = { val func = blockToFunction0(block); func() }
+    def inline: Exp[R] = { val func = blockToFunction0(block, copy=true); func() }
     //def restage(): Block[R] = transformBlock(block)
-    def toFunction0: () => Exp[R] = blockToFunction0(block)
+    def toFunction0: () => Exp[R] = blockToFunction0(block, copy=true)
   }
   implicit class Lambda1Ops[A,R](lambda1: Lambda1[A,R]) {
-    def inline(a: Exp[A]): Exp[R] = { val func = lambda1ToFunction1(lambda1); func(a) }
+    def inline(a: Exp[A]): Exp[R] = { val func = lambda1ToFunction1(lambda1, copy=true); func(a) }
     /*def restage(a: Exp[A]): Lambda1[A,R] = {
       stageLambda1(a)({ lambda1.inline(a) }, lambda1.temp, lambda1.isolated, lambda1.seal)
     }*/
-    def toFunction1: Exp[A] => Exp[R] = lambda1ToFunction1(lambda1)
+    def toFunction1: Exp[A] => Exp[R] = lambda1ToFunction1(lambda1, copy=true)
   }
   implicit class Lambda2Ops[A,B,R](lambda2: Lambda2[A,B,R]) {
-    def inline(a: Exp[A], b: Exp[B]): Exp[R] = { val func = lambda2ToFunction2(lambda2); func(a,b) }
+    def inline(a: Exp[A], b: Exp[B]): Exp[R] = { val func = lambda2ToFunction2(lambda2, copy=true); func(a,b) }
     /*def restage(a: Exp[A], b: Exp[B]): Lambda2[A,B,R] = {
       stageLambda2(a,b)({ lambda2.inline(a,b) }, lambda2.temp, lambda2.isolated, lambda2.seal)
     }*/
-    def toFunction2: (Exp[A], Exp[B]) => Exp[R] = lambda2ToFunction2(lambda2)
+    def toFunction2: (Exp[A], Exp[B]) => Exp[R] = lambda2ToFunction2(lambda2, copy=true)
   }
   implicit class Lambda3Ops[A,B,C,R](lambda3: Lambda3[A,B,C,R]) {
-    def inline(a: Exp[A], b: Exp[B], c: Exp[C]): Exp[R] = { val func = lambda3ToFunction3(lambda3); func(a,b,c) }
+    def inline(a: Exp[A], b: Exp[B], c: Exp[C]): Exp[R] = { val func = lambda3ToFunction3(lambda3, copy=true); func(a,b,c) }
     /*def restage(a: Exp[A], b: Exp[B], c: Exp[C]): Lambda3[A,B,C,R] = {
       stageLambda3(a,b,c)({ lambda3.inline(a,b,c) }, lambda3.temp, lambda3.isolated, lambda3.seal)
     }*/
-    def toFunction3: (Exp[A], Exp[B], Exp[C]) => Exp[R] = lambda3ToFunction3(lambda3)
+    def toFunction3: (Exp[A], Exp[B], Exp[C]) => Exp[R] = lambda3ToFunction3(lambda3, copy=true)
   }
   implicit class Lambda4Ops[A,B,C,D,R](lambda4: Lambda4[A,B,C,D,R]) {
-    def inline(a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]): Exp[R] = { val func = lambda4ToFunction4(lambda4); func(a,b,c,d) }
+    def inline(a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]): Exp[R] = { val func = lambda4ToFunction4(lambda4, copy = true); func(a,b,c,d) }
     /*def restage(a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]): Lambda4[A,B,C,D,R] = {
       stageLambda4(a,b,c,d)({ lambda4.inline(a,b,c,d) }, lambda4.temp, lambda4.isolated, lambda4.seal)
     }*/
-    def toFunction4: (Exp[A], Exp[B], Exp[C], Exp[D]) => Exp[R] = lambda4ToFunction4(lambda4)
+    def toFunction4: (Exp[A], Exp[B], Exp[C], Exp[D]) => Exp[R] = lambda4ToFunction4(lambda4, copy = true)
   }
 
-  protected def blockToFunction0[R](b: Block[R]): () => Exp[R] = () => inlineBlock(b)
-  protected def lambda1ToFunction1[A,R](b: Lambda1[A,R]): Exp[A] => Exp[R]
-  protected def lambda2ToFunction2[A,B,R](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R]
-  protected def lambda3ToFunction3[A,B,C,R](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R]
-  protected def lambda4ToFunction4[A,B,C,D,R](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R]
+  protected def blockToFunction0[R](b: Block[R], copy: Boolean): () => Exp[R] = () => inlineBlock(b)
+  protected def lambda1ToFunction1[A,R](b: Lambda1[A,R], copy: Boolean): Exp[A] => Exp[R]
+  protected def lambda2ToFunction2[A,B,R](b: Lambda2[A,B,R], copy: Boolean): (Exp[A],Exp[B]) => Exp[R]
+  protected def lambda3ToFunction3[A,B,C,R](b: Lambda3[A,B,C,R], copy: Boolean): (Exp[A],Exp[B],Exp[C]) => Exp[R]
+  protected def lambda4ToFunction4[A,B,C,D,R](b: Lambda4[A,B,C,D,R], copy: Boolean): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R]
 
   /**
     * Visit and transform each statement in the given block WITHOUT creating a staging scope

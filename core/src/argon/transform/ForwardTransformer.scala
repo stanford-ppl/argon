@@ -130,7 +130,7 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
     if (Config.verbosity > 2 && !allowDuplication) {
       val (_, contents) = blockInputsAndNestedContents(block)
       val symbols = contents.flatMap(_.lhs.asInstanceOf[Seq[Exp[_]]]).toSet
-      val duplicated = symbols intersect subst.keySet
+      val duplicated = (symbols intersect subst.keySet).filterNot{x => f(x) == x }
       if (duplicated.nonEmpty) {
         error(s"[Compiler] The following symbols appear to have been duplicated by transformer $name:")
         duplicated.foreach{x => error(c"[Compiler]  ${str(x)}")}
