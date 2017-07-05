@@ -97,15 +97,16 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case FixConvert(x) => lhs.tp match {
       case IntType()  => 
         emitGlobalWire(src"val $lhs = Wire(new FixedPoint(true, 32, 0))")
-        emit(src"${lhs}.r := ${x}.r")
+        emit(src"${x}.cast($lhs)")
       case LongType() => 
-        val pad = bitWidth(lhs.tp) - bitWidth(x.tp)
+        // val pad = bitWidth(lhs.tp) - bitWidth(x.tp)
         emitGlobalWire(src"val $lhs = Wire(new FixedPoint(true, 64, 0))")
-        if (pad > 0) {
-          emit(src"${lhs}.r := chisel3.util.Cat(0.U(${pad}.W), ${x}.r)")
-        } else {
-          emit(src"${lhs}.r := ${x}.r.apply(${bitWidth(lhs.tp)-1}, 0)")
-        }
+        emit(src"${x}.cast($lhs)")        
+        // if (pad > 0) {
+        //   emit(src"${lhs}.r := chisel3.util.Cat(0.U(${pad}.W), ${x}.r)")
+        // } else {
+        //   emit(src"${lhs}.r := ${x}.r.apply(${bitWidth(lhs.tp)-1}, 0)")
+        // }
       case FixPtType(s,d,f) => 
         emit(src"val $lhs = Wire(new FixedPoint($s, $d, $f))")
         emit(src"${x}.cast($lhs)")
