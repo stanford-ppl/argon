@@ -3,7 +3,7 @@ package argon.interpreter
 import argon.core._
 import argon.{ConstantGenFailedException, GenerationFailedException}
 import argon.traversal.Traversal
-
+import scala.math.BigDecimal
 
 trait Interpreter extends Traversal {
 
@@ -51,6 +51,26 @@ trait Interpreter extends Traversal {
     case s: Sym[_] => variables(s)
     case _ => ???
   }).asInstanceOf[A]
+
+  object EAny {
+    def unapply(x: Any) = Some(eval[Any](x))
+  }
+
+  object EArray {
+    def unapply(x: Any) = Some(eval[Array[Any]](x))
+  }
+
+  object EString {
+    def unapply(x: Any) = Some(eval[String](x))
+  }
+  
+  object EBigDecimal {
+    def unapply(x: Any) = Some(eval[BigDecimal](x))
+  }
+  
+  object EBoolean {
+    def unapply(x: Any) = Some(eval[Boolean](x))
+  }
 
   def matchNode = PartialFunction.empty[Op[_], Any]
 
