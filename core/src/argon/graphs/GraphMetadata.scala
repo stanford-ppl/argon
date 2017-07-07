@@ -46,4 +46,10 @@ class GraphMetadata[MetaData] {
     edgeMetadata.clear()
     otherMetadata.clear()
   }
+  def copyTo(that: GraphMetadata[MetaData]): GraphMetadata[MetaData] = {
+    that.reset()
+    that.edgeMetadata ++= this.edgeMetadata
+    that.otherMetadata ++= this.otherMetadata
+    that
+  }
 }

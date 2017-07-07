@@ -61,16 +61,34 @@ class State {
 
   def reset(): Unit = {
     graph.reset()
+    metadata.reset()
     context = null
     defCache = Map.empty
     shallowAliasCache.clear()
     deepAliasCache.clear()
     aliasCache.clear()
     scopeCache.clear()
-    metadata.reset()
     pass = 1
     logstream = new PrintStream(new NullOutputStream)
     _errors = 0
     _warnings = 0
+    nParams = 0
+  }
+  def copyTo(that: State): State = {
+    that.reset()
+    this.graph.copyTo(that.graph)
+    this.metadata.copyTo(that.metadata)
+    that.context = this.context
+    that.defCache = this.defCache
+    that.shallowAliasCache ++= this.shallowAliasCache
+    that.deepAliasCache ++= this.deepAliasCache
+    that.aliasCache ++= this.aliasCache
+    that.scopeCache ++= this.scopeCache
+    that.pass = this.pass
+    that.logstream = this.logstream
+    that._errors = this._errors
+    that._warnings = this._warnings
+    that.nParams = this.nParams
+    that
   }
 }
