@@ -41,6 +41,9 @@ trait Interpreter extends Traversal {
   }
 
   var variables: Map[Sym[_], Any] = Map()
+
+  def updateVar(lhs: Sym[_], x: Any): Unit =
+    variables += ((lhs, x))
 //  var registers: Map[Reg[_], Any] = Map()
 
   def eval[A](x: Any) = (x match {
@@ -49,14 +52,11 @@ trait Interpreter extends Traversal {
     case _ => ???
   }).asInstanceOf[A]
 
+  def matchNode = PartialFunction.empty[Op[_], Any]
+
   protected def interpretNode(lhs: Sym[_], rhs: Op[_]): Unit = {
-    rhs match {
-      case _ =>
-        println(lhs, rhs)
-        //variables += ((lhs, rhs))
-        ()
-    }
-  }
+    updateVar(lhs, matchNode(rhs))
+  }  
 
   final override protected def preprocess[S:Type](block: Block[S]): Block[S] = {
     println()
