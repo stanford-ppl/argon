@@ -49,7 +49,9 @@ trait Interpreter extends Traversal {
   def eval[A](x: Any) = (x match {
     case Const(y) => y
     case s: Sym[_] => variables(s)
-    case _ => ???
+    case a@_ =>
+      println("attempted to eval " +a)
+      ???
   }).asInstanceOf[A]
 
   object EAny {
