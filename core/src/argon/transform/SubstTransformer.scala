@@ -20,35 +20,38 @@ trait SubstTransformer extends Transformer {
 
   def getSubst[T](key: Exp[T]): Option[Exp[T]] = subst.get(key).asInstanceOf[Option[Exp[T]]]
 
-  override protected def lambda1ToFunction1[A,R](lambda1: Lambda1[A,R]) = {a: Exp[A] => isolateSubstScope {
+  final override protected def blockToFunction0[R](b: Block[R], copy: Boolean): () => Exp[R] = isolateIf(copy){
+    () => inlineBlock(b)
+  }
+  final override protected def lambda1ToFunction1[A,R](lambda1: Lambda1[A,R], copy: Boolean) = {a: Exp[A] => isolateIf(copy) {
     register(lambda1.input -> a)
-    val block = blockToFunction0(lambda1)
+    val block = blockToFunction0(lambda1, copy)
     block()
   }}
-  override protected def lambda2ToFunction2[A,B,R](lambda2: Lambda2[A,B,R]) = { (a: Exp[A], b: Exp[B]) =>
-    isolateSubstScope {
+  final override protected def lambda2ToFunction2[A,B,R](lambda2: Lambda2[A,B,R], copy: Boolean) = { (a: Exp[A], b: Exp[B]) =>
+    isolateIf(copy) {
       register(lambda2.inputA -> a)
       register(lambda2.inputB -> b)
-      val block = blockToFunction0(lambda2)
+      val block = blockToFunction0(lambda2, copy)
       block()
     }
   }
-  override protected def lambda3ToFunction3[A,B,C,R](lambda3: Lambda3[A,B,C,R]) = { (a: Exp[A], b: Exp[B], c: Exp[C]) =>
-    isolateSubstScope {
+  final override protected def lambda3ToFunction3[A,B,C,R](lambda3: Lambda3[A,B,C,R], copy: Boolean) = { (a: Exp[A], b: Exp[B], c: Exp[C]) =>
+    isolateIf(copy) {
       register(lambda3.inputA -> a)
       register(lambda3.inputB -> b)
       register(lambda3.inputC -> c)
-      val block = blockToFunction0(lambda3)
+      val block = blockToFunction0(lambda3, copy)
       block()
     }
   }
-  override protected def lambda4ToFunction4[A,B,C,D,R](lambda4: Lambda4[A,B,C,D,R]) = { (a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]) =>
-    isolateSubstScope {
+  final override protected def lambda4ToFunction4[A,B,C,D,R](lambda4: Lambda4[A,B,C,D,R], copy: Boolean) = { (a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D]) =>
+    isolateIf(copy) {
       register(lambda4.inputA -> a)
       register(lambda4.inputB -> b)
       register(lambda4.inputC -> c)
       register(lambda4.inputD -> d)
-      val block = blockToFunction0(lambda4)
+      val block = blockToFunction0(lambda4, copy)
       block()
     }
   }
@@ -64,11 +67,12 @@ trait SubstTransformer extends Transformer {
       block
     }
 
-  def isolateSubstScope[A](block: => A): A = {
+  def isolateSubstScope[A](block: => A): A = isolateIf(true)(block)
+  def isolateIf[A](cond: Boolean)(block: => A): A = {
     val save = subst
-    val r = block
-    subst = save
-    r
+    val result = block
+    if (cond) subst = save
+    result
   }
 
   def withSubstRules[A](rules: Map[Exp[_],Exp[_]])(block: => A): A = {
