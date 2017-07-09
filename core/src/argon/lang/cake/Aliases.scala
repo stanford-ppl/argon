@@ -278,7 +278,7 @@ trait ArgonExternalAliases extends ArgonCommonAliases {
   type Long  = FixPt[TRUE,_64,_0]
   type Int   = FixPt[TRUE,_32,_0]
   type Short = FixPt[TRUE,_16,_0]
-  type Char  = FixPt[TRUE, _8,_0]
+  type Byte  = FixPt[TRUE, _8,_0]
 
   type Double = FltPt[_53,_11]
   type Float  = FltPt[_24, _8]
