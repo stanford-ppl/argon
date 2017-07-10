@@ -2,24 +2,26 @@ package argon.graphs
 
 import java.io.PrintStream
 
-import argon.Config
-import argon.core.Exceptions
+import argon.RecursiveScheduleException
+import argon.core._
+import forge.stateful
 
 import scala.collection.mutable
 
-trait Graph extends Exceptions {
+class Graph[E<:Edge,N<:Node] {
   type EdgeId = Int
   type NodeId = Int
+
   final val VERBOSE_SCHEDULING = false
-  var graphLog: PrintStream = if (VERBOSE_SCHEDULING) createLog(Config.logDir + "/sched/", "0000 Staging.log") else null
-  @inline private def xlog(x: String) = if (VERBOSE_SCHEDULING) withLog(graphLog){ log(x) }
+  var glog: PrintStream = if (VERBOSE_SCHEDULING) createLog(Config.logDir + "/sched/", "0000 Staging.log") else null
+  @inline private def xlog(x: => Any) = if (VERBOSE_SCHEDULING) glog.println(x)
 
   implicit class EdgeIdToInt(x: EdgeId) { @inline def toInt: Int = x.asInstanceOf[Int] }
   implicit class NodeIdToInt(x: NodeId) { @inline def toInt: Int = x.asInstanceOf[Int] }
   implicit class IntToEdgeId(x: Int) { @inline def toEdgeId: EdgeId = x.asInstanceOf[EdgeId] }
   implicit class IntToNodeId(x: Int) { @inline def toNodeId: NodeId = x.asInstanceOf[NodeId] }
 
-  type Triple = (Iterable[Edge], Node, Iterable[Edge]) // outputs, node, inputs
+  type Triple = (Iterable[E], N, Iterable[E]) // outputs, node, inputs
 
   var curEdgeId : EdgeId = 0.toEdgeId
   var curNodeId : NodeId = 0.toNodeId
@@ -33,42 +35,26 @@ trait Graph extends Exceptions {
     }
   }
 
-  sealed abstract class UseFreq
-  object Freq {
-    case object Cold extends UseFreq
-    case object Hot  extends UseFreq
-    case object Normal extends UseFreq
-  }
-
-  def combine(a: UseFreq, b: UseFreq): UseFreq = (a,b) match {
-    case (Freq.Cold, _) => Freq.Cold
-    case (_, Freq.Cold) => Freq.Cold
-    case (Freq.Hot, _)  => Freq.Hot
-    case (_, Freq.Hot)  => Freq.Hot
-    case _              => Freq.Normal
-  }
-
   object EdgeData {
-    val value = mutable.ArrayBuffer[Edge]()
+    val value = mutable.ArrayBuffer[E]()
     val producer = mutable.ArrayBuffer[NodeId]()            // Index of node corresponding to this edge
     val dependents = mutable.ArrayBuffer[List[NodeId]]()    // Dataflow edges (forward) -- per edge
   }
 
   object NodeData {
-    val value   = mutable.ArrayBuffer[Node]()
+    val value   = mutable.ArrayBuffer[N]()
     val outputs = mutable.ArrayBuffer[EdgeId](0.toEdgeId)            // nodeId :: nodeId+1 ==> edges for this node
     val inputs  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Dataflow edges (reverse) -- per node
     val bounds  = mutable.ArrayBuffer[Seq[EdgeId]]()                 // Edges bound by this node
     val tunnels = mutable.ArrayBuffer[Seq[(EdgeId,Seq[EdgeId])]]()   // Edges bound by this node, defined elsewhere
-    val freqs   = mutable.ArrayBuffer[Seq[UseFreq]]()                // Frequency hints for code motion
+    val freqs   = mutable.ArrayBuffer[Seq[Freq]]()                   // Frequency hints for code motion
   }
 
   def dumpSymbolTable(func: (Iterable[Edge], Node) => Unit): Unit = {
     (0 until curNodeId.toInt).foreach{i => val t = triple(i.toNodeId); func(t._1, t._2) }
   }
 
-  override def reset(): Unit = {
-    super.reset()
+  def reset(): Unit = {
     curEdgeId = 0.toEdgeId
     curNodeId = 0.toNodeId
     curInputId = 0.toEdgeId
@@ -83,6 +69,22 @@ trait Graph extends Exceptions {
     NodeData.tunnels.clear()
     NodeData.freqs.clear()
   }
+  def copyTo(that: Graph[E,N]): Graph[E,N] = {
+    that.reset()
+    that.curEdgeId = this.curEdgeId
+    that.curNodeId = this.curNodeId
+    that.curInputId = this.curInputId
+    that.EdgeData.value ++= this.EdgeData.value
+    that.EdgeData.producer ++= this.EdgeData.producer
+    that.EdgeData.dependents ++= this.EdgeData.dependents
+    that.NodeData.value ++= this.NodeData.value
+    that.NodeData.outputs ++= this.NodeData.outputs
+    that.NodeData.inputs ++= this.NodeData.inputs
+    that.NodeData.bounds ++= this.NodeData.bounds
+    that.NodeData.tunnels ++= this.NodeData.tunnels
+    that.NodeData.freqs ++= this.NodeData.freqs
+    that
+  }
 
   def nodeOutputs(node: NodeId): Seq[EdgeId] = {
     (NodeData.outputs(node.toInt).toInt until NodeData.outputs(node.toInt+1).toInt).map(_.toEdgeId)
@@ -90,9 +92,9 @@ trait Graph extends Exceptions {
   def nodeInputs(node: NodeId): Seq[EdgeId] = NodeData.inputs(node.toInt)
   def nodeBounds(node: NodeId): Seq[EdgeId] = NodeData.bounds(node.toInt)
   def nodeTunnels(node: NodeId): Seq[(EdgeId,Seq[EdgeId])] = NodeData.tunnels(node.toInt)
-  def nodeFreqs(node: NodeId): Seq[UseFreq] = NodeData.freqs(node.toInt)
-  def nodeOf(node: NodeId): Node = NodeData.value(node.toInt)
-  def edgeOf(edge: EdgeId): Edge = EdgeData.value(edge.toInt)
+  def nodeFreqs(node: NodeId): Seq[Freq] = NodeData.freqs(node.toInt)
+  def nodeOf(node: NodeId): N = NodeData.value(node.toInt)
+  def edgeOf(edge: EdgeId): E = EdgeData.value(edge.toInt)
   def dependentsOf(edge: EdgeId): Seq[NodeId] = EdgeData.dependents(edge.toInt)
   def producerOf(edge: EdgeId): NodeId = EdgeData.producer(edge.toInt)
   def triple(id: NodeId): Triple = (nodeOutputs(id).map(edgeOf), nodeOf(id), nodeInputs(id).map(edgeOf))
@@ -110,10 +112,10 @@ trait Graph extends Exceptions {
   }
 
   /** Add an edge with no node but which may be required for scheduling **/
-  final def addBound(out: Edge) = addNode(Nil, Seq(out), Nil, Nil, Nil, null).head
+  final def addBound(out: E) = addNode(Nil, Seq(out), Nil, Nil, Nil, null.asInstanceOf[N]).head
 
   /** Add output edge(s) with corresponding node **/
-  final def addNode(ins: Seq[Edge], outs: Seq[Edge], binds: Seq[Edge], tunnel: Seq[(Edge,Seq[Edge])], freqs: Seq[UseFreq], node: Node) = {
+  final def addNode(ins: Seq[E], outs: Seq[E], binds: Seq[E], tunnel: Seq[(Edge,Seq[E])], freqs: Seq[Freq], node: N) = {
     outs.foreach { out =>
       out.id = curEdgeId.toInt
 
@@ -152,10 +154,6 @@ trait Graph extends Exceptions {
   }
 
   // --- Scheduling
-  // Based on performance testing LongMap is slightly faster than others (even with casting)
-  type OrderCache = scala.collection.mutable.LongMap[(NodeId,Int)] // EdgeId -> (NodeId,Int)
-  def OrderCache() = new scala.collection.mutable.LongMap[(NodeId,Int)]()
-
   type SMap  = scala.collection.mutable.LongMap[Int] //java.util.HashMap[NodeId,Int]
   def SMap() = new mutable.LongMap[Int]() //new java.util.HashMap[NodeId,Int]()
   type Stack = java.util.ArrayDeque[NodeId]
@@ -394,7 +392,7 @@ trait Graph extends Exceptions {
     val levelScope = currentScope.filter(canOutside)
 
 // These xlog statements are VERY expensive - use only when debugging
-    if (VERBOSE_SCHEDULING) {
+    /*if (VERBOSE_SCHEDULING) {
       xlog("Getting scope level within scope: ")
       scope.foreach{stm => xlog(c"  ${triple(stm)}"); xlog(c"    dependents = ${nodeOutputs(stm).flatMap(dependentsOf)}") }
       xlog("For result: ")
@@ -419,7 +417,7 @@ trait Graph extends Exceptions {
       hotFringeDeps.foreach{stm => xlog(c"  ${triple(stm)}")}
       xlog("levelScope: ")
       levelScope.foreach{stm => xlog(c"  ${triple(stm)}")}
-    }
+    }*/
 
     levelScope
   }
@@ -436,7 +434,7 @@ trait Graph extends Exceptions {
     val localSchedule = getSchedule(localRoots, localCache, checkAcyclic = false) filter (localScope contains _)
 
 // These xlog statements are VERY expensive - use only when debugging
-    if (VERBOSE_SCHEDULING) {
+    /*if (VERBOSE_SCHEDULING) {
       xlog("avail nodes: ")
       availableNodes.foreach{stm => xlog(c"  ${triple(stm)}")}
       xlog("avail roots:")
@@ -449,7 +447,7 @@ trait Graph extends Exceptions {
       localRoots.foreach{stm => xlog(c"  ${triple(stm)}")}
       xlog("local schedule:")
       localSchedule.foreach{stm => xlog(c"  ${triple(stm)}")}
-    }
+    }*/
 
     localSchedule
   }
@@ -457,7 +455,7 @@ trait Graph extends Exceptions {
   /**
     * DEBUGGING
     */
-  def getNodesThatBindGiven(availableNodes: Seq[NodeId], result: Seq[EdgeId], given: Seq[NodeId]): Seq[NodeId] = {
+  @stateful def getNodesThatBindGiven(availableNodes: Seq[NodeId], result: Seq[EdgeId], given: Seq[NodeId]): Seq[(NodeId, Option[NodeId], Option[NodeId])] = {
     val availCache = buildScopeIndex(availableNodes)
     val availRoots = scheduleDepsWithIndex(result, availCache)
     val localNodes = getSchedule(availRoots, availCache, checkAcyclic = true)
@@ -478,14 +476,30 @@ trait Graph extends Exceptions {
         val bindsL1 = nodeBounds(node)
         bindsL1.foreach{bound => msg(c"  ${triple(producerOf(bound))}") }
         msg(c"  path: ")
-        path.foreach{p => msg(c"  ${triple(p)}")}
-        // TODO: This part appears to be broken right now
-        /*val otherParents = path.find{node => nodeBounds(node).nonEmpty }
-        if (otherParents.nonEmpty) {
-          log(c"  Possible culprit: The following nodes may be bound by x$node and " + otherParents.map{x => s"x$x"}.mkString(", "))
-          (path filter(bindsL1 contains _)).foreach{x => log(c"  ${triple(x)}")}
-        }*/
-        Some(node)
+        path.foreach{p =>
+          msg(c"  ${triple(p)}")
+          val bounds = nodeBounds(p)
+          if (bounds.nonEmpty) {
+            msg(c"  - binds: ")
+            bounds.foreach{b => msg(c"    ${triple(producerOf(b))}")}
+          }
+        }
+
+        val parent2 = path.find{node =>
+          val boundNodes: Set[NodeId] = nodeBounds(node).map(producerOf).toSet
+          boundNodes.intersect(binds).nonEmpty
+        }
+        if (parent2.nonEmpty) {
+          log(c"Possible culprit: The following nodes appear to be bind common symbols: ")
+          log(c"  ${triple(node)}")
+          log(c"  ${triple(parent2.get)}")
+          log(c"Common bound symbol:")
+          log(c"  ${triple(path.head)}")
+          Some((node, parent2, path.headOption))
+        }
+        else {
+          Some((node, None, None))
+        }
       }
       else None
     }

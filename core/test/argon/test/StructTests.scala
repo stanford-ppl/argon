@@ -1,15 +1,17 @@
 package argon.test
+
 import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized._
+import api._
+
+@struct case class MyStruct(x: Int, y: Int)
+@struct case class MyStruct2(x: Int = 13, y: Int = 12)
 
 class StructTests extends FlatSpec with Matchers {
 
   "StructTest" should "compile" in {
+
     class StructTest extends Test {
-      import IR._
-
-      @struct class MyStruct(x: Int, y: Int)
-
       @virtualize
       def main() {
         val array = Array.tabulate(32){i => MyStruct(i + 1, i - 1) }
@@ -25,18 +27,14 @@ class StructTests extends FlatSpec with Matchers {
         println("Sum: " + sum)
       }
     }
-    (new StructTest).main(Array.empty)
+    (new StructTest).main(scala.Array.empty)
   }
 
   "StructDefaultArgsTest" should "compile" in {
     class StructTest extends Test {
-      import IR._
-
-      @struct class MyStruct(x: Int = 13, y: Int = 12)
-
       @virtualize
       def main() {
-        val array = Array.tabulate(10){i => MyStruct(x = 25) }
+        val array = Array.tabulate(10){i => MyStruct2(x = 25) }
 
         val m = array(0).x // TODO: Why is this a problem when the val's name is 'x'? Not an issue in normal Scala
         val y = array(0).y
@@ -46,7 +44,7 @@ class StructTests extends FlatSpec with Matchers {
         println("Y value: " + y)
       }
     }
-    (new StructTest).main(Array.empty)
+    (new StructTest).main(scala.Array.empty)
   }
 
 }

@@ -1,15 +1,11 @@
 package argon.codegen.cppgen
 
-import argon.codegen.Codegen
-import argon.Config
-import argon.codegen.FileDependencies
+import argon.core._
+import argon.codegen.{Codegen, FileDependencies}
 import sys.process._
 import scala.language.postfixOps
 
-
-
 trait CppCodegen extends Codegen with FileDependencies  {
-  import IR._
   override val name = "Cpp Codegen"
   override val lang: String = "cpp"
   override val ext: String = "cpp"
@@ -46,14 +42,11 @@ trait CppCodegen extends Codegen with FileDependencies  {
     dependencies ::= DirDep(cppResourcesPath, "fringeZynq")
     dependencies ::= DirDep(cppResourcesPath, "fringeDE1SoC")
     dependencies ::= DirDep(cppResourcesPath, "fringeVCS")
+    dependencies ::= DirDep(cppResourcesPath, "fringeAWS")
     // dependencies ::= FileDep(cppResourcesPath, "cpptypes.h")
     // moveDependencies ::= AlwaysDep(s"""${out}/interface.h""", "datastructures")
     // moveDependencies ::= AlwaysDep(s"""${out}/DRAM.h""", "datastructures")
     super.copyDependencies(out)
   }
-
-
-
-
 
 }

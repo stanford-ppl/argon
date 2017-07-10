@@ -1,20 +1,20 @@
 package argon.codegen.chiselgen
 
-import sys.process._
+import argon.core._
+import argon.codegen.{Codegen, FileDependencies}
+import argon.NoBitWidthException
+
+import scala.collection.mutable
 import scala.language.postfixOps
-import argon.codegen.Codegen
-import argon.Config
-import scala.collection.mutable.HashMap
-import argon.codegen.FileDependencies
+import sys.process._
 
 trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies extends Codegen already
-  import IR._
   override val name = "Chisel Codegen"
   override val lang: String = "chisel"
   override val ext: String = "scala"
   var controllerStack = scala.collection.mutable.Stack[Exp[_]]()
 
-  var alphaconv = HashMap[String, String]() // Map for tracking defs of nodes and if they get redeffed anywhere, we map it to a suffix
+  var alphaconv = mutable.HashMap[String, String]() // Map for tracking defs of nodes and if they get redeffed anywhere, we map it to a suffix
   var maxretime: Int = 0
 
   final def alphaconv_register(xx: String): Unit = {
@@ -124,10 +124,12 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     val resourcesPath = s"chiselgen"
 
     dependencies ::= DirDep(resourcesPath, "template-level/templates")
+    // dependencies ::= DirDep(resourcesPath, "template-level/templates/hardfloat")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeHW") 
     dependencies ::= DirDep(resourcesPath, "template-level/fringeZynq")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeDE1SoC")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeVCS")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeAWS")
     
     dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile")) 
     dependencies ::= FileDep(resourcesPath, "app-level/verilator.mk", "../", Some("verilator.mk"))
@@ -165,7 +167,8 @@ import templates._
 import templates.ops._
 import types._
 import chisel3._
-import chisel3.util._""")
+import chisel3.util._
+""")
           val prnt = if (file_num == 1) src"${strip_ext(curStream)}" else src"${strip_ext(curStream)}_${file_num-1}"
           open(src"""trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {""")
         }
@@ -238,7 +241,8 @@ import templates._
 import templates.ops._
 import types._
 import chisel3._
-import chisel3.util._""")
+import chisel3.util._
+""")
           open(src"""trait ${name} extends ${prnts} {""")
           try { body } 
           finally { 
@@ -255,7 +259,8 @@ import chisel3.util._""")
   import templates.ops._
   import types._
   import chisel3._
-  import chisel3.util._""")
+  import chisel3.util._
+  """)
             open(src"""trait ${name} extends RootController {""")
             try { body } 
             finally { 

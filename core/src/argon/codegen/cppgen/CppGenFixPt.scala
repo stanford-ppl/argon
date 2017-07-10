@@ -1,19 +1,18 @@
 package argon.codegen.cppgen
 
-import argon.core.Staging
-import argon.ops.{FixPtExp, FltPtExp}
+import argon.core._
+import argon.nodes._
 
 trait CppGenFixPt extends CppCodegen {
-  val IR: FixPtExp with FltPtExp with Staging
-  import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
     case IntType() => "int32_t"
-    case LongType() => "int32_t"
+    case LongType() => "int64_t"
     case FixPtType(s,d,f) => 
       val u = if (!s) "u" else ""
       if (f > 0) {"double"} else {
-        if (d > 32) s"${u}int64_t"
+        if (d > 64) s"${u}int128_t"
+        else if (d > 32) s"${u}int64_t"
         else if (d > 16) s"${u}int32_t"
         else if (d > 8) s"${u}int16_t"
         else if (d > 4) s"${u}int8_t"
@@ -72,6 +71,12 @@ trait CppGenFixPt extends CppCodegen {
       case LongType() => emit(src"long $lhs = std::stol($x);")
       case FixPtType(s,d,f) => emit(src"float $lhs = std::stof($x);")
     }
+    case Char2Int(x) => 
+      emit(src"${lhs.tp} $lhs = (${lhs.tp}) ${x}[0];")
+    case Int2Char(x) => 
+      emit(src"char ${lhs}[2]; // Declared as char but becomes string")
+      emit(src"${lhs}[0] = $x;")
+      emit(src"${lhs}[1] = '\0';")
 
     case _ => super.emitNode(lhs, rhs)
   }

@@ -1,11 +1,9 @@
 package argon.codegen.chiselgen
 
-import argon.core.Staging
-import argon.ops.ArrayExp
+import argon.core._
+import argon.nodes._
 
 trait ChiselGenArray extends ChiselCodegen {
-  val IR: ArrayExp with Staging
-  import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
     case tp: ArrayType[_] => src"List[${tp.typeArguments.head}]"

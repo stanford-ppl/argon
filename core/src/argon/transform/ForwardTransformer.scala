@@ -1,13 +1,13 @@
 package argon.transform
 
-import argon.core.Staging
+import argon.core._
 import argon.traversal.Traversal
 
-trait ForwardTransformer extends SubstTransformer with Traversal { self =>
-  val IR: Staging
-  import IR._
+trait ForwardTransformer extends Traversal with SubstTransformer {
+  override implicit def __state: State = IR
 
-  val allowPretransform = false       // Need to explicitly enable this
+  //val allowPretransform = false     // Need to explicitly enable this
+  val allowDuplication = false        // Allow old symbols with mirroring rules to persist in the IR
   final override val recurse = Never  // Mirroring already guarantees we always recursively visit scopes
 
   /**
@@ -32,24 +32,18 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
 
   /**
     * Visit and transform each statement in the given block WITHOUT creating a staging scope
+    *
+    * Override this function for custom block transformation rules
     */
-  override protected def inlineBlock[T:Type](b: Block[T]): Exp[T] = {
-    inlineBlock(b, {stms => visitStms(stms); f(b.result) })
-  }
-
-  /**
-    * Visit and transform each statement in the given block, creating a new Staged block
-    * with the transformed statements
-    */
-  override protected def transformBlock[T:Type](b: Block[T]): Block[T] = {
-    transformBlock(b, {stms => visitStms(stms); f(b.result) })
-  }
+  override protected def inlineBlock[T](b: Block[T]): Exp[T] = inlineBlockWith(b, {stms => visitStms(stms); f(b.result) })
 
   /**
     * Visit and perform some transformation `func` over all statements in the block, returning a result symbol
     * WITHOUT creating a staging scope.
+    *
+    * Utility function - should not be overridden
     */
-  final protected def inlineBlock[T:Type](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T] = {
+  final override protected def inlineBlockWith[T](b: Block[T], func: Seq[Stm] => Exp[T]): Exp[T] = {
     tab += 1
     val inputs2 = syms(f.tx(b.inputs)).map(stmOf)
     val result: Exp[T] = withInnerStms(availStms diff inputs2) {
@@ -60,19 +54,9 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   }
 
   /**
-    * Visit and perform some transformation `func` over all statements in the block, returning a new staged
-    * block with the resulting transformed statements. The return Exp[T] of func will be the result symbol of the
-    * new block.
-    */
-  final protected def transformBlock[T:Type](b: Block[T], func: Seq[Stm] => Exp[T]): Block[T] = {
-    val inputs = syms(f.tx(b.inputs))
-    createBlock({ inlineBlock(b,func) }, inputs, b.temp)
-  }
-
-  /**
     * Perform inlining while "mangling" the given block using the given statement transformation function.
-    * No new block is created, and the return type does not have to be an Exp[T]
-    * Note that this means the return types may be entirely different - use with caution.
+    * No new block is created, and the returned value does not have to be an Exp[T]
+    * Note that this means the return type of the new Block may be entirely different - use with caution.
     */
   final protected def mangleBlock[T:Type, R](b: Block[T], func: Seq[Stm] => R): R = {
     tab += 1
@@ -88,7 +72,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
   /** Traversal functions **/
   final override protected def visitBlock[S](b: Block[S]): Block[S] = {
     tab += 1
-    val b2 = transformBlock(b)(mtyp(b.tp))
+    val b2 = transformBlock(b)
     assert(b2.tp == b.tp)
     tab -= 1
     b2
@@ -103,7 +87,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
       val lhs2 = transform(lhs, rhs)
 
       // Substitution must not have any rule for lhs besides (optionally) lhs -> lhs2
-      if (f(lhs) != lhs && f(lhs) != lhs2) throw new IllegalSubstException(name, lhs, f(lhs), lhs2)
+      if (f(lhs) != lhs && f(lhs) != lhs2) throw new argon.IllegalSubstException(name, lhs, f(lhs), lhs2)
       lhs2
     }
     else {
@@ -140,6 +124,23 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
     super.preprocess(block)
   }
 
+  override protected def postprocess[S:Type](block: Block[S]) = {
+    // Somewhat expensive sanity check
+    val b = super.postprocess(block)
+    if (Config.verbosity > 2 && !allowDuplication) {
+      val (_, contents) = blockInputsAndNestedContents(block)
+      val symbols = contents.flatMap(_.lhs.asInstanceOf[Seq[Exp[_]]]).toSet
+      val duplicated = (symbols intersect subst.keySet).filterNot{x => f(x) == x }
+      if (duplicated.nonEmpty) {
+        error(s"[Compiler] The following symbols appear to have been duplicated by transformer $name:")
+        duplicated.foreach{x => error(c"[Compiler]  ${str(x)}")}
+        error(s"[Compiler] If this behavior is expected, enable it by setting allowDuplication to true")
+        state.logError()
+      }
+    }
+    b
+  }
+
   /**
     * DANGER ZONE
     * Use these methods only if you know what you're doing! (i.e. your name is David and you're not drunk)
@@ -150,7 +151,7 @@ trait ForwardTransformer extends SubstTransformer with Traversal { self =>
       case stm @ TTP(List(lhs), rhs) => mirror(List(lhs), rhs).head.asInstanceOf[Exp[A]]
       case stm @ TTP(lhs, rhs) =>
         // TODO: How to handle this? Is this possible?
-        throw new IllegalMirrorExpException(name, e)
+        throw new argon.IllegalMirrorExpException(name, e)
     }
     case _ => e
   }

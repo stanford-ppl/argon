@@ -1,12 +1,10 @@
 package argon.codegen.scalagen
 
+import argon.core._
 import argon.codegen.StructCodegen
-import argon.core.Staging
-import argon.ops.StructExp
+import argon.nodes._
 
 trait ScalaGenStructs extends ScalaCodegen with StructCodegen {
-  val IR: StructExp with Staging
-  import IR._
 
   protected def structName(tp: StructType[_], idx: Int): String = s"Struct$idx"
 

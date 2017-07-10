@@ -3,10 +3,9 @@ package argon.test
 import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized._
 
-
 object NoCSEAcrossCold extends Test {
-  import IR._
-  IR.testArgs = List("1")
+  import argon.test.api._
+  testArgs = List("1")
 
   @virtualize
   def main() {
@@ -24,12 +23,15 @@ object NoCSEAcrossCold extends Test {
   }
 }
 
-class CSETests extends FlatSpec with Matchers with argon.core.Exceptions {
+class CSETests extends FlatSpec with Matchers {
   val noargs = Array[String]()
 
   "NoCSEAcrossCold" should "not CSE across cold blocks" in {
+    import argon.nodes.FixDiv
     NoCSEAcrossCold.main(noargs)
-    val nDivs = NoCSEAcrossCold.IR.NodeData.value.count{case _: NoCSEAcrossCold.IR.FixDiv[_,_,_] => true; case _ => false }
+
+    val IR = NoCSEAcrossCold.IR.graph
+    val nDivs = IR.NodeData.value.count{case _: FixDiv[_,_,_] => true; case _ => false }
 
     nDivs should be >= 3
   }

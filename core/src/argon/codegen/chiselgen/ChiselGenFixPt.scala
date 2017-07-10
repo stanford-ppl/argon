@@ -1,12 +1,11 @@
 package argon.codegen.chiselgen
 
-import argon.core.Staging
+import argon.core._
+import argon.NoWireConstructorException
+import argon.nodes._
 import scala.math._
-import argon.ops.{FixPtExp, FltPtExp}
 
 trait ChiselGenFixPt extends ChiselCodegen {
-  val IR: FixPtExp with FltPtExp with Staging
-  import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
     case IntType() => "Int"
@@ -38,7 +37,8 @@ trait ChiselGenFixPt extends ChiselCodegen {
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     case (FixPtType(s,d,f), Const(cc: BigDecimal)) => 
-      cc.toString + src".FP($s, $d, $f)"
+      if (d > 32 | (!s & d == 32)) cc.toString + src"L.FP($s, $d, $f)"
+      else cc.toString + src".FP($s, $d, $f)"
     case (IntType(), Const(cc: BigDecimal)) => 
       if (cc >= 0) {
         cc.toString + ".toInt.U(32.W)"  
@@ -75,9 +75,9 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case SatSub(x,y) => emit(src"val $lhs = $x <-> $y")
     case SatMul(x,y) => emit(src"val $lhs = $x <*> $y")
     case SatDiv(x,y) => emit(src"val $lhs = $x </> $y")
-    case FixLsh(x,y) => emit(s"val ${quote(lhs)} = ${quote(x)} << $y // TODO: cast to proper type (chisel expands bits)")
-    case FixRsh(x,y) => emit(s"val ${quote(lhs)} = ${quote(x)} >> $y")
-    case FixURsh(x,y) => emit(s"val ${quote(lhs)} = ${quote(x)} >>> $y")
+    case FixLsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} << $yy // TODO: cast to proper type (chisel expands bits)")
+    case FixRsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} >> $yy")
+    case FixURsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} >>> $yy")
     case UnbSatMul(x,y) => emit(src"val $lhs = $x <*&> $y")
     case UnbSatDiv(x,y) => emit(src"val $lhs = $x </&> $y")
     case FixRandom(x) => 
@@ -86,18 +86,28 @@ trait ChiselGenFixPt extends ChiselCodegen {
       emitGlobalModule(src"val ${lhs}_rng = Module(new PRNG($seed))")
       emitGlobalModule(src"${lhs}_rng.io.en := true.B")
       emit(src"val ${lhs} = ${lhs}_rng.io.output(${lhs}_bitsize,0)")
+    case FixUnif() => 
+      val bits = lhs.tp match {
+        case FixPtType(s,d,f) => f
+      }
+      val seed = (random*1000).toInt
+      emitGlobalModule(src"val ${lhs}_rng = Module(new PRNG($seed))")
+      emitGlobalModule(src"${lhs}_rng.io.en := true.B")
+      emit(src"val ${lhs} = Wire(new FixedPoint(false, 0, $bits))")
+      emit(src"${lhs}.r := ${lhs}_rng.io.output(${bits},0)")
     case FixConvert(x) => lhs.tp match {
       case IntType()  => 
         emitGlobalWire(src"val $lhs = Wire(new FixedPoint(true, 32, 0))")
-        emit(src"${lhs}.r := ${x}.r")
+        emit(src"${x}.cast($lhs)")
       case LongType() => 
-        val pad = bitWidth(lhs.tp) - bitWidth(x.tp)
+        // val pad = bitWidth(lhs.tp) - bitWidth(x.tp)
         emitGlobalWire(src"val $lhs = Wire(new FixedPoint(true, 64, 0))")
-        if (pad > 0) {
-          emit(src"${lhs}.r := chisel3.util.Cat(0.U(${pad}.W), ${x}.r)")
-        } else {
-          emit(src"${lhs}.r := ${x}.r.apply(${bitWidth(lhs.tp)-1}, 0)")
-        }
+        emit(src"${x}.cast($lhs)")        
+        // if (pad > 0) {
+        //   emit(src"${lhs}.r := chisel3.util.Cat(0.U(${pad}.W), ${x}.r)")
+        // } else {
+        //   emit(src"${lhs}.r := ${x}.r.apply(${bitWidth(lhs.tp)-1}, 0)")
+        // }
       case FixPtType(s,d,f) => 
         emit(src"val $lhs = Wire(new FixedPoint($s, $d, $f))")
         emit(src"${x}.cast($lhs)")

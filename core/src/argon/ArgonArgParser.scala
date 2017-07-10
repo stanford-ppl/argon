@@ -1,7 +1,7 @@
 package argon
 
+import argon.core.Config
 import argon.util.ArgParser
-
 import scopt._
 
 class ArgonArgParser extends ArgParser {

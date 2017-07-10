@@ -1,11 +1,9 @@
 package argon.codegen.chiselgen
 
-import argon.core.Staging
-import argon.ops.IfThenElseExp
+import argon.core._
+import argon.nodes._
 
 trait ChiselGenIfThenElse extends ChiselCodegen {
-  val IR: IfThenElseExp with Staging
-  import IR._
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case IfThenElse(cond, thenp, elsep) =>

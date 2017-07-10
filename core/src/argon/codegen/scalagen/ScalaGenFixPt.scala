@@ -1,12 +1,12 @@
 package argon.codegen.scalagen
 
-import argon.core.Staging
-import argon.ops.{FixPtExp, FltPtExp}
+import argon.core._
+import argon.nodes._
 
+/**
+  * NOTE TO SPATIAL AUTHORS: NOT USED IN SPATIAL!
+  */
 trait ScalaGenFixPt extends ScalaCodegen {
-  val IR: FixPtExp with FltPtExp with Staging
-  import IR._
-
   override protected def remap(tp: Type[_]): String = tp match {
     case IntType() => "Int"
     case LongType() => "Long"
@@ -19,8 +19,6 @@ trait ScalaGenFixPt extends ScalaCodegen {
     case _ => super.quoteConst(c)
   }
 
-  /* WHY IS THIS FILE BEING IGNORED?! */
-  
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case FixInv(x)   => emit(src"val $lhs = ~$x")
     case FixNeg(x)   => emit(src"val $lhs = -$x")
@@ -39,6 +37,7 @@ trait ScalaGenFixPt extends ScalaCodegen {
       case IntType()  => emit(src"val $lhs = scala.util.Random.nextInt($max)")
       case LongType() => emit(src"val $lhs = scala.util.Random.nextLong() % $max")
     }
+    case FixUnif() => emit(src"val $lhs = scala.util.Random.nextDouble()")
     case FixRandom(None) => lhs.tp match {
       case IntType()  => emit(src"val $lhs = scala.util.Random.nextInt()")
       case LongType() => emit(src"val $lhs = scala.util.Random.nextLong()")
@@ -56,6 +55,11 @@ trait ScalaGenFixPt extends ScalaCodegen {
       case IntType()  => emit(src"val $lhs = $x.toInt")
       case LongType() => emit(src"val $lhs = $x.toLong")
     }
+    // case Char2Int(x) => 
+    //   emit(src"val $lhs = ${x}(0).toInt")
+    // case Int2Char(x) => 
+    //   emit(src"val $lhs = ${x}(0).toChar")
+
     case _ => super.emitNode(lhs, rhs)
   }
 }

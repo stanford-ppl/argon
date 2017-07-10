@@ -1,11 +1,9 @@
 package argon.codegen.chiselgen
 
-import argon.core.Staging
-import argon.ops.{FixPtExp, FltPtExp}
+import argon.core._
+import argon.nodes._
 
 trait ChiselGenFltPt extends ChiselCodegen {
-  val IR: FltPtExp with FixPtExp with Staging
-  import IR._
 
   override protected def remap(tp: Type[_]): String = tp match {
     case FloatType()  => "Float"
@@ -20,8 +18,9 @@ trait ChiselGenFltPt extends ChiselCodegen {
   }
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
-    case (FloatType(), Const(c: BigDecimal)) => c.toString + "f"
-    case (DoubleType(), Const(c: BigDecimal)) => c.toString
+    // recFNFromFN(8, 24, Mux(faddCode === io.opcode, io.b, getFloatBits(1.0f).S))
+    case (FloatType(), Const(cc: BigDecimal)) => cc.toString + src".FlP(8, 24)"
+    case (DoubleType(), Const(c: BigDecimal)) => "DspReal(" + c.toString + ")"
     case _ => super.quoteConst(c)
   }
 
@@ -34,7 +33,7 @@ trait ChiselGenFltPt extends ChiselCodegen {
     case FltLt(x,y)  => emit(src"val $lhs = $x < $y")
     case FltLeq(x,y) => emit(src"val $lhs = $x <= $y")
     case FltNeq(x,y) => emit(src"val $lhs = $x != $y")
-    case FltEql(x,y) => emit(src"val $lhs = $x == $y")
+    case FltEql(x,y) => emit(src"val $lhs = $x === $y")
     case FltRandom(x) => lhs.tp match {
       case FloatType()  => emit(src"val $lhs = chisel.util.Random.nextFloat()")
       case DoubleType() => emit(src"val $lhs = chisel.util.Random.nextDouble()")

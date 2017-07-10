@@ -1,18 +1,13 @@
 package argon.codegen.chiselgen
 
+import argon.core._
 import argon.codegen.FileGen
-import argon.Config
 
 trait ChiselFileGen extends FileGen {
-  import IR._
 
-
-  override protected def emitMain[S:Type](b: Block[S]): Unit = {
-    emitBlock(b)
-  }
+  override protected def emitMain[S:Type](b: Block[S]): Unit = emitBlock(b)
 
   override protected def process[S:Type](b: Block[S]): Block[S] = {
-
     // // Forcefully create the following streams
     // val baseStream = getStream("GlobalWires")
     // val ioModule = getStream("IOModule")
@@ -42,7 +37,8 @@ import templates._
 import templates.ops._
 import chisel3.util._
 import fringe._
-import types._""")
+import types._
+""")
       open("trait IOModule extends Module {")
       emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
       emit("val io_w = 64 // TODO: How to generate these properly?")
@@ -54,7 +50,8 @@ import types._""")
 import templates._
 import templates.ops._
 import fringe._
-import chisel3._""")
+import chisel3._
+""")
       open(s"""trait BufferControlCxns extends RootController {""")
     }
 
@@ -65,7 +62,8 @@ import templates.ops._
 import fringe._
 import types._
 import chisel3._
-import chisel3.util._""")
+import chisel3.util._
+""")
       open(s"trait RootController extends GlobalModulesMixer {")
       emit(src"// Root controller for app: ${Config.name}")
 
@@ -77,7 +75,8 @@ import templates._
 import templates.ops._
 import chisel3._
 import chisel3.util._
-import types._""")
+import types._
+""")
       open(s"""trait GlobalWires extends IOModule{""")
     }
 
@@ -87,7 +86,8 @@ import templates._
 import templates.ops._
 import chisel3._
 import chisel3.util._
-import types._ """)
+import types._ 
+""")
       open(s"""trait GlobalModules extends GlobalWiresMixer {""")
     }
 

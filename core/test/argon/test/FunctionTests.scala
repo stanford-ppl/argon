@@ -1,12 +1,10 @@
 package argon.test
 
-import argon.core._
-import org.virtualized.virtualize
-import org.virtualized.SourceContext
+import org.virtualized._
 import org.scalatest.{FlatSpec, Matchers}
 
 object ScalaFunTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
     val f: scala.Function1[Int, Int] = (arg: Int) => {
@@ -18,7 +16,7 @@ object ScalaFunTest extends Test {
   }
 }
 object ArgonFunTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
     val f: Function1[Int, Int] = (arg: Int) =>
@@ -29,7 +27,7 @@ object ArgonFunTest extends Test {
 }
 
 object ArgonFunMapTest extends Test {
-  import IR._
+  import argon.test.api._
   @virtualize
   def main() {
     val a = Array.tabulate(16){i => i}
@@ -40,7 +38,7 @@ object ArgonFunMapTest extends Test {
     println("FlatMap appears to be working")
   }
 }
-class FunctionTests extends FlatSpec with Matchers with Exceptions {
+class FunctionTests extends FlatSpec with Matchers {
   val noargs = Array[String]()
   "ScalaFunTest" should "compile" in { ScalaFunTest.main(noargs) }
   "ArgonFunTest" should "compile" in { ArgonFunTest.main(noargs) }

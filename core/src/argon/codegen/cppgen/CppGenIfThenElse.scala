@@ -1,14 +1,12 @@
 package argon.codegen.cppgen
 
-import argon.core.Staging
-import argon.ops._
+import argon.core._
+import argon.nodes._
 
 trait CppGenIfThenElse extends CppGenArray {
-  val IR: VoidExp with ArrayExtExp with TextExp with FixPtExp with FltPtExp with BoolExp with StructExp with TupleExp with HashMapExp with IfThenElseExp with Staging
-  import IR._
 
   protected def isVoidType(tp: Type[_]): Boolean = tp match {
-    case VoidType => true
+    case UnitType => true
     case _ => false
   }
 

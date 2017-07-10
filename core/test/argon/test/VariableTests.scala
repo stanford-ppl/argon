@@ -1,12 +1,10 @@
 package argon.test
 
-import argon.core.Exceptions
 import org.scalatest.{FlatSpec, Matchers}
-
 import org.virtualized._
 
 object NestedArrayTest extends Test {
-  import IR._
+  import api._
 
   type T = Float
 
@@ -51,7 +49,7 @@ object NestedArrayTest extends Test {
 }
 
 
-class VariableTests extends FlatSpec with Matchers with Exceptions {
+class VariableTests extends FlatSpec with Matchers {
   "NestedArrayTest" should "compile" in { NestedArrayTest.main(Array.empty) }
 
 }
