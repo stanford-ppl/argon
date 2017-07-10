@@ -316,7 +316,7 @@ object FixPt {
     stage(FixPtToFltPt[S,I,F,G,E](x))(ctx)
   }
 
-  @internal def from_text[S:BOOL,I:INT,F:INT](x: Exp[MString]): Exp[FixPt[S,I,F]] = x match {
+  @internal def from_string[S:BOOL,I:INT,F:INT](x: Exp[MString]): Exp[FixPt[S,I,F]] = x match {
     case Const(c: CString) =>
       if (c.indexOf("0x") == 0) {
         val raw = c.replace("0x","")

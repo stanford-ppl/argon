@@ -44,7 +44,7 @@ trait FixPtExp {
     @internal def apply(x: FixPt[S,I,F]): FltPt[G,E] = wrap(FixPt.to_flt[S,I,F,G,E](x.s))
   }
   implicit def string2fixpt[S:BOOL,I:INT,F:INT] = new Cast[MString,FixPt[S,I,F]] {
-    @internal def apply(x: MString): FixPt[S,I,F] = wrap(FixPt.from_text[S,I,F](x.s))
+    @internal def apply(x: MString): FixPt[S,I,F] = wrap(FixPt.from_string[S,I,F](x.s))
   }
 }
 
