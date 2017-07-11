@@ -125,7 +125,7 @@ object FixPt {
       case x: Long => makeFixPt(BigDecimal(x))
       case x: Float => makeFixPt(BigDecimal(x.toDouble))
       case x: Double => makeFixPt(BigDecimal(x))
-      case x: CString if !x.exists(_ == '.') => makeFixPt(BigDecimal(x))
+      case x: CString => makeFixPt(BigDecimal(x))
       case c =>
         error(ctx, s"$c cannot be lifted to a fixed point value")
         error(ctx)
