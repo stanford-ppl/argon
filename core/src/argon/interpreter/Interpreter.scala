@@ -17,10 +17,17 @@ trait Interpreter extends Traversal {
   }
 
   var variables: Map[Sym[_], Any] = Map()
+  var bounds: Map[Bound[_], Any] = Map()
 
   def updateVar(lhs: Sym[_], x: Any): Unit =
     variables += ((lhs, x))
 
+  def updateBound(bd: Bound[_], x: Any): Unit =
+    bounds += ((bd, x))
+
+  def removeBound(bd: Bound[_]) =
+    bounds -= bd
+  
 
   def eval[A](x: Exp[_]): A = (x match {
     //Internal const rewrites
@@ -28,10 +35,11 @@ trait Interpreter extends Traversal {
     //Otherwise
     case Const(y) => y
     case Param(y) => y
+    case b: Bound[_] => bounds(b)
     case s: Sym[_] => variables(s)
     case a@_ =>
-      println("attempted to eval " +a)
-      ???
+      println(s"[${Console.RED}error${Console.RESET}] Attempted to eval: $a ${a.getClass}")
+      System.exit(0)
   }).asInstanceOf[A]
 
   object EAny {
@@ -74,11 +82,14 @@ trait Interpreter extends Traversal {
       }
     }
 
-    updateVar(lhs, matchNode(lhs).lift(rhs).getOrElse({
+    val v = matchNode(lhs).lift(rhs).getOrElse({
       println()
-      println(s"[${Console.RED}error${Console.RESET}] Unable to interpret this node " + (lhs, rhs))
+      println(s"[${Console.RED}error${Console.RESET}] Unable to interpret this node: " + (lhs, rhs))
       System.exit(0)
-    }))
+    })
+
+    if (!v.isInstanceOf[Unit])
+      updateVar(lhs, v)
 
   }  
 
@@ -111,7 +122,17 @@ object Interpreter {
       case q: Queue[_] =>
         "Queue(" + q.asScala.toList.map(stringify).mkString(", ") + ")"
       case s: Seq[_] =>
-        "Seq(" + s.map(stringify).mkString(", ") + ")"
+        if (s.size > 10) 
+          "Seq(" + s.take(10).map(stringify).mkString(", ") + ", ...)"
+        else
+          "Seq(" + s.map(stringify).mkString(", ") + ")"          
+
+      case s: Array[_] =>
+        if (s.size > 10) 
+          "Array(" + s.take(10).map(stringify).mkString(", ") + ", ...)"
+        else
+          "Array(" + s.map(stringify).mkString(", ") + ")"          
+        
       case (a, b) => "(" + stringify(a) + ", "  + stringify(b) + ")"
       case s: String => '"' + s + '"'
       case Const(x) => stringify(x)
