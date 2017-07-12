@@ -22,6 +22,10 @@ class ArgonArgParser extends ArgParser {
     Config.verbosity = 2
   ).text("enable verbose printout")
 
+  parser.opt[Unit]("debug").action { (_,_) =>
+    Config.debug = true
+  }.text("enable interpreter debugger")
+  
   parser.opt[Unit]('c', "clean").action( (x,_) => {
       Config.clearGen = true
       Config.clearLogs = true

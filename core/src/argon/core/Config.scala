@@ -15,6 +15,7 @@ argon {
   lib = true
   log = $${argon.cwd}"/logs/"${name}
   out = $${argon.cwd}"/gen/"${name}
+  debug = false
   clear-logs = true
   clear-gen = false
   multifile = 4
@@ -32,6 +33,7 @@ argon {
       verbosity:Int,
       unsafe: Boolean,
       lib: Boolean,
+      debug: Boolean,
       //name: String,
       log: String,
       out: String,
@@ -50,7 +52,7 @@ argon {
 
     verbosity = conf.verbosity
     showWarn = true
-
+    debug = conf.debug
     unsafe = conf.unsafe
     lib    = conf.lib
     //name = conf.name
@@ -71,6 +73,7 @@ argon {
   var verbosity: Int = _
   var showWarn: Boolean = true
 
+  var debug: Boolean = _  
   var unsafe: Boolean = _
   var lib:  Boolean = _
   var name: String = _
@@ -83,4 +86,9 @@ argon {
   var unwrapStructs: Boolean = _
   var emitDevel: Int = _
   var allowAtomicWrites: Boolean = _
+
+  //debugger interpreter
+  var forceExit: () => Boolean = () => false
+  var exit: () => Unit = () => ()
+  
 }
