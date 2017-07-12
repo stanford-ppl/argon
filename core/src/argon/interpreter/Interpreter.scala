@@ -75,9 +75,9 @@ trait Interpreter extends Traversal {
     }
 
     updateVar(lhs, matchNode(lhs).lift(rhs).getOrElse({
-      println("Unable to interpret this node " + (lhs, rhs))
+      println()
+      println(s"[${Console.RED}error${Console.RESET}] Unable to interpret this node " + (lhs, rhs))
       System.exit(0)
-      ???
     }))
 
   }  
@@ -85,20 +85,20 @@ trait Interpreter extends Traversal {
   final override protected def preprocess[S:Type](block: Block[S]): Block[S] = {
     println()
     println(s"[${Console.GREEN}Interpreter${Console.RESET}]")
-    variables.foreach { case (key, e) => println(s"${key}: $e") }
     block
   }
 
+  final override protected def postprocess[S:Type](block: Block[S]): Block[S] = {
+    println()
+    displayInfo
+    block
+  }
+  
 
 
-  def debug() = {
+  def displayInfo() = {
     println(s"[${Console.BLUE}variables content${Console.RESET}]")
     variables.foreach { case (key, e) => { val v = Interpreter.stringify(e); println(s"${Console.MAGENTA}${key}${Console.RESET}: $v") }}
-  }
-  final override protected def postprocess[S:Type](block: Block[S]): Block[S] = {
-    println()    
-    debug
-    block
   }
   final override protected def visit(lhs: Sym[_], rhs: Op[_]) = interpretNode(lhs, rhs)
   final override protected def visitFat(lhs: Seq[Sym[_]], rhs: Def) = ???
