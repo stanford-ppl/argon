@@ -135,7 +135,7 @@ object Interpreter {
         
       case (a, b) => "(" + stringify(a) + ", "  + stringify(b) + ")"
       case s: String => '"' + s + '"'
-      case Const(x) => stringify(x)
+      case Const(x) => "C(" + stringify(x) + ")"
       case null => "null"
       case _ => x.toString
     }
