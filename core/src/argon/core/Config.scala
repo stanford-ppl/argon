@@ -88,7 +88,6 @@ argon {
   var allowAtomicWrites: Boolean = _
 
   //debugger interpreter
-  var forceExit: () => Boolean = () => false
   var exit: () => Unit = () => ()
   
 }

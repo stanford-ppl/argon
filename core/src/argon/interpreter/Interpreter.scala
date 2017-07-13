@@ -11,9 +11,8 @@ trait Interpreter extends Traversal {
 
   override val recurse: RecurseOpt = Never
 
-  protected def interpretBlock(b: Block[_]): Unit = {
-    visitBlock(b)
-//    println("block", s"${b.result}")
+  protected def interpretBlock(b: Block[_]): Exp[_]= {
+    visitBlock(b).result
   }
 
   var variables: Map[Sym[_], Any] = Map()
@@ -66,6 +65,18 @@ trait Interpreter extends Traversal {
     def unapply(x: Exp[_]) = Some(eval[Boolean](x))
   }
 
+  object ESeq {
+    def unapply(x: Exp[_]) = Some(eval[Seq[_]](x))
+  }
+  
+  object SeqE {
+    def unapply(x: Seq[Exp[_]]) = Some(x.map(eval[Any]))
+  }
+
+  object SeqEB {
+    def unapply(x: Seq[Exp[_]]) = Some(x.map(eval[Boolean]))
+  }
+  
   trait INodes
   
   def matchNode(lhs: Sym[_]) = PartialFunction.empty[Op[_], Any]
