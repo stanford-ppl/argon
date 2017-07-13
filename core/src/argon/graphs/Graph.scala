@@ -69,6 +69,22 @@ class Graph[E<:Edge,N<:Node] {
     NodeData.tunnels.clear()
     NodeData.freqs.clear()
   }
+  def copyTo(that: Graph[E,N]): Graph[E,N] = {
+    that.reset()
+    that.curEdgeId = this.curEdgeId
+    that.curNodeId = this.curNodeId
+    that.curInputId = this.curInputId
+    that.EdgeData.value ++= this.EdgeData.value
+    that.EdgeData.producer ++= this.EdgeData.producer
+    that.EdgeData.dependents ++= this.EdgeData.dependents
+    that.NodeData.value ++= this.NodeData.value
+    that.NodeData.outputs ++= this.NodeData.outputs
+    that.NodeData.inputs ++= this.NodeData.inputs
+    that.NodeData.bounds ++= this.NodeData.bounds
+    that.NodeData.tunnels ++= this.NodeData.tunnels
+    that.NodeData.freqs ++= this.NodeData.freqs
+    that
+  }
 
   def nodeOutputs(node: NodeId): Seq[EdgeId] = {
     (NodeData.outputs(node.toInt).toInt until NodeData.outputs(node.toInt+1).toInt).map(_.toEdgeId)
