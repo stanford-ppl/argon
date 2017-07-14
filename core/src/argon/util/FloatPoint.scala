@@ -2,6 +2,8 @@ package argon.util
 
 case class FltFormat(sbits: Int, ebits: Int) {
   lazy val bias: BigInt = BigInt(2).pow(ebits - 1) - 1
+  lazy val MIN_E: BigInt = -bias + 1  // Represented as all 0s
+  lazy val MAX_E: BigInt = bias       // Represented as all 1s
 }
 
 protected sealed abstract class FloatValue {
@@ -102,6 +104,20 @@ protected case class Value(value: BigDecimal) extends FloatValue {
   override def toString: String = if (value.abs >= 1E7) value.bigDecimal.toEngineeringString
                                   else value.bigDecimal.toPlainString
 }
+object FloatValue {
+  def apply(x: Float): FloatValue = {
+    if (x.isNaN) NaN
+    else if (x.isInfinity) Inf(negative = x < 0)
+    else if (x == 0.0f) Zero(negative = 1 / x < 0)
+    else Value(BigDecimal(x.toDouble))
+  }
+  def apply(x: Double): FloatValue = {
+    if (x.isNaN) NaN
+    else if (x.isInfinity) Inf(negative = x < 0)
+    else if (x == 0.0) Zero(negative = 1 / x < 0)
+    else Value(BigDecimal(x))
+  }
+}
 
 class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) {
   // All operations assume that both the left and right hand side have the same fixed point format
@@ -120,5 +136,18 @@ class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) 
 }
 
 object FloatPoint {
-  def clamped(value: FloatValue, valid: Boolean, fmt: FltFormat): FloatPoint = new FloatPoint(value, valid, fmt)
+  def apply(x: Byte, fmt: FltFormat): FloatPoint = FloatPoint.clamped(Value(BigDecimal(x)), valid=true, fmt)
+  def apply(x: Short, fmt: FltFormat): FloatPoint = FloatPoint.clamped(Value(BigDecimal(x)), valid=true, fmt)
+  def apply(x: Int, fmt: FltFormat): FloatPoint = FloatPoint.clamped(Value(BigDecimal(x)), valid=true, fmt)
+  def apply(x: Long, fmt: FltFormat): FloatPoint = FloatPoint.clamped(Value(BigDecimal(x)), valid=true, fmt)
+
+  def apply(x: Float, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
+  def apply(x: Double, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
+
+  def clamped(value: FloatValue, valid: Boolean, fmt: FltFormat): FloatPoint = value match {
+    case NaN | _: Inf | _:Zero => new FloatPoint(value, valid, fmt)
+    case b: Value =>
+      // TODO
+      new FloatPoint(value, valid, fmt)
+  }
 }
