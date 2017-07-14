@@ -33,7 +33,6 @@ argon {
       verbosity:Int,
       unsafe: Boolean,
       lib: Boolean,
-      debug: Boolean,
       //name: String,
       log: String,
       out: String,
@@ -52,7 +51,6 @@ argon {
 
     verbosity = conf.verbosity
     showWarn = true
-    debug = conf.debug
     unsafe = conf.unsafe
     lib    = conf.lib
     //name = conf.name
@@ -73,7 +71,6 @@ argon {
   var verbosity: Int = _
   var showWarn: Boolean = true
 
-  var debug: Boolean = _  
   var unsafe: Boolean = _
   var lib:  Boolean = _
   var name: String = _

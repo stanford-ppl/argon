@@ -30,7 +30,7 @@ trait Interpreter extends Traversal {
 
   def eval[A](x: Exp[_]): A = (x match {
     //Internal const rewrites
-    case s@Const(y) if s.tp.isInstanceOf[StructType[_]] => y.asInstanceOf[Seq[(Any, Exp[_])]].map(x => (x._1, eval[Any](x._2)))
+//    case s@Const(y)  => y.asInstanceOf[Seq[(Any, Exp[_])]].map(x => (x._1, eval[Any](x._2)))
     //Otherwise
     case Const(y) => y
     case Param(y) => y
@@ -85,7 +85,7 @@ trait Interpreter extends Traversal {
 
   protected def interpretNode(lhs: Sym[_], rhs: Op[_]): Unit = {
 
-    if (Config.debug) {
+    if (Config.verbosity >= 3) {
       println("Press a key to execute instruction (q to quit)")
       if (io.StdIn.readLine() == "q") {
         Config.exit()
@@ -111,8 +111,10 @@ trait Interpreter extends Traversal {
   }
 
   final override protected def postprocess[S:Type](block: Block[S]): Block[S] = {
-    println()
-    displayInfo
+    if (Config.verbosity >= 2) {    
+      println()
+      displayInfo
+    }
     block
   }
   
@@ -120,7 +122,7 @@ trait Interpreter extends Traversal {
 
   def displayInfo() = {
     println(s"[${Console.BLUE}variables content${Console.RESET}]")
-    variables.foreach { case (key, e) => { val v = Interpreter.stringify(e); println(s"${Console.MAGENTA}${key}${Console.RESET}: $v") }}
+    variables.toList.sortBy(_._1.toString).foreach { case (key, e) => { val v = Interpreter.stringify(e); println(s"${Console.MAGENTA}${key}${Console.RESET}: $v") }}
   }
   final override protected def visit(lhs: Sym[_], rhs: Op[_]) = interpretNode(lhs, rhs)
   final override protected def visitFat(lhs: Seq[Sym[_]], rhs: Def) = ???
