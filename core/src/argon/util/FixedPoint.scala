@@ -17,6 +17,8 @@ case class FixFormat(sign: Boolean, ibits: Int, fbits: Int) {
 
 class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) {
   // All operations assume that both the left and right hand side have the same fixed point format
+  def unary_- = FixedPoint.clamped(-this.value, this.valid, fmt)
+  def unary_~ = FixedPoint.clamped(~this.value, this.valid, fmt)
   def +(that: FixedPoint) = FixedPoint.clamped(this.value + that.value, this.valid && that.valid, fmt)
   def -(that: FixedPoint) = FixedPoint.clamped(this.value - that.value, this.valid && that.valid, fmt)
   def *(that: FixedPoint) = FixedPoint.clamped((this.value * that.value) >> fmt.fbits, this.valid && that.valid, fmt)
