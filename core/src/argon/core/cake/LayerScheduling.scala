@@ -79,7 +79,7 @@ trait LayerScheduling { this: ArgonCake =>
           dbg("")
           dbg("")
         }
-        throw new argon.EffectsOrderException
+        state.logError()
       }
     }
 
