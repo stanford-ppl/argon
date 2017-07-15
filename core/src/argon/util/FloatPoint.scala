@@ -144,10 +144,30 @@ object FloatPoint {
   def apply(x: Float, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
   def apply(x: Double, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
 
+  /**
+    * public static double logBigInteger(BigInteger val) {
+      int blex = val.bitLength() - 1022; // any value in 60..1023 is ok
+      if (blex > 0)
+          val = val.shiftRight(blex);
+      double res = Math.log(val.doubleValue());
+      return blex > 0 ? res + blex * LOG2 : res;
+    }
+    */
+  /**
+    * Stolen from https://stackoverflow.com/questions/6827516/logarithm-for-biginteger/7982137#7982137
+    */
+  private val LOG2 = Math.log(2.0)
+  def logBigInt(value: BigInt): Double = {
+    val blex = value.bitLength - 1022 // any value in 60 .. 1023 is ok
+    val shifted = if (blex > 0) value >> blex else value
+    val res = Math.log(shifted.doubleValue)
+    if (blex > 0) res + blex*LOG2 else res
+  }
+
   def clamped(value: FloatValue, valid: Boolean, fmt: FltFormat): FloatPoint = value match {
     case NaN | _: Inf | _:Zero => new FloatPoint(value, valid, fmt)
-    case b: Value =>
-      // TODO
+    case Value(v) =>
+      //val exp =
       new FloatPoint(value, valid, fmt)
   }
 }
