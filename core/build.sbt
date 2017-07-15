@@ -8,6 +8,7 @@ libraryDependencies += "commons-io" % "commons-io" % "2.5"
 scalaSource in Compile := baseDirectory(_/ "src").value
 scalaSource in Test := baseDirectory(_/"test").value
 
+
 /** Scalac Options **/
 scalacOptions += "-Yno-generic-signatures"
 //  scalacOptions += "-Ymacro-debug-lite",

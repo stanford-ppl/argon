@@ -58,7 +58,7 @@ class CodegenException(codegen: String, lhs: Sym[_], rhs: Def)(implicit state: S
     error(c"[$codegen] Don't know how to generate code for $lhs = $rhs")
   }
 
-class EffectsOrderException(implicit state: State) extends CompilerException(5, c"Violated ordering of effects")
+//class EffectsOrderException(implicit state: State) extends CompilerException(5, c"Violated ordering of effects")
 
 class FlexEvaluationException(s: Sym[_])(implicit state: State) extends
   CompilerException(6, c"Unable to evaluate $s"){ error(c"Unable to flex evaluate ${str(s)}") }
