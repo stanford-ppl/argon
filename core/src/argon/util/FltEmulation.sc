@@ -17,6 +17,7 @@ case class FltFormat(sbits: Int, ebits: Int) {
   lazy val bias: BigInt = BigInt(2).pow(ebits - 1) - 1
   lazy val MIN_E: BigInt = -bias + 1  // Represented as all 0s
   lazy val MAX_E: BigInt = bias       // Represented as all 1s
+  lazy val SUB_E: BigInt = MIN_E - sbits
 }
 
 protected sealed abstract class FloatValue {
@@ -133,8 +134,10 @@ protected case class Zero(negative: Boolean) extends FloatValue {
 protected case class Value(value: BigDecimal) extends FloatValue {
   def negative: Boolean = value < 0
   // Default cutoff for formatting for scala Double is 1E7, so using the same here
-  override def toString: String = if (value.abs >= 1E7) value.bigDecimal.toEngineeringString
-  else value.bigDecimal.toPlainString
+  override def toString: String = {
+    if (value.abs >= 1E7 || value.abs < 1E-7) value.bigDecimal.toEngineeringString
+    else value.bigDecimal.toPlainString
+  }
 
   def bits(fmt: FltFormat): Array[Bool] = FloatPoint.clamp(value, fmt) match {
     case Left(fv) => fv.bits(fmt)
@@ -179,6 +182,18 @@ class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) 
     case Zero(z) => BigDecimal(0)
     case Value(v) => v
     case v => throw new Exception(s"Cannot convert $v to BigDecimal")
+  }
+  def toDouble: Double = value match {
+    case NaN       => Double.NaN
+    case Inf(neg)  => if (neg) Double.NegativeInfinity else Double.PositiveInfinity
+    case Zero(neg) => if (neg) -0.0 else 0.0
+    case Value(v)  => v.toDouble
+  }
+  def toFloat: Float = value match {
+    case NaN       => Float.NaN
+    case Inf(neg)  => if (neg) Float.NegativeInfinity else Float.PositiveInfinity
+    case Zero(neg) => if (neg) -0.0f else 0.0f
+    case Value(v)  => v.toFloat
   }
 
   def bits: Array[Bool] = value.bits(fmt)
@@ -231,37 +246,53 @@ object FloatPoint {
   }
 
   def clamp(value: BigDecimal, fmt: FltFormat): Either[FloatValue, (Boolean,BigInt,BigInt)] = {
-    val y = Math.floor(log2BigDecimal(value)).toInt
-    val x = value.abs / BigDecimal(2).pow(y)
-    println(s"exp: $y [${fmt.MIN_E} : ${fmt.MAX_E}]")
-    println(s"man: $x")
-    if (y > fmt.MAX_E) {
-      Left(Inf(negative = value < 0))
-    }
-    else if (y > fmt.MIN_E) {
-      val mantissaShifted = ((x - 1) * BigDecimal(2).pow(fmt.sbits+1)).toBigInt
-      val mantissa = if (mantissaShifted.testBit(0)) (mantissaShifted - 1) >> 1 else mantissaShifted >> 1
-      val expPart = y + fmt.bias
-      Right((value < 0, mantissa, expPart))
-    }
-    else if (y == fmt.MIN_E) {
-      val mantissaShifted = (x * BigDecimal(2).pow(fmt.sbits+1)).toBigInt
-      val mantissa = if (mantissaShifted.testBit(0)) (mantissaShifted - 1) >> 1 else mantissaShifted >> 1
-      val expPart = BigInt(1)
-      Right((value < 0, mantissa, expPart))
+    if (value == 0) {
+      Left(Zero(negative = false))
     }
     else {
-      Left(Zero(negative = value < 0))
+      val y = Math.floor(log2BigDecimal(value.abs)).toInt
+      val x = value.abs / BigDecimal(2).pow(y)
+      println(s"exp: $y [${fmt.MIN_E} : ${fmt.MAX_E}, sub: ${fmt.SUB_E}]")
+      println(s"man: $x")
+      if (y > fmt.MAX_E) {
+        Left(Inf(negative = value < 0))
+      }
+      else if (y >= fmt.MIN_E) {
+        val mantissa = ((x - 1) * BigDecimal(2).pow(fmt.sbits)).toBigInt
+        val expPart = y + fmt.bias
+        Right((value < 0, mantissa, expPart))
+      }
+      else if (y < fmt.MIN_E && y >= fmt.MIN_E - fmt.sbits) {
+        val mantissa = (x * BigDecimal(2).pow(fmt.sbits)).toBigInt
+        val expBits = BigInt(0)
+        val shift = fmt.MIN_E - y
+        val shiftedMantissa = mantissa >> shift.toInt
+        println(s"mantissa: " + Array.tabulate(fmt.sbits+1){i => mantissa.testBit(i) }.map{x => if (x) 1 else 0}.reverse.mkString(""))
+        println(s"mantissa: " + Array.tabulate(fmt.sbits+1){i => shiftedMantissa.testBit(i) }.map{x => if (x) 1 else 0}.reverse.mkString(""))
+        println(s"shift: $shift")
+        Right((value < 0, expBits, shiftedMantissa))
+      }
+      else {
+        Left(Zero(negative = value < 0))
+      }
     }
   }
   def convertBackToValue(m: Either[FloatValue, (Boolean,BigInt,BigInt)], fmt: FltFormat): FloatValue = m match {
     case Right((s,m,e)) =>
-      val x = BigDecimal(m) / BigDecimal(2).pow(fmt.sbits) + (if (e==1) 0 else 1)
-      val y = e.toInt - fmt.bias.toInt
-      println(s"x: $x")
-      println(s"y: $y")
-      val sign = if (s) -1 else 1
-      Value(x * BigDecimal(2).pow(y) * sign)
+      if (e > 0) {
+        val y = e.toInt - fmt.bias.toInt
+        val x = BigDecimal(m) / BigDecimal(2).pow(fmt.sbits) + 1 //+ (if (e == 1) 0 else 1)
+        println(s"x: $x")
+        println(s"y: $y")
+        val sign = if (s) -1 else 1
+        Value(x * BigDecimal(2).pow(y) * sign)
+      }
+      else {
+        val x = BigDecimal(m) / BigDecimal(2).pow(fmt.sbits - 1)
+        val y = BigDecimal(2).pow(fmt.MIN_E.toInt - 1)
+        val sign = if (s) -1 else 1
+        Value(sign * x * y)
+      }
     case Left(value) => value
   }
 
@@ -282,7 +313,7 @@ FloatPoint.log2BigInt(x)
 
 Math.log(32)
 
-val q = -0.0
+val q = Double.MinPositiveValue * Math.pow(2, 50)
 val DoubleFmt = FltFormat(52, 11)
 val m = FloatPoint(q, DoubleFmt)
 
