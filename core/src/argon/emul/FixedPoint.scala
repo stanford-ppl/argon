@@ -1,6 +1,7 @@
-package argon.util
+package argon.emul
+
 case class FixFormat(sign: Boolean, ibits: Int, fbits: Int) {
-  lazy val bits = ibits + fbits
+  lazy val bits: Int = ibits + fbits
   lazy val MAX_FRACTIONAL_VALUE: BigInt = (BigInt(1) << (fbits - 1)) - 1
 
   lazy val MAX_INTEGRAL_VALUE: BigInt = (if (sign) (BigInt(1) << (ibits-1)) - 1      else (BigInt(1) << ibits) - 1) << fbits
@@ -46,13 +47,17 @@ class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) {
   def <*>(that: FixedPoint): FixedPoint = FixedPoint.saturating((this.value * that.value) >> fmt.bits, this.valid && that.valid, fmt)
   def </>(that: FixedPoint): FixedPoint = FixedPoint.saturating((this.value << fmt.bits) / that.value, this.valid && that.valid, fmt)
 
-  def *&(that: FixedPoint)  = FixedPoint.unbiased(((this.value << 4) * (that.value << 4)) >> fmt.fbits, this.valid && that.valid, fmt)
-  def /&(that: FixedPoint)  = valueOrX {
+  def *&(that: FixedPoint): FixedPoint = {
+    FixedPoint.unbiased(((this.value << 4) * (that.value << 4)) >> fmt.fbits, this.valid && that.valid, fmt)
+  }
+  def /&(that: FixedPoint): FixedPoint = valueOrX {
     FixedPoint.unbiased((this.value << fmt.fbits+4) / (that.value << 4), this.valid && that.valid, fmt)
   }
-  def <*&>(that: FixedPoint) = FixedPoint.unbiasedSat((this.value << 4) * (that.value << 4) >> fmt.fbits, this.valid && that.valid, fmt)
-  def </&>(that: FixedPoint) = valueOrX {
-    FixedPoint.unbiasedSat((this.value << fmt.fbits+4) / (that.value << 4), this.valid && that.valid, fmt)
+  def <*&>(that: FixedPoint): FixedPoint = {
+    FixedPoint.unbiased((this.value << 4) * (that.value << 4) >> fmt.fbits, this.valid && that.valid, fmt, saturate = true)
+  }
+  def </&>(that: FixedPoint): FixedPoint = valueOrX {
+    FixedPoint.unbiased((this.value << fmt.fbits+4) / (that.value << 4), this.valid && that.valid, fmt, saturate = true)
   }
 
 
@@ -143,7 +148,7 @@ object FixedPoint {
   def saturating(bits: BigInt, valid: Boolean, fmt: FixFormat): FixedPoint = {
     if (bits < fmt.MIN_VALUE) fmt.MIN_VALUE_FP
     else if (bits > fmt.MAX_VALUE) fmt.MAX_VALUE_FP
-    else new FixedPoint(bits, valid, fmt)
+    else FixedPoint.clamped(bits, valid, fmt)
   }
 
   /**
@@ -152,18 +157,35 @@ object FixedPoint {
     * @param bits Value's bits, with 4 extra fractional bits (beyond normal format representation)
     * @param valid Defines whether this value is valid or not
     * @param fmt The fixed point format used by this number
+    * @param saturate When true, also use saturating arithmetic on underflow/overflow
     */
-  def unbiased(bits: BigInt, valid: Boolean, fmt: FixFormat): FixedPoint = {
-    val biased = bits >> fmt.fbits
-    // TODO
-    new FixedPoint(biased, valid, fmt)
-    /*val remainder = bits & (fmt.)
-    if (biased >= 0) {
+  def unbiased(bits: BigInt, valid: Boolean, fmt: FixFormat, saturate: Boolean = false): FixedPoint = {
+    val biased = bits >> 4
+    val remainder = (bits & 0xF).toFloat / 16.0f
+    val rand = scala.util.Random.nextFloat() // TODO: This is actually heavier than it needs to be
+    val add = rand + remainder
+    val value = if (add >= 1 && biased >= 0) biased + 1  else if (add >= 1 && biased < 0) biased - 1 else biased
+    if (!saturate) FixedPoint.clamped(value, valid, fmt)
+    else FixedPoint.saturating(value, valid, fmt)
+  }
 
-    }
-    else {
+  /**
+    * Generate a pseudo-random fixed point number, uniformly distributed across the entire representation's range
+    * @param fmt The format for the fixed point number being generated
+    */
+  def random(fmt: FixFormat): FixedPoint = {
+    val bits = Array.tabulate(fmt.bits){_ => Bool(scala.util.Random.nextBoolean()) }
+    FixedPoint.fromBits(bits, fmt)
+  }
 
-    }*/
+  /**
+    * Generate a pseudo-random fixed point number, uniformly distributed between [0, max)
+    * @param max The maximum value of the range, non-inclusive
+    * @param fmt The format for the max and the fixed point number being generated
+    */
+  def random(max: FixedPoint, fmt: FixFormat): FixedPoint = {
+    val rand = random(fmt)
+    rand % max
   }
 
 }

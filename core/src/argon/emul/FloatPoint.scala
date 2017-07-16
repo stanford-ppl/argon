@@ -1,4 +1,5 @@
-package argon.util
+package argon.emul
+
 case class FltFormat(sbits: Int, ebits: Int) {
   lazy val bias: BigInt = BigInt(2).pow(ebits - 1) - 1
   lazy val MIN_E: BigInt = -bias + 1      // Represented as exponent of 1
@@ -31,8 +32,8 @@ protected sealed abstract class FloatValue {
     case (_, NaN) => NaN
     case (NaN, _) => NaN
     case (a:Inf, b:Inf) => Inf(a.negative != b.negative)
-    case (a:Inf, b:Zero) => NaN
-    case (a:Zero, b:Inf) => NaN
+    case (_:Inf, _:Zero) => NaN
+    case (_:Zero, _:Inf) => NaN
     case (a:Inf, b:Value) => Inf(a.negative != b.negative)
     case (a:Value, b:Inf) => Inf(a.negative != b.negative)
     case (_:Inf, _) => this
@@ -66,11 +67,11 @@ protected sealed abstract class FloatValue {
     case (_, NaN) => false
     case (NaN, _) => false
     case (a:Inf, b:Inf) => a.negative && !b.negative
-    case (a, b:Inf) => !b.negative
-    case (a:Inf, b) => b.negative
-    case (a:Zero, b:Zero) => false
-    case (a, b:Zero) => a.negative
-    case (a:Zero, b) => !b.negative
+    case (_, b:Inf) => !b.negative
+    case (_:Inf, b) => b.negative
+    case (_:Zero, _:Zero) => false
+    case (a, _:Zero) => a.negative
+    case (_:Zero, b) => !b.negative
     case (a:Value,b:Value) => a.value < b.value
   }
   def <=(that: FloatValue): Boolean = this < that || this === that
@@ -82,7 +83,7 @@ protected sealed abstract class FloatValue {
     case (a:Inf, b:Inf) => a.negative == b.negative
     case (_, _:Inf) => false
     case (_:Inf, _) => false
-    case (a:Zero, b:Zero) => true
+    case (_:Zero,_:Zero) => true
     case (_:Zero, _) => false
     case (_, _:Zero) => false
     case (a:Value,b:Value) => a.value == b.value
@@ -95,7 +96,7 @@ protected case object NaN extends FloatValue {
 
   def bits(fmt: FltFormat): Array[Bool] = {
     Array.tabulate(fmt.sbits){i => Bool(i == fmt.sbits-1) } ++
-      Array.tabulate(fmt.ebits){i => Bool(true) } ++
+      Array.tabulate(fmt.ebits){_ => Bool(true) } ++
       Array(Bool(false))
   }
 }
@@ -103,8 +104,8 @@ protected case class Inf(negative: Boolean) extends FloatValue {
   override def toString: String = if (negative) "-Inf" else "Inf"
 
   def bits(fmt: FltFormat): Array[Bool] = {
-    Array.tabulate(fmt.sbits){i => Bool(false) } ++
-      Array.tabulate(fmt.ebits){i => Bool(true) } ++
+    Array.tabulate(fmt.sbits){_ => Bool(false) } ++
+      Array.tabulate(fmt.ebits){_ => Bool(true) } ++
       Array(Bool(negative))
   }
 }
@@ -112,8 +113,8 @@ protected case class Zero(negative: Boolean) extends FloatValue {
   override def toString: String = if (negative) "-0.0" else "0.0"
 
   def bits(fmt: FltFormat): Array[Bool] = {
-    Array.tabulate(fmt.sbits){i => Bool(false) } ++
-      Array.tabulate(fmt.ebits){i => Bool(false) } ++
+    Array.tabulate(fmt.sbits){_ => Bool(false) } ++
+      Array.tabulate(fmt.ebits){_ => Bool(false) } ++
       Array(Bool(negative))
   }
 }
@@ -151,21 +152,21 @@ object FloatValue {
 
 class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) {
   // All operations assume that both the left and right hand side have the same fixed point format
-  def +(that: FloatPoint) = FloatPoint.clamped(this.value + that.value, this.valid && that.valid, fmt)
-  def -(that: FloatPoint) = FloatPoint.clamped(this.value - that.value, this.valid && that.valid, fmt)
-  def *(that: FloatPoint) = FloatPoint.clamped(this.value * that.value, this.valid && that.valid, fmt)
-  def /(that: FloatPoint) = FloatPoint.clamped(this.value / that.value, this.valid && that.valid, fmt)
-  def %(that: FloatPoint) = FloatPoint.clamped(this.value % that.value, this.valid && that.valid, fmt)
+  def +(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value + that.value, this.valid && that.valid, fmt)
+  def -(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value - that.value, this.valid && that.valid, fmt)
+  def *(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value * that.value, this.valid && that.valid, fmt)
+  def /(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value / that.value, this.valid && that.valid, fmt)
+  def %(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value % that.value, this.valid && that.valid, fmt)
 
-  def <(that: FloatPoint)   = Bool(this.value < that.value, this.valid && that.valid)
-  def <=(that: FloatPoint)  = Bool(this.value <= that.value, this.valid && that.valid)
-  def >(that: FloatPoint)   = Bool(this.value > that.value, this.valid && that.valid)
-  def >=(that: FloatPoint)  = Bool(this.value >= that.value, this.valid && that.valid)
-  def !==(that: FloatPoint) = Bool(this.value != that.value, this.valid && that.valid)
-  def ===(that: FloatPoint) = Bool(this.value == that.value, this.valid && that.valid)
+  def <(that: FloatPoint): Bool   = Bool(this.value < that.value, this.valid && that.valid)
+  def <=(that: FloatPoint): Bool  = Bool(this.value <= that.value, this.valid && that.valid)
+  def >(that: FloatPoint): Bool   = Bool(this.value > that.value, this.valid && that.valid)
+  def >=(that: FloatPoint): Bool  = Bool(this.value >= that.value, this.valid && that.valid)
+  def !==(that: FloatPoint): Bool = Bool(this.value != that.value, this.valid && that.valid)
+  def ===(that: FloatPoint): Bool = Bool(this.value == that.value, this.valid && that.valid)
 
   def toBigDecimal: BigDecimal = value match {
-    case Zero(z) => BigDecimal(0)
+    case Zero(_) => BigDecimal(0)
     case Value(v) => v
     case v => throw new Exception(s"Cannot convert $v to BigDecimal")
   }
@@ -204,7 +205,7 @@ class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) 
   def isNegZero: Boolean = value == Zero(false)
   def isSubnormal: Boolean = value match {
     case Value(v) => FloatPoint.clamp(v, fmt) match {
-      case Right((s,m,e)) => e == 0
+      case Right((_,_,e)) => e == 0
       case _ => false
     }
     case _ => false
@@ -284,7 +285,7 @@ object FloatPoint {
       }
     }
   }
-  def convertBackToValue(m: Either[FloatValue, (Boolean,BigInt,BigInt)], fmt: FltFormat): FloatValue = m match {
+  def convertBackToValue(x: Either[FloatValue, (Boolean,BigInt,BigInt)], fmt: FltFormat): FloatValue = x match {
     case Right((s,m,e)) =>
       if (e > 0) {
         val y = e.toInt - fmt.bias.toInt
