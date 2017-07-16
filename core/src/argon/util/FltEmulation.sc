@@ -201,6 +201,19 @@ class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) 
     if (x.valid && x.value) "1" else if (x.valid) "0" else "X"
   }.mkString("")
 
+  def isNaN: Boolean = value == NaN
+  def isPositiveInfinity: Boolean = value == Inf(false)
+  def isNegativeInfinity: Boolean = value == Inf(true)
+  def isPosZero: Boolean = value == Zero(true)
+  def isNegZero: Boolean = value == Zero(false)
+  def isSubnormal: Boolean = value match {
+    case Value(v) => FloatPoint.clamp(v, fmt) match {
+      case Right((s,m,e)) => e == 0
+      case _ => false
+    }
+    case _ => false
+  }
+
   override def toString: String = if (valid) value.toString else "X"
 }
 
@@ -214,15 +227,6 @@ object FloatPoint {
   def apply(x: Double, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
   def apply(x: BigDecimal, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
 
-  /**
-    * public static double logBigInteger(BigInteger val) {
-      int blex = val.bitLength() - 1022; // any value in 60..1023 is ok
-      if (blex > 0)
-          val = val.shiftRight(blex);
-      double res = Math.log(val.doubleValue());
-      return blex > 0 ? res + blex * LOG2 : res;
-    }
-    */
   /**
     * Stolen from https://stackoverflow.com/questions/6827516/logarithm-for-biginteger/7982137#7982137
     */
@@ -250,7 +254,7 @@ object FloatPoint {
       Left(Zero(negative = false))
     }
     else {
-      val y = Math.floor(log2BigDecimal(value.abs)).toInt
+      val y = Math.round(log2BigDecimal(value.abs)).toInt // Note: NOT floor or ceil
       val x = value.abs / BigDecimal(2).pow(y)
       println(s"exp: $y [${fmt.MIN_E} : ${fmt.MAX_E}, sub: ${fmt.SUB_E}]")
       println(s"man: $x")
@@ -258,19 +262,20 @@ object FloatPoint {
         Left(Inf(negative = value < 0))
       }
       else if (y >= fmt.MIN_E) {
-        val mantissa = ((x - 1) * BigDecimal(2).pow(fmt.sbits)).toBigInt
+        val mantissaP1 = ((x - 1) * BigDecimal(2).pow(fmt.sbits + 1)).toBigInt
+        val mantissa = (mantissaP1 + (if (mantissaP1.testBit(0)) 1 else 0)) >> 1
         val expPart = y + fmt.bias
         Right((value < 0, mantissa, expPart))
       }
-      else if (y < fmt.MIN_E && y >= fmt.MIN_E - fmt.sbits) {
-        val mantissa = (x * BigDecimal(2).pow(fmt.sbits)).toBigInt
+      else if (y < fmt.MIN_E && y >= fmt.SUB_E) {
+        val mantissa = (x * BigDecimal(2).pow(fmt.sbits + 1)).toBigInt
         val expBits = BigInt(0)
-        val shift = fmt.MIN_E - y
-        val shiftedMantissa = mantissa >> shift.toInt
+        val shift = (fmt.MIN_E - y + 1).toInt
+        val shiftedMantissa = (mantissa >> shift) + (if (mantissa.testBit(shift-1)) 1 else 0)
         println(s"mantissa: " + Array.tabulate(fmt.sbits+1){i => mantissa.testBit(i) }.map{x => if (x) 1 else 0}.reverse.mkString(""))
         println(s"mantissa: " + Array.tabulate(fmt.sbits+1){i => shiftedMantissa.testBit(i) }.map{x => if (x) 1 else 0}.reverse.mkString(""))
         println(s"shift: $shift")
-        Right((value < 0, expBits, shiftedMantissa))
+        Right((value < 0, shiftedMantissa, expBits))
       }
       else {
         Left(Zero(negative = value < 0))
@@ -307,19 +312,18 @@ object FloatPoint {
 
 def log2(x: BigDecimal) = Math.log(x.toDouble) / Math.log(2)
 
-val x = BigInt(32)
-log2(32)
-FloatPoint.log2BigInt(x)
-
-Math.log(32)
-
-val q = Double.MinPositiveValue * Math.pow(2, 50)
+val q = Float.NaN //* 512.23231238123//* Math.pow(2, 51) * 1.1
 val DoubleFmt = FltFormat(52, 11)
-val m = FloatPoint(q, DoubleFmt)
+val FloatFmt = FltFormat(23, 8)
+val m = FloatPoint(q, FloatFmt)
 
 def bitString(x: Double) = {
   val str = java.lang.Long.toBinaryString(java.lang.Double.doubleToRawLongBits(x))
   "0b" + ("0" * (64 - str.length)) + str
+}
+def bitString(x: Float) = {
+  val str = java.lang.Integer.toBinaryString(java.lang.Float.floatToIntBits(x))
+  "0b" + ("0" * (32 - str.length)) + str
 }
 def annotate(x: String) = {
   x.slice(0,3) + "|" + x.slice(3,15) + "|" + x.slice(15,x.length)
@@ -329,3 +333,4 @@ def annotate(x: String) = {
 annotate(m.bitString)
 annotate(bitString(q))
 
+m.isSubnormal
