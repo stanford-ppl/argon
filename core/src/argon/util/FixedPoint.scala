@@ -17,47 +17,66 @@ case class FixFormat(sign: Boolean, ibits: Int, fbits: Int) {
 
 class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) {
   // All operations assume that both the left and right hand side have the same fixed point format
-  def unary_- = FixedPoint.clamped(-this.value, this.valid, fmt)
-  def unary_~ = FixedPoint.clamped(~this.value, this.valid, fmt)
-  def +(that: FixedPoint) = FixedPoint.clamped(this.value + that.value, this.valid && that.valid, fmt)
-  def -(that: FixedPoint) = FixedPoint.clamped(this.value - that.value, this.valid && that.valid, fmt)
-  def *(that: FixedPoint) = FixedPoint.clamped((this.value * that.value) >> fmt.fbits, this.valid && that.valid, fmt)
-  def /(that: FixedPoint) = valueOrX{ FixedPoint.clamped((this.value << fmt.fbits) / that.value, this.valid && that.valid, fmt) }
-  def %(that: FixedPoint) = valueOrX{
+  def unary_-(): FixedPoint = FixedPoint.clamped(-this.value, this.valid, fmt)
+  def unary_~(): FixedPoint = FixedPoint.clamped(~this.value, this.valid, fmt)
+  def +(that: FixedPoint): FixedPoint = FixedPoint.clamped(this.value + that.value, this.valid && that.valid, fmt)
+  def -(that: FixedPoint): FixedPoint = FixedPoint.clamped(this.value - that.value, this.valid && that.valid, fmt)
+  def *(that: FixedPoint): FixedPoint = FixedPoint.clamped((this.value * that.value) >> fmt.fbits, this.valid && that.valid, fmt)
+  def /(that: FixedPoint): FixedPoint = valueOrX{ FixedPoint.clamped((this.value << fmt.fbits) / that.value, this.valid && that.valid, fmt) }
+  def %(that: FixedPoint): FixedPoint = valueOrX{
     val result = this.value % that.value
     val posResult = if (result < 0) result + that.value else result
     FixedPoint.clamped(posResult, this.valid && that.valid, fmt)
   }
-  def &(that: FixedPoint) = FixedPoint.clamped(this.value & that.value, this.valid && that.valid, fmt)
-  def ^(that: FixedPoint) = FixedPoint.clamped(this.value ^ that.value, this.valid && that.valid, fmt)
-  def |(that: FixedPoint) = FixedPoint.clamped(this.value | that.value, this.valid && that.valid, fmt)
+  def &(that: FixedPoint): FixedPoint = FixedPoint.clamped(this.value & that.value, this.valid && that.valid, fmt)
+  def ^(that: FixedPoint): FixedPoint = FixedPoint.clamped(this.value ^ that.value, this.valid && that.valid, fmt)
+  def |(that: FixedPoint): FixedPoint = FixedPoint.clamped(this.value | that.value, this.valid && that.valid, fmt)
 
-  def <(that: FixedPoint)   = Bool(this.value < that.value, this.valid && that.valid)
-  def <=(that: FixedPoint)  = Bool(this.value <= that.value, this.valid && that.valid)
-  def >(that: FixedPoint)   = Bool(this.value > that.value, this.valid && that.valid)
-  def >=(that: FixedPoint)  = Bool(this.value >= that.value, this.valid && that.valid)
-  def !==(that: FixedPoint) = Bool(this.value != that.value, this.valid && that.valid)
-  def ===(that: FixedPoint) = Bool(this.value == that.value, this.valid && that.valid)
+  def <(that: FixedPoint): Bool   = Bool(this.value < that.value, this.valid && that.valid)
+  def <=(that: FixedPoint): Bool  = Bool(this.value <= that.value, this.valid && that.valid)
+  def >(that: FixedPoint): Bool   = Bool(this.value > that.value, this.valid && that.valid)
+  def >=(that: FixedPoint): Bool  = Bool(this.value >= that.value, this.valid && that.valid)
+  def !==(that: FixedPoint): Bool = Bool(this.value != that.value, this.valid && that.valid)
+  def ===(that: FixedPoint): Bool = Bool(this.value == that.value, this.valid && that.valid)
 
   def bits: Array[Bool] = Array.tabulate(fmt.bits){i => Bool(value.testBit(i)) }
 
-  def <+>(that: FixedPoint) = FixedPoint.saturating(this.value + that.value, this.valid && that.valid, fmt)
-  def <->(that: FixedPoint) = FixedPoint.saturating(this.value - that.value, this.valid && that.valid, fmt)
-  def <*>(that: FixedPoint) = FixedPoint.saturating((this.value * that.value) >> fmt.bits, this.valid && that.valid, fmt)
-  def </>(that: FixedPoint) = FixedPoint.saturating((this.value << fmt.bits) / that.value, this.valid && that.valid, fmt)
+  def <+>(that: FixedPoint): FixedPoint = FixedPoint.saturating(this.value + that.value, this.valid && that.valid, fmt)
+  def <->(that: FixedPoint): FixedPoint = FixedPoint.saturating(this.value - that.value, this.valid && that.valid, fmt)
+  def <*>(that: FixedPoint): FixedPoint = FixedPoint.saturating((this.value * that.value) >> fmt.bits, this.valid && that.valid, fmt)
+  def </>(that: FixedPoint): FixedPoint = FixedPoint.saturating((this.value << fmt.bits) / that.value, this.valid && that.valid, fmt)
 
-  /*
-  def *&(that: FixedPoint)  = FixedPoint.unbiased(this.value * that.value, this.valid && that.valid, fmt)
-  def /&(that: FixedPoint)  = valueOrX { FixedPoint.unbiased(this.value / that.value, this.valid && that.valid, fmt) }
-  def <*&>(that: FixedPoint) = FixedPoint.unbiasedSat(this.value * that.value, this.valid && that.valid, fmt)
-  def </&>(that: FixedPoint) = valueOrX { FixedPoint.unbiasedSat(this.value / that.value, this.valid && that.valid, fmt) }*/
+  def *&(that: FixedPoint)  = FixedPoint.unbiased(((this.value << 4) * (that.value << 4)) >> fmt.fbits, this.valid && that.valid, fmt)
+  def /&(that: FixedPoint)  = valueOrX {
+    FixedPoint.unbiased((this.value << fmt.fbits+4) / (that.value << 4), this.valid && that.valid, fmt)
+  }
+  def <*&>(that: FixedPoint) = FixedPoint.unbiasedSat((this.value << 4) * (that.value << 4) >> fmt.fbits, this.valid && that.valid, fmt)
+  def </&>(that: FixedPoint) = valueOrX {
+    FixedPoint.unbiasedSat((this.value << fmt.fbits+4) / (that.value << 4), this.valid && that.valid, fmt)
+  }
+
+
+  def toByte: Byte = (value >> fmt.fbits).toByte
+  def toShort: Short = (value >> fmt.bits).toShort
+  def toInt: Int = (value >> fmt.fbits).toInt
+  def toLong: Long = (value >> fmt.fbits).toLong
+  def toBigInt: BigInt = value >> fmt.fbits
+
+  def toFloat: Float = this.toBigDecimal.toFloat
+  def toDouble: Double = this.toBigDecimal.toDouble
+  def toBigDecimal: BigDecimal = BigDecimal(value) / BigDecimal(BigInt(1) << fmt.fbits)
+
+  def toFixedPoint(fmt: FixFormat): FixedPoint = FixedPoint.clamped(value, valid, fmt)
+  def toFloatPoint(fmt: FltFormat): FloatPoint = FloatPoint(this.toBigDecimal, fmt).withValid(valid)
+
+  def withValid(v: Boolean) = new FixedPoint(value, valid=v, fmt)
 
   def valueOrX(x: => FixedPoint): FixedPoint = {
     try { x } catch { case _: Throwable => FixedPoint.invalid(fmt) }
   }
   override def toString: String = if (valid) {
     if (fmt.fbits > 0) {
-      (BigDecimal(this.value) / BigDecimal(BigInt(1) << fmt.fbits)).bigDecimal.toPlainString
+      this.toBigDecimal.bigDecimal.toPlainString
     }
     else {
       value.toString
@@ -130,7 +149,7 @@ object FixedPoint {
   /**
     * Create a new fixed point number, rounding to the closest representable number
     * using unbiased rounding
-    * @param bits Value's bits, with double the number of fractional bits (beyond normal format representation)
+    * @param bits Value's bits, with 4 extra fractional bits (beyond normal format representation)
     * @param valid Defines whether this value is valid or not
     * @param fmt The fixed point format used by this number
     */
