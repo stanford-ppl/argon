@@ -43,7 +43,10 @@ trait CppFileGen extends FileGen {
 #include "functions.h"
 #include <vector>
 using std::vector;
+
+#ifndef ZYNQ
 typedef __int128 int128_t;
+#endif
 
 """)
 

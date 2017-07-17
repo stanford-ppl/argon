@@ -19,7 +19,7 @@ trait BlockTraversal {
   private def availableStms = if (innerScope ne null) innerScope else 0 until state.graph.curNodeId
 
   // Statement versions of the above
-  protected def innerStms: Seq[Stm] = innerScope.flatMap(stmFromNodeId)
+  protected def innerStms: Seq[Stm] = if (innerScope eq null) null else innerScope.flatMap(stmFromNodeId)
   protected def availStms: Seq[Stm] = availableStms.flatMap(stmFromNodeId)
 
   private def withInnerScope[A](scope: Seq[Int])(body: => A): A = {

@@ -136,6 +136,6 @@ case class FixPtToFltPt[S:BOOL,I:INT,F:INT,G:INT,E:INT](x: Exp[FixPt[S,I,F]]) ex
 }
 
 case class StringToFixPt[S:BOOL,I:INT,F:INT](x: Exp[MString]) extends FixPtOp1[S,I,F] {
-  def mirror(f:Tx) = fix.from_text[S,I,F](f(x))
+  def mirror(f:Tx) = fix.from_string[S,I,F](f(x))
 }
 
