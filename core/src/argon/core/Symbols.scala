@@ -65,13 +65,19 @@ class Const[+T](val tp: Type[T@uncheckedVariance])(x: Any) extends Exp[T] {
 
 /** A Staged, mutable constant **/
 class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid: Int) extends Const[T](tp)(x) {
-  private var _c: Any = x
-  override def c: Any = _c
-  def c_=(rhs: Any): Unit = if (!isFinal) _c = rhs
 
+  case class ParamValue(x: Any) extends Metadata[ParamValue] { def mirror(f:Tx) = this }
+
+  private var _c: Any = x
   private var _isFinal: Boolean = false
+
+  override def c: Any = _c
   def isFinal: Boolean = _isFinal
-  def makeFinal(): Unit = { _isFinal = true }
+
+  @stateful def value(implicit state: State): Any = metadata[ParamValue](this).getOrElse(_c)
+  @stateful def setValue(rhs: Any)(implicit state: State): Unit = if (!isFinal) { metadata.add(this, ParamValue(rhs)) }
+  @stateful def makeFinal()(implicit state: State): Unit = { _isFinal = true; _c = this.value }
+
 
   override def hashCode() = pid
   override def equals(x: Any) = x match {
@@ -101,8 +107,8 @@ object Const {
 }
 
 object Param {
-  def unapply(s: Exp[_]): Option[Any] = s match {
-    case param: Param[_] => Some(param.c)
+  @stateful def unapply(s: Exp[_]): Option[Any] = s match {
+    case param: Param[_] => Some(param.value)
     case _ => None
   }
 }
