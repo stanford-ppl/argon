@@ -78,6 +78,7 @@ class Graph[E<:Edge,N<:Node] {
     that.EdgeData.producer ++= this.EdgeData.producer
     that.EdgeData.dependents ++= this.EdgeData.dependents
     that.NodeData.value ++= this.NodeData.value
+    that.NodeData.outputs.clear() // Remove the zero at the beginning
     that.NodeData.outputs ++= this.NodeData.outputs
     that.NodeData.inputs ++= this.NodeData.inputs
     that.NodeData.bounds ++= this.NodeData.bounds
