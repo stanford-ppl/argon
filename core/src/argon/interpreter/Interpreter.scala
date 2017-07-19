@@ -76,6 +76,10 @@ trait Interpreter extends Traversal {
   object SeqEB {
     def unapply(x: Seq[Exp[_]]) = Some(x.map(eval[Boolean]))
   }
+
+  object SeqEI {
+    def unapply(x: Seq[Exp[_]]) = Some(x.map(x => eval[BigDecimal](x).toInt))
+  }
   
   trait INodes
   
@@ -96,11 +100,12 @@ trait Interpreter extends Traversal {
     val v = matchNode(lhs).lift(rhs).getOrElse({
       println()
       println(s"[${Console.RED}error${Console.RESET}] Unable to interpret this node: " + (lhs, rhs))
+      displayInfo
       System.exit(0)
     })
 
-    if (!v.isInstanceOf[Unit])
-      updateVar(lhs, v)
+//    if (!v.isInstanceOf[Unit])
+    updateVar(lhs, v)
 
   }  
 
@@ -120,10 +125,14 @@ trait Interpreter extends Traversal {
   
 
 
-  def displayInfo() = {
-    println(s"[${Console.BLUE}variables content${Console.RESET}]")
-    variables.toList.sortBy(_._1.toString).foreach { case (key, e) => { val v = Interpreter.stringify(e); println(s"${Console.MAGENTA}${key}${Console.RESET}: $v") }}
+  def displayPair(keye: (Any, Any)) = {
+    val (key, e) = keye
+    val v = Interpreter.stringify(e)
+    println(s"${Console.MAGENTA}${key}${Console.RESET}: $v") 
   }
+
+  def displayInfo() = {}
+
   final override protected def visit(lhs: Sym[_], rhs: Op[_]) = interpretNode(lhs, rhs)
   final override protected def visitFat(lhs: Seq[Sym[_]], rhs: Def) = ???
 }
@@ -150,6 +159,7 @@ object Interpreter {
       case s: String => '"' + s + '"'
       case Const(x) => "C(" + stringify(x) + ")"
       case null => "null"
+      case x: BigDecimal => x.toString.take(5)
       case _ => x.toString
     }
   }  
