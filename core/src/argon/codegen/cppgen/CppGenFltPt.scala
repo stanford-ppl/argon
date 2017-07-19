@@ -14,6 +14,7 @@ trait CppGenFltPt extends CppCodegen {
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     case (FloatType(), Const(c: BigDecimal)) => c.toString
     case (DoubleType(), Const(c: BigDecimal)) => c.toString
+    case (FltPtType(m,e), Const(c: BigDecimal)) => throw new Exception(s"Please avoid using unusual Float types ($m, $e).  Stick with (53,11) or (24,8).")
     case _ => super.quoteConst(c)
   }
 
