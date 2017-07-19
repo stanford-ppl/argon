@@ -74,7 +74,7 @@ class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid:
   override def c: Any = _c
   def isFinal: Boolean = _isFinal
 
-  @stateful def value(implicit state: State): Any = metadata[ParamValue](this).getOrElse(_c)
+  @stateful def value(implicit state: State): Any = metadata[ParamValue](this).map(_.x).getOrElse(_c)
   @stateful def setValue(rhs: Any)(implicit state: State): Unit = if (!isFinal) { metadata.add(this, ParamValue(rhs)) }
   @stateful def makeFinal()(implicit state: State): Unit = { _isFinal = true; _c = this.value }
 
@@ -86,7 +86,11 @@ class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid:
   }
 
   override def toString = s"Param(#${-pid})"
-  override def toStringFrontend = this.toString   // TODO: Is this what is we want here?
+
+  override def toStringFrontend: String = name match {
+    case Some(n) => s"$n (${this.toString})"
+    case None => this.toString
+  }
 }
 
 // TODO: Investigate why this still gives back Any even when T#Internal is used
