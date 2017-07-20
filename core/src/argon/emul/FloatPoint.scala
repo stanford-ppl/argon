@@ -1,6 +1,7 @@
 package argon.emul
 
 case class FltFormat(sbits: Int, ebits: Int) {
+  lazy val bits: Int = sbits + ebits + 1
   lazy val bias: BigInt = BigInt(2).pow(ebits - 1) - 1
   lazy val MIN_E: BigInt = -bias + 1      // Represented as exponent of 1
   lazy val MAX_E: BigInt = bias
@@ -150,13 +151,22 @@ object FloatValue {
   def apply(x: BigDecimal): FloatValue = Value(x)
 }
 
-class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) {
+class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) extends Number {
+  def unary_-(): FloatPoint = FloatPoint.clamped(-this.value, this.valid, fmt)
+
   // All operations assume that both the left and right hand side have the same fixed point format
   def +(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value + that.value, this.valid && that.valid, fmt)
   def -(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value - that.value, this.valid && that.valid, fmt)
   def *(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value * that.value, this.valid && that.valid, fmt)
   def /(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value / that.value, this.valid && that.valid, fmt)
-  def %(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value % that.value, this.valid && that.valid, fmt)
+  def %(that: FloatPoint): FloatPoint = {
+    val result = this.value % that.value
+    val posResult = result match {
+      case Value(v) => if (v < 0) Value(v) + that.value else result
+      case _ => result
+    }
+    FloatPoint.clamped(posResult, this.valid && that.valid, fmt)
+  }
 
   def <(that: FloatPoint): Bool   = Bool(this.value < that.value, this.valid && that.valid)
   def <=(that: FloatPoint): Bool  = Bool(this.value <= that.value, this.valid && that.valid)
@@ -224,6 +234,16 @@ object FloatPoint {
   def apply(x: Float, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
   def apply(x: Double, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
   def apply(x: BigDecimal, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
+  def apply(x: String, fmt: FltFormat): FloatPoint = x match {
+    case "NaN"  => FloatPoint.clamped(NaN, valid=true, fmt)
+    case "-Inf" => FloatPoint.clamped(Inf(negative=true), valid=true, fmt)
+    case "Inf"  => FloatPoint.clamped(Inf(negative=false), valid=true, fmt)
+    case "-0.0" => FloatPoint.clamped(Zero(negative=true), valid=true, fmt)
+    case "0.0"  => FloatPoint.clamped(Zero(negative=false), valid=true, fmt)
+    case _      => FloatPoint.clamped(Value(BigDecimal(x)), valid=true, fmt)
+  }
+
+  def invalid(fmt: FltFormat): FloatPoint = new FloatPoint(NaN, false, fmt)
 
   /**
     * Stolen from https://stackoverflow.com/questions/6827516/logarithm-for-biginteger/7982137#7982137
@@ -309,4 +329,47 @@ object FloatPoint {
       val actualValue = convertBackToValue(m, fmt)
       new FloatPoint(actualValue, valid, fmt)
   }
+
+  def fromBits(bits: Array[Bool], fmt: FltFormat): FloatPoint = {
+    val sign = bits.last
+    val exp = bits.slice(fmt.sbits,fmt.sbits+fmt.ebits)
+    val man = bits.slice(0, fmt.sbits)
+    val value = {
+      if (!exp.exists(_.value) && !man.exists(_.value)) Zero(sign.value)
+      else if (exp.forall(_.value)) {
+        if (man.exists(_.value)) NaN
+        else Inf(sign.value)
+      }
+      else {
+        var exponent = BigInt(0)
+        exp.zipWithIndex.foreach{case (bit, i) => if (bit.value) exponent = exponent.setBit(i) }
+        var mantissa = BigInt(0)
+        man.zipWithIndex.foreach{case (bit, i) => if (bit.value) mantissa = mantissa.setBit(i) }
+        convertBackToValue(Right((sign.value,mantissa,exponent)), fmt)
+      }
+    }
+    new FloatPoint(value, true, fmt)
+  }
+
+  def fromByteArray(array: Array[Byte], fmt: FltFormat): FloatPoint = {
+    val bits = array.flatMap{byte =>
+      (0 until 8).map{i => Bool( (byte & (1 << i)) > 0) }
+    }
+    fromBits(bits, fmt)
+  }
+
+  /**
+    * Generate a pseudo-random floating point number, uniformly distributed between [0, 1)
+    * FIXME: Uses Double right now
+    * @param fmt The format for the fixed point number being generated
+    */
+  def random(fmt: FltFormat): FloatPoint = FloatPoint(scala.util.Random.nextDouble(), fmt)
+
+  /**
+    * Generate a pseudo-random floating point number, uniformly distributed between [0, max)
+    * @param max The maximum value of the range, non-inclusive
+    * @param fmt The format for the max and the fixed point number being generated
+    */
+  def random(max: FloatPoint, fmt: FltFormat): FloatPoint = FloatPoint.random(fmt) * max
+
 }

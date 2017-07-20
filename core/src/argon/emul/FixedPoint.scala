@@ -16,7 +16,7 @@ case class FixFormat(sign: Boolean, ibits: Int, fbits: Int) {
   lazy val MIN_VALUE_FP: FixedPoint = FixedPoint.clamped(MIN_VALUE, valid=true, this)
 }
 
-class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) {
+class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) extends Number {
   // All operations assume that both the left and right hand side have the same fixed point format
   def unary_-(): FixedPoint = FixedPoint.clamped(-this.value, this.valid, fmt)
   def unary_~(): FixedPoint = FixedPoint.clamped(~this.value, this.valid, fmt)
@@ -60,6 +60,20 @@ class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) {
     FixedPoint.unbiased((this.value << fmt.fbits+4) / (that.value << 4), this.valid && that.valid, fmt, saturate = true)
   }
 
+  def <<(that: FixedPoint): FixedPoint = FixedPoint.clamped(this.value << that.toInt, this.valid && that.valid, fmt)
+  def >>(that: FixedPoint): FixedPoint = FixedPoint.clamped(this.value >> that.toInt, this.valid && that.valid, fmt)
+  def >>>(that: FixedPoint): FixedPoint = {
+    val shift = that.toInt
+    if (shift >= 0) {
+      // Unsigned right shift isn't supported in BigInt because BigInt technically has infinite precision
+      // But we're only using BigInt to model arbitrary precision data here
+      val zeros = Array.fill(shift)(Bool(false))
+      val bits = this.bits.drop(shift) // Drop that number of lsbs
+      FixedPoint.fromBits(bits ++ zeros, fmt).withValid(this.valid && that.valid)
+    }
+    else FixedPoint.clamped(BigInt(0), this.valid && that.valid, fmt)
+  }
+
 
   def toByte: Byte = (value >> fmt.fbits).toByte
   def toShort: Short = (value >> fmt.bits).toShort
@@ -71,10 +85,17 @@ class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) {
   def toDouble: Double = this.toBigDecimal.toDouble
   def toBigDecimal: BigDecimal = BigDecimal(value) / BigDecimal(BigInt(1) << fmt.fbits)
 
-  def toFixedPoint(fmt: FixFormat): FixedPoint = FixedPoint.clamped(value, valid, fmt)
+  def toFixedPoint(fmt2: FixFormat): FixedPoint = {
+    if (fmt2.fbits == fmt.fbits) FixedPoint.clamped(value, valid, fmt2)
+    else if (fmt2.fbits > fmt.fbits) FixedPoint.clamped(value << (fmt2.fbits - fmt.fbits), valid, fmt2)
+    else FixedPoint.clamped(value >> (fmt.fbits - fmt2.fbits), valid, fmt2)
+  }
   def toFloatPoint(fmt: FltFormat): FloatPoint = FloatPoint(this.toBigDecimal, fmt).withValid(valid)
 
   def withValid(v: Boolean) = new FixedPoint(value, valid=v, fmt)
+
+  def until(end: FixedPoint) = FixedPointRange(this, end, FixedPoint(1, fmt), isInclusive = false)
+  def to(end: FixedPoint) = FixedPointRange(this, end, FixedPoint(1, fmt), isInclusive = true)
 
   def valueOrX(x: => FixedPoint): FixedPoint = {
     try { x } catch { case _: Throwable => FixedPoint.invalid(fmt) }
@@ -87,9 +108,25 @@ class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) {
       value.toString
     }
   } else "X"
+
+  override def equals(that: Any): Boolean = that match {
+    case that: Byte   => this == FixedPoint(that, fmt) && that == this.toByte
+    case that: Short  => this == FixedPoint(that, fmt) && that == this.toShort
+    case that: Int    => this == FixedPoint(that, fmt) && that == this.toInt
+    case that: Long   => this == FixedPoint(that, fmt) && that == this.toLong
+    case that: Float  => this == FixedPoint(that, fmt) && that == this.toFloat
+    case that: Double => this == FixedPoint(that, fmt) && that == this.toDouble
+    case that: FixedPoint => (if (this.fmt != that.fmt) {
+      if (this.fmt.fbits > that.fmt.fbits) that.toFixedPoint(this.fmt) === this
+      else                                 this.toFixedPoint(that.fmt) === that
+    } else this === that).value
+    case _ => false
+  }
 }
 
 object FixedPoint {
+  def apply(x: Int): FixedPoint = FixedPoint(x, FixFormat(true,32,0))
+
   def apply(x: Byte, fmt: FixFormat): FixedPoint = FixedPoint.clamped(BigInt(x) << fmt.fbits, valid=true, fmt)
   def apply(x: Short, fmt: FixFormat): FixedPoint = FixedPoint.clamped(BigInt(x) << fmt.fbits, valid=true, fmt)
   def apply(x: Int, fmt: FixFormat): FixedPoint = FixedPoint.clamped(BigInt(x) << fmt.fbits, valid=true, fmt)
@@ -99,6 +136,7 @@ object FixedPoint {
   def apply(x: Float, fmt: FixFormat): FixedPoint = FixedPoint.clamped(BigDecimal(x.toDouble) * Math.pow(2,fmt.fbits), valid=true, fmt)
   def apply(x: Double, fmt: FixFormat): FixedPoint = FixedPoint.clamped(BigDecimal(x) * Math.pow(2,fmt.fbits), valid=true, fmt)
   def apply(x: BigDecimal, fmt: FixFormat): FixedPoint = FixedPoint.clamped(x, valid=true, fmt)
+  def apply(x: String, fmt: FixFormat): FixedPoint = FixedPoint.clamped(BigDecimal(x), valid=true, fmt)
 
   def invalid(fmt: FixFormat) = new FixedPoint(-1, valid=false, fmt)
   def clamped(value: BigDecimal, valid: Boolean, fmt: FixFormat): FixedPoint = clamped(value.toBigInt, valid, fmt)
@@ -122,6 +160,13 @@ object FixedPoint {
       bits.take(fmt.bits).zipWithIndex.foreach{case (bit, i) => if (bit.value) x = x.setBit(i) }
       new FixedPoint(x, bits.forall(_.valid), fmt)
     }
+  }
+
+  def fromByteArray(array: Array[Byte], fmt: FixFormat): FixedPoint = {
+    val bits = array.flatMap{byte =>
+      (0 until 8).map{i => Bool( (byte & (1 << i)) > 0) }
+    }
+    fromBits(bits, fmt)
   }
 
   /**
@@ -188,5 +233,19 @@ object FixedPoint {
     rand % max
   }
 
+  implicit object FixedPointIsIntegral extends Integral[FixedPoint] {
+    def quot(x: FixedPoint, y: FixedPoint): FixedPoint = x / y
+    def rem(x: FixedPoint, y: FixedPoint): FixedPoint = x % y
+    def compare(x: FixedPoint, y: FixedPoint): Int = if ((x < y).value) -1 else if ((x > y).value) 1 else 0
+    def plus(x : FixedPoint, y : FixedPoint) : FixedPoint = x + y
+    def minus(x : FixedPoint, y : FixedPoint) : FixedPoint = x - y
+    def times(x : FixedPoint, y : FixedPoint) : FixedPoint = x * y
+    def negate(x : FixedPoint) : FixedPoint = -x
+    def fromInt(x : scala.Int) : FixedPoint = FixedPoint(x)
+    def toInt(x : FixedPoint) : scala.Int = x.toInt
+    def toLong(x : FixedPoint) : scala.Long = x.toLong
+    def toFloat(x : FixedPoint) : scala.Float = x.toFloat
+    def toDouble(x : FixedPoint) : scala.Double = x.toDouble
+  }
 }
 
