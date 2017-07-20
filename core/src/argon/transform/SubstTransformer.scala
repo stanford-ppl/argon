@@ -8,7 +8,11 @@ trait SubstTransformer extends Transformer {
   // Syntax is, e.g.: register(x -> y)
   // Technically original and replacement should have the same type, but this type currently can be "Any"
   def register[T](rule: (Exp[T], Exp[T])) = {
-    assert(rule._2.tp <:< rule._1.tp, c"When creating substitution ${rule._1} -> ${rule._2}, type ${rule._1.tp} was not a subtype of ${rule._2.tp}")
+    assert(rule._2.tp <:< rule._1.tp, c"When creating substitution ${rule._1} -> ${rule._2}, type ${rule._2.tp} was not a subtype of ${rule._1.tp}")
+    subst += rule
+  }
+  // Only use if you know what you're doing!
+  def registerUnsafe[A,B](rule: (Exp[A],Exp[B])): Unit = {
     subst += rule
   }
   def remove[T](key: Exp[T]) = subst -= key
