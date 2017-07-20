@@ -38,8 +38,9 @@ object Struct {
   @internal def apply[T:StructType](fields: (CString, Exp[_])*): T = wrap(struct_new[T](fields))
 
   /** Static methods **/
-  def unapply(x: Op[_]): Option[Map[CString,Exp[_]]] = x match {
-    case s: StructAlloc[_] => Some(s.elems.toMap)
+  @stateful def unapply(x: Exp[_]): Option[Map[CString,Exp[_]]] = x match {
+    case Op(s: StructAlloc[_]) => Some(s.elems.toMap)
+    case c@Const(elems) if c.tp.isInstanceOf[StructType[_]] => Some(elems.asInstanceOf[Seq[(CString, Exp[_])]].toMap)
     case _ => None
   }
 
@@ -72,7 +73,7 @@ object Struct {
   }
 
   @stateful private[argon] def unwrapStruct[S:StructType,T:Type](struct: Exp[S], index: CString): Option[Exp[T]] = struct match {
-    case Op(Struct(elems)) => elems.get(index) match {
+    case Struct(elems) => elems.get(index) match {
       case Some(x) if x.tp <:< typ[T] => Some(x.asInstanceOf[Exp[T]]) // TODO: Should this be Staged asInstanceOf?
       case None =>
         throw new argon.NoFieldException(struct, index) // TODO: Should this be a user error?
@@ -83,12 +84,15 @@ object Struct {
 
   /** Constructors **/
   @internal def struct_new[S:StructType](elems: Seq[(CString, Exp[_])]): Exp[S] = {
-    stage(SimpleStruct(elems))(ctx)
+    if (elems.forall(_._2.isConst)) 
+        constant(implicitly[StructType[S]])(elems)
+    else
+        stage(SimpleStruct(elems))(ctx)
   }
 
   // TODO: Should struct unwrapping be disabled for mutable structs?
   @internal def field_apply[S:StructType,T:Type](struct: Exp[S], index: CString): Exp[T] = struct match {
-    case Op(s:StructAlloc[_]) if Config.unwrapStructs => unwrapStruct[S,T](struct, index) match {
+    case Struct(_) if Config.unwrapStructs => unwrapStruct[S,T](struct, index) match {
       case Some(x) => x
       case None => stage(FieldApply[S,T](struct, index))(ctx)
     }

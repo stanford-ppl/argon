@@ -112,6 +112,15 @@ trait CppGenStruct extends CppCodegen with StructCodegen {
   }
 
 
+  override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
+    case (st: StructType[_], e@Const(elems)) =>
+      val seq = elems.asInstanceOf[Seq[(_, Exp[_])]]
+      src"*(new ${st}( " + seq.map(x => quote(x._2)).mkString(", ") + " ));"
+
+    case _ => super.quoteConst(c)
+  }
+  
+
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
     case e: StructAlloc[_] =>
       emit(src"${lhs.tp} $lhs = *(new ${e.mR}( " + e.elems.map(x => quote(x._2)).mkString(", ") + " ));")

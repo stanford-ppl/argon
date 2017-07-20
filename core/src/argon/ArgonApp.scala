@@ -10,18 +10,12 @@ import argon.util.deleteExts
 import scala.collection.mutable.ArrayBuffer
 import org.virtualized.SourceContext
 
-trait ArgonApp { self =>
-  /**
-    * The entry function for users
-    * Allows @virtualize def main(): Unit = { } and [@virtualize] def main() { }
-    */
-  def main(): Unit
-
+trait ArgonCompiler { self =>
   final implicit val IR: State = new State
 
-  private var __stagingArgs: Array[String] = _
-  private var __args: MArray[MString] = _
-  def stagingArgs: Array[String] = __stagingArgs
+  def stagingArgs: Array[String]
+
+  private var __args: MArray[MString] = _  
   def args: MArray[MString] = __args
 
   final protected val passes: ArrayBuffer[CompilerPass] = ArrayBuffer.empty[CompilerPass]
@@ -161,6 +155,20 @@ trait ArgonApp { self =>
 
     parseArguments(sargs.toSeq)
   }
+
+}
+
+trait ArgonApp extends ArgonCompiler { self =>
+
+  protected var __stagingArgs: Array[String] = _
+  def stagingArgs: Array[String] = __stagingArgs
+  
+  /**
+    * The entry function for users
+    * Allows @virtualize def main(): Unit = { } and [@virtualize] def main() { }
+    */
+  def main(): Unit
+
 
   /**
     * The "real" entry point for the application
