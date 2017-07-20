@@ -48,6 +48,7 @@ class State {
   def errors: Int = _errors
   def hadErrors: Boolean = errors > 0
   def logError(): Unit = { _errors += 1 }
+  def resetErrors(): Unit = { _errors = 0 }
 
   /** The number of user warnings encountered so far **/
   private var _warnings: Int = 0
