@@ -15,7 +15,6 @@ argon {
   lib = true
   log = $${argon.cwd}"/logs/"${name}
   out = $${argon.cwd}"/gen/"${name}
-  debug = false
   clear-logs = true
   clear-gen = false
   multifile = 4
