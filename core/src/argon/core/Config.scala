@@ -50,7 +50,6 @@ argon {
 
     verbosity = conf.verbosity
     showWarn = true
-
     unsafe = conf.unsafe
     lib    = conf.lib
     //name = conf.name
@@ -83,4 +82,8 @@ argon {
   var unwrapStructs: Boolean = _
   var emitDevel: Int = _
   var allowAtomicWrites: Boolean = _
+
+  //debugger interpreter
+  var exit: () => Unit = () => ()
+  
 }

@@ -10,6 +10,7 @@ import scala.annotation.unchecked.uncheckedVariance
 sealed abstract class Exp[+T] extends EdgeLike with FrontendFacing {
   def tp: Type[T @uncheckedVariance]
 
+  def isConst = false
   var prevNames: Seq[(String,String)] = Nil
   var name: Option[String] = None
   override def toStringFrontend = name match {
@@ -53,6 +54,7 @@ class Const[+T](val tp: Type[T@uncheckedVariance])(x: Any) extends Exp[T] {
   private val _c: Any = x
   def c: Any = _c
 
+  override def isConst = true
   override def hashCode() = (tp, c).hashCode()
   override def equals(x: Any) = x match {
     case that: Const[_] => this.tp == that.tp && this.c == that.c
