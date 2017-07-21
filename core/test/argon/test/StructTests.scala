@@ -47,4 +47,21 @@ class StructTests extends FlatSpec with Matchers {
     (new StructTest).main(scala.Array.empty)
   }
 
+  "CopyTest" should "compile" in {
+    class StructCopyTest extends Test {
+      @virtualize def main(): Unit = {
+        val x = MyStruct(1, 2)
+        val a = x.copy(x = 3, y =4)
+        val b = x.copy(x = 1)
+        val c = x.copy(y = 1)
+        val d = x.copy()
+        println(a)
+        println(b)
+        println(c)
+        println(d)
+      }
+    }
+    (new StructCopyTest).main(scala.Array.empty)
+  }
+
 }
