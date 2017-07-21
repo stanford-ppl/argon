@@ -52,7 +52,7 @@ object Report {
   def warn(x: => Any): Unit = if (Config.showWarn) {
     System.err.println(s"[\u001B[33mwarn\u001B[0m] $x")
   }
-  def error(x: => Any): Unit = {
+  def error(x: => Any): Unit = if (Config.verbosity >= -1) {
     System.err.println(s"[\u001B[31merror\u001B[0m] $x")
   }
 
