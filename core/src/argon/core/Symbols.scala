@@ -9,7 +9,6 @@ import scala.annotation.unchecked.uncheckedVariance
 /** Any staged symbol **/
 sealed abstract class Exp[+T] extends EdgeLike with FrontendFacing {
   def tp: Type[T @uncheckedVariance]
-
   def isConst = false
   var prevNames: Seq[(String,String)] = Nil
   var name: Option[String] = None
