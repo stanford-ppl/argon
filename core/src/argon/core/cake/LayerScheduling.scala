@@ -49,14 +49,15 @@ trait LayerScheduling { this: ArgonCake =>
             stm -> binders.map{case (node, parent2, bound) => (stmFromNodeId(node), parent2.flatMap(stmFromNodeId), bound.flatMap(stmFromNodeId)) }
           }
         }
-        error(c"Violated ordering of effects while traversing block result: ")
-        error(c"${str(block.result)}")
-        error("expected: ")
-        expectedStms.foreach{stm => error(c"  $stm")}
-        error("actual: ")
-        actualStms.foreach{stm => error(c"  $stm")}
-        error("missing: ")
-        //missing.foreach{stm => error(c"  $stm")}
+        bug(c"Violated ordering of effects while traversing block result. ")
+        bug(c"See log file #${state.pass-1} for more information.")
+        dbg(c"${str(block.result)}")
+        dbg("expected: ")
+        expectedStms.foreach{stm => dbg(c"  $stm")}
+        dbg("actual: ")
+        actualStms.foreach{stm => dbg(c"  $stm")}
+        dbg("missing: ")
+        missing.foreach{stm => dbg(c"  $stm")}
         binding.foreach { case (stm, bindedby) =>
           dbg(c"  $stm")
           dbg("  appears to be unschedulable because of: ")
@@ -64,22 +65,38 @@ trait LayerScheduling { this: ArgonCake =>
             case (Some(node), p2, bound) =>
               if (p2.isDefined) dbg("  The pair of nodes:") else dbg("  The node:")
               dbg(c"    $node")
-              strMeta(node.lhs.head)
+              strMeta(node.lhs.head, tab = 2)
               p2.foreach{otherNode =>
                 dbg(c"    $otherNode")
-                strMeta(otherNode.lhs.head)
+                strMeta(otherNode.lhs.head, tab = 2)
               }
               bound.foreach{bnd =>
                 dbg("  Binding: ")
                 dbg(c"    $bnd")
-                strMeta(bnd.lhs.head)
+                strMeta(bnd.lhs.head, tab = 2)
+              }
+
+              if (p2.isDefined && bound.isDefined) {
+                bug("This appears to have been caused, in part, because")
+                bug(bound.get.lhs.head.ctx, c"The operation: ")
+                bug(c"    ${str(bound.get.lhs.head)}")
+                bug(bound.get.lhs.head.ctx, showCaret = true)
+                bug("")
+                bug(node.lhs.head.ctx, "Is defined in both this scope: ")
+                bug(c"    ${str(node.lhs.head)}")
+                bug(node.lhs.head.ctx, showCaret = true)
+                bug("")
+                bug(p2.get.lhs.head.ctx, "And this scope: ")
+                bug(c"    ${str(p2.get.lhs.head)}")
+                bug(p2.get.lhs.head.ctx, showCaret = true)
+                bug("")
               }
             case _ =>
           }
           dbg("")
           dbg("")
         }
-        state.logError()
+        state.logBug()
       }
     }
 
