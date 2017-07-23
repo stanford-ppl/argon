@@ -135,7 +135,7 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
         bug(s"The following symbols appear to have been duplicated by transformer $name:")
         duplicated.foreach{x => bug(c"  ${str(x)}")}
         bug(s"If this behavior is expected, enable it by setting allowDuplication to true")
-        state.logError()
+        state.logBug()
       }
     }
     b

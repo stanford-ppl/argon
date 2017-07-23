@@ -69,7 +69,7 @@ object Report {
   }
   @stateful def bug(ctx: SrcCtx, x: => Any, noError: Boolean = false)(implicit state: State): Unit = {
     bug(ctx.fileName + ":" + ctx.line + ": " + x)
-    if (!noError) state.logError()
+    if (!noError) state.logBug()
   }
 
   def warn(ctx: SrcCtx, showCaret: Boolean): Unit = if (ctx.lineContent.isDefined) {
