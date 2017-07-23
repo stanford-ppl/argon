@@ -10,6 +10,8 @@ abstract class Def extends Node with Product {
   type Tx = argon.transform.Transformer
 
   final def expInputs: Seq[Exp[_]] = recursive.collectSeqs(__exps)(productIterator)
+  final def blockInputs: Seq[Exp[_]] = recursive.collectSeqs(__exps)(blocks)
+  final def nonBlockInputs: Seq[Exp[_]] = inputs.distinct diff blockInputs.distinct
 
   def outputTypes: Seq[Type[_]]
 
