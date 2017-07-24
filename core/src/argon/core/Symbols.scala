@@ -86,7 +86,7 @@ class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid:
     case _ => false
   }
 
-  override def toString = s"Param(#${-pid})"
+  override def toString: String = if (!isFinal) name.getOrElse(s"p${-pid}") else super.toString
 
   override def toStringFrontend: String = name match {
     case Some(n) => s"$n (${this.toString})"
@@ -106,6 +106,7 @@ class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid:
 object Const {
   def unapply(s: Exp[_]): Option[Any] = s match {
     case param: Param[_] if param.isFinal => Some(param.c)
+    case param: Param[_] if !param.isFinal => None
     case const: Const[_] => Some(const.c)
     case _ => None
   }
