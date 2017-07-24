@@ -1,7 +1,9 @@
 package argon.nodes
 
+import argon.compiler
 import argon.core._
 import argon.compiler._
+import argon.emul.FltFormat
 import forge._
 
 class FltPtType[G,E](val mG: INT[G], val mE: INT[E]) extends Type[FltPt[G,E]] with CanBits[FltPt[G,E]] with FrontendFacing {
@@ -28,6 +30,8 @@ class FltPtType[G,E](val mG: INT[G], val mE: INT[E]) extends Type[FltPt[G,E]] wi
 }
 
 class FltPtNum[G:INT,E:INT] extends Num[FltPt[G,E]] {
+  lazy val fmt = FltFormat(INT[G].v-1, INT[E].v) // FltFormat doesn't include sign in significand bits
+
   @api def negate(x: FltPt[G,E]) = -x
   @api def plus(x: FltPt[G,E], y: FltPt[G,E]) = x + y
   @api def minus(x: FltPt[G,E], y: FltPt[G,E]) = x - y
@@ -50,6 +54,10 @@ class FltPtNum[G:INT,E:INT] extends Num[FltPt[G,E]] {
   @api def fromLong(x: Long, force: CBoolean = true) = FltPt.lift[G,E](x, force)
   @api def fromFloat(x: Float, force: CBoolean = true) = FltPt.lift[G,E](x, force)
   @api def fromDouble(x: Double, force: CBoolean = true) = FltPt.lift[G,E](x, force)
+
+  @api def maxValue: FltPt[G,E] = FltPt.lift[G,E](fmt.MAX_VALUE_FP.toBigDecimal, force=true)
+  @api def minValue: FltPt[G,E] = FltPt.lift[G,E](fmt.MIN_VALUE_FP.toBigDecimal, force=true)
+  @api def minPositiveValue: FltPt[G,E] = FltPt.lift[G,E](fmt.MIN_POSITIVE_VALUE.toBigDecimal, force=true)
 }
 
 object FltPtNum {

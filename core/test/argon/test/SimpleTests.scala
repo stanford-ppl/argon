@@ -184,6 +184,17 @@ object StagedStringTest extends Test {
   }
 }
 
+// Argon doesn't have codegen of arbitrary precision fixed point numbers for now
+/*object FixPtTest extends Test {
+  import api._
+  type Q16 = FixPt[TRUE,_16,_16]
+
+  @virtualize def main(): Unit = {
+    val x = 0.32f.to[Q16]
+    println(x)
+  }
+}*/
+
 class StringStagingTests extends FlatSpec with Matchers {
   "StagedStringTest" should "compile" in {
     import argon.nodes.ToString
@@ -193,6 +204,7 @@ class StringStagingTests extends FlatSpec with Matchers {
     tostr.length should be >= 2
   }
 }
+
 
 class SimpleTests extends FlatSpec with Matchers {
   val noargs = Array[String]()
@@ -213,4 +225,5 @@ class SimpleTests extends FlatSpec with Matchers {
   "UnstagedToStringTest" should "compile" in { UnstagedToStringTest.main(noargs) }
 
   "SimpleMap2" should "compile" in { SimpleMap2.main(noargs) }
+  //"FixPtTest" should "compile" in { FixPtTest.main(noargs) }
 }

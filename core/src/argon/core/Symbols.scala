@@ -74,11 +74,11 @@ class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid:
 
   override def c: Any = _c
   def isFinal: Boolean = _isFinal
+  override def isConst = isFinal
 
   @stateful def value(implicit state: State): Any = metadata[ParamValue](this).map(_.x).getOrElse(_c)
   @stateful def setValue(rhs: Any)(implicit state: State): Unit = if (!isFinal) { metadata.add(this, ParamValue(rhs)) }
   @stateful def makeFinal()(implicit state: State): Unit = { _isFinal = true; _c = this.value }
-
 
   override def hashCode() = pid
   override def equals(x: Any) = x match {

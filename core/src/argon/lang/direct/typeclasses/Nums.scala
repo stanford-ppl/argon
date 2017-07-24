@@ -49,4 +49,8 @@ trait NumApi extends LowPriorityNumImplicits { this: NumExp =>
   implicit def double2numT[T:Type:Num] = new Cast[Double,T] {
     @internal def apply(x: Double): T = num[T].fromDouble(x)
   }
+
+  @api def minValue[T:Type:Num]: T = num[T].minValue
+  @api def maxValue[T:Type:Num]: T = num[T].maxValue
+  @api def minPositiveValue[T:Type:Num]: T = num[T].minPositiveValue
 }
