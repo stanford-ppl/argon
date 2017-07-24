@@ -145,13 +145,13 @@ object Interpreter {
         "Queue(" + q.asScala.toList.map(stringify).mkString(", ") + ")"
       case s: Seq[_] =>
         if (s.size > 10) 
-          "Seq(" + s.take(10).map(stringify).mkString(", ") + ", ...)"
+          "Seq(" + s.take(5).map(stringify).mkString(", ") + ", ..., " + s.takeRight(5).map(stringify).mkString(", ")+")"
         else
           "Seq(" + s.map(stringify).mkString(", ") + ")"          
 
       case s: Array[_] =>
-        if (s.size > 10) 
-          "Array(" + s.take(10).map(stringify).mkString(", ") + ", ...)"
+        if (s.size > 10)
+          "Array(" + s.take(50).map(stringify).mkString(", ") + ", ..., " + s.takeRight(5).map(stringify).mkString(", ") + ")"          
         else
           "Array(" + s.map(stringify).mkString(", ") + ")"          
         
