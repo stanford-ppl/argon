@@ -97,15 +97,21 @@ trait Interpreter extends Traversal {
       }
     }
 
-    val v = matchNode(lhs).lift(rhs).getOrElse({
-      println()
-      println(s"[${Console.RED}error${Console.RESET}] Unable to interpret this node: " + (lhs, rhs))
-      displayInfo
-      System.exit(0)
-    })
+    try {
+      val v = matchNode(lhs).lift(rhs).get
+      updateVar(lhs, v)
+    }
+    catch {
+      case e: Throwable =>
+        e.printStackTrace
+        println()
+        println(s"[${Console.RED}error${Console.RESET}] Unable to interpret this node: " + (lhs, rhs))
+        displayInfo
+        Config.exit()
+        System.exit(0)
+    }
 
 //    if (!v.isInstanceOf[Unit])
-    updateVar(lhs, v)
 
   }  
 
@@ -159,7 +165,9 @@ object Interpreter {
       case s: String => '"' + s + '"'
       case Const(x) => "C(" + stringify(x) + ")"
       case null => "null"
-      case x: BigDecimal => x.toString.take(5)
+      case x: BigDecimal =>
+        val v = x.toDouble
+        f"$v%.5e"
       case _ => x.toString
     }
   }  
