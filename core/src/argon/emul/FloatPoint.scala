@@ -1,11 +1,27 @@
 package argon.emul
 
+import DataImplicits._
+
 case class FltFormat(sbits: Int, ebits: Int) {
   lazy val bits: Int = sbits + ebits + 1
   lazy val bias: BigInt = BigInt(2).pow(ebits - 1) - 1
   lazy val MIN_E: BigInt = -bias + 1      // Represented as exponent of 1
   lazy val MAX_E: BigInt = bias
   lazy val SUB_E: BigInt = MIN_E - sbits  // Exponent is all 0s
+
+  lazy val MAX_VALUE_FP: FloatPoint = {
+    val x = Array.tabulate(bits){i => if (i == bits-1 || i == bits-1-ebits) Bool(false) else Bool(true) }
+    //println(x.toStr)
+    FloatPoint.fromBits(x, this)
+  }
+  lazy val MIN_VALUE_FP: FloatPoint = -MAX_VALUE_FP
+
+  lazy val MIN_POSITIVE_VALUE: FloatPoint = {
+    val exp = BigInt(0)
+    val man = BigInt(1)
+    val value = FloatPoint.convertBackToValue(Right(false,man,exp), this)
+    new FloatPoint(value, true, this)
+  }
 }
 
 protected sealed abstract class FloatValue {
@@ -272,10 +288,27 @@ object FloatPoint {
       Left(Zero(negative = false))
     }
     else {
-      val y = Math.round(log2BigDecimal(value.abs)).toInt // Note: NOT floor or ceil
-      val x = value.abs / BigDecimal(2).pow(y)
+      var y = Math.floor(log2BigDecimal(value.abs)).toInt // Note: NOT floor or ceil
+      var x = value.abs / BigDecimal(2).pow(y)
+      //println("CLAMPING: ")
       //println(s"exp: $y [${fmt.MIN_E} : ${fmt.MAX_E}, sub: ${fmt.SUB_E}]")
       //println(s"man: $x")
+
+      if (x >= 2) {
+        y += 1
+        x = value.abs / BigDecimal(2).pow(y)
+      }
+      val cutoff = if (y < 0) BigDecimal(1) - BigDecimal(2).pow(-fmt.sbits) else BigDecimal(1)
+      if (x < cutoff) { // TODO: This is broken!!
+        y -= 1
+        x = value.abs / BigDecimal(2).pow(y)
+      }
+
+      //println("FINAL: ")
+      //println(s"exp: $y [${fmt.MIN_E} : ${fmt.MAX_E}, sub: ${fmt.SUB_E}]")
+      //println(s"man: $x")
+
+
       if (y > fmt.MAX_E) {
         Left(Inf(negative = value < 0))
       }
@@ -311,6 +344,7 @@ object FloatPoint {
         val y = e.toInt - fmt.bias.toInt
         val x = BigDecimal(m) / BigDecimal(2).pow(fmt.sbits) + 1 //+ (if (e == 1) 0 else 1)
         val sign = if (s) -1 else 1
+        //println(s"$sign * $x * 2^$y")
         Value(x * BigDecimal(2).pow(y) * sign)
       }
       else {
@@ -345,6 +379,11 @@ object FloatPoint {
         exp.zipWithIndex.foreach{case (bit, i) => if (bit.value) exponent = exponent.setBit(i) }
         var mantissa = BigInt(0)
         man.zipWithIndex.foreach{case (bit, i) => if (bit.value) mantissa = mantissa.setBit(i) }
+
+        //println("exponent: " + exponent)
+        //println("mantissa: " + mantissa)
+        //exponent += fmt.bias
+
         convertBackToValue(Right((sign.value,mantissa,exponent)), fmt)
       }
     }
