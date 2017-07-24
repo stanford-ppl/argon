@@ -50,6 +50,11 @@ class State {
   def logError(): Unit = { _errors += 1 }
   def resetErrors(): Unit = { _errors = 0 }
 
+  private var _bug: Boolean = false
+  def hadBug: Boolean = _bug
+  def logBug(): Unit = { _bug = true }
+  def resetBug(): Unit = { _bug = false }
+
   /** The number of user warnings encountered so far **/
   private var _warnings: Int = 0
   def warnings: Int = _warnings

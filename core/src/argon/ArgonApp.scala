@@ -23,6 +23,12 @@ trait ArgonCompiler { self =>
 
   protected val testbench: Boolean = false
 
+  protected def checkBugs(start: Long, stageName: String): Unit = if (IR.hadBug) {
+    onException(new Exception(s"Encountered compiler bug during pass $stageName"))
+    if (testbench) throw new TestBenchFailed(1)
+    else System.exit(1)
+  }
+
   protected def checkErrors(start: Long, stageName: String): Unit = if (IR.hadErrors) {
     val time = (System.currentTimeMillis - start).toFloat
     checkWarnings()
@@ -47,11 +53,11 @@ trait ArgonCompiler { self =>
       if (t.getCause != null) { log(t.getCause); log("") }
       t.getStackTrace.foreach{elem => log(elem.toString) }
     }
-    error(s"An exception was encountered while compiling ${Config.name}: ")
-    if (t.getMessage != null) error(s"  ${t.getMessage}")
-    if (t.getCause != null) error(s"  ${t.getCause}")
-    error(s"This is likely a compiler bug. A log file has been created at: ")
-    error(s"  ${Config.logDir}/${Config.name}_exception.log")
+    bug(s"An exception was encountered while compiling ${Config.name}: ")
+    if (t.getMessage != null) bug(s"  ${t.getMessage}")
+    if (t.getCause != null) bug(s"  ${t.getCause}")
+    bug(s"This is likely a compiler bug. A log file has been created at: ")
+    bug(s"  ${Config.logDir}/${Config.name}_exception.log")
   }
 
   protected def settings(): Unit = { }
@@ -94,6 +100,7 @@ trait ArgonCompiler { self =>
 
       block = t.run(block)
       // After each traversal, check whether there were any reported errors
+      checkBugs(startTime, t.name)
       checkErrors(startTime, t.name)
 
       if (Config.verbosity >= 1) withLog(timingLog) {
@@ -123,6 +130,7 @@ trait ArgonCompiler { self =>
       warn("Nothing staged, nothing gained.")
     }
     // Exit now if errors were found during staging
+    checkBugs(startTime, "staging")
     checkErrors(startTime, "staging")
 
     val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")

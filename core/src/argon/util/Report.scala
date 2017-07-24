@@ -69,7 +69,7 @@ object Report {
   }
   @stateful def bug(ctx: SrcCtx, x: => Any, noError: Boolean = false)(implicit state: State): Unit = {
     bug(ctx.fileName + ":" + ctx.line + ": " + x)
-    if (!noError) state.logError()
+    if (!noError) state.logBug()
   }
 
   def warn(ctx: SrcCtx, showCaret: Boolean): Unit = if (ctx.lineContent.isDefined) {
@@ -81,8 +81,8 @@ object Report {
     if (showCaret) error(" "*(ctx.column-1) + "^") else error("")
   }
   def bug(ctx: SrcCtx, showCaret: Boolean): Unit = if (ctx.lineContent.isDefined) {
-    error(ctx.lineContent.get)
-    if (showCaret) bug(" "*(ctx.column-1) + "^") else error("")
+    bug(ctx.lineContent.get)
+    if (showCaret) bug(" "*(ctx.column-1) + "^") else bug("")
   }
 
   def warn(ctx: SrcCtx): Unit = warn(ctx, showCaret = false)
