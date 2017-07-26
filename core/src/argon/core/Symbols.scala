@@ -82,7 +82,12 @@ class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid:
 
   override def hashCode() = pid
   override def equals(x: Any) = x match {
-    case that: Param[_] => this.pid == that.pid
+    case that: Param[_] =>
+      if (this.isFinal && that.isFinal) {
+        this.tp == that.tp && this.c == that.c
+      } else {
+        this.pid == that.pid
+      }
     case _ => false
   }
 
