@@ -11,7 +11,11 @@ import scala.collection.mutable.ArrayBuffer
 import org.virtualized.SourceContext
 
 trait ArgonCompiler { self =>
-  final implicit val IR: State = new State
+  var _IR: State = new State
+  final implicit def IR: State = _IR
+
+  def resetState() =
+    _IR = new State
 
   def stagingArgs: Array[String]
 
