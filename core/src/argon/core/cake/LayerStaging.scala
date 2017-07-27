@@ -92,7 +92,7 @@ trait LayerStaging { this: ArgonCake =>
     log(c"  full effects = $effects")
     log(c"  isIdempotent = ${effects.isIdempotent}")
 
-    if (effects == Pure) registerDefWithCSE(d)(ctx)
+    val lhs = if (effects == Pure) registerDefWithCSE(d)(ctx)
     else {
       state.checkContext()
       val deps = effectDependencies(effects)
@@ -138,6 +138,10 @@ trait LayerStaging { this: ArgonCake =>
       }
       else stageEffects()
     }
+
+    if (state.useBasicBlocks) state.currentBlock ::= Stm(lhs,d)
+
+    lhs
   }
 
   private def single[T:Type](xx: Seq[Sym[_]]): Sym[T] = xx.head.asInstanceOf[Sym[T]]

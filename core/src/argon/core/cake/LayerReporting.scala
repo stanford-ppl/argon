@@ -35,6 +35,8 @@ trait LayerReporting { self: ArgonCake =>
   def bug(ctx: SrcCtx): Unit = Report.bug(ctx)
   @stateful def bug(ctx: SrcCtx, x: => Any, noError: Boolean = false): Unit = Report.bug(ctx, x, noError)
 
+  def info(x: => Any): Unit = Report.info(x)
+
   @stateful def str(lhs: Exp[_]): String = Report.str(lhs)
   @stateful def str(lhs: Seq[Exp[_]]): String = Report.str(lhs)
   @stateful def strMeta(lhs: Exp[_], tab: Int = 0) {

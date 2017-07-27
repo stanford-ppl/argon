@@ -31,6 +31,13 @@ class State {
   /** Scope cache - used to make scheduling faster **/
   val scopeCache = mutable.HashMap[Block[_],Seq[Stm]]()
 
+
+  /** Basic blocks - skip Graph scheduling **/
+  var useBasicBlocks = false
+  var currentBlock: List[Stm] = Nil
+  val basicBlocks = mutable.HashMap[Block[_],Seq[Stm]]()
+
+
   /** Graph Metadata **/
   val metadata: IRMetadata = new IRMetadata
 
@@ -79,6 +86,9 @@ class State {
     _errors = 0
     _warnings = 0
     nParams = 0
+
+    useBasicBlocks = false
+    basicBlocks.clear()
   }
   def copyTo(that: State): State = {
     that.reset()
@@ -95,6 +105,9 @@ class State {
     that._errors = this._errors
     that._warnings = this._warnings
     that.nParams = this.nParams
+
+    that.basicBlocks ++= this.basicBlocks
+    that.useBasicBlocks = this.useBasicBlocks
     that
   }
 }

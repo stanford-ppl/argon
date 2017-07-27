@@ -61,6 +61,9 @@ object Report {
   def bug(x: => Any): Unit = {
     System.err.println(s"[\u001B[35mbug\u001B[0m] $x")
   }
+  def info(x: => Any): Unit = if (Config.verbosity >= 0) {
+    System.out.println(s"[\u001B[34minfo\u001B[0m] $x")
+  }
 
   @stateful def warn(ctx: SrcCtx, x: => Any, noWarn: Boolean = false)(implicit state: State): Unit = {
     warn(ctx.toString + ": " + x)
