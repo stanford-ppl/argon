@@ -5,7 +5,10 @@ import forge._
 
 trait LayerDefs { this: ArgonCake =>
   // --- Helper functions
-  @stateful def defOf(s:Sym[_]): Def = defFromSymId(s.id).get
+  @stateful def defOf(s:Sym[_]): Def = defFromSymId(s.id).getOrElse{
+    state.graph.dumpSymbolTable((lhs,rhs) => dbg(s"$lhs = $rhs"))
+    throw new Exception(s"Attempted to get defOf Sym $s, but no Stm was found")
+  }
   @stateful def getDef(s: Exp[_]): Option[Def] = s match { case s: Sym[_] => Some(defOf(s)); case _ => None }
 
   val __dyns: PartialFunction[Any,Seq[Dyn[_]]] = {

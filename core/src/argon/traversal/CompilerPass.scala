@@ -39,25 +39,38 @@ trait CompilerPass { self =>
     val outfile = state.paddedPass + " " + name + ".log"
     state.pass += 1
 
-    withLog(Config.logDir, outfile) {
-      val saveVerbosity = Config.verbosity
-      val saveWarnings  = Config.showWarn
-      Config.verbosity = this.verbosity
-      Config.showWarn  = this.shouldWarn
-
-      log("Starting traversal " + name)
+    def runTraversal() = {
       val start = System.currentTimeMillis
 
       val result = process(b)
 
-      Config.verbosity = saveVerbosity
-      Config.showWarn = saveWarnings
-
       val time = (System.currentTimeMillis - start).toFloat
       lastTime = time
       totalTime += time
+
       result
     }
+
+    if (this.verbosity >= 0) {
+      withLog(Config.logDir, outfile) {
+        val saveVerbosity = Config.verbosity
+        val saveWarnings  = Config.showWarn
+        Config.verbosity = this.verbosity
+        Config.showWarn  = this.shouldWarn
+
+        log("Starting traversal " + name)
+        val result = runTraversal()
+
+        Config.verbosity = saveVerbosity
+        Config.showWarn = saveWarnings
+
+        result
+      }
+    }
+    else {
+      runTraversal()
+    }
+
   } else b
 
 

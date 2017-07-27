@@ -14,7 +14,10 @@ trait ArgonCompiler { self =>
   var _IR: State = new State
   final implicit def IR: State = _IR
 
-  def resetState(): Unit = { _IR = new State }
+  def resetState(): Unit = {
+    _IR = new State
+    passes.clear()
+  }
 
   def stagingArgs: Array[String]
 

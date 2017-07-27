@@ -31,13 +31,16 @@ object Report {
   }
 
   @stateful def withLog[T](dir: String, filename: String)(blk: => T)(implicit state: State): T = {
-    val log = createLog(dir, filename)
-    try {
-      withLog(log)(blk)
+    if (Config.verbosity >= 1) {
+      val log = createLog(dir, filename)
+      try {
+        withLog(log)(blk)
+      }
+      finally {
+        log.close()
+      }
     }
-    finally {
-      log.close()
-    }
+    else blk
   }
 
   // TODO: Should these be macros?
@@ -49,7 +52,7 @@ object Report {
   }
 
   def report(x: => Any): Unit = if (Config.verbosity >= 0) System.out.println(x)
-  def warn(x: => Any): Unit = if (Config.showWarn) {
+  def warn(x: => Any): Unit = if (Config.showWarn && Config.verbosity >= -1) {
     System.err.println(s"[\u001B[33mwarn\u001B[0m] $x")
   }
   def error(x: => Any): Unit = if (Config.verbosity >= -1) {
@@ -61,7 +64,7 @@ object Report {
 
   @stateful def warn(ctx: SrcCtx, x: => Any, noWarn: Boolean = false)(implicit state: State): Unit = {
     warn(ctx.toString + ": " + x)
-    if (!noWarn) state.logWarning()
+    if (!noWarn && Config.showWarn) state.logWarning()
   }
   @stateful def error(ctx: SrcCtx, x: => Any, noError: Boolean = false)(implicit state: State): Unit = {
     error(ctx.fileName + ":" + ctx.line + ": " + x)

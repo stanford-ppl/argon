@@ -36,6 +36,11 @@ trait LayerScheduling { this: ArgonCake =>
       * (Basically just checks that, for a given block, all effects that are bound to that block were actually scheduled)
       */
     def scopeSanityCheck(block: Block[_], scope: Seq[NodeId]): Unit = {
+      /*log(c"Running scope sanity check on block: $block")
+      log(c"  block inputs: " + block.inputs.mkString(", "))
+      log(c"  block result: " + block.result)
+      log(c"  block effectful: " + block.effectful.mkString(", "))
+      log(c"  block effects: " + block.effects)*/
       val observable = block.effectful.map(defOf).map(_.id).distinct // node ids for effect producers
       val actual = observable intersect scope
       val missing = observable diff actual
