@@ -6,6 +6,7 @@ import argon.core._
 import argon.nodes._
 import argon.util.escapeConst
 import forge._
+import argon.util._
 
 /** All Fixed Point Types **/
 case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt[S,I,F]] {
@@ -196,6 +197,8 @@ object FixPt {
     case (a@Const(0), _) => a
     case (a, Const(1)) => a
     case (Const(1), b) => b
+    case (_, Const(b: BigDecimal)) if isPow2(b) && b > 0 => lsh(x,const[S,I,_0](log2(b.toDouble).toInt))
+    case (_, Const(b: BigDecimal)) if isPow2(b) && b < 0 => rsh(x,const[S,I,_0](log2(b.abs.toDouble).toInt))
     case _ => stage(FixMul(x, y) )(ctx)
   }
   @internal def mul_unb_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
