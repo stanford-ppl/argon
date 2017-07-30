@@ -87,7 +87,7 @@ trait ChiselGenFixPt extends ChiselCodegen {
         case Some(_) => s"$x"
         case None => "4096"
       }
-      emit(s"val ${quote(lhs)}_bitsize = log2Up(${size}) max 1")
+      emit(s"val ${quote(lhs)}_bitsize = Utils.log2Up(${size}) max 1")
       emitGlobalModule(src"val ${lhs}_rng = Module(new PRNG($seed))")
       emitGlobalModule(src"${lhs}_rng.io.en := true.B")
       emit(src"val ${lhs} = ${lhs}_rng.io.output(${lhs}_bitsize,0)")
