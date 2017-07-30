@@ -25,6 +25,14 @@ package object util {
     }
   }
 
+  def isPow2(x: BigDecimal): Boolean = {
+    x.isWhole && {
+      val y = x.toBigInt
+      (y & (y-1)) == 0
+    }
+  }
+  def log2(x: Double): Double = Math.log(x)/Math.log10(2)
+
   object single {
     private def singleVisit(x: Any)(func: Any => Unit): Unit = x match {
       case x: Iterator[_] => while (x.hasNext) func(x.next)
