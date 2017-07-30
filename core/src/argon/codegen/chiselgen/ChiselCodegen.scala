@@ -160,6 +160,8 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       if (global_lines % maxLinesPerFile == 0 & (!streamExtensions(strip_ext(curStream)).contains(file_num))) { 
         val next = newStream(strip_ext(curStream) + "_" + file_num)
         val curlist = streamExtensions(strip_ext(curStream))
+
+        // Console.println(s"   Just appended ${file_num} to list for ${strip_ext(curStream)}!")
         streamExtensions += (strip_ext(curStream) -> {curlist :+ file_num})
         val prnt = if (file_num == 1) src"${strip_ext(curStream)}" else src"${strip_ext(curStream)}_${file_num-1}"
         withStream(next) {
@@ -237,6 +239,7 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
 
   final protected def withSubStream[A](name: String, parent: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
     if (Config.multifile == 4) {
+      // Console.println(s"substream $name, parent $parent ext ${streamExtensions(parent)}")
       val prnts = if (!(streamExtensions contains parent)) src"$parent" else streamExtensions(parent).map{i => if (i == 0) src"$parent" else src"${parent}_${i}"}.mkString(" with ")
       emit(src"// Creating sub kernel ${name}")
       withStream(newStream(name)) {
