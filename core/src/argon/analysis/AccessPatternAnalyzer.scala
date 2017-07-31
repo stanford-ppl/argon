@@ -3,11 +3,61 @@ package argon.analysis
 import argon.core._
 import argon.compiler._
 import argon.UndefinedAccessPatternException
+import argon.transform.Transformer
 import argon.traversal.Traversal
 import forge._
 
+sealed abstract class AffineFunction {
+  type Tx = argon.transform.Transformer
+  def mirror(f:Tx): AffineFunction
+  def eval(f: Exp[Index] => Int): Int
+}
+class Prod(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction {
+  def mirror(f:Tx) = new Prod(x.map{
+    case Left(e) => Left(f(e))
+    case Right(af) => Right(af.mirror(f))
+  })
+  def eval(f: Exp[Index] => Int): Int = x.map{
+    case Left(e) => f(e)
+    case Right(af) => af.eval(f)
+  }.product
+
+  override def toString: String = x.map{case Left(e) => c"$e"; case Right(af) => af.toString}.mkString(" * ")
+}
+object Prod {
+  def apply(x: Exp[Index]*) = new Prod(x.map(y => Left(y)))
+}
+class Sum(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction {
+  def mirror(f:Tx) = new Sum(x.map{
+    case Left(e) => Left(f(e))
+    case Right(af) => Right(af.mirror(f))
+  })
+  def eval(f: Exp[Index] => Int): Int = x.map{
+    case Left(e) => f(e)
+    case Right(af) => af.eval(f)
+  }.sum
+
+  override def toString: String = x.map{case Left(e) => c"$e"; case Right(af) => af.toString}.mkString(" + ")
+}
+object Sum {
+  def apply(x: Exp[Index]) = new Sum(Seq(Left(x)))
+  def apply(x: Seq[Either[Exp[Index],AffineFunction]]) = new Sum(x)
+}
+case object One extends Prod(Nil) { override def toString: String = "One" }
+case object Zero extends Sum(Nil) { override def toString: String = "Zero" }
+
 // Variations used here allow Index to be abstract (otherwise can't as easily define stride of 1)
-sealed abstract class IndexPattern { def index: Option[Exp[Index]] }
+sealed abstract class IndexPattern {
+  def index: Option[Exp[Index]]
+  def isGeneral: Boolean = this.isInstanceOf[GeneralAffine] || this.isInstanceOf[GeneralOffset]
+}
+
+// product(a)*i + sum(b), where all elements in a and b must be loop invariant relative to i
+case class GeneralAffine(a: AffineFunction, i: Exp[Index]) extends IndexPattern {
+  def index = Some(i)
+}
+case class GeneralOffset(b: AffineFunction) extends IndexPattern { def index = None }
+
 // a*i + b, where a and b must be loop invariant
 case class AffineAccess(a: Exp[Index], i: Exp[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
 // i + b, where b must be loop invariant
@@ -23,6 +73,9 @@ case object RandomAccess extends IndexPattern { def index = None }
 
 case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPattern] {
   def mirror(f:Tx) = AccessPattern(indices.map{
+    case GeneralAffine(a,i)  => GeneralAffine(a.mirror(f),f(i))
+    case GeneralOffset(b)    => GeneralOffset(b.mirror(f))
+
     case AffineAccess(a,i,b) => AffineAccess(f(a),f(i),f(b))
     case OffsetAccess(i,b)   => OffsetAccess(f(i), f(b))
     case StridedAccess(a,i)  => StridedAccess(f(a),f(i))
@@ -118,22 +171,54 @@ trait AccessPatternAnalyzer extends Traversal {
   }
   def isInvariantForAll(b: Exp[Index]): Boolean = loopIndices.forall{i => isInvariant(b,i) }
 
-  def extractIndexPattern(x: Exp[Index]) = x match {
-    case Plus(Times(LoopIndex(i), a), b) if isInvariant(a,i) && isInvariant(b,i) => AffineAccess(a,i,b) // i*a + b
-    case Plus(Times(a, LoopIndex(i)), b) if isInvariant(a,i) && isInvariant(b,i) => AffineAccess(a,i,b) // a*i + b
-    case Plus(b, Times(LoopIndex(i), a)) if isInvariant(a,i) && isInvariant(b,i) => AffineAccess(a,i,b) // b + i*a
-    case Plus(b, Times(a, LoopIndex(i))) if isInvariant(a,i) && isInvariant(b,i) => AffineAccess(a,i,b) // b + a*i
-    case Plus(LoopIndex(i), b) if isInvariant(b,i)  => OffsetAccess(i,b)                                // i + b
-    case Plus(b, LoopIndex(i)) if isInvariant(b,i)  => OffsetAccess(i,b)                                // b + i
-    case Times(LoopIndex(i), a) if isInvariant(a,i) => StridedAccess(a,i)                               // i*a
-    case Times(a, LoopIndex(i)) if isInvariant(a,i) => StridedAccess(a,i)                               // a*i
-    case LoopIndex(i) => LinearAccess(i)                                                                // i
-    case b if isInvariantForAll(b) => InvariantAccess(b)                                                // b
-    case _ => RandomAccess                                                                              // other
+  def findGeneralAffinePattern(x: Exp[Index]): Seq[IndexPattern] = {
+    dbg(c"Looking for affine access patterns from ${str(x)}")
+
+    def extractPattern(x: Exp[Index]): Seq[IndexPattern] = x match {
+      case Plus(a,b) => extractPattern(a) ++ extractPattern(b)
+      case Times(LoopIndex(i), a) if isInvariant(a,i) => Seq(GeneralAffine(Prod(a),i))   // i*a
+      case Times(a, LoopIndex(i)) if isInvariant(a,i) => Seq(GeneralAffine(Prod(a),i))   // a*i
+      case LoopIndex(i) => Seq(GeneralAffine(One,i))                                     // i
+      case b if isInvariantForAll(b) => Seq(GeneralOffset(Sum(b)))                       // b
+      case _ => Seq(RandomAccess)
+    }
+
+    val pattern = extractPattern(x)
+
+    dbg(c"Extracted pattern: " + pattern.mkString(" + "))
+
+    if (pattern.contains(RandomAccess)) Seq(RandomAccess)
+    else {
+      val affine  = pattern.collect{case p: GeneralAffine => p }
+      val groupedAffine = affine.groupBy(_.i)
+                                .mapValues{funcs => funcs.map(af => Right(af.a) )}
+                                .toList.map{case (i, as) => GeneralAffine(Sum(as),i) }
+
+      val offsets = pattern.collect{case GeneralOffset(b) => Right(b) }
+      val offset  = if (offsets.length == 1) GeneralOffset(offsets.head.value) else GeneralOffset(Sum(offsets))
+      offset +: groupedAffine
+    }
   }
-  def extractAccessPatterns(xs: Seq[Exp[Index]]) = xs.flatMap{
+
+
+
+  def extractIndexPattern(x: Exp[Index]): Seq[IndexPattern] = x match {
+    case Plus(Times(LoopIndex(i), a), b) if isInvariant(a,i) && isInvariant(b,i) => Seq(AffineAccess(a,i,b)) // i*a + b
+    case Plus(Times(a, LoopIndex(i)), b) if isInvariant(a,i) && isInvariant(b,i) => Seq(AffineAccess(a,i,b)) // a*i + b
+    case Plus(b, Times(LoopIndex(i), a)) if isInvariant(a,i) && isInvariant(b,i) => Seq(AffineAccess(a,i,b)) // b + i*a
+    case Plus(b, Times(a, LoopIndex(i))) if isInvariant(a,i) && isInvariant(b,i) => Seq(AffineAccess(a,i,b)) // b + a*i
+    case Plus(LoopIndex(i), b) if isInvariant(b,i)  => Seq(OffsetAccess(i,b))                                // i + b
+    case Plus(b, LoopIndex(i)) if isInvariant(b,i)  => Seq(OffsetAccess(i,b))                                // b + i
+    case Times(LoopIndex(i), a) if isInvariant(a,i) => Seq(StridedAccess(a,i))                               // i*a
+    case Times(a, LoopIndex(i)) if isInvariant(a,i) => Seq(StridedAccess(a,i))                               // a*i
+    case LoopIndex(i) => Seq(LinearAccess(i))                                                                // i
+    case b if isInvariantForAll(b) => Seq(InvariantAccess(b))                                                // b
+
+    case _ => findGeneralAffinePattern(x)                                                                    // other
+  }
+  def extractAccessPatterns(xs: Seq[Exp[Index]]): Seq[IndexPattern] = xs.flatMap{
     case x if boundIndexPatterns.contains(x) => boundIndexPatterns(x)
-    case x => List(extractIndexPattern(x))
+    case x => extractIndexPattern(x)
   }
 
   override protected def visit(lhs: Sym[_], rhs: Op[_]): Unit = lhs match {

@@ -31,7 +31,7 @@ package object util {
       (y & (y-1)) == 0
     }
   }
-  def log2(x: Double): Double = Math.log(x)/Math.log10(2)
+  def log2(x: Double): Double = Math.log10(x)/Math.log10(2)
 
   object single {
     private def singleVisit(x: Any)(func: Any => Unit): Unit = x match {
