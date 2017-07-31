@@ -200,8 +200,6 @@ trait AccessPatternAnalyzer extends Traversal {
     }
   }
 
-
-
   def extractIndexPattern(x: Exp[Index]): Seq[IndexPattern] = x match {
     case Plus(Times(LoopIndex(i), a), b) if isInvariant(a,i) && isInvariant(b,i) => Seq(AffineAccess(a,i,b)) // i*a + b
     case Plus(Times(a, LoopIndex(i)), b) if isInvariant(a,i) && isInvariant(b,i) => Seq(AffineAccess(a,i,b)) // a*i + b
