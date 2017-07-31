@@ -214,7 +214,8 @@ trait AccessPatternAnalyzer extends Traversal {
     case LoopIndex(i) => Seq(LinearAccess(i))                                                                // i
     case b if isInvariantForAll(b) => Seq(InvariantAccess(b))                                                // b
 
-    case _ => findGeneralAffinePattern(x)                                                                    // other
+    //case _ => findGeneralAffinePattern(x)                                                                    // other
+    case _ => Seq(RandomAccess)
   }
   def extractAccessPatterns(xs: Seq[Exp[Index]]): Seq[IndexPattern] = xs.flatMap{
     case x if boundIndexPatterns.contains(x) => boundIndexPatterns(x)
