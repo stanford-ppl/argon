@@ -11,7 +11,13 @@ import scala.collection.mutable.ArrayBuffer
 import org.virtualized.SourceContext
 
 trait ArgonCompiler { self =>
-  final implicit val IR: State = new State
+  var _IR: State = new State
+  final implicit def IR: State = _IR
+
+  def resetState(): Unit = {
+    _IR = new State
+    passes.clear()
+  }
 
   def stagingArgs: Array[String]
 
@@ -22,6 +28,12 @@ trait ArgonCompiler { self =>
   final protected def codegenerators = passes.collect{case x: Codegen => x}
 
   protected val testbench: Boolean = false
+
+  protected def checkBugs(start: Long, stageName: String): Unit = if (IR.hadBug) {
+    onException(new Exception(s"Encountered compiler bug during pass $stageName"))
+    if (testbench) throw new TestBenchFailed(1)
+    else System.exit(1)
+  }
 
   protected def checkErrors(start: Long, stageName: String): Unit = if (IR.hadErrors) {
     val time = (System.currentTimeMillis - start).toFloat
@@ -47,11 +59,11 @@ trait ArgonCompiler { self =>
       if (t.getCause != null) { log(t.getCause); log("") }
       t.getStackTrace.foreach{elem => log(elem.toString) }
     }
-    error(s"An exception was encountered while compiling ${Config.name}: ")
-    if (t.getMessage != null) error(s"  ${t.getMessage}")
-    if (t.getCause != null) error(s"  ${t.getCause}")
-    error(s"This is likely a compiler bug. A log file has been created at: ")
-    error(s"  ${Config.logDir}/${Config.name}_exception.log")
+    bug(s"An exception was encountered while compiling ${Config.name}: ")
+    if (t.getMessage != null) bug(s"  ${t.getMessage}")
+    if (t.getCause != null) bug(s"  ${t.getCause}")
+    bug(s"This is likely a compiler bug. A log file has been created at: ")
+    bug(s"  ${Config.logDir}/${Config.name}_exception.log")
   }
 
   protected def settings(): Unit = { }
@@ -61,8 +73,6 @@ trait ArgonCompiler { self =>
     IR.reset() // Reset global state
     settings()
     createTraversalSchedule(IR)
-
-    __args = MArray.input_arguments()
 
     if (Config.clearLogs) deleteExts(Config.logDir, ".log")
     report(c"Compiling ${Config.name} to ${Config.genDir}")
@@ -81,6 +91,9 @@ trait ArgonCompiler { self =>
 
   final protected def runTraversals[R:Type](startTime: Long, b: Block[R], timingLog: Log): Unit = {
     var block: Block[R] = b
+
+    if (IR.useBasicBlocks) warn("Using basic blocks!")
+
     // --- Traversals
     for (t <- passes) {
       if (IR.graph.VERBOSE_SCHEDULING) {
@@ -94,11 +107,15 @@ trait ArgonCompiler { self =>
 
       block = t.run(block)
       // After each traversal, check whether there were any reported errors
+      checkBugs(startTime, t.name)
       checkErrors(startTime, t.name)
 
-      if (Config.verbosity >= 1) withLog(timingLog) {
-        msg(s"  ${t.name}: " + "%.4f".format(t.lastTime / 1000))
+      val v = Config.verbosity
+      Config.verbosity = 1
+      withLog(timingLog) {
+        dbg(s"  ${t.name}: " + "%.4f".format(t.lastTime / 1000))
       }
+      Config.verbosity = v
 
       // Throw out scope cache after each transformer runs. This is because each block either
       // a. didn't exist before
@@ -117,12 +134,16 @@ trait ArgonCompiler { self =>
 
     val startTime = System.currentTimeMillis()
 
-    val block = stageProgram{ MUnit(blk()) }
+    val block = stageProgram{
+      __args = MArray.input_arguments()
+      MUnit(blk())
+    }
 
     if (IR.graph.curEdgeId == 0 && !testbench) {
       warn("Nothing staged, nothing gained.")
     }
     // Exit now if errors were found during staging
+    checkBugs(startTime, "staging")
     checkErrors(startTime, "staging")
 
     val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
@@ -130,17 +151,18 @@ trait ArgonCompiler { self =>
 
     val time = (System.currentTimeMillis - startTime).toFloat
 
-    if (Config.verbosity >= 1) {
-      withLog(timingLog) {
-        msg(s"  Total: " + "%.4f".format(time / 1000))
-        msg(s"")
-        val totalTimes = passes.distinct.groupBy(_.name).mapValues{pass => pass.map(_.totalTime).sum }.toList.sortBy(_._2)
-        for (t <- totalTimes) {
-          msg(s"  ${t._1}: " + "%.4f".format(t._2 / 1000))
-        }
+    val v = Config.verbosity
+    Config.verbosity = 1
+    withLog(timingLog) {
+      dbg(s"  Total: " + "%.4f".format(time / 1000))
+      dbg(s"")
+      val totalTimes = passes.distinct.groupBy(_.name).mapValues{pass => pass.map(_.totalTime).sum }.toList.sortBy(_._2)
+      for (t <- totalTimes) {
+        dbg(s"  ${t._1}: " + "%.4f".format(t._2 / 1000))
       }
-      timingLog.close()
     }
+    timingLog.close()
+    Config.verbosity = v
 
     checkWarnings()
     report(s"[\u001B[32mcompleted\u001B[0m] Total time: " + "%.4f".format(time/1000) + " seconds")

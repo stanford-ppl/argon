@@ -97,15 +97,21 @@ trait Interpreter extends Traversal {
       }
     }
 
-    val v = matchNode(lhs).lift(rhs).getOrElse({
-      println()
-      println(s"[${Console.RED}error${Console.RESET}] Unable to interpret this node: " + (lhs, rhs))
-      displayInfo
-      System.exit(0)
-    })
+    try {
+      val v = matchNode(lhs).lift(rhs).get
+      updateVar(lhs, v)
+    }
+    catch {
+      case e: Throwable =>
+        e.printStackTrace
+        println()
+        println(s"[${Console.RED}error${Console.RESET}] Unable to interpret this node: " + (lhs, rhs))
+        displayInfo
+        Config.exit()
+        System.exit(0)
+    }
 
 //    if (!v.isInstanceOf[Unit])
-    updateVar(lhs, v)
 
   }  
 
@@ -145,13 +151,13 @@ object Interpreter {
         "Queue(" + q.asScala.toList.map(stringify).mkString(", ") + ")"
       case s: Seq[_] =>
         if (s.size > 10) 
-          "Seq(" + s.take(10).map(stringify).mkString(", ") + ", ...)"
+          "Seq(" + s.take(5).map(stringify).mkString(", ") + ", ..., " + s.takeRight(5).map(stringify).mkString(", ")+")"
         else
           "Seq(" + s.map(stringify).mkString(", ") + ")"          
 
       case s: Array[_] =>
-        if (s.size > 10) 
-          "Array(" + s.take(10).map(stringify).mkString(", ") + ", ...)"
+        if (s.size > 10)
+          "Array(" + s.take(50).map(stringify).mkString(", ") + ", ..., " + s.takeRight(5).map(stringify).mkString(", ") + ")"          
         else
           "Array(" + s.map(stringify).mkString(", ") + ")"          
         
@@ -159,7 +165,9 @@ object Interpreter {
       case s: String => '"' + s + '"'
       case Const(x) => "C(" + stringify(x) + ")"
       case null => "null"
-      case x: BigDecimal => x.toString.take(5)
+      case x: BigDecimal =>
+        val v = x.toDouble
+        f"$v%.5e"
       case _ => x.toString
     }
   }  

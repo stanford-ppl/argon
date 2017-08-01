@@ -38,6 +38,9 @@ trait CppGenFixPt extends CppCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
+    case FixLsh(x,y) => emit(src"${lhs.tp} $lhs = $x << $y;")
+    case FixRsh(x,y) => emit(src"${lhs.tp} $lhs = $x >> $y;")
+    case FixURsh(x,y) => emit(src"${lhs.tp} $lhs = $x >>> $y; // Need to do this correctly for cpp")
     case FixInv(x)   => emit(src"${lhs.tp} $lhs = ~$x;")
     case FixNeg(x)   => emit(src"${lhs.tp} $lhs = -$x;")
     case FixAdd(x,y) => emit(src"${lhs.tp} $lhs = $x + $y;")

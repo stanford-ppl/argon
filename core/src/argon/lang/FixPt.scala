@@ -6,6 +6,7 @@ import argon.core._
 import argon.nodes._
 import argon.util.escapeConst
 import forge._
+import argon.util._
 
 /** All Fixed Point Types **/
 case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt[S,I,F]] {
@@ -18,6 +19,7 @@ case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt
   @api def - (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.sub(this.s,that.s))
   @api def * (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul(this.s,that.s))
   @api def / (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div(this.s,that.s))
+  @api def % (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mod(this.s,that.s))
   @api def & (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.and(this.s,that.s))
   @api def | (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.or(this.s,that.s))
   @api def ^ (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.xor(this.s,that.s))
@@ -67,10 +69,6 @@ object FixPt {
   @internal def int8(x: CString): Int8 = int8(String(x))
   @internal def int32(x: BigDecimal): Const[Int32] = const[TRUE,_32,_0](x, force = false)
   @internal def int64(x: BigDecimal): Const[Int64] = const[TRUE,_64,_0](x, force = false)
-
-  implicit class FixPtIntLikeOps[S:BOOL,I:INT](x: FixPt[S,I,_0]) {
-    @api def %(y: FixPt[S,I,_0]): FixPt[S,I,_0] = FixPt(FixPt.mod(x.s, y.s))
-  }
 
   /** Type classes **/
   implicit def fixPtIsStaged[S:BOOL,I:INT,F:INT]: Type[FixPt[S,I,F]] = FixPtType[S,I,F](BOOL[S],INT[I],INT[F])
@@ -187,12 +185,20 @@ object FixPt {
     case _ => stage(SatSub(x,y))(ctx)
   }
 
+  @internal def mod[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
+    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[S,I,F](a % b)
+    case (a, Const(1)) => const[S,I,F](0)
+    case _ => stage(FixMod(x,y))(ctx)
+  }
+
   @internal def mul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
     case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[S,I,F](a * b)
     case (_, b@Const(0)) => b
     case (a@Const(0), _) => a
     case (a, Const(1)) => a
     case (Const(1), b) => b
+    case (_, Const(b: BigDecimal)) if isPow2(b) && b > 0 => lsh(x,const[S,I,_0](log2(b.toDouble).toInt))
+    case (_, Const(b: BigDecimal)) if isPow2(b) && b < 0 => rsh(x,const[S,I,_0](log2(b.abs.toDouble).toInt))
     case _ => stage(FixMul(x, y) )(ctx)
   }
   @internal def mul_unb_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
@@ -278,11 +284,7 @@ object FixPt {
     case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a == b)
     case _ => stage(FixEql(x,y))(ctx)
   }
-  @internal def mod[S:BOOL,I:INT](x: Exp[FixPt[S,I,_0]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,_0]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[S,I,_0](a % b)
-    case (a, Const(1)) => const[S,I,_0](0)
-    case _ => stage(FixMod(x,y))(ctx)
-  }
+
 
   @internal def lsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]): Exp[FixPt[S,I,F]] = (x,y) match {
     case (Const(a: BigDecimal), Const(b: BigDecimal)) if a.isWhole && b.isValidInt => const[S,I,F](BigDecimal(a.toBigInt << b.toInt))

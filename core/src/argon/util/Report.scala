@@ -31,13 +31,16 @@ object Report {
   }
 
   @stateful def withLog[T](dir: String, filename: String)(blk: => T)(implicit state: State): T = {
-    val log = createLog(dir, filename)
-    try {
-      withLog(log)(blk)
+    if (Config.verbosity >= 1) {
+      val log = createLog(dir, filename)
+      try {
+        withLog(log)(blk)
+      }
+      finally {
+        log.close()
+      }
     }
-    finally {
-      log.close()
-    }
+    else blk
   }
 
   // TODO: Should these be macros?
@@ -49,20 +52,30 @@ object Report {
   }
 
   def report(x: => Any): Unit = if (Config.verbosity >= 0) System.out.println(x)
-  def warn(x: => Any): Unit = if (Config.showWarn) {
+  def warn(x: => Any): Unit = if (Config.showWarn && Config.verbosity >= -1) {
     System.err.println(s"[\u001B[33mwarn\u001B[0m] $x")
   }
-  def error(x: => Any): Unit = {
+  def error(x: => Any): Unit = if (Config.verbosity >= -1) {
     System.err.println(s"[\u001B[31merror\u001B[0m] $x")
+  }
+  def bug(x: => Any): Unit = {
+    System.err.println(s"[\u001B[35mbug\u001B[0m] $x")
+  }
+  def info(x: => Any): Unit = if (Config.verbosity >= 0) {
+    System.out.println(s"[\u001B[34minfo\u001B[0m] $x")
   }
 
   @stateful def warn(ctx: SrcCtx, x: => Any, noWarn: Boolean = false)(implicit state: State): Unit = {
     warn(ctx.toString + ": " + x)
-    if (!noWarn) state.logWarning()
+    if (!noWarn && Config.showWarn) state.logWarning()
   }
   @stateful def error(ctx: SrcCtx, x: => Any, noError: Boolean = false)(implicit state: State): Unit = {
     error(ctx.fileName + ":" + ctx.line + ": " + x)
     if (!noError) state.logError()
+  }
+  @stateful def bug(ctx: SrcCtx, x: => Any, noError: Boolean = false)(implicit state: State): Unit = {
+    bug(ctx.fileName + ":" + ctx.line + ": " + x)
+    if (!noError) state.logBug()
   }
 
   def warn(ctx: SrcCtx, showCaret: Boolean): Unit = if (ctx.lineContent.isDefined) {
@@ -73,9 +86,14 @@ object Report {
     error(ctx.lineContent.get)
     if (showCaret) error(" "*(ctx.column-1) + "^") else error("")
   }
+  def bug(ctx: SrcCtx, showCaret: Boolean): Unit = if (ctx.lineContent.isDefined) {
+    bug(ctx.lineContent.get)
+    if (showCaret) bug(" "*(ctx.column-1) + "^") else bug("")
+  }
 
   def warn(ctx: SrcCtx): Unit = warn(ctx, showCaret = false)
   def error(ctx: SrcCtx): Unit = error(ctx, showCaret = false)
+  def bug(ctx: SrcCtx): Unit = bug(ctx, showCaret = false)
 
   @stateful def str(lhs: Exp[_]): String = lhs match {
     case Def(rhs) => readable(lhs) + " = " + readable(rhs)

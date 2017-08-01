@@ -22,7 +22,7 @@ object Boolean {
   /** Static functions **/
   @api def apply(x: CBoolean): MBoolean = Boolean(const(x))
   @internal def lift(x: CBoolean): MBoolean = Boolean(const(x))
-  @internal def const(x: CBoolean): Exp[MBoolean] = constant(BooleanType)(x)
+  @internal def const(x: CBoolean): Const[MBoolean] = constant(BooleanType)(x)
 
   /** Type **/
   implicit def boolIsStaged: Type[MBoolean] = BooleanType

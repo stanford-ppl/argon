@@ -8,6 +8,7 @@ trait BlockTraversal {
 
   /** All statements defined in lower (further nested) blocks within the current traversal scope **/
   private var innerScope: Seq[NodeId] = _
+  private var currentScope: Seq[Stm] = _
 
   final protected def scrubSym(s: Sym[_]): Unit = {
     log(c"Scrubbing symbol $s from IR graph!")
@@ -21,6 +22,15 @@ trait BlockTraversal {
   // Statement versions of the above
   protected def innerStms: Seq[Stm] = if (innerScope eq null) null else innerScope.flatMap(stmFromNodeId)
   protected def availStms: Seq[Stm] = availableStms.flatMap(stmFromNodeId)
+  protected def curScope: Seq[Stm] = currentScope
+
+  private def withCurrentScope[A](scope: Seq[Stm])(body: => A): A = {
+    val saveCurrent = currentScope
+    currentScope = scope
+    val result = body
+    currentScope = saveCurrent
+    result
+  }
 
   private def withInnerScope[A](scope: Seq[Int])(body: => A): A = {
     val saveInner = innerScope
@@ -81,9 +91,11 @@ trait BlockTraversal {
     val inputs = block.inputs.flatMap(getDef).map(_.id)
     withInnerScope(availableStms diff inputs) {
       val schedule = scheduleBlock(availableStms, block)
-      // Delay all other symbols as part of the inner scope
-      withInnerScope(availableStms diff schedule.map(_.rhs.id)) {
-        func(schedule)
+      withCurrentScope(schedule) {
+        // Delay all other symbols as part of the inner scope
+        withInnerScope(availableStms diff schedule.map(_.rhs.id)) {
+          func(schedule)
+        }
       }
     }
   }

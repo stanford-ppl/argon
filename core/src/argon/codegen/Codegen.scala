@@ -15,7 +15,7 @@ trait Codegen extends Traversal {
   def out: String = s"${Config.genDir}${Config.sep}$lang${Config.sep}"
   var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
 
-  val maxLinesPerFile = 500  // Specific hacks for chisel             
+  val maxLinesPerFile = 300  // Specific hacks for chisel             
   val numTraitsPerMixer = 50 // Specific hacks for chisel
 
   var stream: PrintWriter = _
@@ -148,6 +148,7 @@ trait Codegen extends Traversal {
     case b: Boolean => b.toString
     case l: Long => l.toString
     case l: BigDecimal => l.toString
+    case l: BigInt => l.toString
     case _ => throw new RuntimeException(s"Could not quote or remap $arg (${arg.getClass})")
   }
 

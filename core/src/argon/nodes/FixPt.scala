@@ -1,7 +1,9 @@
 package argon.nodes
 
+import argon.compiler
 import argon.core._
 import argon.compiler._
+import argon.emul._
 import forge._
 
 sealed class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Type[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] with FrontendFacing {
@@ -29,6 +31,8 @@ sealed class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) e
 }
 
 class FixPtNum[S:BOOL,I:INT,F:INT] extends Num[FixPt[S,I,F]] {
+  lazy val fmt = FixFormat(BOOL[S].v, INT[I].v, INT[F].v)
+
   @api def negate(x: FixPt[S,I,F]) = -x
   @api def plus(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x + y
   @api def minus(x: FixPt[S,I,F], y: FixPt[S,I,F]) = x - y
@@ -51,6 +55,10 @@ class FixPtNum[S:BOOL,I:INT,F:INT] extends Num[FixPt[S,I,F]] {
   @api def fromLong(x: Long, force: CBoolean = true) = FixPt.lift[S,I,F](x, force)
   @api def fromFloat(x: Float, force: CBoolean = true) = FixPt.lift[S,I,F](x, force)
   @api def fromDouble(x: Double, force: CBoolean = true) = FixPt.lift[S,I,F](x, force)
+
+  @api def maxValue: FixPt[S,I,F] = FixPt.lift[S,I,F](fmt.MAX_VALUE_FP.toBigDecimal, force=true)  // TODO: Eventually should get rid of conversion
+  @api def minValue: FixPt[S,I,F] = FixPt.lift[S,I,F](fmt.MIN_VALUE_FP.toBigDecimal, force=true)
+  @api def minPositiveValue: FixPt[S,I,F] = FixPt.lift[S,I,F](fmt.MIN_POSITIVE_VALUE_FP.toBigDecimal, force=true)
 }
 
 object FixPtNum {
@@ -102,6 +110,7 @@ case class FixAdd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]
 case class SatAdd[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.add_sat(f(x), f(y)) }
 case class FixSub[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.sub(f(x), f(y)) }
 case class SatSub[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.sub_sat(f(x), f(y)) }
+case class FixMod[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.mod(f(x), f(y)) }
 case class FixMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.mul(f(x), f(y)) }
 case class UnbSatMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.mul_unb_sat(f(x), f(y)) }
 case class SatMul[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.mul_sat(f(x), f(y)) }
@@ -117,7 +126,6 @@ case class FixLt [S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]
 case class FixLeq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F,MBoolean] { def mirror(f:Tx) = fix.leq(f(x), f(y)) }
 case class FixNeq[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F,MBoolean] { def mirror(f:Tx) = fix.neq(f(x), f(y)) }
 case class FixEql[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]) extends FixPtOp[S,I,F,MBoolean] { def mirror(f:Tx) = fix.eql(f(x), f(y)) }
-case class FixMod[S:BOOL,I:INT](x: Exp[FixPt[S,I,_0]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp1[S,I,_0] { def mirror(f:Tx) = fix.mod(f(x), f(y)) }
 
 case class FixLsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.lsh(f(x), f(y)) }
 case class FixRsh[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,_0]]) extends FixPtOp1[S,I,F] { def mirror(f:Tx) = fix.rsh(f(x), f(y)) }

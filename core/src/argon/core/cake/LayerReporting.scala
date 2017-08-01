@@ -30,12 +30,19 @@ trait LayerReporting { self: ArgonCake =>
   def error(ctx: SrcCtx): Unit = Report.error(ctx)
   @stateful def error(ctx: SrcCtx, x: => Any, noError: Boolean = false): Unit = Report.error(ctx, x, noError)
 
+  def bug(x: => Any): Unit = Report.bug(x)
+  def bug(ctx: SrcCtx, showCaret: Boolean): Unit = Report.bug(ctx, showCaret)
+  def bug(ctx: SrcCtx): Unit = Report.bug(ctx)
+  @stateful def bug(ctx: SrcCtx, x: => Any, noError: Boolean = false): Unit = Report.bug(ctx, x, noError)
+
+  def info(x: => Any): Unit = Report.info(x)
+
   @stateful def str(lhs: Exp[_]): String = Report.str(lhs)
   @stateful def str(lhs: Seq[Exp[_]]): String = Report.str(lhs)
-  @stateful def strMeta(lhs: Exp[_]) {
-    lhs.name.foreach{name => dbg(c" - Name: $name") }
-    dbg(c" - Type: ${lhs.tp}")
-    metadata.get(lhs).foreach{m => dbg(c" - ${m._1}: ${m._2}") }
+  @stateful def strMeta(lhs: Exp[_], tab: Int = 0) {
+    lhs.name.foreach{name => dbg("  "*tab + c" - Name: $name") }
+    dbg("  "*tab + c" - Type: ${lhs.tp}")
+    metadata.get(lhs).foreach{m => dbg("  "*tab + c" - ${m._1}: ${m._2}") }
   }
 
   implicit def compilerReadable(sc: StringContext): Report.CompilerReportHelper = new Report.CompilerReportHelper(sc)

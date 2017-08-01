@@ -9,7 +9,6 @@ import scala.annotation.unchecked.uncheckedVariance
 /** Any staged symbol **/
 sealed abstract class Exp[+T] extends EdgeLike with FrontendFacing {
   def tp: Type[T @uncheckedVariance]
-
   def isConst = false
   var prevNames: Seq[(String,String)] = Nil
   var name: Option[String] = None
@@ -75,19 +74,24 @@ class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid:
 
   override def c: Any = _c
   def isFinal: Boolean = _isFinal
+  override def isConst = isFinal
 
   @stateful def value(implicit state: State): Any = metadata[ParamValue](this).map(_.x).getOrElse(_c)
   @stateful def setValue(rhs: Any)(implicit state: State): Unit = if (!isFinal) { metadata.add(this, ParamValue(rhs)) }
   @stateful def makeFinal()(implicit state: State): Unit = { _isFinal = true; _c = this.value }
 
-
   override def hashCode() = pid
   override def equals(x: Any) = x match {
-    case that: Param[_] => this.pid == that.pid
+    case that: Param[_] =>
+      if (this.isFinal && that.isFinal) {
+        this.tp == that.tp && this.c == that.c
+      } else {
+        this.pid == that.pid
+      }
     case _ => false
   }
 
-  override def toString = s"Param(#${-pid})"
+  override def toString: String = if (!isFinal) name.getOrElse(s"p${-pid}") else super.toString
 
   override def toStringFrontend: String = name match {
     case Some(n) => s"$n (${this.toString})"
@@ -107,6 +111,7 @@ class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid:
 object Const {
   def unapply(s: Exp[_]): Option[Any] = s match {
     case param: Param[_] if param.isFinal => Some(param.c)
+    case param: Param[_] if !param.isFinal => None
     case const: Const[_] => Some(const.c)
     case _ => None
   }

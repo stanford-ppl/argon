@@ -147,30 +147,36 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   protected def strip_ext(name: String): String = {"\\..*".r.replaceAllIn(name,"")}
   protected def get_ext(name: String): String = {".*\\.".r.replaceAllIn(name,"")}
-  protected def get_real_stream(curStream: String, x: String): String = {
+  protected def get_real_stream(curStream: String): String = {
     if ((curStream contains "IOModule") | (curStream contains "AccelTop")) {
       strip_ext(curStream)
     } else {
       val current_ext = streamExtensions(strip_ext(curStream)).last
       val cur_stream_ext = if (current_ext == 0) {strip_ext(curStream)} else {strip_ext(curStream) + "_" + current_ext}
       val cur_tabbing = streamTab(cur_stream_ext + "." + get_ext(curStream))
-      if (/*(x.indexOf("val") == 0) & */(cur_tabbing == 1)) streamLines(strip_ext(curStream)) += 1
+      if ((cur_tabbing == 1)) streamLines(strip_ext(curStream)) += 1
       val global_lines = streamLines(strip_ext(curStream))
       val file_num = global_lines / maxLinesPerFile
-      if (global_lines % maxLinesPerFile == 0 & (!streamExtensions(strip_ext(curStream)).contains(file_num))) { // How the fuck is it entering this loop if the condition is false
+      if (global_lines % maxLinesPerFile == 0 & (!streamExtensions(strip_ext(curStream)).contains(file_num))) { 
         val next = newStream(strip_ext(curStream) + "_" + file_num)
         val curlist = streamExtensions(strip_ext(curStream))
+
+        // Console.println(s"   Just appended ${file_num} to list for ${strip_ext(curStream)}!")
         streamExtensions += (strip_ext(curStream) -> {curlist :+ file_num})
+        val prnt = if (file_num == 1) src"${strip_ext(curStream)}" else src"${strip_ext(curStream)}_${file_num-1}"
         withStream(next) {
-          stream.println("""package accel
+          stream.println(src"""package accel
 import templates._
 import templates.ops._
 import types._
 import chisel3._
 import chisel3.util._
+
+trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
 """)
-          val prnt = if (file_num == 1) src"${strip_ext(curStream)}" else src"${strip_ext(curStream)}_${file_num-1}"
-          open(src"""trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {""")
+
+          streamTab(strip_ext(curStream) + "_" + file_num + "." + get_ext(curStream)) = 1 
+
         }
       }
       cur_stream_ext
@@ -191,7 +197,7 @@ import chisel3.util._
       // val file_num = global_lines / maxLinesPerFile
       // val debug_stuff = "// lines " + global_lines + " tabbing " + cur_tabbing + " ext_list " + ext_list + " file_num " + file_num
 
-      val realstream = get_real_stream(streamName,x)
+      val realstream = get_real_stream(streamName)
       withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x /*+ debug_stuff*/)}
     } else { 
       if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
@@ -199,7 +205,7 @@ import chisel3.util._
   } 
   override protected def open(x: String, forceful: Boolean = false): Unit = {
     if (emitEn | forceful) {
-      val realstream = get_real_stream(streamName,x)
+      val realstream = get_real_stream(streamName)
       withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x)}; 
       if (streamTab contains {realstream + "." + get_ext(streamName)}) streamTab(realstream + "." + get_ext(streamName)) += 1 
     } else { 
@@ -208,7 +214,7 @@ import chisel3.util._
   }
   override protected def close(x: String, forceful: Boolean = false): Unit = { 
     if (emitEn | forceful) {
-      val realstream = get_real_stream(streamName,x)
+      val realstream = get_real_stream(streamName)
       if (streamTab contains {realstream + "." + get_ext(streamName)}) {
         streamTab(realstream + "." + get_ext(streamName)) -= 1; 
         withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x)}
@@ -219,7 +225,7 @@ import chisel3.util._
   } 
   override protected def closeopen(x: String, forceful: Boolean = false): Unit = { // Good for "} else {" lines
     if (emitEn | forceful) {
-      val realstream = get_real_stream(streamName,x)
+      val realstream = get_real_stream(streamName)
       if (streamTab contains {realstream + "." + get_ext(streamName)}) {
         streamTab(realstream + "." + get_ext(streamName)) -= 1; 
         withStream(getStream(realstream)) {stream.println(x);}
@@ -233,6 +239,7 @@ import chisel3.util._
 
   final protected def withSubStream[A](name: String, parent: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
     if (Config.multifile == 4) {
+      // Console.println(s"substream $name, parent $parent ext ${streamExtensions(parent)}")
       val prnts = if (!(streamExtensions contains parent)) src"$parent" else streamExtensions(parent).map{i => if (i == 0) src"$parent" else src"${parent}_${i}"}.mkString(" with ")
       emit(src"// Creating sub kernel ${name}")
       withStream(newStream(name)) {

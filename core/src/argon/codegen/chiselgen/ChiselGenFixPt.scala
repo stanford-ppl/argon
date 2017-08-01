@@ -82,7 +82,12 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case UnbSatDiv(x,y) => emit(src"val $lhs = $x </&> $y")
     case FixRandom(x) => 
       val seed = (random*1000).toInt
-      emit(s"val ${quote(lhs)}_bitsize = log2Up(${x.getOrElse(4096)}) max 1")
+      val size = x match{
+        case Some(Const(xx)) => s"$xx"
+        case Some(_) => s"$x"
+        case None => "4096"
+      }
+      emit(s"val ${quote(lhs)}_bitsize = Utils.log2Up(${size}) max 1")
       emitGlobalModule(src"val ${lhs}_rng = Module(new PRNG($seed))")
       emitGlobalModule(src"${lhs}_rng.io.en := true.B")
       emit(src"val ${lhs} = ${lhs}_rng.io.output(${lhs}_bitsize,0)")

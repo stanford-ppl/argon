@@ -13,4 +13,8 @@ trait Num[T] extends Bits[T] with Arith[T] with Order[T] {
   @api def fromLong(x: Long, force: Boolean = true): T
   @api def fromFloat(x: Float, force: Boolean = true): T
   @api def fromDouble(x: Double, force: Boolean = true): T
+
+  @api def maxValue: T
+  @api def minValue: T
+  @api def minPositiveValue: T
 }

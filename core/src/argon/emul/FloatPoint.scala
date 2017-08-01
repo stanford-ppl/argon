@@ -1,10 +1,27 @@
 package argon.emul
 
+import DataImplicits._
+
 case class FltFormat(sbits: Int, ebits: Int) {
+  lazy val bits: Int = sbits + ebits + 1
   lazy val bias: BigInt = BigInt(2).pow(ebits - 1) - 1
   lazy val MIN_E: BigInt = -bias + 1      // Represented as exponent of 1
   lazy val MAX_E: BigInt = bias
   lazy val SUB_E: BigInt = MIN_E - sbits  // Exponent is all 0s
+
+  lazy val MAX_VALUE_FP: FloatPoint = {
+    val x = Array.tabulate(bits){i => if (i == bits-1 || i == bits-1-ebits) Bool(false) else Bool(true) }
+    //println(x.toStr)
+    FloatPoint.fromBits(x, this)
+  }
+  lazy val MIN_VALUE_FP: FloatPoint = -MAX_VALUE_FP
+
+  lazy val MIN_POSITIVE_VALUE: FloatPoint = {
+    val exp = BigInt(0)
+    val man = BigInt(1)
+    val value = FloatPoint.convertBackToValue(Right(false,man,exp), this)
+    new FloatPoint(value, true, this)
+  }
 }
 
 protected sealed abstract class FloatValue {
@@ -150,13 +167,22 @@ object FloatValue {
   def apply(x: BigDecimal): FloatValue = Value(x)
 }
 
-class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) {
+class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) extends Number {
+  def unary_-(): FloatPoint = FloatPoint.clamped(-this.value, this.valid, fmt)
+
   // All operations assume that both the left and right hand side have the same fixed point format
   def +(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value + that.value, this.valid && that.valid, fmt)
   def -(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value - that.value, this.valid && that.valid, fmt)
   def *(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value * that.value, this.valid && that.valid, fmt)
   def /(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value / that.value, this.valid && that.valid, fmt)
-  def %(that: FloatPoint): FloatPoint = FloatPoint.clamped(this.value % that.value, this.valid && that.valid, fmt)
+  def %(that: FloatPoint): FloatPoint = {
+    val result = this.value % that.value
+    val posResult = result match {
+      case Value(v) => if (v < 0) Value(v) + that.value else result
+      case _ => result
+    }
+    FloatPoint.clamped(posResult, this.valid && that.valid, fmt)
+  }
 
   def <(that: FloatPoint): Bool   = Bool(this.value < that.value, this.valid && that.valid)
   def <=(that: FloatPoint): Bool  = Bool(this.value <= that.value, this.valid && that.valid)
@@ -224,6 +250,16 @@ object FloatPoint {
   def apply(x: Float, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
   def apply(x: Double, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
   def apply(x: BigDecimal, fmt: FltFormat): FloatPoint = FloatPoint.clamped(FloatValue(x), valid=true, fmt)
+  def apply(x: String, fmt: FltFormat): FloatPoint = x match {
+    case "NaN"  => FloatPoint.clamped(NaN, valid=true, fmt)
+    case "-Inf" => FloatPoint.clamped(Inf(negative=true), valid=true, fmt)
+    case "Inf"  => FloatPoint.clamped(Inf(negative=false), valid=true, fmt)
+    case "-0.0" => FloatPoint.clamped(Zero(negative=true), valid=true, fmt)
+    case "0.0"  => FloatPoint.clamped(Zero(negative=false), valid=true, fmt)
+    case _      => FloatPoint.clamped(Value(BigDecimal(x)), valid=true, fmt)
+  }
+
+  def invalid(fmt: FltFormat): FloatPoint = new FloatPoint(NaN, false, fmt)
 
   /**
     * Stolen from https://stackoverflow.com/questions/6827516/logarithm-for-biginteger/7982137#7982137
@@ -252,10 +288,27 @@ object FloatPoint {
       Left(Zero(negative = false))
     }
     else {
-      val y = Math.round(log2BigDecimal(value.abs)).toInt // Note: NOT floor or ceil
-      val x = value.abs / BigDecimal(2).pow(y)
+      var y = Math.floor(log2BigDecimal(value.abs)).toInt // Note: NOT floor or ceil
+      var x = value.abs / BigDecimal(2).pow(y)
+      //println("CLAMPING: ")
       //println(s"exp: $y [${fmt.MIN_E} : ${fmt.MAX_E}, sub: ${fmt.SUB_E}]")
       //println(s"man: $x")
+
+      if (x >= 2) {
+        y += 1
+        x = value.abs / BigDecimal(2).pow(y)
+      }
+      val cutoff = if (y < 0) BigDecimal(1) - BigDecimal(2).pow(-fmt.sbits) else BigDecimal(1)
+      if (x < cutoff) { // TODO: This is broken!!
+        y -= 1
+        x = value.abs / BigDecimal(2).pow(y)
+      }
+
+      //println("FINAL: ")
+      //println(s"exp: $y [${fmt.MIN_E} : ${fmt.MAX_E}, sub: ${fmt.SUB_E}]")
+      //println(s"man: $x")
+
+
       if (y > fmt.MAX_E) {
         Left(Inf(negative = value < 0))
       }
@@ -291,6 +344,7 @@ object FloatPoint {
         val y = e.toInt - fmt.bias.toInt
         val x = BigDecimal(m) / BigDecimal(2).pow(fmt.sbits) + 1 //+ (if (e == 1) 0 else 1)
         val sign = if (s) -1 else 1
+        //println(s"$sign * $x * 2^$y")
         Value(x * BigDecimal(2).pow(y) * sign)
       }
       else {
@@ -309,4 +363,52 @@ object FloatPoint {
       val actualValue = convertBackToValue(m, fmt)
       new FloatPoint(actualValue, valid, fmt)
   }
+
+  def fromBits(bits: Array[Bool], fmt: FltFormat): FloatPoint = {
+    val sign = bits.last
+    val exp = bits.slice(fmt.sbits,fmt.sbits+fmt.ebits)
+    val man = bits.slice(0, fmt.sbits)
+    val value = {
+      if (!exp.exists(_.value) && !man.exists(_.value)) Zero(sign.value)
+      else if (exp.forall(_.value)) {
+        if (man.exists(_.value)) NaN
+        else Inf(sign.value)
+      }
+      else {
+        var exponent = BigInt(0)
+        exp.zipWithIndex.foreach{case (bit, i) => if (bit.value) exponent = exponent.setBit(i) }
+        var mantissa = BigInt(0)
+        man.zipWithIndex.foreach{case (bit, i) => if (bit.value) mantissa = mantissa.setBit(i) }
+
+        //println("exponent: " + exponent)
+        //println("mantissa: " + mantissa)
+        //exponent += fmt.bias
+
+        convertBackToValue(Right((sign.value,mantissa,exponent)), fmt)
+      }
+    }
+    new FloatPoint(value, true, fmt)
+  }
+
+  def fromByteArray(array: Array[Byte], fmt: FltFormat): FloatPoint = {
+    val bits = array.flatMap{byte =>
+      (0 until 8).map{i => Bool( (byte & (1 << i)) > 0) }
+    }
+    fromBits(bits, fmt)
+  }
+
+  /**
+    * Generate a pseudo-random floating point number, uniformly distributed between [0, 1)
+    * FIXME: Uses Double right now
+    * @param fmt The format for the fixed point number being generated
+    */
+  def random(fmt: FltFormat): FloatPoint = FloatPoint(scala.util.Random.nextDouble(), fmt)
+
+  /**
+    * Generate a pseudo-random floating point number, uniformly distributed between [0, max)
+    * @param max The maximum value of the range, non-inclusive
+    * @param fmt The format for the max and the fixed point number being generated
+    */
+  def random(max: FloatPoint, fmt: FltFormat): FloatPoint = FloatPoint.random(fmt) * max
+
 }
