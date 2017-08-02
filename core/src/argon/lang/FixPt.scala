@@ -198,7 +198,7 @@ object FixPt {
     case (a, Const(1)) => a
     case (Const(1), b) => b
     case (_, Const(b: BigDecimal)) if isPow2(b) && b > 0 => lsh(x,const[S,I,_0](log2(b.toDouble).toInt))
-    case (_, Const(b: BigDecimal)) if isPow2(b) && b < 0 => rsh(x,const[S,I,_0](log2(b.abs.toDouble).toInt))
+    case (_, Const(b: BigDecimal)) if isPow2(b) && b < 0 => lsh(FixPt.neg(x),const[S,I,_0](log2(b.abs.toDouble).toInt))
     case _ => stage(FixMul(x, y) )(ctx)
   }
   @internal def mul_unb_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
@@ -229,6 +229,10 @@ object FixPt {
     case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[S,I,F](a / b)
     case (a, Const(1)) => a
     case (_, Const(0)) => warn(ctx, "Division by constant 0 detected"); stage(FixDiv(x,y))(ctx)
+
+    case (_, Const(b: BigDecimal)) if isPow2(b) && b > 0 => rsh(x,const[S,I,_0](log2(b.toDouble).toInt))
+    case (_, Const(b: BigDecimal)) if isPow2(b) && b < 0 => rsh(FixPt.neg(x),const[S,I,_0](log2(b.abs.toDouble).toInt))
+
     case _ => stage(FixDiv(x,y))(ctx)
   }
   @internal def div_unb_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
