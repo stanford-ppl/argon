@@ -3,12 +3,16 @@ package argon.transform
 import argon.core._
 
 trait SubstTransformer extends Transformer {
+  val allowUnsafeSubst: Boolean = false
+
   var subst: Map[Exp[_],Exp[_]] = Map.empty
 
   // Syntax is, e.g.: register(x -> y)
   // Technically original and replacement should have the same type, but this type currently can be "Any"
   def register[T](rule: (Exp[T], Exp[T])) = {
-    assert(rule._2.tp <:< rule._1.tp, c"When creating substitution ${rule._1} -> ${rule._2}, type ${rule._2.tp} was not a subtype of ${rule._1.tp}")
+    if (!allowUnsafeSubst) {
+      assert(rule._2.tp <:< rule._1.tp, c"When creating substitution ${rule._1} -> ${rule._2}, type ${rule._2.tp} was not a subtype of ${rule._1.tp}")
+    }
     subst += rule
   }
   // Only use if you know what you're doing!

@@ -159,6 +159,9 @@ trait AccessPatternAnalyzer extends Traversal {
   object MemWrite   { def unapply(x: Exp[_]) = writeUnapply(x) }
   object LoopIndex  { def unapply(x: Exp[Index]) = indexUnapply(x) }
 
+  def offsetOf(i: Bound[Index]): Option[Exp[Index]] = None
+  def strideOf(i: Bound[Index]): Option[Exp[Index]] = None
+
   /**
     * Check if expression b is invariant with respect to loop index i
     * An expression b is invariant to loop index i if it is defined outside of the loop scope of i
@@ -176,9 +179,22 @@ trait AccessPatternAnalyzer extends Traversal {
 
     def extractPattern(x: Exp[Index]): Seq[IndexPattern] = x match {
       case Plus(a,b) => extractPattern(a) ++ extractPattern(b)
-      case Times(LoopIndex(i), a) if isInvariant(a,i) => Seq(GeneralAffine(Prod(a),i))   // i*a
-      case Times(a, LoopIndex(i)) if isInvariant(a,i) => Seq(GeneralAffine(Prod(a),i))   // a*i
-      case LoopIndex(i) => Seq(GeneralAffine(One,i))                                     // i
+
+      case Times(LoopIndex(i), a) if isInvariant(a,i) =>    // i*a
+        val stride = strideOf(i).map{s => Prod(a,s) }.getOrElse(Prod(a))
+        val offset = offsetOf(i).map{o => GeneralOffset(Sum(o)) }
+        Seq(GeneralAffine(stride,i)) ++ offset
+
+      case Times(a, LoopIndex(i)) if isInvariant(a,i) =>
+        val stride = strideOf(i).map{s => Prod(a,s) }.getOrElse(Prod(a))
+        val offset = offsetOf(i).map{o => GeneralOffset(Sum(o)) }
+        Seq(GeneralAffine(stride,i)) ++ offset   // a*i
+
+      case LoopIndex(i) =>
+        val stride = strideOf(i).map{s => Prod(s) }.getOrElse(One)
+        val offset = offsetOf(i).map{o => GeneralOffset(Sum(o)) }
+        Seq(GeneralAffine(stride,i)) ++ offset                                     // i
+
       case b if isInvariantForAll(b) => Seq(GeneralOffset(Sum(b)))                       // b
       case _ => Seq(RandomAccess)
     }
@@ -211,8 +227,7 @@ trait AccessPatternAnalyzer extends Traversal {
     case Times(a, LoopIndex(i)) if isInvariant(a,i) => Seq(StridedAccess(a,i))                               // a*i
     case LoopIndex(i) => Seq(LinearAccess(i))                                                                // i
     case b if isInvariantForAll(b) => Seq(InvariantAccess(b))                                                // b
-
-    //case _ => findGeneralAffinePattern(x)                                                                    // other
+    case _ if Config.useAffine => findGeneralAffinePattern(x)                                                // other
     case _ => Seq(RandomAccess)
   }
   def extractAccessPatterns(xs: Seq[Exp[Index]]): Seq[IndexPattern] = xs.flatMap{
