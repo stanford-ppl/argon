@@ -315,7 +315,12 @@ object FixPt {
   }
 
   @internal def convert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[_,_,_]]): Exp[FixPt[S2,I2,F2]] = {
-    stage(FixConvert[S,I,F,S2,I2,F2](x.asInstanceOf[Exp[FixPt[S,I,F]]]))(ctx)
+    if (BOOL[S] == BOOL[S2] && INT[I] == INT[I2] && INT[F] == INT[F2]) {
+      x.asInstanceOf[Exp[FixPt[S2,I2,F2]]]
+    }
+    else {
+      stage(FixConvert[S,I,F,S2,I2,F2](x.asInstanceOf[Exp[FixPt[S,I,F]]]))(ctx)
+    }
   }
 
   @internal def to_flt[S:BOOL,I:INT,F:INT,G:INT,E:INT](x: Exp[FixPt[S,I,F]]): Exp[FltPt[G,E]] = {
