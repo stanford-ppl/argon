@@ -49,14 +49,12 @@ case object Zero extends Sum(Nil) { override def toString: String = "Zero" }
 // Variations used here allow Index to be abstract (otherwise can't as easily define stride of 1)
 sealed abstract class IndexPattern {
   def index: Option[Exp[Index]]
-  def isGeneral: Boolean = this.isInstanceOf[GeneralAffine] || this.isInstanceOf[GeneralOffset]
+  def isGeneral: Boolean = this.isInstanceOf[GeneralAffine]
 }
 
 // product(a)*i + sum(b), where all elements in a and b must be loop invariant relative to i
-case class GeneralAffine(a: AffineFunction, i: Exp[Index]) extends IndexPattern {
-  def index = Some(i)
-}
-case class GeneralOffset(b: AffineFunction) extends IndexPattern { def index = None }
+case class AffineProduct(a: AffineFunction, i: Exp[Index])
+case class GeneralAffine(sums: Seq[AffineProduct], offset: AffineFunction) extends IndexPattern { def index = None }
 
 // a*i + b, where a and b must be loop invariant
 case class AffineAccess(a: Exp[Index], i: Exp[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
@@ -73,8 +71,10 @@ case object RandomAccess extends IndexPattern { def index = None }
 
 case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPattern] {
   def mirror(f:Tx) = AccessPattern(indices.map{
-    case GeneralAffine(a,i)  => GeneralAffine(a.mirror(f),f(i))
-    case GeneralOffset(b)    => GeneralOffset(b.mirror(f))
+    case GeneralAffine(sums, offset) =>
+      val sums2 = sums.map{case AffineProduct(a,i) => AffineProduct(a.mirror(f),f(i)) }
+      val offset2 = offset.mirror(f)
+      GeneralAffine(sums2, offset2)
 
     case AffineAccess(a,i,b) => AffineAccess(f(a),f(i),f(b))
     case OffsetAccess(i,b)   => OffsetAccess(f(i), f(b))
@@ -159,6 +159,9 @@ trait AccessPatternAnalyzer extends Traversal {
   object MemWrite   { def unapply(x: Exp[_]) = writeUnapply(x) }
   object LoopIndex  { def unapply(x: Exp[Index]) = indexUnapply(x) }
 
+  def offsetOf(i: Bound[Index]): Option[Exp[Index]] = None
+  def strideOf(i: Bound[Index]): Option[Exp[Index]] = None
+
   /**
     * Check if expression b is invariant with respect to loop index i
     * An expression b is invariant to loop index i if it is defined outside of the loop scope of i
@@ -174,30 +177,45 @@ trait AccessPatternAnalyzer extends Traversal {
   def findGeneralAffinePattern(x: Exp[Index]): Seq[IndexPattern] = {
     dbg(c"Looking for affine access patterns from ${str(x)}")
 
-    def extractPattern(x: Exp[Index]): Seq[IndexPattern] = x match {
-      case Plus(a,b) => extractPattern(a) ++ extractPattern(b)
-      case Times(LoopIndex(i), a) if isInvariant(a,i) => Seq(GeneralAffine(Prod(a),i))   // i*a
-      case Times(a, LoopIndex(i)) if isInvariant(a,i) => Seq(GeneralAffine(Prod(a),i))   // a*i
-      case LoopIndex(i) => Seq(GeneralAffine(One,i))                                     // i
-      case b if isInvariantForAll(b) => Seq(GeneralOffset(Sum(b)))                       // b
-      case _ => Seq(RandomAccess)
+    def extractPattern(x: Exp[Index]): Option[(Seq[AffineProduct],AffineFunction)] = x match {
+      case Plus(a,b) => (extractPattern(a), extractPattern(b)) match {
+        case (Some((is1,c1)), Some((is2,c2))) =>
+          val offset = Sum(Seq(Right(c1),Right(c2)))
+          Some((is1 ++ is2, offset))
+        case _ => None
+      }
+
+      case Times(LoopIndex(i), a) if isInvariant(a,i) =>    // i*a
+        val stride = strideOf(i).map{s => Prod(a,s) }.getOrElse(Prod(a))
+        val offset = offsetOf(i).map{o => Sum(o) }.getOrElse(Zero)
+        Some(Seq(AffineProduct(stride,i)), offset)
+
+      case Times(a, LoopIndex(i)) if isInvariant(a,i) =>
+        val stride = strideOf(i).map{s => Prod(a,s) }.getOrElse(Prod(a))
+        val offset = offsetOf(i).map{o => Sum(o) }.getOrElse(Zero)
+        Some(Seq(AffineProduct(stride,i)), offset)  // a*i
+
+      case LoopIndex(i) =>
+        val stride = strideOf(i).map{s => Prod(s) }.getOrElse(One)
+        val offset = offsetOf(i).map{o => Sum(o) }.getOrElse(Zero)
+        Some(Seq(AffineProduct(stride,i)), offset)                                     // i
+
+      case b if isInvariantForAll(b) => Some(Nil, Zero)                            // b
+      case _ => None
     }
 
     val pattern = extractPattern(x)
 
     dbg(c"Extracted pattern: " + pattern.mkString(" + "))
 
-    if (pattern.contains(RandomAccess)) Seq(RandomAccess)
-    else {
-      val affine  = pattern.collect{case p: GeneralAffine => p }
-      val groupedAffine = affine.groupBy(_.i)
-                                .mapValues{funcs => funcs.map(af => Right(af.a) )}
-                                .toList.map{case (i, as) => GeneralAffine(Sum(as),i) }
+    pattern.map{p =>
+      val products = p._1
+      val groupedProducts = products.groupBy(_.i)
+                                    .mapValues{funcs => funcs.map(af => Right(af.a) )}
+                                    .toList.map{case (i, as) => AffineProduct(Sum(as),i) }
 
-      val offsets = pattern.collect{case GeneralOffset(b) => Right(b) }
-      val offset  = if (offsets.length == 1) GeneralOffset(offsets.head.value) else GeneralOffset(Sum(offsets))
-      offset +: groupedAffine
-    }
+      Seq(GeneralAffine(groupedProducts, p._2))
+    }.getOrElse(Seq(RandomAccess))
   }
 
   def extractIndexPattern(x: Exp[Index]): Seq[IndexPattern] = x match {
@@ -211,8 +229,7 @@ trait AccessPatternAnalyzer extends Traversal {
     case Times(a, LoopIndex(i)) if isInvariant(a,i) => Seq(StridedAccess(a,i))                               // a*i
     case LoopIndex(i) => Seq(LinearAccess(i))                                                                // i
     case b if isInvariantForAll(b) => Seq(InvariantAccess(b))                                                // b
-
-    //case _ => findGeneralAffinePattern(x)                                                                    // other
+    case _ if Config.useAffine => findGeneralAffinePattern(x)                                                // other
     case _ => Seq(RandomAccess)
   }
   def extractAccessPatterns(xs: Seq[Exp[Index]]): Seq[IndexPattern] = xs.flatMap{
