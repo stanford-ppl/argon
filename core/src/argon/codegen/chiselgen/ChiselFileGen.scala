@@ -40,7 +40,6 @@ import fringe._
 import types._
 """)
       open("trait IOModule extends Module {")
-      emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
       emit("val io_w = 64 // TODO: How to generate these properly?")
       emit("val io_v = 16 // TODO: How to generate these properly?")
     }
