@@ -18,7 +18,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   var maxretime: Int = 0
 
   final def alphaconv_register(xx: String): Unit = {
-    val x = "_reuse.*".r.replaceAllIn(xx, "")
+    val x = "_reuse[0-9]+".r.replaceAllIn(xx, "")
     if (alphaconv.contains(x)) {
       val suf = alphaconv(x).replace("_reuse","")
       if (suf == "") {
