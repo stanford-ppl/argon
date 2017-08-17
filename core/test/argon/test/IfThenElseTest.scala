@@ -9,6 +9,8 @@ class IfThenElseTest extends FlatSpec with Matchers{
     class IfThenElseTest extends Test {
       import api._
 
+      def test(x: String): String = x + " "
+
       @virtualize
       def main() {
         val x = random[Int]
@@ -17,6 +19,7 @@ class IfThenElseTest extends FlatSpec with Matchers{
         val b = if (y > x)  5 else x
         val c = if (y < x)  0 else 1
         val d = if (x != y) x else y
+        println("hi")
         println(a)
         println(b)
         println(c)
