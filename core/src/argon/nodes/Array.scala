@@ -111,7 +111,21 @@ case class ArrayReduce[A:Type](
   override def inputs = dyns(array) ++ dyns(apply) ++ dyns(reduce)
   override def freqs  = normal(array) ++ hot(apply) ++ hot(reduce)
   override def binds = super.binds ++ Seq(i, rV._1, rV._2)
+  val mA = typ[A]
+}
 
+case class ArrayFold[A:Type](
+  array:  Exp[MArray[A]],
+  init:   Exp[A],
+  apply:  Lambda2[MArray[A],Index,A],
+  reduce: Lambda2[A,A,A],
+  i:      Bound[Index],
+  rV:     (Bound[A],Bound[A])
+) extends Op[A] {
+  def mirror(f:Tx) = MArray.fold(f(array),f(init),f(reduce),i,rV)
+  override def inputs = dyns(array) ++ dyns(init) ++ dyns(apply) ++ dyns(reduce)
+  override def freqs  = normal(array) ++ normal(init) ++ hot(apply) ++ hot(reduce)
+  override def binds  = super.binds ++ Seq(i, rV._1, rV._2)
   val mA = typ[A]
 }
 

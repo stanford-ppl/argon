@@ -2,6 +2,7 @@ package argon.lang.direct
 package typeclasses
 
 import forge._
+import org.virtualized.virtualize
 
 trait OrderExp {
 
