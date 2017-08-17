@@ -14,6 +14,8 @@ case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
   @api def update[A](i: Index, data: A)(implicit lift: Lift[A,T]): MUnit
     = Unit(Array.update(this.s,i.s,lift(data).s))
 
+
+
   @api def foreach(func: T => MUnit): MUnit
     = Unit(Array.foreach(this.s, {t: Exp[T] => func(wrap(t)).s}, fresh[Index]))
   @api def map[R:Type](func: T => R): Array[R]
@@ -22,6 +24,8 @@ case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
     = Array(Array.zip(this.s, that.s, {(a:Exp[T],b:Exp[S]) => func(wrap(a), wrap(b)).s }, fresh[Index]))
   @api def reduce(rfunc: (T,T) => T): T
     = wrap{ Array.reduce(this.s,{(a:Exp[T],b:Exp[T]) => rfunc(wrap(a),wrap(b)).s}, fresh[Index], (fresh[T],fresh[T])) }
+  @api def fold(init: T)(rfunc: (T,T) => T): T
+    = wrap{ Array.fold(this.s, init.s, {(a:Exp[T],b:Exp[T]) => rfunc(wrap(a),wrap(b)).s}, fresh[Index], (fresh[T],fresh[T])) }
   @api def mkString(start: MString, delim: MString, stop: MString): MString
     = wrap(Array.string_mk(this.s, start.s, delim.s, stop.s))
   @api def filter(cond: T => MBoolean): Array[T]
@@ -119,6 +123,19 @@ object Array {
     val rBlk = stageLambda2(rV._1,rV._2) { rfunc(rV._1,rV._2) }
     val effects = aBlk.effects andAlso rBlk.effects
     stageEffectful(ArrayReduce(array,aBlk,rBlk,i,rV), effects.star)(ctx)
+  }
+
+  @internal def fold[A:Type](
+    array: Exp[MArray[A]],
+    init:  Exp[A],
+    rfunc: (Exp[A], Exp[A]) => Exp[A],
+    i:     Bound[Index],
+    rV:    (Bound[A],Bound[A])
+  ): Sym[A] = {
+    val aBlk = stageLambda2(array,i){ apply(array,i) }
+    val rBlk = stageLambda2(rV._1,rV._2){ rfunc(rV._1, rV._2) }
+    val effects = aBlk.effects andAlso rBlk.effects
+    stageEffectful(ArrayFold(array,init,aBlk,rBlk,i,rV), effects.star)(ctx)
   }
 
   @internal def filter[A:Type](
