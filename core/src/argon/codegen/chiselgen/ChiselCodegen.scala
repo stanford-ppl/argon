@@ -59,6 +59,12 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     }
   }
 
+  final protected def emitInstrumentation(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("Instrumentation")) {
+      emit(x, forceful) 
+    }
+  }
+
   final protected def emitGlobalModule(x: String, forceful: Boolean = false): Unit = { 
     withStream(getStream("GlobalModules")) {
       emit(x, forceful) 
@@ -77,6 +83,12 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     }
   }
 
+  final protected def openInstrumentation(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("Instrumentation")) {
+      open(x, forceful) 
+    }
+  }
+
   final protected def openGlobalModule(x: String, forceful: Boolean = false): Unit = { 
     withStream(getStream("GlobalModules")) {
       open(x, forceful) 
@@ -91,6 +103,12 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final protected def closeGlobalWire(x: String, forceful: Boolean = false): Unit = { 
     withStream(getStream("GlobalWires")) {
+      close(x, forceful) 
+    }
+  }
+
+  final protected def closeInstrumentation(x: String, forceful: Boolean = false): Unit = { 
+    withStream(getStream("Instrumentation")) {
       close(x, forceful) 
     }
   }
@@ -134,6 +152,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile")) 
     dependencies ::= FileDep(resourcesPath, "app-level/verilator.mk", "../", Some("verilator.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/zynq.mk", "../", Some("zynq.mk"))
+    dependencies ::= FileDep(resourcesPath, "app-level/instrument.sh", "../", Some("instrument.sh"))
     dependencies ::= FileDep(resourcesPath, "app-level/de1soc.mk", "../", Some("de1soc.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/vcs.mk", "../", Some("vcs.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/build.sbt", "../", Some("build.sbt"))

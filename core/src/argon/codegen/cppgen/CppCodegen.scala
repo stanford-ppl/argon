@@ -10,6 +10,9 @@ trait CppCodegen extends Codegen with FileDependencies  {
   override val lang: String = "cpp"
   override val ext: String = "cpp"
 
+  var controllerStack = scala.collection.mutable.Stack[Exp[_]]()
+  var argOuts: List[Sym[_]] = List()
+  var argIOs: List[Sym[_]] = List()
   var setMems = List[String]()
   var getMems = List[String]()
 
