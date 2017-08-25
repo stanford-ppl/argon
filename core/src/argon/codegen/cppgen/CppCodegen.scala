@@ -13,6 +13,8 @@ trait CppCodegen extends Codegen with FileDependencies  {
   var controllerStack = scala.collection.mutable.Stack[Exp[_]]()
   var argOuts: List[Sym[_]] = List()
   var argIOs: List[Sym[_]] = List()
+  var argIns: List[Sym[_]] = List()
+  var drams: List[Sym[_]] = List()
   var setMems = List[String]()
   var getMems = List[String]()
 
