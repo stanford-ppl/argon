@@ -195,7 +195,7 @@ import types._
         emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(64.W))))")
         emit("")
         emit("// Stream IO")
-        emit("// val genericStreams = new GenericStreams(io_streamInsInfo, io_streamOutsInfo)")
+        emit("val genericStreams = new GenericStreams(io_streamInsInfo, io_streamOutsInfo)")
         emit("// Video Stream Inputs ")
         emit("val stream_in_data            = Input(UInt(16.W))")
         emit("val stream_in_startofpacket   = Input(Bool())")
