@@ -40,6 +40,10 @@ package object cake {
   val Lambda3 = argon.core.Lambda3
   type Lambda4[A,B,C,D,+T] = argon.core.Lambda4[A,B,C,D,T]
   val Lambda4 = argon.core.Lambda4
+  type Lambda5[A,B,C,D,E,+T] = argon.core.Lambda5[A,B,C,D,E,T]
+  val Lambda5 = argon.core.Lambda5
+  type Lambda6[A,B,C,D,E,F,+T] = argon.core.Lambda6[A,B,C,D,E,F,T]
+  val Lambda6 = argon.core.Lambda6
 
   type Lattice[T] = argon.core.Lattice[T]
   type Metadata[M] = argon.core.Metadata[M]
