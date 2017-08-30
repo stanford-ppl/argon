@@ -7,6 +7,8 @@ trait SubstTransformer extends Transformer {
 
   var subst: Map[Exp[_],Exp[_]] = Map.empty
 
+  object Mirrored { def unapply[T](x: Exp[T]): Option[Exp[T]] = Some(f(x)) }
+
   // Syntax is, e.g.: register(x -> y)
   // Technically original and replacement should have the same type, but this type currently can be "Any"
   def register[T](rule: (Exp[T], Exp[T])) = {
