@@ -288,7 +288,7 @@ object FloatPoint {
       Left(Zero(negative = false))
     }
     else {
-      var y = Math.floor(log2BigDecimal(value.abs)).toInt // Note: NOT floor or ceil
+      var y = Math.floor(log2BigDecimal(value.abs)).toInt
       var x = value.abs / BigDecimal(2).pow(y)
       //println("CLAMPING: ")
       //println(s"exp: $y [${fmt.MIN_E} : ${fmt.MAX_E}, sub: ${fmt.SUB_E}]")
