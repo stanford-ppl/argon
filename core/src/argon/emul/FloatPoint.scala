@@ -1,7 +1,5 @@
 package argon.emul
 
-import DataImplicits._
-
 case class FltFormat(sbits: Int, ebits: Int) {
   lazy val bits: Int = sbits + ebits + 1
   lazy val bias: BigInt = BigInt(2).pow(ebits - 1) - 1
@@ -290,23 +288,30 @@ object FloatPoint {
     else {
       var y = Math.floor(log2BigDecimal(value.abs)).toInt
       var x = value.abs / BigDecimal(2).pow(y)
-      //println("CLAMPING: ")
-      //println(s"exp: $y [${fmt.MIN_E} : ${fmt.MAX_E}, sub: ${fmt.SUB_E}]")
-      //println(s"man: $x")
+//      println("CLAMPING: ")
+//      println(s"exp: $y [min: ${fmt.MIN_E}, max: ${fmt.MAX_E}, sub: ${fmt.SUB_E}]")
+//      println(s"man: $x")
+//      println("y < fmt.SUB_E: " + (y < fmt.SUB_E))
+//      println("x > 1.9: " + (x > 1.9))
 
-      if (x >= 2) {
+      if (y < fmt.SUB_E && x > 1.9) {
+        //println("Adjusting y += 1 and x = 1")
+        y += 1
+        x = 1
+      }
+      else if (x >= 2) {
         y += 1
         x = value.abs / BigDecimal(2).pow(y)
       }
       val cutoff = if (y < 0) BigDecimal(1) - BigDecimal(2).pow(-fmt.sbits) else BigDecimal(1)
-      if (x < cutoff) { // TODO: This is broken!!
+      if (x < cutoff) {
         y -= 1
         x = value.abs / BigDecimal(2).pow(y)
       }
 
-      //println("FINAL: ")
-      //println(s"exp: $y [${fmt.MIN_E} : ${fmt.MAX_E}, sub: ${fmt.SUB_E}]")
-      //println(s"man: $x")
+//      println("FINAL: ")
+//      println(s"exp: $y [min: ${fmt.MIN_E}, max: ${fmt.MAX_E}, sub: ${fmt.SUB_E}]")
+//      println(s"man: $x")
 
 
       if (y > fmt.MAX_E) {

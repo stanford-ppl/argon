@@ -99,15 +99,6 @@ class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid:
   }
 }
 
-// TODO: Investigate why this still gives back Any even when T#Internal is used
-/*object Lit {
-  def unapply[T<:MetaAny[T]](s: Exp[T]): Option[T#Internal] = s match {
-    case param: Param[_] if param.isFinal => Some(param.c)
-    case const: Const[_] => Some(const.c)
-    case _ => None
-  }
-}*/
-
 object Const {
   def unapply(s: Exp[_]): Option[Any] = s match {
     case param: Param[_] if param.isFinal => Some(param.c)

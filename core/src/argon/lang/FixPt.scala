@@ -3,6 +3,7 @@ package argon.lang
 import typeclasses._
 
 import argon.core._
+import argon.emul._
 import argon.nodes._
 import argon.util.escapeConst
 import forge._
@@ -10,7 +11,7 @@ import argon.util._
 
 /** All Fixed Point Types **/
 case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt[S,I,F]] {
-  override type Internal = BigDecimal // TODO: Should use custom type here
+  override type Internal = FixedPoint
 
   protected val fix = FixPt
   @api def unary_-(): FixPt[S,I,F] = FixPt(fix.neg(this.s))
@@ -89,36 +90,23 @@ object FixPt {
 
 
   /** Constants **/
-  @internal def literalToBigDecimal[S:BOOL,I:INT,F:INT](x: Any, force: CBoolean): BigDecimal = {
+  @internal def literalToBigDecimal[S:BOOL,I:INT,F:INT](x: Any, force: CBoolean): FixedPoint = {
     log(c"Creating fixed point constant for $x")
 
     val sign = BOOL[S].v
     val ibits = INT[I].v
     val fbits = INT[F].v
+    val fmt = FixFormat(sign,ibits,fbits)
+    val tp  = FixPtType[S,I,F]
 
-    val tp = FixPtType[S,I,F]
-
-    val MAX_INTEGRAL_VALUE = BigDecimal( if (sign) (BigInt(1) << (ibits-1)) - 1 else (BigInt(1) << ibits) - 1 )
-    val MIN_INTEGRAL_VALUE = BigDecimal( if (sign) -(BigInt(1) << (ibits-1)) else BigInt(0) )
-
-    def makeFixPt(v: BigDecimal): BigDecimal = {
-      if (v > MAX_INTEGRAL_VALUE) {
-        if (!force) {
-          error(ctx, u"Loss of precision detected in implicit lift: $tp cannot represent value ${escapeConst(v)}.")
-          error(u"""Use the explicit annotation "${escapeConst(v)}.to[$tp]" to ignore this error.""")
-          error(ctx)
-        }
-        MAX_INTEGRAL_VALUE
+    def makeFixPt(v: BigDecimal): FixedPoint = {
+      val value = FixedPoint(v, fmt)
+      if (value.toBigDecimal != v) {
+        error(ctx, u"Loss of precision detected in implicit lift: $tp cannot represent value ${escapeConst(v)}.")
+        error(u"""Use the explicit annotation "${escapeConst(v)}.to[$tp]" to ignore this error.""")
+        error(ctx)
       }
-      else if (v < MIN_INTEGRAL_VALUE) {
-        if (!force) {
-          error(ctx, u"Loss of precision detected in implicit lift: $tp cannot represent value ${escapeConst(v)}.")
-          error(u"""Use the explicit annotation "${escapeConst(v)}.to[$tp]" to ignore this error.""")
-          error(ctx)
-        }
-        MIN_INTEGRAL_VALUE
-      }
-      else v
+      value
     }
 
     x match {
@@ -129,10 +117,12 @@ object FixPt {
       case x: Float => makeFixPt(BigDecimal(x.toDouble))
       case x: Double => makeFixPt(BigDecimal(x))
       case x: CString => makeFixPt(BigDecimal(x))
+      case x: FixedPoint if x.fmt == fmt => x
+      case x: FixedPoint => x.toFixedPoint(fmt)
       case c =>
         error(ctx, s"$c cannot be lifted to a fixed point value")
         error(ctx)
-        BigDecimal(0)
+        FixedPoint(0, fmt)
     }
   }
   @internal def const[S:BOOL,I:INT,F:INT](x: Any, force: CBoolean = true): Const[FixPt[S,I,F]] = {
@@ -142,17 +132,18 @@ object FixPt {
   /** Constructors **/
   @internal def char_2_int(x: Exp[MString]): Exp[Int8] = stage(Char2Int(x))(ctx)
   @internal def neg[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = x match {
-    case Const(c: BigDecimal) => const[S,I,F](-c)
+    case Literal(c) => const[S,I,F](-c)
+    //case Const(c: FixedPoint) => const[S,I,F](-c)
     case Op(FixNeg(x)) => x
     case _ => stage(FixNeg(x))(ctx)
   }
   @internal def inv[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = x match {
-    case Const(c: BigDecimal) if c.isWhole => const[S,I,F](BigDecimal(~c.toBigInt))
+    case Literal(c)    => const[S,I,F](~c)
     case Op(FixInv(x)) => x
     case _ => stage(FixInv(x))(ctx)
   }
   @internal def add[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[S,I,F](a + b)
+    case (Literal(a), Literal(b)) => const[S,I,F](a + b)
     case (a, Const(0)) => a                               // a + 0 => a
     case (Const(0), b) => b                               // 0 + a => a
     case (a, Op(FixNeg(b))) if a == b => const[S,I,F](0)  // a + -a => 0
@@ -162,7 +153,7 @@ object FixPt {
     case _ => stage(FixAdd(x,y))(ctx)
   }
   @internal def add_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a:BigDecimal), Const(b:BigDecimal)) => const[S,I,F](a + b)
+    case (Const(a:FixedPoint), Const(b:FixedPoint)) => const[S,I,F](a <+> b)
     case (a, Const(0)) => a                               // a + 0 => a
     case (Const(0), b) => b                               // 0 + a => a
     case (a, Op(FixNeg(b))) if a == b => const[S,I,F](0)  // a + -a => 0
@@ -172,7 +163,7 @@ object FixPt {
     case _ => stage(SatAdd(x,y))(ctx)
   }
   @internal def sub[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a:BigDecimal), Const(b:BigDecimal)) => const[S,I,F](a - b)
+    case (Const(a:FixedPoint), Const(b:FixedPoint)) => const[S,I,F](a - b)
     case (a, Const(0)) => a                                      // a - 0 => a
     case (Const(0), a) => stage(FixNeg(a))(ctx)                  // 0 - a => -a
     case (Op(FixAdd(a,b)), c) if a == c => b                     // a + b - a => b
@@ -181,7 +172,7 @@ object FixPt {
     case _ => stage(FixSub(x,y))(ctx)
   }
   @internal def sub_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Const(a:BigDecimal), Const(b:BigDecimal)) => const[S,I,F](a - b)
+    case (Const(a:FixedPoint), Const(b:FixedPoint)) => const[S,I,F](a <-> b)
     case (a, Const(0)) => a                                      // a - 0 => a
     case (Const(0), a) => stage(FixNeg(a))(ctx)                  // 0 - a => -a
     case (Op(FixAdd(a,b)), c) if a == c => b                     // a + b - a => b
