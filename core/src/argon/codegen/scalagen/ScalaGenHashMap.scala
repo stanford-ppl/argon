@@ -13,7 +13,7 @@ trait ScalaGenHashMap extends ScalaCodegen {
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]) = rhs match {
     case HashIndexApply(index, key) =>
       implicit val ctx: SrcCtx = lhs.ctx
-      emit(src"val $lhs = $index.getOrElse($key, ${FixPt.int32(-1)})")
+      emit(src"val $lhs = $index.getOrElse($key, ${FixPt.int32s(-1)})")
     case _ => super.emitNode(lhs, rhs)
   }
 

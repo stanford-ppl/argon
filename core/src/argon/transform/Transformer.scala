@@ -16,6 +16,8 @@ trait Transformer { self =>
   final def apply[A,B,R:Type](b: Lambda2[A,B,R]): (Exp[A],Exp[B]) => Exp[R] = lambda2ToFunction2(b, copy=false)
   final def apply[A,B,C,R:Type](b: Lambda3[A,B,C,R]): (Exp[A],Exp[B],Exp[C]) => Exp[R] = lambda3ToFunction3(b, copy=false)
   final def apply[A,B,C,D,R:Type](b: Lambda4[A,B,C,D,R]): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R] = lambda4ToFunction4(b, copy=false)
+  final def apply[A,B,C,D,E,R:Type](b: Lambda5[A,B,C,D,E,R]): (Exp[A],Exp[B],Exp[C],Exp[D],Exp[E]) => Exp[R] = lambda5ToFunction5(b, copy=false)
+  final def apply[A,B,C,D,E,F,R:Type](b: Lambda6[A,B,C,D,E,F,R]): (Exp[A],Exp[B],Exp[C],Exp[D],Exp[E],Exp[F]) => Exp[R] = lambda6ToFunction6(b, copy=false)
 
   final def apply[T](xs: List[Exp[T]]): List[Exp[T]] = xs.map{x => this.apply(x)}
   final def apply[T](xs: Seq[Exp[T]]): Seq[Exp[T]] = xs.map{x => this.apply(x)}
@@ -65,12 +67,22 @@ trait Transformer { self =>
     }*/
     def toFunction4: (Exp[A], Exp[B], Exp[C], Exp[D]) => Exp[R] = lambda4ToFunction4(lambda4, copy = true)
   }
+  implicit class Lambda5Ops[A,B,C,D,E,R](lambda5: Lambda5[A,B,C,D,E,R]) {
+    def inline(a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E]): Exp[R] = { val func = lambda5ToFunction5(lambda5, copy = true); func(a,b,c,d,e) }
+    def toFunction5: (Exp[A], Exp[B], Exp[C], Exp[D], Exp[E]) => Exp[R] = lambda5ToFunction5(lambda5, copy = true)
+  }
+  implicit class Lambda6Ops[A,B,C,D,E,F,R](lambda6: Lambda6[A,B,C,D,E,F,R]) {
+    def inline(a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F]): Exp[R] = { val func = lambda6ToFunction6(lambda6, copy = true); func(a,b,c,d,e,f) }
+    def toFunction5: (Exp[A], Exp[B], Exp[C], Exp[D], Exp[E], Exp[F]) => Exp[R] = lambda6ToFunction6(lambda6, copy = true)
+  }
 
   protected def blockToFunction0[R](b: Block[R], copy: Boolean): () => Exp[R] = () => inlineBlock(b)
   protected def lambda1ToFunction1[A,R](b: Lambda1[A,R], copy: Boolean): Exp[A] => Exp[R]
   protected def lambda2ToFunction2[A,B,R](b: Lambda2[A,B,R], copy: Boolean): (Exp[A],Exp[B]) => Exp[R]
   protected def lambda3ToFunction3[A,B,C,R](b: Lambda3[A,B,C,R], copy: Boolean): (Exp[A],Exp[B],Exp[C]) => Exp[R]
   protected def lambda4ToFunction4[A,B,C,D,R](b: Lambda4[A,B,C,D,R], copy: Boolean): (Exp[A],Exp[B],Exp[C],Exp[D]) => Exp[R]
+  protected def lambda5ToFunction5[A,B,C,D,E,R](b: Lambda5[A,B,C,D,E,R], copy: Boolean): (Exp[A],Exp[B],Exp[C],Exp[D],Exp[E]) => Exp[R]
+  protected def lambda6ToFunction6[A,B,C,D,E,F,R](b: Lambda6[A,B,C,D,E,F,R], copy: Boolean): (Exp[A],Exp[B],Exp[C],Exp[D],Exp[E],Exp[F]) => Exp[R]
 
   /**
     * Visit and transform each statement in the given block WITHOUT creating a staging scope
@@ -92,11 +104,13 @@ trait Transformer { self =>
     * Utility function - calls inlineBlock in all cases
     */
   final protected def transformBlock[T, B[T]<:Block[T]](block: B[T]): B[T] = (block match {
-    case Lambda1(input,_,_,_,temp,isol,seal)   => stageLambda1(f(input))({ inlineBlock(block) }, temp, isol, seal)
-    case Lambda2(a,b, _,_,_,temp,isol,seal)    => stageLambda2(f(a),f(b))({ inlineBlock(block) }, temp, isol, seal)
-    case Lambda3(a,b,c,_,_,_,temp,isol,seal)   => stageLambda3(f(a),f(b),f(c))( {inlineBlock(block) }, temp, isol, seal)
-    case Lambda4(a,b,c,d,_,_,_,temp,isol,seal) => stageLambda4(f(a),f(b),f(c),f(d))({ inlineBlock(block)}, temp, isol, seal)
-    case Block(inputs,_,_,_,temp,isol,seal)    => stageLambdaN(f.tx(inputs), { inlineBlock(block) }, temp, isol, seal)
+    case Lambda1(input,_,_,_,temp,isol,seal)       => stageLambda1(f(input))({ inlineBlock(block) }, temp, isol, seal)
+    case Lambda2(a,b, _,_,_,temp,isol,seal)        => stageLambda2(f(a),f(b))({ inlineBlock(block) }, temp, isol, seal)
+    case Lambda3(a,b,c,_,_,_,temp,isol,seal)       => stageLambda3(f(a),f(b),f(c))( {inlineBlock(block) }, temp, isol, seal)
+    case Lambda4(a,b,c,d,_,_,_,temp,isol,seal)     => stageLambda4(f(a),f(b),f(c),f(d))({ inlineBlock(block)}, temp, isol, seal)
+    case Lambda5(a,b,c,d,e,_,_,_,temp,isol,seal)   => stageLambda5(f(a),f(b),f(c),f(d),f(e))({ inlineBlock(block)}, temp, isol, seal)
+    case Lambda6(a,b,c,d,e,x,_,_,_,temp,isol,seal) => stageLambda6(f(a),f(b),f(c),f(d),f(e),f(x))({ inlineBlock(block)}, temp, isol, seal)
+    case Block(inputs,_,_,_,temp,isol,seal)        => stageLambdaN(f.tx(inputs), { inlineBlock(block) }, temp, isol, seal)
   }).asInstanceOf[B[T]]
 
 

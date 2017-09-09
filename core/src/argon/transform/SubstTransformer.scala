@@ -7,6 +7,8 @@ trait SubstTransformer extends Transformer {
 
   var subst: Map[Exp[_],Exp[_]] = Map.empty
 
+  object Mirrored { def unapply[T](x: Exp[T]): Option[Exp[T]] = Some(f(x)) }
+
   // Syntax is, e.g.: register(x -> y)
   // Technically original and replacement should have the same type, but this type currently can be "Any"
   def register[T](rule: (Exp[T], Exp[T])) = {
@@ -60,6 +62,29 @@ trait SubstTransformer extends Transformer {
       register(lambda4.inputC -> c)
       register(lambda4.inputD -> d)
       val block = blockToFunction0(lambda4, copy)
+      block()
+    }
+  }
+  final override protected def lambda5ToFunction5[A,B,C,D,E,R](lambda5: Lambda5[A,B,C,D,E,R], copy: Boolean) = { (a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E]) =>
+    isolateIf(copy) {
+      register(lambda5.inputA -> a)
+      register(lambda5.inputB -> b)
+      register(lambda5.inputC -> c)
+      register(lambda5.inputD -> d)
+      register(lambda5.inputE -> e)
+      val block = blockToFunction0(lambda5, copy)
+      block()
+    }
+  }
+  final override protected def lambda6ToFunction6[A,B,C,D,E,F,R](lambda6: Lambda6[A,B,C,D,E,F,R], copy: Boolean) = { (a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F]) =>
+    isolateIf(copy) {
+      register(lambda6.inputA -> a)
+      register(lambda6.inputB -> b)
+      register(lambda6.inputC -> c)
+      register(lambda6.inputD -> d)
+      register(lambda6.inputE -> e)
+      register(lambda6.inputF -> f)
+      val block = blockToFunction0(lambda6, copy)
       block()
     }
   }
