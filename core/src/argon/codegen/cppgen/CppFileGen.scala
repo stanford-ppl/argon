@@ -36,6 +36,7 @@ trait CppFileGen extends FileGen {
 #include <stdio.h>
 #include <errno.h>
 #include "DeliteCpp.h"
+#include "argmap.h"
 #include "cppDeliteArraystring.h"
 #include "cppDeliteArrays.h"
 #include "cppDeliteArraydouble.h"
@@ -70,6 +71,13 @@ typedef __int128 int128_t;
 
     withStream(getStream("functions","cpp")) {
       emit("""#include "functions.h" """)
+    }
+
+    withStream(getStream("argmap","h")) {
+      open("""struct argtp {""")
+        emit("int id;")
+        emit("bool isIO;")
+      close("};")
     }
 
 //     withStream(getStream("DRAM","h")){
@@ -121,9 +129,10 @@ int main(int argc, char *argv[]) {
 }
 """)
 
-      withStream(getStream("functions","h")) {
-        emit("""#endif""")
+    withStream(getStream("functions","h")) {
+      emit("""#endif""")
     }
+
 
     super.emitFileFooter()
   }
