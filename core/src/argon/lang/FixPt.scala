@@ -13,38 +13,114 @@ case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt
   override type Internal = BigDecimal // TODO: Should use custom type here
 
   protected val fix = FixPt
+  /** Returns negation of this fixed point value. **/
   @api def unary_-(): FixPt[S,I,F] = FixPt(fix.neg(this.s))
+  /** Returns bitwise inversion of this fixed point value. **/
   @api def unary_~(): FixPt[S,I,F] = FixPt(fix.inv(this.s))
+  /** Fixed point addition. **/
   @api def + (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.add(this.s,that.s))
+  /** Fixed point subtraction. **/
   @api def - (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.sub(this.s,that.s))
+  /** Fixed point multiplication. **/
   @api def * (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul(this.s,that.s))
+  /** Fixed point division. **/
   @api def / (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div(this.s,that.s))
+  /** Fixed point modulus. **/
   @api def % (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mod(this.s,that.s))
+  /** Bit-wise AND. **/
   @api def & (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.and(this.s,that.s))
+  /** Bit-wise OR. **/
   @api def | (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.or(this.s,that.s))
+  /** Bit-wise XOR. **/
   @api def ^ (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.xor(this.s,that.s))
+  /** Logical shift left. **/
+  @api def <<(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix.lsh(this.s, that.s))
+  /** Arithmetic (sign-preserving) shift right. **/
+  @api def >>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix.rsh(this.s, that.s))
+  /** Logical (zero-padded) shift right. **/
+  @api def >>>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix.ursh(this.s, that.s))
+
+  /**
+    * Less than comparison.
+    *
+    * Returns `true` if this value is less than `that` value. Otherwise returns `false`.
+    */
   @api def < (that: FixPt[S,I,F]): MBoolean     = Boolean( fix.lt(this.s,that.s))
+  /**
+    * Less than or equal comparison.
+    *
+    * Returns `true` if this value is less than or equal to `that` value. Otherwise returns `false`.
+    */
   @api def <=(that: FixPt[S,I,F]): MBoolean     = Boolean(fix.leq(this.s,that.s))
+  /**
+    * Greater than comparison
+    *
+    * Returns `true` if this value is greater than `that` value. Otherwise returns `false`.
+    */
   @api def > (that: FixPt[S,I,F]): MBoolean     = Boolean( fix.lt(that.s,this.s))
+  /**
+    * Greater than or equal comparison.
+    *
+    * Returns `true` if this value is greater than or equal to `that` value. Otherwise returns `false`.
+    */
   @api def >=(that: FixPt[S,I,F]): MBoolean     = Boolean(fix.leq(that.s,this.s))
 
   // Unbiased rounding operators
+  /**
+    * Fixed point multiplication with unbiased rounding.
+    *
+    * After multiplication, probabilistically rounds up or down to the closest representable number.
+    */
   @api def *& (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul_unbias(this.s,that.s))
+
+  /**
+    * Fixed point division with unbiased rounding.
+    *
+    * After division, probabilistically rounds up or down to the closest representable number.
+    */
   @api def /& (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div_unbias(this.s,that.s))
 
   // Saturating operators
+  /**
+    * Saturating fixed point addition.
+    *
+    * Addition which saturates at the largest or smallest representable number upon over/underflow.
+    */
   @api def <+> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.add_sat(this.s,that.s))
+  /**
+    * Saturating fixed point subtraction.
+    *
+    * Subtraction which saturates at the largest or smallest representable number upon over/underflow.
+    */
   @api def <-> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.sub_sat(this.s,that.s))
+  /**
+    * Saturating fixed point multiplication.
+    *
+    * Multiplication which saturates at the largest or smallest representable number upon over/underflow.
+    */
   @api def <*> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul_sat(this.s,that.s))
+  /**
+    * Saturating fixed point division.
+    *
+    * Division which saturates at the largest or smallest representable number upon over/underflow.
+    */
   @api def </> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div_sat(this.s,that.s))
 
   // Saturating and unbiased rounding operators
+  /**
+    * Saturating fixed point multiplication with unbiased rounding.
+    *
+    * After multiplication, probabilistically rounds up or down to the closest representable number.
+    * After rounding, also saturates at the largest or smallest representable number upon over/underflow.
+    */
   @api def <*&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul_unb_sat(this.s,that.s))
+  /**
+    * Saturating fixed point division with unbiased rounding.
+    *
+    * After division, probabilistically rounds up or down to the closest representable number.
+    * After rounding, also saturates at the largest or smallest representable number upon over/underflow.
+    */
   @api def </&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div_unb_sat(this.s,that.s))
-
-  @api def <<(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix.lsh(this.s, that.s))  // Left shift
-  @api def >>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix.rsh(this.s, that.s))  // Right shift (signed)
-  @api def >>>(that: FixPt[S,I,_0]): FixPt[S,I,F] = FixPt(fix.ursh(this.s, that.s)) // Right shift (unsigned)
 
   @api def ===(that: FixPt[S,I,F]) = Boolean(fix.eql(this.s, that.s))
   @api def =!=(that: FixPt[S,I,F]) = Boolean(fix.neq(this.s, that.s))

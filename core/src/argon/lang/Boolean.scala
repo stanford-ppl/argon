@@ -7,10 +7,30 @@ import forge._
 
 case class Boolean(s: Exp[Boolean]) extends MetaAny[Boolean] {
   override type Internal = scala.Boolean
-  protected val bool = Boolean
+  private val bool = Boolean
+
+  /** Negates the given boolean expression. **/
   @api def unary_!(): MBoolean = Boolean(bool.not(this.s))
+
+  /**
+    * Boolean AND.
+    *
+    * Compares two Booleans and returns `true` if both are `true`.
+    */
   @api def &&(that: MBoolean): MBoolean = Boolean(bool.and(this.s, that.s))
+
+  /**
+    * Boolean OR.
+    *
+    * Compares two Booleans and returns `true` if at least one is `true`.
+    */
   @api def ||(that: MBoolean): MBoolean = Boolean(bool.or(this.s, that.s))
+
+  /**
+    * Boolean exclusive-OR (XOR).
+    *
+    * Compares two Booleans and returns `true` if exactly one is `true`.
+    */
   @api def ^ (that: MBoolean): MBoolean = Boolean(bool.xor(this.s, that.s))
 
   @api def ===(that: MBoolean): MBoolean = Boolean(bool.xnor(this.s, that.s))
