@@ -11,16 +11,13 @@ trait ArgonLangAliases {
     * C- prefix: "Constant" (unstaged types)
     */
   type Index = argon.lang.FixPt[TRUE,_32,_0]
-  type Int64 = argon.lang.FixPt[TRUE,_64,_0]
-  type Int32 = argon.lang.FixPt[TRUE,_32,_0]
-  type Int16 = argon.lang.FixPt[TRUE,_16,_0]
-  type  Int8 = argon.lang.FixPt[TRUE,_8, _0]
-  @generate
-  type UIntJJ$JJ$2to128 = argon.lang.FixPt[FALSE,argon.lang.typeclasses._JJ,_0]
 
-  type MInt = Int32
+  @generate type IntJJ$JJ$2to128 = argon.lang.FixPt[TRUE,argon.lang.typeclasses._JJ,_0]
+  @generate type UIntJJ$JJ$2to128 = argon.lang.FixPt[FALSE,argon.lang.typeclasses._JJ,_0]
+
+  type MInt = argon.lang.FixPt[TRUE,_32,_0]
   type CInt = scala.Int
-  type MLong = Int64
+  type MLong = argon.lang.FixPt[TRUE,_64,_0]
   type CLong = scala.Long
 
   type Float64 = argon.lang.FltPt[_53,_11]

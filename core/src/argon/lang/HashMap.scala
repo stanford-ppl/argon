@@ -9,14 +9,26 @@ case class HashMap[K:Type,V:Type](s: Exp[HashMap[K,V]]) extends Struct[HashMap[K
   //val mV: MetaAny[V] = typ[V].fake
   override type Internal = scala.collection.immutable.HashMap[Any,Any]
 
+  /** Returns an Array of all keys stored in this HashMap. **/
   @api def keys: Array[K]   = field[Array[K]]("keys")
+
+  /** Returns an Array of all values stored in this HashMap. **/
   @api def values: Array[V] = field[Array[V]]("values")
+
+  /** Returns the number of key-value pairs in this HashMap. **/
   @api def size: Index      = field[Index]("size")
 
   @internal private def index = field[HashIndex[K]]("index")
   @internal private def getIndex(key: K): Index = wrap(HashMap.hash_index_apply(this.index.s, key.s))
 
+  /**
+    * Returns the value associated with the given key.
+    *
+    * Throws an exception if the given key is not stored in this HashMap.
+    */
   @api def apply(key: K): V = this.values.apply(this.getIndex(key))
+
+  /** Returns true if this HashMap contains the given key. **/
   @api def contains(key: K): MBoolean = this.getIndex(key) =!= -1
 }
 
