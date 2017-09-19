@@ -8,14 +8,39 @@ import forge._
 case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) extends MetaAny[FltPt[G,E]] {
   override type Internal = BigDecimal
   protected val flt = FltPt
+  /** Returns the negation of this floating point value. **/
   @api def unary_-(): FltPt[G,E] = FltPt(flt.neg(this.s))
+  /** Floating point addition. **/
   @api def + (that: FltPt[G,E]): FltPt[G,E] = FltPt(flt.add(this.s,that.s))
+  /** Floating point subtraction. **/
   @api def - (that: FltPt[G,E]): FltPt[G,E] = FltPt(flt.sub(this.s,that.s))
+  /** Floating point multiplication. **/
   @api def * (that: FltPt[G,E]): FltPt[G,E] = FltPt(flt.mul(this.s,that.s))
+  /** Floating point division. **/
   @api def / (that: FltPt[G,E]): FltPt[G,E] = FltPt(flt.div(this.s,that.s))
+  /**
+    * Less than comparison.
+    *
+    * Returns `true` if this value is less than `that` value. Otherwise returns `false`.
+    */
   @api def < (that: FltPt[G,E]): MBoolean   = Boolean( flt.lt(this.s,that.s))
+  /**
+    * Less than or equal comparison.
+    *
+    * Returns `true` if this value is less than or equal to `that` value. Otherwise returns `false`.
+    */
   @api def <=(that: FltPt[G,E]): MBoolean   = Boolean(flt.leq(this.s,that.s))
+  /**
+    * Greater than comparison.
+    *
+    * Returns `true` if this value is greater than `that` value. Otherwise returns `false`.
+    */
   @api def > (that: FltPt[G,E]): MBoolean   = Boolean( flt.lt(that.s,this.s))
+  /**
+    * Greater than or equal comparison.
+    *
+    * Returns `true` if this value is less than `that` value. Otherwise returns `false`.
+    */
   @api def >=(that: FltPt[G,E]): MBoolean   = Boolean(flt.leq(that.s,this.s))
   @api def ===(that: FltPt[G,E]): MBoolean  = Boolean(flt.eql(this.s,that.s))
   @api def =!=(that: FltPt[G,E]): MBoolean  = Boolean(flt.neq(this.s,that.s))
