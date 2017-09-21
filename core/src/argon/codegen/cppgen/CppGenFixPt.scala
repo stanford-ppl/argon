@@ -1,6 +1,7 @@
 package argon.codegen.cppgen
 
 import argon.core._
+import argon.emul.FixedPoint
 import argon.nodes._
 
 trait CppGenFixPt extends CppCodegen {
@@ -24,9 +25,9 @@ trait CppGenFixPt extends CppCodegen {
   }
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
-    case (IntType(), Const(c: BigDecimal)) => c.toInt.toString
-    case (LongType(), Const(c: BigDecimal)) => c.toLong.toString + "L"
-    case (FixPtType(s,d,f), Const(c: BigDecimal)) => c.toString
+    case (IntType(), Const(c: FixedPoint)) => c.toInt.toString
+    case (LongType(), Const(c: FixedPoint)) => c.toLong.toString + "L"
+    case (FixPtType(s,d,f), Const(c: FixedPoint)) => c.toString
     case _ => super.quoteConst(c)
   }
 

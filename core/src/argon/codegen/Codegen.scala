@@ -3,9 +3,9 @@ package argon.codegen
 import argon.core._
 import argon.{ConstantGenFailedException, GenerationFailedException}
 import argon.traversal.Traversal
-
 import java.nio.file.{Files, Paths}
 import java.io.PrintWriter
+import argon.emul.{FixedPoint, FloatPoint}
 
 trait Codegen extends Traversal {
   override val recurse: RecurseOpt = Never
@@ -149,6 +149,8 @@ trait Codegen extends Traversal {
     case l: Long => l.toString
     case l: BigDecimal => l.toString
     case l: BigInt => l.toString
+    case l: FloatPoint => l.toString
+    case l: FixedPoint => l.toString
     case _ => throw new RuntimeException(s"Could not quote or remap $arg (${arg.getClass})")
   }
 

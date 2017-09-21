@@ -2,7 +2,9 @@ package argon.codegen.chiselgen
 
 import argon.core._
 import argon.NoWireConstructorException
+import argon.emul.FixedPoint
 import argon.nodes._
+
 import scala.math._
 
 trait ChiselGenFixPt extends ChiselCodegen {
@@ -36,18 +38,18 @@ trait ChiselGenFixPt extends ChiselCodegen {
 
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
-    case (FixPtType(s,d,f), Const(cc: BigDecimal)) => 
+    case (FixPtType(s,d,f), Const(cc)) =>
       if (d > 32 | (!s & d == 32)) cc.toString + src"L.FP($s, $d, $f)"
       else cc.toString + src".FP($s, $d, $f)"
-    case (IntType(), Const(cc: BigDecimal)) => 
+    case (IntType(), Const(cc: FixedPoint)) =>
       if (cc >= 0) {
         cc.toString + ".toInt.U(32.W)"  
       } else {
         cc.toString + ".toInt.S(32.W).asUInt"
       }
       
-    case (LongType(), Const(cc: BigDecimal)) => cc.toLong.toString + ".L"
-    case (FixPtType(s,d,f), Const(cc: BigDecimal)) => 
+    case (LongType(), Const(cc: FixedPoint)) => cc.toLong.toString + ".L"
+    case (FixPtType(s,d,f), Const(cc: FixedPoint)) =>
       if (needsFPType(c.tp)) {s"Utils.FixedPoint($s,$d,$f,$cc)"} else {
         if (cc >= 0) cc.toInt.toString + ".U(32.W)" else cc.toInt.toString + ".S(32.W).asUInt"
       }
@@ -75,9 +77,9 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case SatSub(x,y) => emit(src"val $lhs = $x <-> $y")
     case SatMul(x,y) => emit(src"val $lhs = $x <*> $y")
     case SatDiv(x,y) => emit(src"val $lhs = $x </> $y")
-    case FixLsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} << $yy // TODO: cast to proper type (chisel expands bits)")
-    case FixRsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} >> $yy")
-    case FixURsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} >>> $yy")
+    case FixLsh(x,Const(yy))  => emit(src"val $lhs = $x << $yy // TODO: cast to proper type (chisel expands bits)")
+    case FixRsh(x,Const(yy))  => emit(src"val $lhs = $x >> $yy")
+    case FixURsh(x,Const(yy)) => emit(src"val $lhs = $x >>> $yy")
     case UnbSatMul(x,y) => emit(src"val $lhs = $x <*&> $y")
     case UnbSatDiv(x,y) => emit(src"val $lhs = $x </&> $y")
     case FixRandom(x) => 

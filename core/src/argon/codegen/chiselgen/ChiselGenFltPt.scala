@@ -19,8 +19,8 @@ trait ChiselGenFltPt extends ChiselCodegen {
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     // recFNFromFN(8, 24, Mux(faddCode === io.opcode, io.b, getFloatBits(1.0f).S))
-    case (FloatType(), Const(cc: BigDecimal)) => cc.toString + src".FlP(8, 24)"
-    case (DoubleType(), Const(c: BigDecimal)) => "DspReal(" + c.toString + ")"
+    case (FloatType(), Const(cc)) => cc.toString + src".FlP(8, 24)"
+    case (DoubleType(), Const(c)) => "DspReal(" + c.toString + ")"
     case _ => super.quoteConst(c)
   }
 

@@ -1,6 +1,7 @@
 package argon.codegen.scalagen
 
 import argon.core._
+import argon.emul.FixedPoint
 import argon.nodes._
 
 /**
@@ -14,8 +15,8 @@ trait ScalaGenFixPt extends ScalaCodegen {
   }
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
-    case (IntType(), Const(c: BigDecimal)) => c.toInt.toString
-    case (LongType(), Const(c: BigDecimal)) => c.toLong.toString + "L"
+    case (IntType(), Const(c: FixedPoint)) => c.toInt.toString
+    case (LongType(), Const(c: FixedPoint)) => c.toLong.toString + "L"
     case _ => super.quoteConst(c)
   }
 

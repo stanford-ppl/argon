@@ -2,6 +2,7 @@ package argon
 
 import java.io.File
 
+import argon.emul.FixedPoint
 import org.apache.commons.lang3.StringEscapeUtils.escapeJava
 
 import scala.collection.mutable
@@ -24,6 +25,8 @@ package object util {
       file.delete()
     }
   }
+
+  def isPow2(x: FixedPoint): Boolean = isPow2(x.toBigDecimal)
 
   def isPow2(x: BigDecimal): Boolean = {
     x.isWhole && {

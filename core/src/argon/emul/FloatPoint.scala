@@ -213,6 +213,9 @@ class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) 
     case Value(v) => FixedPoint(v, fmt)
   }).withValid(valid)
 
+  def toInt: Int   = this.toFixedPoint(FixFormat(true,32,0)).toInt
+  def toLong: Long = this.toFixedPoint(FixFormat(true,64,0)).toLong
+
   def toFloatPoint(fmt: FltFormat): FloatPoint = FloatPoint.clamped(value, valid, fmt)
 
   def bits: Array[Bool] = value.bits(fmt)
