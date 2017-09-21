@@ -19,6 +19,16 @@ case class FixFormat(sign: Boolean, ibits: Int, fbits: Int) {
 
 class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) extends Number {
   def abs: FixedPoint = if (this < 0) -this else this
+  def floor: FixedPoint = {
+    val add = if (this < 0 && this % FixedPoint(1,fmt) != 0) FixedPoint(-1, fmt) else FixedPoint(0,fmt)
+    val clamp = (this.value >> fmt.fbits) << fmt.fbits
+    FixedPoint.clamped(clamp, this.valid, fmt) + add
+  }
+  def ceil: FixedPoint = {
+    val add = if (this > 0 && this % FixedPoint(1,fmt) != 0) FixedPoint(1, fmt) else FixedPoint(0, fmt)
+    val clamp = (this.value >> fmt.fbits) << fmt.fbits
+    FixedPoint.clamped(clamp, this.valid, fmt) + add
+  }
 
   // All operations assume that both the left and right hand side have the same fixed point format
   def unary_-(): FixedPoint = FixedPoint.clamped(-this.value, this.valid, fmt)

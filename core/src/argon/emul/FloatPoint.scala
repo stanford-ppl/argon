@@ -166,6 +166,8 @@ object FloatValue {
 }
 
 class FloatPoint(val value: FloatValue, val valid: Boolean, val fmt: FltFormat) extends Number {
+  def abs: FloatPoint = if ((this < FloatPoint(0, fmt)).value) -this else this
+
   def unary_-(): FloatPoint = FloatPoint.clamped(-this.value, this.valid, fmt)
 
   // All operations assume that both the left and right hand side have the same fixed point format

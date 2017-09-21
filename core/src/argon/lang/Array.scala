@@ -44,16 +44,17 @@ case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
     = Array(Array.flatmap(this.s,{t:Exp[T] => func(wrap(t)).s}, fresh[Index]))
 
   /** Creates a string representation of this Array using the given `delimeter`. **/
-  @api def mkString(delimeter: MString) = this.mkString("", delimeter, "")
+  @api def mkString(delimeter: MString): MString = this.mkString("", delimeter, "")
 
   /** Creates a string representation of this Array using the given `delimeter`, bracketed by `start` and `stop`. **/
   @api def mkString(start: MString, delimeter: MString, stop: MString): MString
-  = wrap(Array.string_mk(this.s, start.s, delimeter.s, stop.s))
+    = wrap(Array.string_mk(this.s, start.s, delimeter.s, stop.s))
 
   /** Returns true if this Array and `that` contain the same elements, false otherwise. **/
   @api def ===(that: Array[T]): MBoolean = this.zip(that){(x,y) => x === y }.reduce{_ && _}
   /** Returns true if this Array and `that` differ by at least one element, false otherwise. **/
   @api def =!=(that: Array[T]): MBoolean = this.zip(that){(x,y) => x =!= y }.reduce{_ || _}
+
   @api def toText: MString = String.ify(this)
 }
 

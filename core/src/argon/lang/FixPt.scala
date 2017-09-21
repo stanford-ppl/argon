@@ -139,16 +139,16 @@ object FixPt {
   @api def apply[S:BOOL,I:INT,F:INT](x: BigInt): FixPt[S,I,F] = FixPt.wrapped(const[S,I,F](x))
   @api def apply[S:BOOL,I:INT,F:INT](x: BigDecimal): FixPt[S,I,F] = FixPt.wrapped(const[S,I,F](x))
 
-  @internal def intParam(c: Int): Param[Int32] = parameter(IntType)(literalToFixedPoint[TRUE,_32,_0](c, force=true))
+  @internal def intParam(c: Int): Param[Index] = parameter(IntType)(literalToFixedPoint[TRUE,_32,_0](c, force=true))
   @internal def int8(x: BigDecimal): Int8 = wrap(const[TRUE,_8,_0](x, force = false))
   @internal def int8(x: MString): Int8 = wrap(char_2_int(x.s))
   @internal def int8(x: CString): Int8 = int8(String(x))
   @internal def int16(x: BigDecimal): Int16 = wrap(const[TRUE,_16,_0](x, force = false))
-  @internal def int32(x: BigDecimal): Int32 = wrap(const[TRUE,_32,_0](x, force = false))
+  @internal def int32(x: BigDecimal): Index = wrap(const[TRUE,_32,_0](x, force = false))
   @internal def int64(x: BigDecimal): Int64 = wrap(const[TRUE,_64,_0](x, force = false))
 
   @internal def int8s(x: BigDecimal): Const[Int8] = const[TRUE,_8,_0](x, force = false)
-  @internal def int32s(x: BigDecimal): Const[Int32] = const[TRUE,_32,_0](x, force = false)
+  @internal def int32s(x: BigDecimal): Const[Index] = const[TRUE,_32,_0](x, force = false)
   @internal def int64s(x: BigDecimal): Const[Int64] = const[TRUE,_64,_0](x, force = false)
 
   /** Type classes **/
