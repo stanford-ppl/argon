@@ -15,6 +15,9 @@ case class FixFormat(sign: Boolean, ibits: Int, fbits: Int) {
   lazy val MAX_VALUE_FP: FixedPoint = FixedPoint.clamped(MAX_VALUE, valid=true, this)
   lazy val MIN_VALUE_FP: FixedPoint = FixedPoint.clamped(MIN_VALUE, valid=true, this)
   lazy val MIN_POSITIVE_VALUE_FP: FixedPoint = FixedPoint.clamped(BigInt(1), valid=true, this)
+
+  def isExactInt: Boolean  = fbits == 0 && ((sign && ibits <= 32) || ibits <= 31)
+  def isExactLong: Boolean = fbits == 0 && ((sign && ibits <= 64) || ibits <= 63)
 }
 
 class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) extends Number {
@@ -29,6 +32,7 @@ class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) exte
     val clamp = (this.value >> fmt.fbits) << fmt.fbits
     FixedPoint.clamped(clamp, this.valid, fmt) + add
   }
+
 
   // All operations assume that both the left and right hand side have the same fixed point format
   def unary_-(): FixedPoint = FixedPoint.clamped(-this.value, this.valid, fmt)
