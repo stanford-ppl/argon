@@ -80,3 +80,32 @@ case class Lambda4[A,B,C,D,+R](
   override val isolated:  Boolean,
   override val seal:      Boolean
 ) extends Block[R](Seq(inputA,inputB,inputC,inputD),result,effects,effectful,temp,isolated,seal)
+
+case class Lambda5[A,B,C,D,E,+R](
+  inputA: Exp[A],
+  inputB: Exp[B],
+  inputC: Exp[C],
+  inputD: Exp[D],
+  inputE: Exp[E],
+  override val result:    Exp[R],
+  override val effects:   Effects,
+  override val effectful: Seq[Sym[_]],
+  override val temp:      Freq,
+  override val isolated:  Boolean,
+  override val seal:      Boolean
+) extends Block[R](Seq(inputA,inputB,inputC,inputD,inputE),result,effects,effectful,temp,isolated,seal)
+
+case class Lambda6[A,B,C,D,E,F,+R](
+  inputA: Exp[A],
+  inputB: Exp[B],
+  inputC: Exp[C],
+  inputD: Exp[D],
+  inputE: Exp[E],
+  inputF: Exp[F],
+  override val result:    Exp[R],
+  override val effects:   Effects,
+  override val effectful: Seq[Sym[_]],
+  override val temp:      Freq,
+  override val isolated:  Boolean,
+  override val seal:      Boolean
+) extends Block[R](Seq(inputA,inputB,inputC,inputD,inputE,inputF),result,effects,effectful,temp,isolated,seal)

@@ -18,8 +18,12 @@ trait CompilerPass { self =>
   // --- Options
   var verbosity: Int = Config.verbosity
   var shouldWarn: Boolean = true
+  var needsInit: Boolean = true
   def shouldRun: Boolean = true
   def silence() { verbosity = -2; shouldWarn = false }
+  def init(): Unit = {
+    needsInit = false
+  }
 
   // --- State
   protected var tab = 0

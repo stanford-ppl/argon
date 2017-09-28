@@ -3,9 +3,9 @@ package argon.codegen
 import argon.core._
 import argon.{ConstantGenFailedException, GenerationFailedException}
 import argon.traversal.Traversal
-
 import java.nio.file.{Files, Paths}
 import java.io.PrintWriter
+import argon.emul.{FixedPoint, FloatPoint}
 
 trait Codegen extends Traversal {
   override val recurse: RecurseOpt = Never
@@ -15,8 +15,8 @@ trait Codegen extends Traversal {
   def out: String = s"${Config.genDir}${Config.sep}$lang${Config.sep}"
   var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
 
-  val maxLinesPerFile = 200  // Specific hacks for chisel             
-  val numTraitsPerMixer = 40 // Specific hacks for chisel
+  val maxLinesPerFile = 300  // Specific hacks for chisel             
+  val numTraitsPerMixer = 50 // Specific hacks for chisel
 
   var stream: PrintWriter = _
   var streamName = ""
@@ -148,6 +148,9 @@ trait Codegen extends Traversal {
     case b: Boolean => b.toString
     case l: Long => l.toString
     case l: BigDecimal => l.toString
+    case l: BigInt => l.toString
+    case l: FloatPoint => l.toString
+    case l: FixedPoint => l.toString
     case _ => throw new RuntimeException(s"Could not quote or remap $arg (${arg.getClass})")
   }
 

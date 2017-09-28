@@ -2,6 +2,7 @@ package argon
 
 import java.io.File
 
+import argon.emul.FixedPoint
 import org.apache.commons.lang3.StringEscapeUtils.escapeJava
 
 import scala.collection.mutable
@@ -24,6 +25,16 @@ package object util {
       file.delete()
     }
   }
+
+  def isPow2(x: FixedPoint): Boolean = isPow2(x.toBigDecimal)
+
+  def isPow2(x: BigDecimal): Boolean = {
+    x.isWhole && {
+      val y = x.toBigInt
+      (y & (y-1)) == 0
+    }
+  }
+  def log2(x: Double): Double = Math.log10(x)/Math.log10(2)
 
   object single {
     private def singleVisit(x: Any)(func: Any => Unit): Unit = x match {

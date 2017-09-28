@@ -20,6 +20,10 @@ case class ArrayNew[T:Type](size: Exp[Index]) extends Op2[T,MArray[T]] {
   def mirror(f:Tx) = MArray.mutable[T](f(size))
 }
 
+case class ArrayFromSeq[T:Type](seq: Seq[Exp[T]]) extends Op2[T,MArray[T]] {
+  def mirror(f:Tx) = MArray.from_seq(f(seq))
+}
+
 case class ArrayApply[T:Type](coll: Exp[MArray[T]], i: Exp[Index]) extends Op[T] with AtomicRead[MArray[T]] {
   def mirror(f:Tx) = MArray.apply(f(coll),f(i))
   override def aliases = Nil
@@ -111,7 +115,21 @@ case class ArrayReduce[A:Type](
   override def inputs = dyns(array) ++ dyns(apply) ++ dyns(reduce)
   override def freqs  = normal(array) ++ hot(apply) ++ hot(reduce)
   override def binds = super.binds ++ Seq(i, rV._1, rV._2)
+  val mA = typ[A]
+}
 
+case class ArrayFold[A:Type](
+  array:  Exp[MArray[A]],
+  init:   Exp[A],
+  apply:  Lambda2[MArray[A],Index,A],
+  reduce: Lambda2[A,A,A],
+  i:      Bound[Index],
+  rV:     (Bound[A],Bound[A])
+) extends Op[A] {
+  def mirror(f:Tx) = MArray.fold(f(array),f(init),f(reduce),i,rV)
+  override def inputs = dyns(array) ++ dyns(init) ++ dyns(apply) ++ dyns(reduce)
+  override def freqs  = normal(array) ++ normal(init) ++ hot(apply) ++ hot(reduce)
+  override def binds  = super.binds ++ Seq(i, rV._1, rV._2)
   val mA = typ[A]
 }
 

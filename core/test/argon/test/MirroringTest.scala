@@ -17,7 +17,7 @@ object MirroringTest extends Test { self =>
     core.Config.verbosity = 3
     withLog(core.Config.logDir, "MirroringTest.log") {
       val x = Array.empty[Int](1)
-      val y = Array.update(x.s, FixPt.int32(0), FixPt.int32(16))
+      val y = Array.update(x.s, FixPt.int32s(0), FixPt.int32s(16))
       val z = Array.empty[Int](2)
       val tx = new ForwardTransformer { var IR: State = self.IR }
 

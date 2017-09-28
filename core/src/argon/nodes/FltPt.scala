@@ -55,9 +55,9 @@ class FltPtNum[G:INT,E:INT] extends Num[FltPt[G,E]] {
   @api def fromFloat(x: Float, force: CBoolean = true) = FltPt.lift[G,E](x, force)
   @api def fromDouble(x: Double, force: CBoolean = true) = FltPt.lift[G,E](x, force)
 
-  @api def maxValue: FltPt[G,E] = FltPt.lift[G,E](fmt.MAX_VALUE_FP.toBigDecimal, force=true)
-  @api def minValue: FltPt[G,E] = FltPt.lift[G,E](fmt.MIN_VALUE_FP.toBigDecimal, force=true)
-  @api def minPositiveValue: FltPt[G,E] = FltPt.lift[G,E](fmt.MIN_POSITIVE_VALUE.toBigDecimal, force=true)
+  @api def maxValue: FltPt[G,E] = FltPt.lift[G,E](fmt.MAX_VALUE_FP, force=true)
+  @api def minValue: FltPt[G,E] = FltPt.lift[G,E](fmt.MIN_VALUE_FP, force=true)
+  @api def minPositiveValue: FltPt[G,E] = FltPt.lift[G,E](fmt.MIN_POSITIVE_VALUE, force=true)
 }
 
 object FltPtNum {

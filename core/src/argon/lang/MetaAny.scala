@@ -1,6 +1,6 @@
 package argon.lang
 
-import argon.core.{Exp, Globals, Type, warn}
+import argon.core._
 import forge._
 
 
@@ -41,4 +41,13 @@ abstract class MetaAny[T:Type] extends Product {
   @api def ===(that: T): MBoolean
   @api def =!=(that: T): MBoolean
   @api def toText: MString
+}
+
+// TODO: Investigate why this still gives back Any even when T#Internal is used
+object Literal {
+  def unapply[T<:MetaAny[T]](s: Exp[T]): Option[T#Internal] = s match {
+    case param: Param[_] if param.isFinal => Some(param.c.asInstanceOf[T#Internal])
+    case const: Const[_] => Some(const.c.asInstanceOf[T#Internal])
+    case _ => None
+  }
 }

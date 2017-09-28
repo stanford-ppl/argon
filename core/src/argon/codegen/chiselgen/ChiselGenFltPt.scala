@@ -19,8 +19,8 @@ trait ChiselGenFltPt extends ChiselCodegen {
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     // recFNFromFN(8, 24, Mux(faddCode === io.opcode, io.b, getFloatBits(1.0f).S))
-    case (FloatType(), Const(cc: BigDecimal)) => cc.toString + src".FlP(8, 24)"
-    case (DoubleType(), Const(c: BigDecimal)) => "DspReal(" + c.toString + ")"
+    case (FloatType(), Const(cc)) => cc.toString + src".FlP(8, 24)"
+    case (DoubleType(), Const(c)) => "DspReal(" + c.toString + ")"
     case _ => super.quoteConst(c)
   }
 
@@ -28,8 +28,8 @@ trait ChiselGenFltPt extends ChiselCodegen {
     case FltNeg(x)   => emit(src"val $lhs = -$x")
     case FltAdd(x,y) => emit(src"val $lhs = $x + $y")
     case FltSub(x,y) => emit(src"val $lhs = $x - $y")
-    case FltMul(x,y) => emit(src"val $lhs = $x * $y")
-    case FltDiv(x,y) => emit(src"val $lhs = $x / $y")
+    case FltMul(x,y) => emit(src"val $lhs = $x *-* $y")
+    case FltDiv(x,y) => emit(src"val $lhs = $x /-/ $y")
     case FltLt(x,y)  => emit(src"val $lhs = $x < $y")
     case FltLeq(x,y) => emit(src"val $lhs = $x <= $y")
     case FltNeq(x,y) => emit(src"val $lhs = $x != $y")

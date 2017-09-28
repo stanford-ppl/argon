@@ -2,7 +2,9 @@ package argon.codegen.chiselgen
 
 import argon.core._
 import argon.NoWireConstructorException
+import argon.emul.FixedPoint
 import argon.nodes._
+
 import scala.math._
 
 trait ChiselGenFixPt extends ChiselCodegen {
@@ -36,18 +38,18 @@ trait ChiselGenFixPt extends ChiselCodegen {
 
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
-    case (FixPtType(s,d,f), Const(cc: BigDecimal)) => 
+    case (FixPtType(s,d,f), Const(cc)) =>
       if (d > 32 | (!s & d == 32)) cc.toString + src"L.FP($s, $d, $f)"
       else cc.toString + src".FP($s, $d, $f)"
-    case (IntType(), Const(cc: BigDecimal)) => 
+    case (IntType(), Const(cc: FixedPoint)) =>
       if (cc >= 0) {
         cc.toString + ".toInt.U(32.W)"  
       } else {
         cc.toString + ".toInt.S(32.W).asUInt"
       }
       
-    case (LongType(), Const(cc: BigDecimal)) => cc.toLong.toString + ".L"
-    case (FixPtType(s,d,f), Const(cc: BigDecimal)) => 
+    case (LongType(), Const(cc: FixedPoint)) => cc.toLong.toString + ".L"
+    case (FixPtType(s,d,f), Const(cc: FixedPoint)) =>
       if (needsFPType(c.tp)) {s"Utils.FixedPoint($s,$d,$f,$cc)"} else {
         if (cc >= 0) cc.toInt.toString + ".U(32.W)" else cc.toInt.toString + ".S(32.W).asUInt"
       }
@@ -59,8 +61,8 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case FixNeg(x)   => emit(src"val $lhs = -$x")
     case FixAdd(x,y) => emit(src"val $lhs = $x + $y")
     case FixSub(x,y) => emit(src"val $lhs = $x - $y")
-    case FixMul(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x * $y")
-    case FixDiv(x,y) => emit(src"val $lhs = $x / $y")
+    case FixMul(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x *-* $y")
+    case FixDiv(x,y) => emit(src"val $lhs = $x /-/ $y")
     case FixAnd(x,y) => emit(src"val $lhs = $x & $y")
     case FixOr(x,y)  => emit(src"val $lhs = $x | $y")
     case FixXor(x,y)  => emit(src"val $lhs = $x ^ $y")
@@ -68,21 +70,26 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case FixLeq(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x <= $y")
     case FixNeq(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x =/= $y")
     case FixEql(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x === $y")
-    case FixMod(x,y) => emit(src"val $lhs = $x % $y")
+    case FixMod(x,y) => emit(src"val $lhs = $x %-% $y")
     case UnbMul(x,y) => emit(src"val $lhs = $x *& $y")
     case UnbDiv(x,y) => emit(src"val $lhs = $x /& $y")
     case SatAdd(x,y) => emit(src"val $lhs = $x <+> $y")
     case SatSub(x,y) => emit(src"val $lhs = $x <-> $y")
     case SatMul(x,y) => emit(src"val $lhs = $x <*> $y")
     case SatDiv(x,y) => emit(src"val $lhs = $x </> $y")
-    case FixLsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} << $yy // TODO: cast to proper type (chisel expands bits)")
-    case FixRsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} >> $yy")
-    case FixURsh(x,y) => val yy = y match{case Const(c: BigDecimal) => c }; emit(src"val ${lhs} = ${x} >>> $yy")
+    case FixLsh(x,Const(yy))  => emit(src"val $lhs = $x << $yy // TODO: cast to proper type (chisel expands bits)")
+    case FixRsh(x,Const(yy))  => emit(src"val $lhs = $x >> $yy")
+    case FixURsh(x,Const(yy)) => emit(src"val $lhs = $x >>> $yy")
     case UnbSatMul(x,y) => emit(src"val $lhs = $x <*&> $y")
     case UnbSatDiv(x,y) => emit(src"val $lhs = $x </&> $y")
     case FixRandom(x) => 
       val seed = (random*1000).toInt
-      emit(s"val ${quote(lhs)}_bitsize = log2Up(${x.getOrElse(4096)}) max 1")
+      val size = x match{
+        case Some(Const(xx)) => s"$xx"
+        case Some(_) => s"$x"
+        case None => "4096"
+      }
+      emit(s"val ${quote(lhs)}_bitsize = Utils.log2Up(${size}) max 1")
       emitGlobalModule(src"val ${lhs}_rng = Module(new PRNG($seed))")
       emitGlobalModule(src"${lhs}_rng.io.en := true.B")
       emit(src"val ${lhs} = ${lhs}_rng.io.output(${lhs}_bitsize,0)")

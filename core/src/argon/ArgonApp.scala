@@ -105,6 +105,8 @@ trait ArgonCompiler { self =>
         }
       }
 
+      if (t.needsInit) t.init()
+
       block = t.run(block)
       // After each traversal, check whether there were any reported errors
       checkBugs(startTime, t.name)

@@ -30,7 +30,7 @@ object String {
 
   @api def char2num(s: CString): Int8 = char2num(String(const(s)))
   @api def char2num(s: MString): Int8 = {
-    assert(eql(int32(1), length(s.s)), Some("Must call char2num on a string of length 1".s))
+    assert(eql(int32s(1), length(s.s)), Some("Must call char2num on a string of length 1".s))
     int8(s)
   }
   @api def string2num(s: CString): MArray[Int8] = string2num(String(s))

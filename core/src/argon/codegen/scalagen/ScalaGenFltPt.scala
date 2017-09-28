@@ -1,6 +1,7 @@
 package argon.codegen.scalagen
 
 import argon.core._
+import argon.emul.FloatPoint
 import argon.nodes._
 
 /**
@@ -14,8 +15,8 @@ trait ScalaGenFltPt extends ScalaCodegen {
   }
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
-    case (FloatType(), Const(c: BigDecimal)) => c.toString + "f"
-    case (DoubleType(), Const(c: BigDecimal)) => c.toString
+    case (FloatType(), Const(c)) => c.toString + "f"
+    case (DoubleType(), Const(c)) => c.toString
     case _ => super.quoteConst(c)
   }
 

@@ -83,6 +83,8 @@ argon {
   var emitDevel: Int = _
   var allowAtomicWrites: Boolean = _
 
+  var useAffine: Boolean = false
+
   //debugger interpreter
   var exit: () => Unit = () => ()
   

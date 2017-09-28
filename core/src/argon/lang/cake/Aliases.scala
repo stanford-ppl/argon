@@ -11,16 +11,23 @@ trait ArgonLangAliases {
     * C- prefix: "Constant" (unstaged types)
     */
   type Index = argon.lang.FixPt[TRUE,_32,_0]
-  type Int64 = argon.lang.FixPt[TRUE,_64,_0]
-  type Int32 = argon.lang.FixPt[TRUE,_32,_0]
-  type Int16 = argon.lang.FixPt[TRUE,_16,_0]
-  type  Int8 = argon.lang.FixPt[TRUE,_8, _0]
-  @generate
-  type UIntJJ$JJ$2to128 = argon.lang.FixPt[FALSE,argon.lang.typeclasses._JJ,_0]
 
-  type MInt = Int32
+  type FixedPoint = argon.emul.FixedPoint
+  val FixedPoint = argon.emul.FixedPoint
+  type FloatPoint = argon.emul.FloatPoint
+  val FloatPoint = argon.emul.FloatPoint
+  type FixFormat = argon.emul.FixFormat
+  val FixFormat = argon.emul.FixFormat
+  type FltFormat = argon.emul.FltFormat
+  val FltFormat = argon.emul.FltFormat
+  implicit def boolToBoolean(x: argon.emul.Bool): Boolean = x.value
+
+  @generate type IntJJ$JJ$2to128 = argon.lang.FixPt[TRUE,argon.lang.typeclasses._JJ,_0]
+  @generate type UIntJJ$JJ$2to128 = argon.lang.FixPt[FALSE,argon.lang.typeclasses._JJ,_0]
+
+  type MInt = argon.lang.FixPt[TRUE,_32,_0]
   type CInt = scala.Int
-  type MLong = Int64
+  type MLong = argon.lang.FixPt[TRUE,_64,_0]
   type CLong = scala.Long
 
   type Float64 = argon.lang.FltPt[_53,_11]
@@ -55,6 +62,8 @@ trait ArgonLangAliases {
 /** All common type aliases, used outside argon.lang **/
 trait ArgonCommonAliases extends ArgonLangAliases {
   type MetaAny[T] = argon.lang.MetaAny[T]
+
+  val Literal = argon.lang.Literal
 
   type FixPt[S,I,F] = argon.lang.FixPt[S,I,F]
   type FltPt[G,E] = argon.lang.FltPt[G,E]

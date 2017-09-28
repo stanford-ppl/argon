@@ -40,7 +40,6 @@ import fringe._
 import types._
 """)
       open("trait IOModule extends Module {")
-      emit("""val target = "" // TODO: Get this info from command line args (aws, de1, etc)""")
       emit("val io_w = 64 // TODO: How to generate these properly?")
       emit("val io_v = 16 // TODO: How to generate these properly?")
     }
@@ -55,6 +54,7 @@ import chisel3._
       open(s"""trait BufferControlCxns extends RootController {""")
     }
 
+
     withStream(getStream("RootController")) {
       emit(s"""package accel
 import templates._
@@ -64,7 +64,7 @@ import types._
 import chisel3._
 import chisel3.util._
 """)
-      open(s"trait RootController extends GlobalModulesMixer {")
+      open(s"trait RootController extends InstrumentationMixer {")
       emit(src"// Root controller for app: ${Config.name}")
 
     }
@@ -89,6 +89,17 @@ import chisel3.util._
 import types._ 
 """)
       open(s"""trait GlobalModules extends GlobalWiresMixer {""")
+    }
+
+    withStream(getStream("Instrumentation")) {
+      emit(s"""package accel
+import templates._
+import templates.ops._
+import chisel3._
+import chisel3.util._
+import types._ 
+""")
+      open(s"""trait Instrumentation extends GlobalModulesMixer {""")
     }
 
 //     withStream(getStream("GlobalRetiming")) {
@@ -138,9 +149,10 @@ import types._
     withStream(getStream("Instantiator")) {
           emit("val w = 32")
           emit("val numArgIns = numArgIns_mem  + numArgIns_reg + numArgIOs_reg")
-          emit("val numArgOuts = numArgOuts_reg + numArgIOs_reg")
+          emit("val numArgOuts = numArgOuts_reg + numArgIOs_reg + numArgOuts_instr")
           emit("val numArgIOs = numArgIOs_reg")
-          emit("new Top(w, numArgIns, numArgOuts, numArgIOs, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
+          emit("val numArgInstrs = numArgOuts_instr")
+          emit("new Top(w, numArgIns, numArgOuts, numArgIOs, numArgOuts_instr, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
         close("}")
         emit("def tester = { c: DUTType => new TopUnitTester(c) }")
       close("}")
@@ -164,8 +176,9 @@ import types._
     withStream(getStream("IOModule")) {
       emit("// Combine values")
       emit("val io_numArgIns = math.max(1, io_numArgIns_reg + io_numArgIns_mem + io_numArgIOs_reg)")
-      emit("val io_numArgOuts = math.max(1, io_numArgOuts_reg + io_numArgIOs_reg)")
+      emit("val io_numArgOuts = math.max(1, io_numArgOuts_reg + io_numArgIOs_reg + io_numArgOuts_instr)")
       emit("val io_numArgIOs = io_numArgIOs_reg")
+      emit("val io_numArgInstrs = io_numArgOuts_instr")
       open("val io = IO(new Bundle {")
         emit("// Control IO")
         emit("val enable = Input(Bool())")
@@ -294,6 +307,12 @@ import types._
       fname
     }
 
+    val instruments = streamExtensions("Instrumentation").map{i =>
+      val fname = if (i == 0) "Instrumentation" else src"Instrumentation_${i}"
+      withStream(getStream(fname)) { stream.println("}")}
+      fname
+    }
+
     val gws = streamExtensions("GlobalWires").map{i =>
       val fname = if (i == 0) "GlobalWires" else src"GlobalWires_${i}"
       withStream(getStream(fname)) { stream.println("}")}
@@ -318,6 +337,14 @@ import chisel3.util._
 trait GlobalModulesMixer extends ${gms.mkString("\n with ")}""")
       }
 
+    withStream(getStream("InstrumentationMixer")) {
+        emit(s"""package accel
+import templates._
+import fringe._
+import chisel3._
+import chisel3.util._
+trait InstrumentationMixer extends ${instruments.mkString("\n with ")}""")
+      }
 
     // withStream(getStream("GlobalRetiming")) {
     //   close("}")
@@ -355,6 +382,7 @@ class AccelTop(
   val numArgIns: Int,
   val numArgOuts: Int,
   val numArgIOs: Int,
+  val numArgInstrs: Int,
   val loadStreamInfo: List[StreamParInfo],
   val storeStreamInfo: List[StreamParInfo],
   val streamInsInfo: List[StreamParInfo],
@@ -382,6 +410,7 @@ class AccelTop(
   val numArgIns: Int,
   val numArgOuts: Int,
   val numArgIOs: Int,
+  val numArgInstrs: Int,
   val loadStreamInfo: List[StreamParInfo],
   val storeStreamInfo: List[StreamParInfo],
   val numStreamIns: List[StreamParInfo],

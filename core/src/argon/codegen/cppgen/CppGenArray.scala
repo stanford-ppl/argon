@@ -57,6 +57,12 @@ trait CppGenArray extends CppCodegen {
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case op@ArrayNew(size)      => emitNewArray(lhs, lhs.tp, src"$size")
+    case op@ArrayFromSeq(seq)   =>
+      // TODO: Not sure if this is right
+      emit(src"""${lhs.tp.typeArguments.head} ${lhs}_vs[${seq.length}] = {${seq.map(quote).mkString(",")}};""")
+      emit(src"""${lhs.tp} ${lhs}_v(${lhs}_vs, ${lhs}_vs + ${seq.length});""")
+      emit(src"${lhs.tp}* $lhs = &${lhs}_v;")
+
     case ArrayApply(array, i)   => emitApply(lhs, array, src"$i")
     case ArrayLength(array)     => emit(src"${lhs.tp} $lhs = ${getSize(array)};")
     case InputArguments()       => emit(src"${lhs.tp}* $lhs = args;")

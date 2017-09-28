@@ -10,12 +10,17 @@ trait FixPtExp {
   def isInt32Type(x: Type[_]) = IntType.unapply(x)
   def isIndexType(x: Type[_]) = x == FixPtType[TRUE,_32,_0]
 
-  @internal def intParam(c: Int): Param[Int32] = FixPt.intParam(c)
-  @internal def int8(x: BigDecimal): Const[Int8] = FixPt.int8(x)
+  @internal def intParam(c: Int): Param[Index] = FixPt.intParam(c)
   @internal def int8(x: CString): Int8 = FixPt.int8(x)
   @internal def int8(x: MString): Int8 = FixPt.int8(x)
-  @internal def int32(x: BigDecimal): Const[Int32] = FixPt.int32(x)
-  @internal def int64(x: BigDecimal): Const[Int64] = FixPt.int64(x)
+
+  @internal def int8(x: BigDecimal): Int8 = FixPt.int8(x)
+  @internal def int32(x: BigDecimal): Index = FixPt.int32(x)
+  @internal def int64(x: BigDecimal): Int64 = FixPt.int64(x)
+
+  @internal def int8s(x: BigDecimal): Const[Int8] = FixPt.int8s(x)
+  @internal def int32s(x: BigDecimal): Const[Index] = FixPt.int32s(x)
+  @internal def int64s(x: BigDecimal): Const[Int64] = FixPt.int64s(x)
 
   @api implicit def int2fixpt[S:BOOL,I:INT,F:INT](x: Int): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)
   @api implicit def long2fixpt[S:BOOL,I:INT,F:INT](x: Long): FixPt[S,I,F] = FixPt.lift[S,I,F](x, force=false)

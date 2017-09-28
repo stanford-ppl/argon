@@ -15,9 +15,25 @@ case class FixFormat(sign: Boolean, ibits: Int, fbits: Int) {
   lazy val MAX_VALUE_FP: FixedPoint = FixedPoint.clamped(MAX_VALUE, valid=true, this)
   lazy val MIN_VALUE_FP: FixedPoint = FixedPoint.clamped(MIN_VALUE, valid=true, this)
   lazy val MIN_POSITIVE_VALUE_FP: FixedPoint = FixedPoint.clamped(BigInt(1), valid=true, this)
+
+  def isExactInt: Boolean  = fbits == 0 && ((sign && ibits <= 32) || ibits <= 31)
+  def isExactLong: Boolean = fbits == 0 && ((sign && ibits <= 64) || ibits <= 63)
 }
 
 class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) extends Number {
+  def abs: FixedPoint = if (this < 0) -this else this
+  def floor: FixedPoint = {
+    val add = if (this < 0 && this % FixedPoint(1,fmt) != 0) FixedPoint(-1, fmt) else FixedPoint(0,fmt)
+    val clamp = (this.value >> fmt.fbits) << fmt.fbits
+    FixedPoint.clamped(clamp, this.valid, fmt) + add
+  }
+  def ceil: FixedPoint = {
+    val add = if (this > 0 && this % FixedPoint(1,fmt) != 0) FixedPoint(1, fmt) else FixedPoint(0, fmt)
+    val clamp = (this.value >> fmt.fbits) << fmt.fbits
+    FixedPoint.clamped(clamp, this.valid, fmt) + add
+  }
+
+
   // All operations assume that both the left and right hand side have the same fixed point format
   def unary_-(): FixedPoint = FixedPoint.clamped(-this.value, this.valid, fmt)
   def unary_~(): FixedPoint = FixedPoint.clamped(~this.value, this.valid, fmt)
@@ -40,6 +56,11 @@ class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) exte
   def >=(that: FixedPoint): Bool  = Bool(this.value >= that.value, this.valid && that.valid)
   def !==(that: FixedPoint): Bool = Bool(this.value != that.value, this.valid && that.valid)
   def ===(that: FixedPoint): Bool = Bool(this.value == that.value, this.valid && that.valid)
+
+  def <(that: Int): Boolean = (this < FixedPoint(that, this.fmt)).value
+  def <=(that: Int): Boolean = (this <= FixedPoint(that, this.fmt)).value
+  def >(that: Int): Boolean = (this > FixedPoint(that, this.fmt)).value
+  def >=(that: Int): Boolean = (this >= FixedPoint(that, this.fmt)).value
 
   def bits: Array[Bool] = Array.tabulate(fmt.bits){i => Bool(value.testBit(i)) }
 
