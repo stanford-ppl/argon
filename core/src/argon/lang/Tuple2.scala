@@ -10,7 +10,9 @@ case class Tuple2[A:Type,B:Type](s: Exp[Tuple2[A,B]]) extends Struct[Tuple2[A,B]
   //val mB: MetaAny[B] = typ[B].fake
   override type Internal = scala.Tuple2[Any,Any]
 
+  /** Returns the first field in this Tuple2. **/
   @api def _1: A = field[A]("_1")
+  /** Returns the second field in this Tuple2. **/
   @api def _2: B = field[B]("_2")
 }
 

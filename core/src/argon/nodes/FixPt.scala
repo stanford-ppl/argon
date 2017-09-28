@@ -1,9 +1,7 @@
 package argon.nodes
 
-import argon.compiler
 import argon.core._
 import argon.compiler._
-import argon.emul._
 import forge._
 
 sealed class FixPtType[S,I,F](val mS: BOOL[S], val mI: INT[I], val mF: INT[F]) extends Type[FixPt[S,I,F]] with CanBits[FixPt[S,I,F]] with FrontendFacing {
@@ -56,9 +54,9 @@ class FixPtNum[S:BOOL,I:INT,F:INT] extends Num[FixPt[S,I,F]] {
   @api def fromFloat(x: Float, force: CBoolean = true) = FixPt.lift[S,I,F](x, force)
   @api def fromDouble(x: Double, force: CBoolean = true) = FixPt.lift[S,I,F](x, force)
 
-  @api def maxValue: FixPt[S,I,F] = FixPt.lift[S,I,F](fmt.MAX_VALUE_FP.toBigDecimal, force=true)  // TODO: Eventually should get rid of conversion
-  @api def minValue: FixPt[S,I,F] = FixPt.lift[S,I,F](fmt.MIN_VALUE_FP.toBigDecimal, force=true)
-  @api def minPositiveValue: FixPt[S,I,F] = FixPt.lift[S,I,F](fmt.MIN_POSITIVE_VALUE_FP.toBigDecimal, force=true)
+  @api def maxValue: FixPt[S,I,F] = FixPt.lift[S,I,F](fmt.MAX_VALUE_FP, force=true)
+  @api def minValue: FixPt[S,I,F] = FixPt.lift[S,I,F](fmt.MIN_VALUE_FP, force=true)
+  @api def minPositiveValue: FixPt[S,I,F] = FixPt.lift[S,I,F](fmt.MIN_POSITIVE_VALUE_FP, force=true)
 }
 
 object FixPtNum {
