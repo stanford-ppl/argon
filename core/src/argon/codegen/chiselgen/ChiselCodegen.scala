@@ -193,6 +193,11 @@ import chisel3.util._
 
 trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
 """)
+        val methodized_trait_pattern = "^x[0-9]+".r
+        val new_trait_name = src"""${strip_ext(curStream)}_${file_num}"""
+        if (Config.multifile == 5 & methodized_trait_pattern.findFirstIn(new_trait_name).isDefined) {
+          stream.println(src"""def method_${strip_ext(curStream)}_${file_num}() {""")
+        }
 
           streamTab(strip_ext(curStream) + "_" + file_num + "." + get_ext(curStream)) = 1 
 
@@ -257,7 +262,29 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
 
 
   final protected def withSubStream[A](name: String, parent: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
-    if (Config.multifile == 4) {
+    if (Config.multifile == 5) {
+      // Console.println(s"substream $name, parent $parent ext ${streamExtensions(parent)}")
+      val prnts = if (!(streamExtensions contains parent)) src"$parent" else streamExtensions(parent).map{i => if (i == 0) src"$parent" else src"${parent}_${i}"}.mkString(" with ")
+      emit(src"// Creating sub kernel ${name}")
+      withStream(newStream(name)) {
+          emit("""package accel
+import templates._
+import templates.ops._
+import types._
+import chisel3._
+import chisel3.util._
+""")
+          open(src"""trait ${name} extends ${prnts} {
+def method_${name}() {""")
+          try { body } 
+          finally { 
+            streamExtensions(name).foreach{i => 
+              val fname = if (i == 0) src"$name" else src"${name}_${i}"
+              withStream(getStream(fname)) { stream.println("}}")}
+            }
+          }
+      }
+    } else if (Config.multifile == 4) {
       // Console.println(s"substream $name, parent $parent ext ${streamExtensions(parent)}")
       val prnts = if (!(streamExtensions contains parent)) src"$parent" else streamExtensions(parent).map{i => if (i == 0) src"$parent" else src"${parent}_${i}"}.mkString(" with ")
       emit(src"// Creating sub kernel ${name}")
