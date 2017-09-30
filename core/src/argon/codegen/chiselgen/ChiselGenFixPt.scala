@@ -33,9 +33,14 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case FixPtType(s,d,f) => src"new FixedPoint($s, $d, $f)"
     case IntType() => "UInt(32.W)"
     case LongType() => "UInt(32.W)"
-    case _ => throw new NoWireConstructorException(s"$tp")
+    case FltPtType(g,e) => src"new FloatingPoint($e, $g)"
+    case BooleanType => "Bool()"
+    // case tp: VectorType[_] => src"Vec(${tp.width}, ${newWireFix(tp.typeArguments.head)})"
+    case tp: StructType[_] => src"UInt(${bitWidth(tp)}.W)"
+    // case tp: IssuedCmd => src"UInt(${bitWidth(tp)}.W)"
+    case tp: ArrayType[_] => src"Wire(Vec(999, ${newWireFix(tp.typeArguments.head)}"
+    case _ => throw new argon.NoWireConstructorException(s"$tp")
   }
-
 
   override protected def quoteConst(c: Const[_]): String = (c.tp, c) match {
     case (FixPtType(s,d,f), Const(cc)) =>
@@ -63,13 +68,13 @@ trait ChiselGenFixPt extends ChiselCodegen {
     case FixSub(x,y) => emit(src"val $lhs = $x - $y")
     case FixMul(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x *-* $y")
     case FixDiv(x,y) => emit(src"val $lhs = $x /-/ $y")
-    case FixAnd(x,y) => emit(src"val $lhs = $x & $y")
-    case FixOr(x,y)  => emit(src"val $lhs = $x | $y")
-    case FixXor(x,y)  => emit(src"val $lhs = $x ^ $y")
-    case FixLt(x,y)  => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x < $y")
-    case FixLeq(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x <= $y")
-    case FixNeq(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x =/= $y")
-    case FixEql(x,y) => alphaconv_register(src"$lhs"); emit(src"val $lhs = $x === $y")
+    case FixAnd(x,y)  => emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := $x & $y")
+    case FixOr(x,y)   => emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := $x | $y")
+    case FixXor(x,y)  => emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := $x ^ $y")
+    case FixLt(x,y)  => alphaconv_register(src"$lhs"); emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := $x < $y")
+    case FixLeq(x,y) => alphaconv_register(src"$lhs"); emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := $x <= $y")
+    case FixNeq(x,y) => alphaconv_register(src"$lhs"); emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := $x =/= $y")
+    case FixEql(x,y) => alphaconv_register(src"$lhs"); emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := $x === $y")
     case FixMod(x,y) => emit(src"val $lhs = $x %-% $y")
     case UnbMul(x,y) => emit(src"val $lhs = $x *& $y")
     case UnbDiv(x,y) => emit(src"val $lhs = $x /& $y")
