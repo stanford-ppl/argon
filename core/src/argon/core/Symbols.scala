@@ -10,6 +10,7 @@ import scala.annotation.unchecked.uncheckedVariance
 sealed abstract class Exp[+T] extends EdgeLike with FrontendFacing {
   def tp: Type[T @uncheckedVariance]
   def isConst = false
+  def isParam = false
   var prevNames: Seq[(String,String)] = Nil
   var name: Option[String] = None
   override def toStringFrontend = name match {
@@ -66,6 +67,7 @@ class Const[+T](val tp: Type[T@uncheckedVariance])(x: Any) extends Exp[T] {
 
 /** A Staged, mutable constant **/
 class Param[+T](override val tp: Type[T@uncheckedVariance])(val x: Any, val pid: Int) extends Const[T](tp)(x) {
+  override def isParam: Boolean = true
 
   case class ParamValue(x: Any) extends Metadata[ParamValue] { def mirror(f:Tx) = this }
 
