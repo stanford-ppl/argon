@@ -13,6 +13,7 @@ import org.virtualized.SourceContext
 trait ArgonCompiler { self =>
   var _IR: State = new State
   final implicit def IR: State = _IR
+  def name: String = self.getClass.getName.replace("class ", "").replace('.','_').replace("$","")
 
   def resetState(): Unit = {
     _IR = new State
@@ -45,11 +46,6 @@ trait ArgonCompiler { self =>
   }
   protected def checkWarnings(): Unit = if (IR.hadWarnings) {
     warn(s"""${IR.warnings} ${plural(IR.warnings, "warning","warnings")} found""")
-  }
-
-  protected def parseArguments(args: Seq[String]): Unit = {
-    val parser = new ArgonArgParser
-    parser.parse(args)
   }
 
   protected def onException(t: Throwable): Unit = {
@@ -170,16 +166,19 @@ trait ArgonCompiler { self =>
     report(s"[\u001B[32mcompleted\u001B[0m] Total time: " + "%.4f".format(time/1000) + " seconds")
   }
 
-
-  protected def initConfig(sargs: Array[String]): Unit = {
-    val defaultName = self.getClass.getName.replace("class ", "").replace('.','-').replace("$","") //.split('$').head
-    System.setProperty("argon.name", defaultName)
-    Config.name = defaultName
-    Config.init()
-
-    parseArguments(sargs.toSeq)
+  protected def parseArguments(args: Seq[String]): Unit = {
+    val parser = new ArgonArgParser
+    parser.parse(args)
   }
 
+  def createConfig(): Config = new Config()
+  def initConfig(sargs: Array[String]): Unit = {
+    state.config = createConfig()
+    System.setProperty("argon.name", name)
+    Config.name = name
+    Config.init()
+    parseArguments(sargs.toSeq)
+  }
 }
 
 trait ArgonApp extends ArgonCompiler { self =>

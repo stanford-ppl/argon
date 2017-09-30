@@ -4,36 +4,36 @@ import argon.core.Config
 import argon.util.ArgParser
 import scopt._
 
-class ArgonArgParser extends ArgParser {
+class ArgonArgParser(config: Config) extends ArgParser {
 
   def scriptName = "argon"
   def description = "CLI for argon"
   //not sur yet if we must optional()
 
   /*parser.opt[String]('n', "name").action( (x,_) =>
-    Config.name = x
+    config.name = x
   ).text("name of the app [app]")*/
 
   parser.opt[Unit]('q', "quiet").action( (_,_) =>
-    Config.verbosity = 0
+    config.verbosity = 0
   ).text("disable background logging")
 
   parser.opt[Unit]('v', "verbose").action( (_,_) =>
-    Config.verbosity = 2
+    config.verbosity = 2
   ).text("enable verbose printout")
 
   parser.opt[Int]("verbosity").action( (x,_) =>
-    Config.verbosity = x
+    config.verbosity = x
   ).text("set verbosity level")
   
   parser.opt[Unit]('c', "clean").action( (x,_) => {
-      Config.clearGen = true
-      Config.clearLogs = true
+      config.clearGen = true
+      config.clearLogs = true
     }
   ).text("Reset output directory")
 
   parser.opt[Int]('m', "multifile").action( (x,_) =>
-    Config.multifile = x
+    config.multifile = x
   ).text("""aggressiveness for splitting generated code files
       0 = no splitting or scoping
       1 = no splitting but yes scoping on inner pipes
@@ -42,11 +42,11 @@ class ArgonArgParser extends ArgParser {
       4 = all blocks""")
 
   parser.opt[String]('o', "out").action( (x,_) =>
-    Config.genDir = x
+    config.genDir = x
   ).text("location of output directory. Default is ./gen/<appname>")
 
   parser.opt[Int]('e', "emission").action( (x,_) =>
-    Config.emitDevel = x
+    config.emitDevel = x
   ).text(
     """Conservativeness when emitting nodes.
       0 = crash when emitNode is undefined (release mode)
@@ -54,7 +54,7 @@ class ArgonArgParser extends ArgParser {
       2 = warn when undefined and report when node matched but outside backend rules""")
 
   parser.opt[Int]('d', "detail").action( (x,_) =>
-    Config.dotDetail = x
+    config.dotDetail = x
   ).text(
     """Amount of detail to emit when generating graphviz.
       false = control nodes only (legacy mode for PIR debugging)

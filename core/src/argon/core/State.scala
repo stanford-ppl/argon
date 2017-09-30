@@ -10,6 +10,9 @@ import scala.collection.mutable
   * Threadsafe compiler state
   */
 class State {
+  /** Compiler configuration **/
+  var config: Config = _
+
   /** The IR Graph **/
   val graph: Graph[Dyn[_],Def] = new Graph[Dyn[_],Def]
 
@@ -110,4 +113,6 @@ class State {
     that.useBasicBlocks = this.useBasicBlocks
     that
   }
+
+
 }
