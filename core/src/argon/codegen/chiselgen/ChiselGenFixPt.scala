@@ -62,12 +62,12 @@ trait ChiselGenFixPt extends ChiselCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case FixInv(x)   => emit(src"val $lhs = ~$x")
-    case FixNeg(x)   => emit(src"val $lhs = -$x")
-    case FixAdd(x,y) => emit(src"val $lhs = $x + $y")
-    case FixSub(x,y) => emit(src"val $lhs = $x - $y")
+    case FixInv(x)   => emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := (~$x).r")
+    case FixNeg(x)   => emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := (-$x).r")
+    case FixAdd(x,y) => emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := ($x + $y).r")
+    case FixSub(x,y) => emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := ($x - $y).r")
     case FixMul(x,y) => alphaconv_register(src"$lhs"); emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"${lhs}.r := ($x *-* $y).r")
-    case FixDiv(x,y) => emit(src"val $lhs = $x /-/ $y")
+    case FixDiv(x,y) => emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := ($x /-/ $y).r")
     case FixAnd(x,y)  => emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := $x & $y")
     case FixOr(x,y)   => emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := $x | $y")
     case FixXor(x,y)  => emitGlobalWire(src"val $lhs = Wire(${newWireFix(lhs.tp)})");emit(src"$lhs := $x ^ $y")
