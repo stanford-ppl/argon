@@ -3,7 +3,7 @@ package argon.core
 import com.typesafe.config.ConfigFactory
 import pureconfig._
 
-class Config() {
+class Config {
 
   def sep = "/"
   var cwd: String = _
