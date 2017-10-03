@@ -144,8 +144,8 @@ object StateAnnotation {
 
 
       case ModuleDef(mods,name,Template(parents, selfType, bodyList)) =>
-        val (fields, methods) = bodyList.partition { case _:ValDef => true case _ => false }
-        val (constructors, defs) = bodyList.partition{ case DefDef(_,defName,_,_,_,_) => defName == termNames.CONSTRUCTOR }
+        val (fields, methods) = bodyList.partition { case _:DefDef => false case _ => true }
+        val (constructors, defs) = methods.partition{ case DefDef(_,defName,_,_,_,_) => defName == termNames.CONSTRUCTOR }
 
         val defs2 = defs.map{method => StateAnnotation.impl(c)(method) }
 
