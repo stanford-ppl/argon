@@ -1,6 +1,5 @@
 package argon.test
 
-import argon.core.Config
 import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized._
 
@@ -25,7 +24,7 @@ object ArrayNoAtomicWrite extends Test {
   @virtualize
   def main() {
     // HACK
-    Config.allowAtomicWrites = false
+    config.allowAtomicWrites = false
 
     val x = Array.empty[Array[Int]](32)
 

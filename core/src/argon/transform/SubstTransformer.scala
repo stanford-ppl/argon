@@ -116,7 +116,7 @@ trait SubstTransformer extends Transformer {
     result
   }
   override def mirror(lhs: Seq[Sym[_]], rhs: Def) = {
-    if (Config.verbosity > 2) {
+    if (config.verbosity > 2) {
       for((k,v) <- subst) {
         log(c"$k -> $v")
       }

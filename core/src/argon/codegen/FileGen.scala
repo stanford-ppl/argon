@@ -20,7 +20,7 @@ trait FileGen extends Codegen {
   }
 
   override protected def preprocess[S:Type](b: Block[S]) = {
-    if (Config.clearGen) {
+    if (config.clearGen) {
       try {
         FileUtils.deleteDirectory(new File(out))
       }

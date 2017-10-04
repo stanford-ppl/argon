@@ -12,7 +12,7 @@ trait Codegen extends Traversal {
 
   val lang: String
   val ext: String
-  def out: String = s"${Config.genDir}${Config.sep}$lang${Config.sep}"
+  def out: String = s"${config.genDir}${config.sep}$lang${config.sep}"
   var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
 
   val maxLinesPerFile = 300  // Specific hacks for chisel             
@@ -34,28 +34,28 @@ trait Codegen extends Traversal {
     if (emitEn | forceful) {
       stream.println(tabbed + x)
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   } 
   protected def open(x: String, forceful: Boolean = false): Unit = {
     if (emitEn | forceful) {
       stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   }
   protected def close(x: String, forceful: Boolean = false): Unit = { 
     if (emitEn | forceful) {
       if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   } 
   protected def closeopen(x: String, forceful: Boolean = false): Unit = { // Good for "} else {" lines
     if (emitEn | forceful) {
       if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x); streamTab(streamName) += 1
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   } 
 
@@ -64,12 +64,12 @@ trait Codegen extends Traversal {
 
   final protected def toggleEn(): Unit = {
     if (emitEn) {
-      if (Config.emitDevel == 2) {
+      if (config.emitDevel == 2) {
         Console.println(s"[ ${lang}gen-NOTE ] Disabling emits")
       }
       emitEn = false
     } else {
-      if (Config.emitDevel == 2) {
+      if (config.emitDevel == 2) {
         Console.println(s"[ ${lang}gen-NOTE ] Enabling emits")
       }
       emitEn = true      
@@ -120,7 +120,7 @@ trait Codegen extends Traversal {
 
   protected def remap(tp: Type[_]): String = tp.toString
   protected def quoteConst(c: Const[_]): String = {
-    if (Config.emitDevel > 0) {
+    if (config.emitDevel > 0) {
       if (emitEn) { // Want to emit but can't
         Console.println(s"[ ${lang}gen-ERROR ] No quote for $c")  
       } else { // No need to emit
@@ -132,8 +132,15 @@ trait Codegen extends Traversal {
       throw new ConstantGenFailedException(c)
     }
   }
+
+  protected def name(s: Dyn[_]): String = s match {
+    case b: Bound[_] => s"b${b.id}"
+    case s: Sym[_]   => s"x${s.id}"
+  }
+
   protected def quote(s: Exp[_]): String = s match {
     case c: Const[_] => quoteConst(c)
+    case d: Dyn[_] if config.enableNaming => name(d)
     case b: Bound[_] => s"b${b.id}"
     case s: Sym[_] => s"x${s.id}"
   }
@@ -157,13 +164,13 @@ trait Codegen extends Traversal {
   protected def emitBlock(b: Block[_]): Unit = visitBlock(b)
   protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = {
     if (emitEn) {
-      if (Config.emitDevel == 0) {
+      if (config.emitDevel == 0) {
         throw new GenerationFailedException(rhs)
       } else {
         Console.println(s"[ ${lang}gen-ERROR ] no backend for $lhs = $rhs in $lang")  
       } 
     } else {
-      if (Config.emitDevel == 2) Console.println(s"[ ${lang}gen-NOTE ] Emission of $lhs = $rhs does not belong in this backend")
+      if (config.emitDevel == 2) Console.println(s"[ ${lang}gen-NOTE ] Emission of $lhs = $rhs does not belong in this backend")
     }
   }
 

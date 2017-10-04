@@ -48,12 +48,6 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     emit(src"// results in ${b.result}")
   }
 
-  override def quote(s: Exp[_]): String = s match {
-    case c: Const[_] => quoteConst(c)
-    case b: Bound[_] => s"b${b.id}"
-    case lhs: Sym[_] => s"x${lhs.id}"
-  }
-
   final protected def emitGlobalWire(x: String, forceful: Boolean = false): Unit = { 
     withStream(getStream("GlobalWires")) {
       emit(x, forceful) 
@@ -198,7 +192,7 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
 """)
         val methodized_trait_pattern = "^x[0-9]+".r
         val new_trait_name = src"""${strip_ext(curStream)}_${file_num}"""
-        if (Config.multifile == 5 & methodized_trait_pattern.findFirstIn(new_trait_name).isDefined) {
+        if (config.multifile == 5 & methodized_trait_pattern.findFirstIn(new_trait_name).isDefined) {
           stream.println(src"""def method_${strip_ext(curStream)}_${file_num}() {""")
         }
 
@@ -227,7 +221,7 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
       val realstream = get_real_stream(streamName)
       withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x /*+ debug_stuff*/)}
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   } 
   override protected def open(x: String, forceful: Boolean = false): Unit = {
@@ -236,7 +230,7 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
       withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x)}; 
       if (streamTab contains {realstream + "." + get_ext(streamName)}) streamTab(realstream + "." + get_ext(streamName)) += 1 
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   }
   override protected def close(x: String, forceful: Boolean = false): Unit = { 
@@ -247,7 +241,7 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
         withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x)}
       }
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   } 
   override protected def closeopen(x: String, forceful: Boolean = false): Unit = { // Good for "} else {" lines
@@ -259,13 +253,13 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
         streamTab(realstream + "." + get_ext(streamName)) += 1
       }
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   } 
 
 
   final protected def withSubStream[A](name: String, parent: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
-    if (Config.multifile == 5) {
+    if (config.multifile == 5) {
       // Console.println(s"substream $name, parent $parent ext ${streamExtensions(parent)}")
       val prnts = if (!(streamExtensions contains parent)) src"$parent" else streamExtensions(parent).map{i => if (i == 0) src"$parent" else src"${parent}_${i}"}.mkString(" with ")
       emit(src"// Creating sub kernel ${name}")
@@ -287,7 +281,7 @@ def method_${name}() {""")
             }
           }
       }
-    } else if (Config.multifile == 4) {
+    } else if (config.multifile == 4) {
       // Console.println(s"substream $name, parent $parent ext ${streamExtensions(parent)}")
       val prnts = if (!(streamExtensions contains parent)) src"$parent" else streamExtensions(parent).map{i => if (i == 0) src"$parent" else src"${parent}_${i}"}.mkString(" with ")
       emit(src"// Creating sub kernel ${name}")
@@ -308,7 +302,7 @@ import chisel3.util._
             }
           }
       }
-    } else if (Config.multifile == 3 & inner) {
+    } else if (config.multifile == 3 & inner) {
         withStream(newStream(name)) {
             emit("""package accel
   import templates._
@@ -324,11 +318,11 @@ import chisel3.util._
             }
         }
       
-    } else if (Config.multifile == 2) {
+    } else if (config.multifile == 2) {
       open(src";{ // Multifile disabled, emitting $name kernel here")
       try { body } 
       finally { close("}") }
-    } else if (Config.multifile == 1 & inner) {
+    } else if (config.multifile == 1 & inner) {
       open(src";{ // Multifile disabled, emitting $name kernel here")
       try { body } 
       finally { close("}") }

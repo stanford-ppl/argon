@@ -1,6 +1,5 @@
 package argon.interpreter
 
-import argon.nodes._
 import argon.core._
 import argon.traversal.Traversal
 import scala.math.BigDecimal
@@ -8,25 +7,16 @@ import java.util.concurrent.{ LinkedBlockingQueue => Queue }
 import scala.collection.JavaConverters._
 
 trait Interpreter extends Traversal {
-
   override val recurse: RecurseOpt = Never
 
-  protected def interpretBlock(b: Block[_]): Exp[_]= {
-    visitBlock(b).result
-  }
+  protected def interpretBlock(b: Block[_]): Exp[_]= visitBlock(b).result
 
   var variables: Map[Sym[_], Any] = Map()
   var bounds: Map[Bound[_], Any] = Map()
 
-  def updateVar(lhs: Sym[_], x: Any): Unit =
-    variables += ((lhs, x))
-
-  def updateBound(bd: Bound[_], x: Any): Unit =
-    bounds += ((bd, x))
-
-  def removeBound(bd: Bound[_]) =
-    bounds -= bd
-  
+  def updateVar(lhs: Sym[_], x: Any): Unit = { variables += ((lhs, x)) }
+  def updateBound(bd: Bound[_], x: Any): Unit = { bounds += ((bd, x)) }
+  def removeBound(bd: Bound[_]): Unit = { bounds -= bd }
 
   def eval[A](x: Exp[_]): A = (x match {
     //Internal const rewrites
@@ -89,10 +79,10 @@ trait Interpreter extends Traversal {
 
   protected def interpretNode(lhs: Sym[_], rhs: Op[_]): Unit = {
 
-    if (Config.verbosity >= 3) {
+    if (config.verbosity >= 3) {
       println("Press a key to execute instruction (q to quit)")
       if (io.StdIn.readLine() == "q") {
-        Config.exit()
+        config.exit()
         System.exit(0)
       }
     }
@@ -107,7 +97,7 @@ trait Interpreter extends Traversal {
         println()
         println(s"[${Console.RED}error${Console.RESET}] Unable to interpret this node: " + (lhs, rhs))
         displayInfo
-        Config.exit()
+        config.exit()
         System.exit(0)
     }
 
@@ -122,7 +112,7 @@ trait Interpreter extends Traversal {
   }
 
   final override protected def postprocess[S:Type](block: Block[S]): Block[S] = {
-    if (Config.verbosity >= 2) {    
+    if (config.verbosity >= 2) {
       println()
       displayInfo
     }

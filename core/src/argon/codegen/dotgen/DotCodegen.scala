@@ -17,7 +17,7 @@ trait DotCodegen extends Codegen with FileDependencies with DotEnum { // FileDep
     visitBlock(b)
   }
 
-  override def quote(s: Exp[_]): String = s match {
+  override protected def quote(s: Exp[_]): String = s match {
     case c: Const[_] => quoteConst(c)
     case b: Bound[_] => s"b${b.id}"
     case Def(d) =>

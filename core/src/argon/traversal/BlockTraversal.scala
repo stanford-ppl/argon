@@ -72,7 +72,7 @@ trait BlockTraversal {
 
     val inputs = used filterNot (made contains _)
 
-    if (Config.verbosity > 1) {
+    if (config.verbosity > 1) {
       log(c"Used:")
       used.foreach{s => log(c"  ${str(s)}")}
       log(c"Made:")

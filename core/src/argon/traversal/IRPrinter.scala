@@ -4,7 +4,7 @@ import argon.core._
 
 // Print IR + metadata for each encountered symbol
 case class IRPrinter(var IR: State) extends Traversal {
-  override val name = "PrinterPlus"
+  override val name = "IR Printout"
   override def shouldRun = verbosity >= 1
 
   def strMeta(lhs: Exp[_]) {

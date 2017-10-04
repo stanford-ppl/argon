@@ -70,7 +70,7 @@ trait LayerStatements { this: ArgonCake =>
     syms(recurseAtomicLookup(s)).headOption.getOrElse(s)
   }
 
-  @stateful final def propagateWrites(effects: Effects): Effects = if (!Config.allowAtomicWrites) effects else {
+  @stateful final def propagateWrites(effects: Effects): Effects = if (!config.allowAtomicWrites) effects else {
     val writes = effects.writes.map{s => extractAtomicWrite(s) }
     effects.copy(writes = writes)
   }

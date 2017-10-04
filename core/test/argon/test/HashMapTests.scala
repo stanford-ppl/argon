@@ -1,6 +1,5 @@
 package argon.test
 
-import argon.core.Config
 import org.scalatest.{FlatSpec, Matchers}
 import org.virtualized._
 
@@ -125,8 +124,6 @@ object CodeMotionTest extends Test {
 }
 
 class HashMapTests extends FlatSpec with Matchers {
-  Config.verbosity = 3
-
   "GroupByReduceTest" should "compile and run" in { GroupByReduceTest.main(Array.empty) }
 
   "Kmeans" should "compile and run" in { Kmeans.main(Array.empty) }

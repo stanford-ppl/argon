@@ -127,7 +127,7 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
   override protected def postprocess[S:Type](block: Block[S]) = {
     // Somewhat expensive sanity check
     val b = super.postprocess(block)
-    if (Config.verbosity > 2 && !allowDuplication) {
+    if (config.verbosity > 2 && !allowDuplication) {
       val (_, contents) = blockInputsAndNestedContents(block)
       val symbols = contents.flatMap(_.lhs.asInstanceOf[Seq[Exp[_]]]).toSet
       val duplicated = (symbols intersect subst.keySet).filterNot{x => f(x) == x }

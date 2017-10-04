@@ -58,6 +58,4 @@ package object cake {
   val TTP = argon.core.TTP
 
   type State = argon.core.State
-  val Config = argon.core.Config
-  val Globals = argon.core.Globals
 }

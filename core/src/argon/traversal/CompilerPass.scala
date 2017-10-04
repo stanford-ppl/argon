@@ -16,13 +16,14 @@ trait CompilerPass { self =>
   def name: String = c"${self.getClass}"
 
   // --- Options
-  var verbosity: Int = Config.verbosity
+  var verbosity: Int = 0
   var shouldWarn: Boolean = true
   var needsInit: Boolean = true
   def shouldRun: Boolean = true
   def silence() { verbosity = -2; shouldWarn = false }
   def init(): Unit = {
     needsInit = false
+    this.verbosity = IR.config.verbosity  // Can't do this in the constructor unfortunately :(
   }
 
   // --- State
@@ -56,17 +57,17 @@ trait CompilerPass { self =>
     }
 
     if (this.verbosity >= 0) {
-      withLog(Config.logDir, outfile) {
-        val saveVerbosity = Config.verbosity
-        val saveWarnings  = Config.showWarn
-        Config.verbosity = this.verbosity
-        Config.showWarn  = this.shouldWarn
+      withLog(config.logDir, outfile) {
+        val saveVerbosity = config.verbosity
+        val saveWarnings  = config.showWarn
+        config.verbosity = this.verbosity
+        config.showWarn  = this.shouldWarn
 
         log("Starting traversal " + name)
         val result = runTraversal()
 
-        Config.verbosity = saveVerbosity
-        Config.showWarn = saveWarnings
+        config.verbosity = saveVerbosity
+        config.showWarn = saveWarnings
 
         result
       }
