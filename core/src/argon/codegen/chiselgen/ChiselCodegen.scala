@@ -12,6 +12,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   override val name = "Chisel Codegen"
   override val lang: String = "chisel"
   override val ext: String = "scala"
+  var boolMap = mutable.HashMap[String, Int]()
   var controllerStack = scala.collection.mutable.Stack[Exp[_]]()
 
   var alphaconv = mutable.HashMap[String, String]() // Map for tracking defs of nodes and if they get redeffed anywhere, we map it to a suffix
@@ -51,6 +52,40 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   final protected def emitGlobalWire(x: String, forceful: Boolean = false): Unit = { 
     withStream(getStream("GlobalWires")) {
       emit(x, forceful) 
+    }
+  }
+
+  final protected def emitGlobalWireMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
+    if (Config.multifile == 5) {
+      if (rhs == "Wire(Bool())") {
+        boolMap.getOrElseUpdate(lhs, boolMap.size)
+        ()
+      // } else if () { // Other mappings
+      } else {
+        throw new Exception(s"Cannot generate new wire for type $rhs")
+      }
+    } else {
+      if (rhs == "Wire(Bool())") {
+        if (boolMap.contains(lhs)) {
+          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+        } else {
+          emitGlobalWire(src"val $lhs = $rhs", forceful)
+        }
+        boolMap.getOrElseUpdate(lhs, boolMap.size)
+      }
+    }
+  }
+
+  final protected def wireMap(x: String): String = { 
+    if (Config.multifile == 5) {
+      if (boolMap.contains(x)) {
+        src"b(${boolMap(x)})"
+      // } else if () { // Other mappings
+      } else {
+        x
+      }
+    } else {
+      x
     }
   }
 
