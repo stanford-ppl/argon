@@ -21,8 +21,10 @@ case class IRPrinter(var IR: State) extends Traversal {
     tab += 1
     dbgs(c"block $i: $blk {")
     tab += 1
-    logs(c"effects: ${blk.effects}")
-    logs(c"anti-deps: ${blk.effectful}")
+    dbgs(c"effects: ${blk.effects}")
+    dbgs(c"anti-deps: ${blk.effectful}")
+    dbgs(c"isolated: ${blk.isolated}")
+    dbgs(c"seal: ${blk.seal}")
     visitBlock(blk)
     tab -= 1
     dbgs(c"} // End of $lhs block #$i")

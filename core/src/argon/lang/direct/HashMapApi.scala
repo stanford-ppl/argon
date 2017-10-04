@@ -6,6 +6,9 @@ import forge._
 trait HashMapApi {
   implicit class ArrayGroupByOps[A](array: MArray[A]) {
     private implicit val mA: Type[A] = array.s.tp.typeArguments.head.asInstanceOf[Type[A]]
+    /** Partitions this Array using the `key` function, then maps each element using `value`, and
+      * finally combines values in each bin using the associative `reduce` function.
+      */
     @api def groupByReduce[K:Type,V:Type](key: A => K)(value: A => V)(reduce: (V,V) => V): MHashMap[K,V] = {
       val i = fresh[Index]
       val rV = (fresh[V],fresh[V])

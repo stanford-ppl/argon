@@ -16,6 +16,8 @@ trait ScalaGenArray extends ScalaCodegen {
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case op@ArrayNew(size)      => emit(src"val $lhs = new Array[${op.mA}]($size)")
+    case op@ArrayFromSeq(seq)   => emit(src"""val $lhs = Array[${op.mA}](${seq.map(quote).mkString(",")})""")
+
     case ArrayApply(array, i)   => emit(src"val $lhs = $array.apply($i)")
     case ArrayLength(array)     => emit(src"val $lhs = $array.length")
     case InputArguments()       => emit(src"val $lhs = args")

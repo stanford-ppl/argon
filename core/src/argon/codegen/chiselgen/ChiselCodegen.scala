@@ -15,7 +15,8 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   var controllerStack = scala.collection.mutable.Stack[Exp[_]]()
 
   var alphaconv = mutable.HashMap[String, String]() // Map for tracking defs of nodes and if they get redeffed anywhere, we map it to a suffix
-  var maxretime: Int = 0
+  var maxretime: Int = 0 // Look for the biggest retime in the app and have the app wait this many cycles before enabling root controllerStack
+  var disableSplit: Boolean = false // Temporary hack to avoid splitting files from overflow while emitting code that belongs together
 
   final def alphaconv_register(xx: String): Unit = {
     val x = "_reuse[0-9]+".r.replaceAllIn(xx, "")
@@ -147,11 +148,13 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= DirDep(resourcesPath, "template-level/fringeZynq")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeDE1SoC")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeVCS")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeXSIM")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeAWS")
     
     dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile")) 
     dependencies ::= FileDep(resourcesPath, "app-level/verilator.mk", "../", Some("verilator.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/zynq.mk", "../", Some("zynq.mk"))
+    dependencies ::= FileDep(resourcesPath, "app-level/xsim.mk", "../", Some("xsim.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/instrument.sh", "../", Some("instrument.sh"))
     dependencies ::= FileDep(resourcesPath, "app-level/de1soc.mk", "../", Some("de1soc.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/vcs.mk", "../", Some("vcs.mk"))
@@ -173,7 +176,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       val current_ext = streamExtensions(strip_ext(curStream)).last
       val cur_stream_ext = if (current_ext == 0) {strip_ext(curStream)} else {strip_ext(curStream) + "_" + current_ext}
       val cur_tabbing = streamTab(cur_stream_ext + "." + get_ext(curStream))
-      if ((cur_tabbing == 1)) streamLines(strip_ext(curStream)) += 1
+      if ((cur_tabbing == 1) & !disableSplit) streamLines(strip_ext(curStream)) += 1
       val global_lines = streamLines(strip_ext(curStream))
       val file_num = global_lines / maxLinesPerFile
       if (global_lines % maxLinesPerFile == 0 & (!streamExtensions(strip_ext(curStream)).contains(file_num))) { 
@@ -193,6 +196,11 @@ import chisel3.util._
 
 trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
 """)
+        val methodized_trait_pattern = "^x[0-9]+".r
+        val new_trait_name = src"""${strip_ext(curStream)}_${file_num}"""
+        if (Config.multifile == 5 & methodized_trait_pattern.findFirstIn(new_trait_name).isDefined) {
+          stream.println(src"""def method_${strip_ext(curStream)}_${file_num}() {""")
+        }
 
           streamTab(strip_ext(curStream) + "_" + file_num + "." + get_ext(curStream)) = 1 
 
@@ -257,7 +265,29 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
 
 
   final protected def withSubStream[A](name: String, parent: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
-    if (Config.multifile == 4) {
+    if (Config.multifile == 5) {
+      // Console.println(s"substream $name, parent $parent ext ${streamExtensions(parent)}")
+      val prnts = if (!(streamExtensions contains parent)) src"$parent" else streamExtensions(parent).map{i => if (i == 0) src"$parent" else src"${parent}_${i}"}.mkString(" with ")
+      emit(src"// Creating sub kernel ${name}")
+      withStream(newStream(name)) {
+          emit("""package accel
+import templates._
+import templates.ops._
+import types._
+import chisel3._
+import chisel3.util._
+""")
+          open(src"""trait ${name} extends ${prnts} {
+def method_${name}() {""")
+          try { body } 
+          finally { 
+            streamExtensions(name).foreach{i => 
+              val fname = if (i == 0) src"$name" else src"${name}_${i}"
+              withStream(getStream(fname)) { stream.println("}}")}
+            }
+          }
+      }
+    } else if (Config.multifile == 4) {
       // Console.println(s"substream $name, parent $parent ext ${streamExtensions(parent)}")
       val prnts = if (!(streamExtensions contains parent)) src"$parent" else streamExtensions(parent).map{i => if (i == 0) src"$parent" else src"${parent}_${i}"}.mkString(" with ")
       emit(src"// Creating sub kernel ${name}")

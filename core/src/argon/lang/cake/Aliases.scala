@@ -12,6 +12,16 @@ trait ArgonLangAliases {
     */
   type Index = argon.lang.FixPt[TRUE,_32,_0]
 
+  type FixedPoint = argon.emul.FixedPoint
+  val FixedPoint = argon.emul.FixedPoint
+  type FloatPoint = argon.emul.FloatPoint
+  val FloatPoint = argon.emul.FloatPoint
+  type FixFormat = argon.emul.FixFormat
+  val FixFormat = argon.emul.FixFormat
+  type FltFormat = argon.emul.FltFormat
+  val FltFormat = argon.emul.FltFormat
+  implicit def boolToBoolean(x: argon.emul.Bool): Boolean = x.value
+
   @generate type IntJJ$JJ$2to128 = argon.lang.FixPt[TRUE,argon.lang.typeclasses._JJ,_0]
   @generate type UIntJJ$JJ$2to128 = argon.lang.FixPt[FALSE,argon.lang.typeclasses._JJ,_0]
 
@@ -52,6 +62,8 @@ trait ArgonLangAliases {
 /** All common type aliases, used outside argon.lang **/
 trait ArgonCommonAliases extends ArgonLangAliases {
   type MetaAny[T] = argon.lang.MetaAny[T]
+
+  val Literal = argon.lang.Literal
 
   type FixPt[S,I,F] = argon.lang.FixPt[S,I,F]
   type FltPt[G,E] = argon.lang.FltPt[G,E]

@@ -15,8 +15,10 @@ trait CppGenAsserts extends CppCodegen {
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case Assert(cond, m)       =>  
-      val msg = src"""${m.getOrElse("API Assert Failed")}"""
-      emit(src"""ASSERT($cond, "\n=================\n${msg.replace("string(\"","").replace("\")","")}\n=================\n");""")
+      val str = src"""${m.getOrElse("API assert failed with no message provided")}"""
+      emit(src"""string $lhs = string_plus("\n=================\n", string_plus($str, "\n=================\n"));""")
+      emit(src"""ASSERT($cond, ${lhs}.c_str());""")
+
     case _ => super.emitNode(lhs, rhs)
   }
 }

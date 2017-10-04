@@ -3,11 +3,12 @@ package argon.lang
 import typeclasses._
 import argon.core._
 import argon.nodes._
+import argon.util.escapeConst
 import forge._
 
 case class FltPt[G:INT,E:INT](s: Exp[FltPt[G,E]]) extends MetaAny[FltPt[G,E]] {
-  override type Internal = BigDecimal
-  protected val flt = FltPt
+  override type Internal = FloatPoint
+  private val flt = FltPt
   /** Returns the negation of this floating point value. **/
   @api def unary_-(): FltPt[G,E] = FltPt(flt.neg(this.s))
   /** Floating point addition. **/
@@ -74,29 +75,39 @@ object FltPt {
   implicit def fltPtIsNum[G:INT,E:INT]: Num[FltPt[G,E]] = new FltPtNum[G,E]
 
   /** Constants **/
-  @internal def literalToBigDecimal[G:INT,E:INT](x: Any, force: CBoolean): BigDecimal = {
+  @internal private def literalToFloatPoint[G:INT,E:INT](x: Any, force: CBoolean): FloatPoint = {
     val gbits = INT[G].v
     val ebits = INT[E].v
     val tp = s"$gbits.$ebits floating point"
     val FLP = FltPtType[G,E].toString
 
+    val fmt = FltFormat(gbits-1, ebits) // FltFormat sbits doesn't include sign bit, but gbits does
+
     // TODO: Precision checking
-    def makeFloat(v: BigDecimal): BigDecimal = v
+    def withCheck[T](x: T)(eql: T => CBoolean): T = {
+      if (!force && !eql(x)) {
+        error(ctx, u"Loss of precision detected in implicit lift: $tp cannot fully represent value ${escapeConst(x)}.")
+        error(u"""Use the explicit annotation "${escapeConst(x)}.to[$tp]" to ignore this error.""")
+        error(ctx)
+      }
+      x
+    }
 
     x match {
-      case x: BigDecimal => makeFloat(x)
-      case x: Int => makeFloat(BigDecimal(x))
-      case x: Long => makeFloat(BigDecimal(x))
-      case x: Float => makeFloat(BigDecimal(x.toDouble))
-      case x: Double => makeFloat(BigDecimal(x))
-      case x: CString => makeFloat(BigDecimal(x))
+      case x: BigDecimal => withCheck(FloatPoint(x, fmt)){_.toBigDecimal == x }
+      case x: BigInt     => withCheck(FloatPoint(x, fmt)){_.toBigDecimal == BigDecimal(x) }
+      case x: Int        => withCheck(FloatPoint(x, fmt)){_.toInt == x }
+      case x: Long       => withCheck(FloatPoint(x, fmt)){_.toLong == x }
+      case x: Float      => withCheck(FloatPoint(x, fmt)){_.toFloat == x }
+      case x: Double     => withCheck(FloatPoint(x, fmt)){_.toDouble == x }
+      case x: CString    => withCheck(FloatPoint(x, fmt)){_.toBigDecimal == BigDecimal(x) }
       case c =>
         error(s"$c cannot be lifted to a floating point value")
         sys.exit()
     }
   }
   @internal def const[G:INT,E:INT](x: Any, force: CBoolean = true): Const[FltPt[G,E]] = {
-    constant(FltPtType[G,E])(literalToBigDecimal[G,E](x, force))
+    constant(FltPtType[G,E])(literalToFloatPoint[G,E](x, force))
   }
 
   @internal def string2fltpt[G:INT,E:INT](x: CString): FltPt[G,E] = FltPt(const[G,E](x))
@@ -104,40 +115,40 @@ object FltPt {
 
   /** Constructors **/
   @internal def neg[G:INT,E:INT](x: Exp[FltPt[G,E]]): Exp[FltPt[G,E]] = x match {
-    case Const(c: BigDecimal) => const[G,E](-c)
+    case Literal(c) => const[G,E](-c)
     case Op(FltNeg(x)) => x
     case _ => stage(FltNeg(x))(ctx)
   }
   @internal def add[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[FltPt[G,E]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[G,E](a + b)
+    case (Literal(a), Literal(b)) => const[G,E](a + b)
     case _ => stage(FltAdd(x,y))(ctx)
   }
   @internal def sub[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[FltPt[G,E]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[G,E](a - b)
+    case (Literal(a), Literal(b)) => const[G,E](a - b)
     case _ => stage(FltSub(x,y))(ctx)
   }
   @internal def mul[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[FltPt[G,E]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[G,E](a * b)
+    case (Literal(a), Literal(b)) => const[G,E](a * b)
     case _ => stage(FltMul(x,y))(ctx)
   }
   @internal def div[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[FltPt[G,E]] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => const[G,E](a / b)
+    case (Literal(a), Literal(b)) => const[G,E](a / b)
     case _ => stage(FltDiv(x,y))(ctx)
   }
   @internal def lt[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a < b)
+    case (Literal(a), Literal(b)) => Boolean.const(a < b)
     case _ => stage(FltLt(x,y))(ctx)
   }
   @internal def leq[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a <= b)
+    case (Literal(a), Literal(b)) => Boolean.const(a <= b)
     case _ => stage(FltLeq(x,y))(ctx)
   }
   @internal def neq[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a != b)
+    case (Literal(a), Literal(b)) => Boolean.const(a != b)
     case _ => stage(FltNeq(x,y))(ctx)
   }
   @internal def eql[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]): Exp[MBoolean] = (x,y) match {
-    case (Const(a: BigDecimal), Const(b: BigDecimal)) => Boolean.const(a == b)
+    case (Literal(a), Literal(b)) => Boolean.const(a == b)
     case _ => stage(FltEql(x,y))(ctx)
   }
   @internal def random[G:INT,E:INT](max: Option[Exp[FltPt[G,E]]]): Exp[FltPt[G,E]] = {
