@@ -56,7 +56,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   final protected def emitGlobalWireMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
-    if (Config.multifile == 5) {
+    if (config.multifile == 5) {
       if (rhs == "Wire(Bool())") {
         boolMap.getOrElseUpdate(lhs, boolMap.size)
         ()
@@ -77,7 +77,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   final protected def wireMap(x: String): String = { 
-    if (Config.multifile == 5) {
+    if (config.multifile == 5) {
       if (boolMap.contains(x)) {
         src"b(${boolMap(x)})"
       // } else if () { // Other mappings
