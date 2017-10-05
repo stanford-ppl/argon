@@ -19,7 +19,7 @@ object LazyVarAnnotation {
           c.abort(c.enclosingPosition, "@lazyvar requires explicit specification of the type of the var")
         }
         val hiddenVarName = TermName("__"+name)
-        val setterName = TermName(name + "_=")
+        val setterName = TermName(name + "_$eq")
 
         val hiddenVar = q"var $hiddenVarName: Option[$tpt] = None"
         val methodVar =
@@ -31,7 +31,7 @@ object LazyVarAnnotation {
         val varSetter = q"""def $setterName(rhs: $tpt): Unit = { $hiddenVarName = Some($rhs) }"""
 
         val res = q"$hiddenVar ; $methodVar ; $varSetter"
-        c.info(c.enclosingPosition, showCode(res), true)
+        //c.info(c.enclosingPosition, showCode(res), true)
         res
 
       case _ =>
