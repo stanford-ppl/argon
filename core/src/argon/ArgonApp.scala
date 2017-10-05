@@ -83,10 +83,6 @@ trait ArgonCompiler { self =>
     parseArguments(IR.config, stageArgs)  // Override config with any command line arguments
     settings()                            // Override config with any DSL or App specific settings
     createTraversalSchedule(IR)           // Set up the compiler schedule for the app
-
-    if (config.clearLogs) deleteExts(config.logDir, ".log")
-    report(c"Compiling ${config.name} to ${config.genDir}")
-    if (config.verbosity >= 2) report(c"Logging ${config.name} to ${config.logDir}")
   }
 
   /**
@@ -138,6 +134,10 @@ trait ArgonCompiler { self =>
 
 
   def compileProgram(blk: () => Unit): Unit = {
+    if (config.clearLogs) deleteExts(config.logDir, ".log")
+    report(c"Compiling ${config.name} to ${config.genDir}")
+    if (config.verbosity >= 2) report(c"Logging ${config.name} to ${config.logDir}")
+
     val startTime = System.currentTimeMillis()
 
     val block = stageProgram{
