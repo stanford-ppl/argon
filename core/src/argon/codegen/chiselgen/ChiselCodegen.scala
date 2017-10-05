@@ -56,7 +56,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   final protected def emitGlobalWireMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
-    if (config.multifile == 5) {
+    if (config.multifile == 5 || config.multifile == 6) {
       if (rhs == "Wire(Bool())") {
         boolMap.getOrElseUpdate(lhs, boolMap.size)
         ()
@@ -77,7 +77,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   final protected def wireMap(x: String): String = { 
-    if (config.multifile == 5) {
+    if (config.multifile == 5 || config.multifile == 6) {
       if (boolMap.contains(x)) {
         src"b(${boolMap(x)})"
       // } else if () { // Other mappings
@@ -227,7 +227,7 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
 """)
         val methodized_trait_pattern = "^x[0-9]+".r
         val new_trait_name = src"""${strip_ext(curStream)}_${file_num}"""
-        if (config.multifile == 5 & methodized_trait_pattern.findFirstIn(new_trait_name).isDefined) {
+        if (config.multifile == 6 & methodized_trait_pattern.findFirstIn(new_trait_name).isDefined) {
           stream.println(src"""def method_${strip_ext(curStream)}_${file_num}() {""")
         }
 
@@ -294,7 +294,7 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
 
 
   final protected def withSubStream[A](name: String, parent: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
-    if (config.multifile == 5) {
+    if (config.multifile == 6) {
       // Console.println(s"substream $name, parent $parent ext ${streamExtensions(parent)}")
       val prnts = if (!(streamExtensions contains parent)) src"$parent" else streamExtensions(parent).map{i => if (i == 0) src"$parent" else src"${parent}_${i}"}.mkString(" with ")
       emit(src"// Creating sub kernel ${name}")
@@ -313,6 +313,27 @@ def method_${name}() {""")
             streamExtensions(name).foreach{i => 
               val fname = if (i == 0) src"$name" else src"${name}_${i}"
               withStream(getStream(fname)) { stream.println("}}")}
+            }
+          }
+      }
+    } else if (config.multifile == 5) {
+      // Console.println(s"substream $name, parent $parent ext ${streamExtensions(parent)}")
+      val prnts = if (!(streamExtensions contains parent)) src"$parent" else streamExtensions(parent).map{i => if (i == 0) src"$parent" else src"${parent}_${i}"}.mkString(" with ")
+      emit(src"// Creating sub kernel ${name}")
+      withStream(newStream(name)) {
+          emit("""package accel
+import templates._
+import templates.ops._
+import types._
+import chisel3._
+import chisel3.util._
+""")
+          open(src"""trait ${name} extends ${prnts} {""")
+          try { body } 
+          finally { 
+            streamExtensions(name).foreach{i => 
+              val fname = if (i == 0) src"$name" else src"${name}_${i}"
+              withStream(getStream(fname)) { stream.println("}")}
             }
           }
       }

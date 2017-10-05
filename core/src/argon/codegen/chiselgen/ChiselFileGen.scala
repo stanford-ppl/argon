@@ -350,7 +350,7 @@ trait InstrumentationMixer extends ${instruments.mkString("\n with ")}""")
     //   close("}")
     // }
 
-    if (config.multifile == 5) {
+    if (config.multifile == 6) {
       var methodList = scala.collection.mutable.ListBuffer[String]()
       val methodized_trait_pattern = "^x[0-9]+".r
       val traits = (streamMapReverse.keySet.toSet.map{
