@@ -16,11 +16,11 @@ trait ChiselGenBoolean extends ChiselCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case Not(x)       => alphaconv_register(src"$lhs"); emitGlobalWire(src"val $lhs = Wire(Bool())");emit(src"$lhs := !$x")
-    case And(x,y)     => alphaconv_register(src"$lhs"); emitGlobalWire(src"val $lhs = Wire(Bool())");emit(src"$lhs := $x && $y")
-    case Or(x,y)      => alphaconv_register(src"$lhs"); emitGlobalWire(src"val $lhs = Wire(Bool())");emit(src"$lhs := $x || $y")
-    case XOr(x,y)     => alphaconv_register(src"$lhs"); emitGlobalWire(src"val $lhs = Wire(Bool())");emit(src"$lhs := $x =/= $y")
-    case XNor(x,y)    => alphaconv_register(src"$lhs"); emitGlobalWire(src"val $lhs = Wire(Bool())");emit(src"$lhs := $x === $y")
+    case Not(x)       => alphaconv_register(src"$lhs"); emitGlobalWireMap(src"$lhs", src"Wire(Bool())");emit(src"$lhs := !$x")
+    case And(x,y)     => alphaconv_register(src"$lhs"); emitGlobalWireMap(src"$lhs", src"Wire(Bool())");emit(src"$lhs := $x && $y")
+    case Or(x,y)      => alphaconv_register(src"$lhs"); emitGlobalWireMap(src"$lhs", src"Wire(Bool())");emit(src"$lhs := $x || $y")
+    case XOr(x,y)     => alphaconv_register(src"$lhs"); emitGlobalWireMap(src"$lhs", src"Wire(Bool())");emit(src"$lhs := $x =/= $y")
+    case XNor(x,y)    => alphaconv_register(src"$lhs"); emitGlobalWireMap(src"$lhs", src"Wire(Bool())");emit(src"$lhs := $x === $y")
     case RandomBoolean(x) => emit(src"val $lhs = java.util.concurrent.ThreadLocalRandom.current().nextBoolean()")
     case StringToBoolean(x) => emit(src"val $lhs = $x.toBoolean")
     case _ => super.emitNode(lhs, rhs)

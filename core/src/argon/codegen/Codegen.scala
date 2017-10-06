@@ -14,6 +14,7 @@ trait Codegen extends Traversal {
   val ext: String
   def out: String = s"${config.genDir}${config.sep}$lang${config.sep}"
   var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
+  var boolMap = collection.mutable.HashMap[String, Int]()
 
   val maxLinesPerFile = 300  // Specific hacks for chisel             
   val numTraitsPerMixer = 50 // Specific hacks for chisel
@@ -118,6 +119,19 @@ trait Codegen extends Traversal {
     }
   }
 
+  final protected def wireMap(x: String): String = { 
+    if (config.multifile == 5 | config.multifile == 6) {
+      if (boolMap.contains(x)) {
+        src"b(${boolMap(x)})"
+      // } else if () { // Other mappings
+      } else {
+        x
+      }
+    } else {
+      x
+    }
+  }
+
   protected def remap(tp: Type[_]): String = tp.toString
   protected def quoteConst(c: Const[_]): String = {
     if (config.emitDevel > 0) {
@@ -135,14 +149,22 @@ trait Codegen extends Traversal {
 
   protected def name(s: Dyn[_]): String = s match {
     case b: Bound[_] => s"b${b.id}"
-    case s: Sym[_]   => s"x${s.id}"
+    case s: Sym[_]   => 
+      s.tp match {
+        // case BooleanType => wireMap(s"x${s.id}")
+        case _ => wireMap(s"x${s.id}")
+      }
   }
 
   protected def quote(s: Exp[_]): String = s match {
     case c: Const[_] => quoteConst(c)
     case d: Dyn[_] if config.enableNaming => name(d)
     case b: Bound[_] => s"b${b.id}"
-    case s: Sym[_] => s"x${s.id}"
+    case s: Sym[_] => 
+      s.tp match {
+        // case BooleanType => wireMap(s"x${s.id}")
+        case _ => wireMap(s"x${s.id}")
+      }
   }
 
   protected def quoteOrRemap(arg: Any): String = arg match {
