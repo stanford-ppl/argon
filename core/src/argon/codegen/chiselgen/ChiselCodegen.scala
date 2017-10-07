@@ -34,7 +34,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   override protected def quoteOrRemap(arg: Any): String = arg match {
-    case e: Exp[_] => quote(e) + alphaconv.getOrElse(quote(e), "")
+    case e: Exp[_] => wireMap(quote(e) + alphaconv.getOrElse(quote(e), ""))
     case _ => super.quoteOrRemap(arg)
   }
 
@@ -66,13 +66,15 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
         sintMap.getOrElseUpdate(lhs, sintMap.size)
         ()
       } else if (rhs == "Wire(new FixedPoint(true, 32, 0))") { // Other mappings
-        fix32Map.getOrElseUpdate(lhs, fix32Map.size)
+        fixs32Map.getOrElseUpdate(lhs, fixs32Map.size)
+        ()
+      } else if (rhs == "Wire(new FixedPoint(false, 32, 0))") { // Other mappings
+        fixu32Map.getOrElseUpdate(lhs, fixu32Map.size)
         ()
       } else {
         emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
     } else {
-      Console.println(s"working on $lhs=${rhs}..")
       if (rhs == "Wire(Bool())") {
         if (boolMap.contains(lhs)) {
           emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
@@ -95,12 +97,19 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
         }
         sintMap.getOrElseUpdate(lhs, sintMap.size)
       } else if (rhs == "Wire(new FixedPoint(true, 32, 0))"){
-        if (fix32Map.contains(lhs)) {
+        if (fixs32Map.contains(lhs)) {
           emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
         } else {
           emitGlobalWire(src"val $lhs = $rhs", forceful)
         }
-        fix32Map.getOrElseUpdate(lhs, fix32Map.size)
+        fixs32Map.getOrElseUpdate(lhs, fixs32Map.size)
+      } else if (rhs == "Wire(new FixedPoint(false, 32, 0))"){
+        if (fixu32Map.contains(lhs)) {
+          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+        } else {
+          emitGlobalWire(src"val $lhs = $rhs", forceful)
+        }
+        fixu32Map.getOrElseUpdate(lhs, fixu32Map.size)
       } else {
         emitGlobalWire(src"val $lhs = $rhs", forceful)
       }

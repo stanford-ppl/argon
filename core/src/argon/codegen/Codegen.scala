@@ -17,7 +17,8 @@ trait Codegen extends Traversal {
   var boolMap = collection.mutable.HashMap[String, Int]()
   var uintMap = collection.mutable.HashMap[String, Int]()
   var sintMap = collection.mutable.HashMap[String, Int]()
-  var fix32Map = collection.mutable.HashMap[String, Int]()
+  var fixs32Map = collection.mutable.HashMap[String, Int]()
+  var fixu32Map = collection.mutable.HashMap[String, Int]()
 
   val maxLinesPerFile = 300  // Specific hacks for chisel             
   val numTraitsPerMixer = 50 // Specific hacks for chisel
@@ -130,8 +131,10 @@ trait Codegen extends Traversal {
         src"u(${uintMap(x)})"
       } else if (sintMap.contains(x)) {
         src"s(${sintMap(x)})"
-      } else if (fix32Map.contains(x)) {
-        src"f32(${fix32Map(x)})"
+      } else if (fixs32Map.contains(x)) {
+        src"fs32(${fixs32Map(x)})"
+      } else if (fixu32Map.contains(x)) {
+        src"fu32(${fixu32Map(x)})"
       } else {
         x
       }
