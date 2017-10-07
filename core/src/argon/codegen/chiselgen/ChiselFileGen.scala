@@ -355,7 +355,7 @@ trait InstrumentationMixer extends ${instruments.mkString("\n with ")}""")
       val methodized_trait_pattern = "^x[0-9]+".r
       val traits = (streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-      }.toSet - "AccelTop" - "Instantiator").toList
+      }.toSet - "AccelTop" - "Instantiator" - "Mapping").toList
 
       var numMixers = 0
       (0 until traits.length by numTraitsPerMixer).foreach { i =>
@@ -400,7 +400,7 @@ ${methodList.map{i => src"method_${i}()"}.mkString("\n")}
     } else if (config.multifile == 3 | config.multifile == 4) {
       val traits = (streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-      }.toSet - "AccelTop" - "Instantiator").toList
+      }.toSet - "AccelTop" - "Instantiator" - "Mapping").toList
 
       var numMixers = 0
       (0 until traits.length by numTraitsPerMixer).foreach { i =>
@@ -444,7 +444,7 @@ class AccelTop(
     // Get traits that need to be mixed in
       val traits = streamMapReverse.keySet.toSet.map{
         f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
-      }.toSet - "AccelTop" - "Instantiator"
+      }.toSet - "AccelTop" - "Instantiator" - "Mapping"
       withStream(getStream("AccelTop")) {
         emit(s"""package accel
 import templates._

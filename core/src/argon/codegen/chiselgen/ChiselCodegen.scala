@@ -59,7 +59,15 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       if (rhs == "Wire(Bool())") {
         boolMap.getOrElseUpdate(lhs, boolMap.size)
         ()
-      // } else if () { // Other mappings
+      } else if (rhs == "Wire(UInt(32.W))") { // Other mappings
+        uintMap.getOrElseUpdate(lhs, uintMap.size)
+        ()
+      } else if (rhs == "Wire(SInt(32.W))") { // Other mappings
+        sintMap.getOrElseUpdate(lhs, sintMap.size)
+        ()
+      } else if (rhs == "Wire(new FixedPoint(true, 32, 0))") { // Other mappings
+        fix32Map.getOrElseUpdate(lhs, fix32Map.size)
+        ()
       } else {
         emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
@@ -72,6 +80,27 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
           emitGlobalWire(src"val $lhs = $rhs", forceful)
         }
         boolMap.getOrElseUpdate(lhs, boolMap.size)
+      } else if (rhs == "Wire(UInt(32.W))") {
+        if (uintMap.contains(lhs)) {
+          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+        } else {
+          emitGlobalWire(src"val $lhs = $rhs", forceful)
+        }
+        uintMap.getOrElseUpdate(lhs, uintMap.size)
+      } else if (rhs == "Wire(SInt(32.W))") {
+        if (sintMap.contains(lhs)) {
+          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+        } else {
+          emitGlobalWire(src"val $lhs = $rhs", forceful)
+        }
+        sintMap.getOrElseUpdate(lhs, sintMap.size)
+      } else if (rhs == "Wire(new FixedPoint(true, 32, 0))"){
+        if (fix32Map.contains(lhs)) {
+          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+        } else {
+          emitGlobalWire(src"val $lhs = $rhs", forceful)
+        }
+        fix32Map.getOrElseUpdate(lhs, fix32Map.size)
       } else {
         emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
