@@ -15,6 +15,10 @@ trait Codegen extends Traversal {
   def out: String = s"${config.genDir}${config.sep}$lang${config.sep}"
   var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
   var boolMap = collection.mutable.HashMap[String, Int]()
+  var uintMap = collection.mutable.HashMap[String, Int]()
+  var sintMap = collection.mutable.HashMap[String, Int]()
+  var fixs32Map = collection.mutable.HashMap[String, Int]()
+  var fixu32Map = collection.mutable.HashMap[String, Int]()
 
   val maxLinesPerFile = 300  // Specific hacks for chisel             
   val numTraitsPerMixer = 50 // Specific hacks for chisel
@@ -123,7 +127,14 @@ trait Codegen extends Traversal {
     if (config.multifile == 5 | config.multifile == 6) {
       if (boolMap.contains(x)) {
         src"b(${boolMap(x)})"
-      // } else if () { // Other mappings
+      } else if (uintMap.contains(x)) {
+        src"u(${uintMap(x)})"
+      } else if (sintMap.contains(x)) {
+        src"s(${sintMap(x)})"
+      } else if (fixs32Map.contains(x)) {
+        src"fs32(${fixs32Map(x)})"
+      } else if (fixu32Map.contains(x)) {
+        src"fu32(${fixu32Map(x)})"
       } else {
         x
       }
@@ -149,22 +160,22 @@ trait Codegen extends Traversal {
 
   protected def name(s: Dyn[_]): String = s match {
     case b: Bound[_] => s"b${b.id}"
-    case s: Sym[_]   => 
-      s.tp match {
-        // case BooleanType => wireMap(s"x${s.id}")
-        case _ => wireMap(s"x${s.id}")
-      }
+    case s: Sym[_]   => wireMap(s"x${s.id}")
+      // s.tp match {
+      //   // case BooleanType => wireMap(s"x${s.id}")
+      //   case _ => wireMap(s"x${s.id}")
+      // }
   }
 
   protected def quote(s: Exp[_]): String = s match {
     case c: Const[_] => quoteConst(c)
-    case d: Dyn[_] if config.enableNaming => name(d)
+    case d: Dyn[_] if config.enableNaming => wireMap(name(d))
     case b: Bound[_] => s"b${b.id}"
-    case s: Sym[_] => 
-      s.tp match {
-        // case BooleanType => wireMap(s"x${s.id}")
-        case _ => wireMap(s"x${s.id}")
-      }
+    case s: Sym[_] => wireMap(s"x${s.id}")
+      // s.tp match {
+      //   // case BooleanType => wireMap(s"x${s.id}")
+      //   case _ => wireMap(s"x${s.id}")
+      // }
   }
 
   protected def quoteOrRemap(arg: Any): String = arg match {
