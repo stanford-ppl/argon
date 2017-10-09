@@ -186,12 +186,12 @@ trait AccessPatternAnalyzer extends Traversal {
 
       case Times(LoopIndex(i), a) if isInvariant(a,i) =>    // i*a
         val stride = strideOf(i).map{s => Prod(a,s) }.getOrElse(Prod(a))
-        val offset = offsetOf(i).map{o => Sum(o) }.getOrElse(Zero)
+        val offset = offsetOf(i).map{o => Prod(a,o) }.getOrElse(Zero)
         Some(Seq(AffineProduct(stride,i)), offset)
 
       case Times(a, LoopIndex(i)) if isInvariant(a,i) =>
         val stride = strideOf(i).map{s => Prod(a,s) }.getOrElse(Prod(a))
-        val offset = offsetOf(i).map{o => Sum(o) }.getOrElse(Zero)
+        val offset = offsetOf(i).map{o => Prod(a,o) }.getOrElse(Zero)
         Some(Seq(AffineProduct(stride,i)), offset)  // a*i
 
       case LoopIndex(i) =>
