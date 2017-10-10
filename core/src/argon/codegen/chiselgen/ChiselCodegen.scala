@@ -66,10 +66,13 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
         sintMap.getOrElseUpdate(lhs, sintMap.size)
         ()
       } else if (rhs == "Wire(new FixedPoint(true, 32, 0))") { // Other mappings
-        fixs32Map.getOrElseUpdate(lhs, fixs32Map.size)
+        fixs32_0Map.getOrElseUpdate(lhs, fixs32_0Map.size)
         ()
       } else if (rhs == "Wire(new FixedPoint(false, 32, 0))") { // Other mappings
-        fixu32Map.getOrElseUpdate(lhs, fixu32Map.size)
+        fixu32_0Map.getOrElseUpdate(lhs, fixu32_0Map.size)
+        ()
+      } else if (rhs == "Wire(new FixedPoint(true, 10, 22))") { // Other mappings
+        fixs10_22Map.getOrElseUpdate(lhs, fixs10_22Map.size)
         ()
       } else {
         emitGlobalWire(src"val $lhs = $rhs", forceful)
@@ -97,19 +100,26 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
         }
         sintMap.getOrElseUpdate(lhs, sintMap.size)
       } else if (rhs == "Wire(new FixedPoint(true, 32, 0))"){
-        if (fixs32Map.contains(lhs)) {
+        if (fixs32_0Map.contains(lhs)) {
           emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
         } else {
           emitGlobalWire(src"val $lhs = $rhs", forceful)
         }
-        fixs32Map.getOrElseUpdate(lhs, fixs32Map.size)
+        fixs32_0Map.getOrElseUpdate(lhs, fixs32_0Map.size)
       } else if (rhs == "Wire(new FixedPoint(false, 32, 0))"){
-        if (fixu32Map.contains(lhs)) {
+        if (fixu32_0Map.contains(lhs)) {
           emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
         } else {
           emitGlobalWire(src"val $lhs = $rhs", forceful)
         }
-        fixu32Map.getOrElseUpdate(lhs, fixu32Map.size)
+        fixu32_0Map.getOrElseUpdate(lhs, fixu32_0Map.size)
+      } else if (rhs == "Wire(new FixedPoint(true, 10, 22))"){
+        if (fixs10_22Map.contains(lhs)) {
+          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+        } else {
+          emitGlobalWire(src"val $lhs = $rhs", forceful)
+        }
+        fixs10_22Map.getOrElseUpdate(lhs, fixs10_22Map.size)
       } else {
         emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
