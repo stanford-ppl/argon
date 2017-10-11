@@ -20,6 +20,7 @@ trait Codegen extends Traversal {
   var fixs32_0Map = collection.mutable.HashMap[String, Int]()
   var fixu32_0Map = collection.mutable.HashMap[String, Int]()
   var fixs10_22Map = collection.mutable.HashMap[String, Int]()
+  var compressorMap = collection.mutable.HashMap[String, (String,Int)]()
 
   val maxLinesPerFile = 300  // Specific hacks for chisel             
   val numTraitsPerMixer = 50 // Specific hacks for chisel
@@ -124,20 +125,43 @@ trait Codegen extends Traversal {
     }
   }
 
+  final protected def listHandle(rhs: String): String = {
+    if (rhs.contains("Bool()")) {
+      "b"
+    } else if (rhs.contains("UInt(")) {
+      val extractor = ".*UInt\\(([0-9]+).W\\).*".r
+      val extractor(width) = rhs
+      s"u${width}"
+    } else if (rhs.contains("SInt(")) {
+      val extractor = ".*SInt\\(([0-9]+).W\\).*".r
+      val extractor(width) = rhs
+      s"s${width}"      
+    } else if (rhs.contains("FixedPoint(")) {
+      val extractor = ".*FixedPoint\\([ ]*(.*)[ ]*,[ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+      val extractor(s,i,f) = rhs
+      val ss = if (s.contains("rue")) "s" else "u"
+      s"fp${ss}${i}_${f}"            
+    } else {
+      throw new Exception(s"Cannot compress ${rhs}!")
+    }
+  }
+
   final protected def wireMap(x: String): String = { 
     if (config.multifile == 5 | config.multifile == 6) {
-      if (boolMap.contains(x)) {
-        src"b(${boolMap(x)})"
-      } else if (uintMap.contains(x)) {
-        src"u(${uintMap(x)})"
-      } else if (sintMap.contains(x)) {
-        src"s(${sintMap(x)})"
-      } else if (fixs32_0Map.contains(x)) {
-        src"fs32_0(${fixs32_0Map(x)})"
-      } else if (fixu32_0Map.contains(x)) {
-        src"fu32_0(${fixu32_0Map(x)})"
-      } else if (fixs10_22Map.contains(x)) {
-        src"fu32_0(${fixs10_22Map(x)})"
+      if (compressorMap.contains(x)) {
+        src"${listHandle(compressorMap(x)._1)}(${compressorMap(x)._2}) "
+      // if (boolMap.contains(x)) {
+      //   src"b(${boolMap(x)})"
+      // } else if (uintMap.contains(x)) {
+      //   src"u(${uintMap(x)})"
+      // } else if (sintMap.contains(x)) {
+      //   src"s(${sintMap(x)})"
+      // } else if (fixs32_0Map.contains(x)) {
+      //   src"fs32_0(${fixs32_0Map(x)})"
+      // } else if (fixu32_0Map.contains(x)) {
+      //   src"fu32_0(${fixu32_0Map(x)})"
+      // } else if (fixs10_22Map.contains(x)) {
+      //   src"fu32_0(${fixs10_22Map(x)})"
       } else {
         x
       }

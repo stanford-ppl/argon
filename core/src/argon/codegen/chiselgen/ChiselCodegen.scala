@@ -56,73 +56,82 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final protected def emitGlobalWireMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
     if (config.multifile == 5 | config.multifile == 6) {
-      if (rhs == "Wire(Bool())") {
-        boolMap.getOrElseUpdate(lhs, boolMap.size)
-        ()
-      } else if (rhs == "Wire(UInt(32.W))") { // Other mappings
-        uintMap.getOrElseUpdate(lhs, uintMap.size)
-        ()
-      } else if (rhs == "Wire(SInt(32.W))") { // Other mappings
-        sintMap.getOrElseUpdate(lhs, sintMap.size)
-        ()
-      } else if (rhs == "Wire(new FixedPoint(true, 32, 0))") { // Other mappings
-        fixs32_0Map.getOrElseUpdate(lhs, fixs32_0Map.size)
-        ()
-      } else if (rhs == "Wire(new FixedPoint(false, 32, 0))") { // Other mappings
-        fixu32_0Map.getOrElseUpdate(lhs, fixu32_0Map.size)
-        ()
-      } else if (rhs == "Wire(new FixedPoint(true, 10, 22))") { // Other mappings
-        fixs10_22Map.getOrElseUpdate(lhs, fixs10_22Map.size)
-        ()
+      if (!compressorMap.contains(lhs) & !rhs.contains("Vec")) {
+        val id = compressorMap.values.map(_._1).filter(_ == rhs).size
+        compressorMap += (lhs -> (rhs, id))
+      // if (rhs == "Wire(Bool())") {
+      //   boolMap.getOrElseUpdate(lhs, boolMap.size)
+      //   ()
+      // } else if (rhs == "Wire(UInt(32.W))") { // Other mappings
+      //   uintMap.getOrElseUpdate(lhs, uintMap.size)
+      //   ()
+      // } else if (rhs == "Wire(SInt(32.W))") { // Other mappings
+      //   sintMap.getOrElseUpdate(lhs, sintMap.size)
+      //   ()
+      // } else if (rhs == "Wire(new FixedPoint(true, 32, 0))") { // Other mappings
+      //   fixs32_0Map.getOrElseUpdate(lhs, fixs32_0Map.size)
+      //   ()
+      // } else if (rhs == "Wire(new FixedPoint(false, 32, 0))") { // Other mappings
+      //   fixu32_0Map.getOrElseUpdate(lhs, fixu32_0Map.size)
+      //   ()
+      // } else if (rhs == "Wire(new FixedPoint(true, 10, 22))") { // Other mappings
+      //   fixs10_22Map.getOrElseUpdate(lhs, fixs10_22Map.size)
+      //   ()
       } else {
         emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
     } else {
-      if (rhs == "Wire(Bool())") {
-        if (boolMap.contains(lhs)) {
-          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-        } else {
-          emitGlobalWire(src"val $lhs = $rhs", forceful)
-        }
-        boolMap.getOrElseUpdate(lhs, boolMap.size)
-      } else if (rhs == "Wire(UInt(32.W))") {
-        if (uintMap.contains(lhs)) {
-          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-        } else {
-          emitGlobalWire(src"val $lhs = $rhs", forceful)
-        }
-        uintMap.getOrElseUpdate(lhs, uintMap.size)
-      } else if (rhs == "Wire(SInt(32.W))") {
-        if (sintMap.contains(lhs)) {
-          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-        } else {
-          emitGlobalWire(src"val $lhs = $rhs", forceful)
-        }
-        sintMap.getOrElseUpdate(lhs, sintMap.size)
-      } else if (rhs == "Wire(new FixedPoint(true, 32, 0))"){
-        if (fixs32_0Map.contains(lhs)) {
-          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-        } else {
-          emitGlobalWire(src"val $lhs = $rhs", forceful)
-        }
-        fixs32_0Map.getOrElseUpdate(lhs, fixs32_0Map.size)
-      } else if (rhs == "Wire(new FixedPoint(false, 32, 0))"){
-        if (fixu32_0Map.contains(lhs)) {
-          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-        } else {
-          emitGlobalWire(src"val $lhs = $rhs", forceful)
-        }
-        fixu32_0Map.getOrElseUpdate(lhs, fixu32_0Map.size)
-      } else if (rhs == "Wire(new FixedPoint(true, 10, 22))"){
-        if (fixs10_22Map.contains(lhs)) {
-          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-        } else {
-          emitGlobalWire(src"val $lhs = $rhs", forceful)
-        }
-        fixs10_22Map.getOrElseUpdate(lhs, fixs10_22Map.size)
+      if (compressorMap.contains(lhs)) {
+        emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
       } else {
+        compressorMap += (lhs -> (rhs, 0))
         emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
+      // if (rhs == "Wire(Bool())") {
+      //   if (boolMap.contains(lhs)) {
+      //     emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+      //   } else {
+      //     emitGlobalWire(src"val $lhs = $rhs", forceful)
+      //   }
+      //   boolMap.getOrElseUpdate(lhs, boolMap.size)
+      // } else if (rhs == "Wire(UInt(32.W))") {
+      //   if (uintMap.contains(lhs)) {
+      //     emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+      //   } else {
+      //     emitGlobalWire(src"val $lhs = $rhs", forceful)
+      //   }
+      //   uintMap.getOrElseUpdate(lhs, uintMap.size)
+      // } else if (rhs == "Wire(SInt(32.W))") {
+      //   if (sintMap.contains(lhs)) {
+      //     emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+      //   } else {
+      //     emitGlobalWire(src"val $lhs = $rhs", forceful)
+      //   }
+      //   sintMap.getOrElseUpdate(lhs, sintMap.size)
+      // } else if (rhs == "Wire(new FixedPoint(true, 32, 0))"){
+      //   if (fixs32_0Map.contains(lhs)) {
+      //     emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+      //   } else {
+      //     emitGlobalWire(src"val $lhs = $rhs", forceful)
+      //   }
+      //   fixs32_0Map.getOrElseUpdate(lhs, fixs32_0Map.size)
+      // } else if (rhs == "Wire(new FixedPoint(false, 32, 0))"){
+      //   if (fixu32_0Map.contains(lhs)) {
+      //     emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+      //   } else {
+      //     emitGlobalWire(src"val $lhs = $rhs", forceful)
+      //   }
+      //   fixu32_0Map.getOrElseUpdate(lhs, fixu32_0Map.size)
+      // } else if (rhs == "Wire(new FixedPoint(true, 10, 22))"){
+      //   if (fixs10_22Map.contains(lhs)) {
+      //     emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+      //   } else {
+      //     emitGlobalWire(src"val $lhs = $rhs", forceful)
+      //   }
+      //   fixs10_22Map.getOrElseUpdate(lhs, fixs10_22Map.size)
+      // } else {
+      //   emitGlobalWire(src"val $lhs = $rhs", forceful)
+      // }
     }
   }
 
