@@ -56,6 +56,9 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
 
   final protected def emitGlobalWireMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
     if (config.multifile == 5 | config.multifile == 6) {
+      if (rhs.contains("Vec")) {
+        emitGlobalWire(src"val $lhs = $rhs", forceful)
+      }
       if (!compressorMap.contains(lhs) & !rhs.contains("Vec")) {
         val id = compressorMap.values.map(_._1).filter(_ == rhs).size
         compressorMap += (lhs -> (rhs, id))
@@ -78,7 +81,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       //   fixs10_22Map.getOrElseUpdate(lhs, fixs10_22Map.size)
       //   ()
       } else {
-        emitGlobalWire(src"val $lhs = $rhs", forceful)
+        // emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
     } else {
       if (compressorMap.contains(lhs)) {
