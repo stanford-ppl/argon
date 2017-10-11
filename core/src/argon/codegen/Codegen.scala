@@ -145,6 +145,10 @@ trait Codegen extends Traversal {
       val extractor = ".*FloatingPoint\\([ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
       val extractor(m,e) = rhs
       s"flt${m}_${e}"            
+    } else if (rhs.contains("NBufFF(")) {
+      val extractor = ".*NBufFF\\([ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+      val extractor(d,w) = rhs
+      s"nbufff${d}_${w}"  
     } else {
       throw new Exception(s"Cannot compress ${rhs}!")
     }
@@ -153,7 +157,7 @@ trait Codegen extends Traversal {
   final protected def wireMap(x: String): String = { 
     if (config.multifile == 5 | config.multifile == 6) {
       if (compressorMap.contains(x)) {
-        src"${listHandle(compressorMap(x)._1)}(${compressorMap(x)._2}) "
+        src"${listHandle(compressorMap(x)._1)}(${compressorMap(x)._2})"
       // if (boolMap.contains(x)) {
       //   src"b(${boolMap(x)})"
       // } else if (uintMap.contains(x)) {
