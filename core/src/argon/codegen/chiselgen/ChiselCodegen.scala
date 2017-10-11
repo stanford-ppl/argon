@@ -55,13 +55,14 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   final protected def emitGlobalWireMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
+    val stripped = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
     if (config.multifile == 5 | config.multifile == 6) {
       if (rhs.contains("Vec")) {
         emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
       if (!compressorMap.contains(lhs) & !rhs.contains("Vec")) {
-        val id = compressorMap.values.map(_._1).filter(_ == rhs).size
-        compressorMap += (lhs -> (rhs, id))
+        val id = compressorMap.values.map(_._1).filter(_ == stripped).size
+        compressorMap += (lhs -> (stripped, id))
       } else {
         // emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
@@ -71,20 +72,21 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       } else if (rhs.contains("Vec")) {
         emitGlobalWire(src"val $lhs = $rhs", forceful)
       } else {
-        compressorMap += (lhs -> (rhs, 0))
+        compressorMap += (lhs -> (stripped, 0))
         emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
     }
   }
 
   final protected def emitGlobalModuleMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
+    val stripped = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
     if (config.multifile == 5 | config.multifile == 6) {
       if (rhs.contains("Vec")) {
         emitGlobalModule(src"val $lhs = $rhs", forceful)
       }
       if (!compressorMap.contains(lhs) & !rhs.contains("Vec")) {
-        val id = compressorMap.values.map(_._1).filter(_ == rhs).size
-        compressorMap += (lhs -> (rhs, id))
+        val id = compressorMap.values.map(_._1).filter(_ == stripped).size
+        compressorMap += (lhs -> (stripped, id))
       } else {
         // emitGlobalModule(src"val $lhs = $rhs", forceful)
       }
@@ -94,7 +96,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       } else if (rhs.contains("Vec")) {
         emitGlobalModule(src"val $lhs = $rhs", forceful)
       } else {
-        compressorMap += (lhs -> (rhs, 0))
+        compressorMap += (lhs -> (stripped, 0))
         emitGlobalModule(src"val $lhs = $rhs", forceful)
       }
     }
