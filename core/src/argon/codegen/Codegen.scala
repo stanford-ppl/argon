@@ -141,6 +141,10 @@ trait Codegen extends Traversal {
       val extractor(s,i,f) = rhs
       val ss = if (s.contains("rue")) "s" else "u"
       s"fp${ss}${i}_${f}"            
+    } else if (rhs.contains("FloatingPoint(")) {
+      val extractor = ".*FloatingPoint\\([ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+      val extractor(m,e) = rhs
+      s"flt${m}_${e}"            
     } else {
       throw new Exception(s"Cannot compress ${rhs}!")
     }
