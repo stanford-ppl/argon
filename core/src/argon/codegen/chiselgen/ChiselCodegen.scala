@@ -86,6 +86,8 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     } else {
       if (compressorMap.contains(lhs)) {
         emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
+      } else if (rhs.contains("Vec")) {
+        emitGlobalWire(src"val $lhs = $rhs", forceful)
       } else {
         compressorMap += (lhs -> (rhs, 0))
         emitGlobalWire(src"val $lhs = $rhs", forceful)
