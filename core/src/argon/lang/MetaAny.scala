@@ -3,7 +3,6 @@ package argon.lang
 import argon.core._
 import forge._
 
-
 /** Base trait for all staged, frontend types **/
 abstract class MetaAny[T:Type] extends Product {
   type Internal
@@ -20,19 +19,20 @@ abstract class MetaAny[T:Type] extends Product {
     warn("Add @virtualize annotation to an enclosing scope to prevent this.")
     warn(ctx)
   }*/
+  // TODO: Some way of doing this while also having context?
   private def unstagedWarningNoCtx(op: CString): CUnit = {
     val name = s.name.getOrElse(s.toString)
-    warn(s"Unstaged method $op was used on value $name during staging.")
-    warn("Add @virtualize annotation to an enclosing scope to prevent this.")
+    //Report.warn(s"Unstaged method $op was used on value $name during staging.")
+    //Report.warn("Add @virtualize annotation to an enclosing scope to prevent this.")
   }
 
   override def toString: CString = {
-    if (Globals.staging) unstagedWarningNoCtx("toString")
+    unstagedWarningNoCtx("toString")
     this.productPrefix + this.productIterator.mkString("(", ", ", ")")
   }
 
   override def equals(that: Any): CBoolean = {
-    if (Globals.staging) unstagedWarningNoCtx("equals")
+    unstagedWarningNoCtx("equals")
     this.isEqual(that)
   }
 
@@ -43,7 +43,6 @@ abstract class MetaAny[T:Type] extends Product {
   @api def toText: MString
 }
 
-// TODO: Investigate why this still gives back Any even when T#Internal is used
 object Literal {
   def unapply[T<:MetaAny[T]](s: Exp[T]): Option[T#Internal] = s match {
     case param: Param[_] if param.isFinal => Some(param.c.asInstanceOf[T#Internal])

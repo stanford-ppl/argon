@@ -11,12 +11,12 @@ trait ArgonAppRunner extends ArgonApp { self =>
   final protected def run(out: String): Int = {
     val start = System.currentTimeMillis()
     // msg("--------------------------")
-    report(c"Executing ${Config.name}")
+    report(c"Executing ${config.name}")
     //msg(c"in output directory $out")
 
     val proc = scala.sys.process.Process(Seq("sbt", s"""run ${testArgs.mkString(" ")}"""), new java.io.File(out))
     val logger = ProcessLogger{str => msg(str, 2) }
-    val exitCode = withLog(Config.logDir, state.paddedPass + " RUN.log") { proc.run(logger).exitValue() }
+    val exitCode = withLog(config.logDir, state.paddedPass + " RUN.log") { proc.run(logger).exitValue() }
 
     val time = (System.currentTimeMillis - start).toFloat
     if (exitCode != 0)

@@ -1,6 +1,7 @@
 package argon
 
 import argon.core._
+import argon.util.Report
 
 import scala.util.control.NoStackTrace
 
@@ -18,17 +19,17 @@ abstract class ProgramError()(implicit state: State) {
 
 class RecursiveScheduleException(result: Any, xs: List[String]) extends
   Exception(c"Recursive schedule while scheduling result $result"){
-    error(c"Recursive schedule while scheduling result $result:")
-    xs.foreach { x => error(s"  $x") }
+    Report.error(c"Recursive schedule while scheduling result $result:")
+    xs.foreach { x => Report.error(s"  $x") }
   }
 
 class TestBenchFailed(errs: Int)(implicit state: State) extends Exception(c"""Compilation failed with $errs ${plural(errs,"error","errors")}""") with NoStackTrace
 class RunningFailed(exit: Int)(implicit state: State) extends Exception(c"Running compiled testbench failed with exit code $exit") with NoStackTrace
 
 case class NullStateException() extends Exception {
-  error("A node or block was staged without any state")
-  error("This usually happens when Def.mirror is used in a Transformer.")
-  error("Use Def.mirrorNode instead to avoid this issue.")
+  Report.bug("A node or block was staged without any state")
+  Report.bug("This usually happens when Def.mirror is used in a Transformer.")
+  Report.bug("Use Def.mirrorNode instead to avoid this issue.")
 }
 
 class GenerationFailedException(node: Def) extends Exception(c"Don't know how to generate node $node") with NoStackTrace

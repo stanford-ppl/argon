@@ -11,21 +11,18 @@ import scala.collection.mutable.ArrayBuffer
 import org.virtualized.SourceContext
 
 trait ArgonCompiler { self =>
-  var _IR: State = new State
-  final implicit def IR: State = _IR
+  protected var __IR: State = new State
+  final implicit def IR: State = __IR
 
-  def resetState(): Unit = {
-    _IR = new State
-    passes.clear()
-  }
+  def name: String = self.getClass.getName.replace("class ", "").replace('.','_').replace("$","")
 
   def stagingArgs: Array[String]
 
   private var __args: MArray[MString] = _  
-  def args: MArray[MString] = __args
+  protected def args: MArray[MString] = __args
 
   final protected val passes: ArrayBuffer[CompilerPass] = ArrayBuffer.empty[CompilerPass]
-  final protected def codegenerators = passes.collect{case x: Codegen => x}
+  final protected def codegenerators: Seq[Codegen] = passes.collect{case x: Codegen => x}
 
   protected val testbench: Boolean = false
 
@@ -47,46 +44,52 @@ trait ArgonCompiler { self =>
     warn(s"""${IR.warnings} ${plural(IR.warnings, "warning","warnings")} found""")
   }
 
-  protected def parseArguments(args: Seq[String]): Unit = {
-    val parser = new ArgonArgParser
-    parser.parse(args)
-  }
-
   protected def onException(t: Throwable): Unit = {
-    withLog(Config.logDir, Config.name + "_exception.log") {
-      Config.verbosity = 10
+    withLog(config.logDir, config.name + "_exception.log") {
+      config.verbosity = 10
       if (t.getMessage != null) { log(t.getMessage); log("") }
       if (t.getCause != null) { log(t.getCause); log("") }
       t.getStackTrace.foreach{elem => log(elem.toString) }
     }
-    bug(s"An exception was encountered while compiling ${Config.name}: ")
+    bug(s"An exception was encountered while compiling ${config.name}: ")
     if (t.getMessage != null) bug(s"  ${t.getMessage}")
-    if (t.getCause != null) bug(s"  ${t.getCause}")
+    else if (t.getCause != null) bug(s"  ${t.getCause}")
+    else bug(s"  $t")
     bug(s"This is likely a compiler bug. A log file has been created at: ")
-    bug(s"  ${Config.logDir}/${Config.name}_exception.log")
+    bug(s"  ${config.logDir}/${config.name}_exception.log")
+  }
+
+  protected def createConfig(): Config = new Config()
+  protected def parseArguments(config: Config, sargs: Array[String]): Unit = {
+    val parser = new ArgonArgParser(config)
+    parser.parse(sargs.toSeq)
   }
 
   protected def settings(): Unit = { }
   protected def createTraversalSchedule(state: State): Unit = { }
 
-  final protected def init(): Unit = {
-    IR.reset() // Reset global state
-    settings()
-    createTraversalSchedule(IR)
+  final def init(stageArgs: Array[String]): Unit = {
+    val oldState = IR
+    __IR = new State                      // Create a new, empty state
 
-    if (Config.clearLogs) deleteExts(Config.logDir, ".log")
-    report(c"Compiling ${Config.name} to ${Config.genDir}")
-    if (Config.verbosity >= 2) report(c"Logging ${Config.name} to ${Config.logDir}")
+    // Copy all globals (created prior to the main method) to the new state's graph
+    val globals = 0 until oldState.graph.firstNonGlobal
+    oldState.graph.copyNodesTo(globals, IR.graph)
+
+    passes.clear()                        // Reset traversal passes
+    IR.config = createConfig()            // Create a new Config
+    IR.config.name = name                 // Set the default program name
+    IR.config.init()                      // Initialize the Config (from files)
+    parseArguments(IR.config, stageArgs)  // Override config with any command line arguments
+    settings()                            // Override config with any DSL or App specific settings
+    createTraversalSchedule(IR)           // Set up the compiler schedule for the app
   }
 
   /**
     * Stage block
     */
-  final protected def stageProgram[R:Type](blk: => R): Block[R] = {
-    core.Globals.staging = true
-    val block: Block[R] = withLog(Config.logDir, "0000 Staging.log") { stageBlock { blk.s } }
-    core.Globals.staging = false
-    block
+  final protected def stageProgram[R:Type](blk: => R): Block[R] = withLog(config.logDir, "0000 Staging.log") {
+    stageBlock { blk.s }
   }
 
   final protected def runTraversals[R:Type](startTime: Long, b: Block[R], timingLog: Log): Unit = {
@@ -98,7 +101,7 @@ trait ArgonCompiler { self =>
     for (t <- passes) {
       if (IR.graph.VERBOSE_SCHEDULING) {
         IR.graph.glog.close()
-        IR.graph.glog = createLog(Config.logDir + "/sched/", IR.paddedPass + " " + t.name + ".log")
+        IR.graph.glog = createLog(config.logDir + "/sched/", IR.paddedPass + " " + t.name + ".log")
         withLog(IR.graph.glog) {
           log(s"${IR.pass} ${t.name}")
           log(s"===============================================")
@@ -112,12 +115,12 @@ trait ArgonCompiler { self =>
       checkBugs(startTime, t.name)
       checkErrors(startTime, t.name)
 
-      val v = Config.verbosity
-      Config.verbosity = 1
+      val v = IR.config.verbosity
+      IR.config.verbosity = 1
       withLog(timingLog) {
         dbg(s"  ${t.name}: " + "%.4f".format(t.lastTime / 1000))
       }
-      Config.verbosity = v
+      IR.config.verbosity = v
 
       // Throw out scope cache after each transformer runs. This is because each block either
       // a. didn't exist before
@@ -130,9 +133,10 @@ trait ArgonCompiler { self =>
   }
 
 
-  protected def compileProgram(blk: () => Unit): Unit = {
-    // Spin up a new compiler IR
-    init()
+  def compileProgram(blk: () => Unit): Unit = {
+    if (config.clearLogs) deleteExts(config.logDir, ".log")
+    report(c"Compiling ${config.name} to ${config.genDir}")
+    if (config.verbosity >= 2) report(c"Logging ${config.name} to ${config.logDir}")
 
     val startTime = System.currentTimeMillis()
 
@@ -148,13 +152,13 @@ trait ArgonCompiler { self =>
     checkBugs(startTime, "staging")
     checkErrors(startTime, "staging")
 
-    val timingLog = createLog(Config.logDir, "9999 CompilerTiming.log")
+    val timingLog = createLog(IR.config.logDir, "9999 CompilerTiming.log")
     runTraversals(startTime, block, timingLog)
 
     val time = (System.currentTimeMillis - startTime).toFloat
 
-    val v = Config.verbosity
-    Config.verbosity = 1
+    val v = IR.config.verbosity
+    IR.config.verbosity = 1
     withLog(timingLog) {
       dbg(s"  Total: " + "%.4f".format(time / 1000))
       dbg(s"")
@@ -164,29 +168,19 @@ trait ArgonCompiler { self =>
       }
     }
     timingLog.close()
-    Config.verbosity = v
+    IR.config.verbosity = v
 
     checkWarnings()
     report(s"[\u001B[32mcompleted\u001B[0m] Total time: " + "%.4f".format(time/1000) + " seconds")
   }
-
-
-  protected def initConfig(sargs: Array[String]): Unit = {
-    val defaultName = self.getClass.getName.replace("class ", "").replace('.','-').replace("$","") //.split('$').head
-    System.setProperty("argon.name", defaultName)
-    Config.name = defaultName
-    Config.init()
-
-    parseArguments(sargs.toSeq)
-  }
-
 }
+
 
 trait ArgonApp extends ArgonCompiler { self =>
 
-  protected var __stagingArgs: Array[String] = _
+  var __stagingArgs: Array[String] = _
   def stagingArgs: Array[String] = __stagingArgs
-  
+
   /**
     * The entry function for users
     * Allows @virtualize def main(): Unit = { } and [@virtualize] def main() { }
@@ -199,16 +193,16 @@ trait ArgonApp extends ArgonCompiler { self =>
     */
   def main(sargs: Array[String]): Unit = {
     __stagingArgs = sargs
-    initConfig(sargs)
 
     try {
+      init(sargs)
       compileProgram(() => main())
     }
     catch {
       case t: TestBenchFailed => throw t
       case t: Throwable =>
         onException(t)
-        if (!testbench && Config.verbosity < 1) sys.exit(-1) else throw t
+        if (!testbench && config.verbosity < 1) sys.exit(-1) else throw t
     }
   }
 }

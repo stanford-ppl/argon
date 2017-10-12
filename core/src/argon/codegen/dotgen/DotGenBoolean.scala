@@ -19,12 +19,12 @@ trait DotGenBoolean extends DotCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case Not(x)       => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs);}
-    case And(x,y)     => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); emitEdge(y, lhs)}
-    case Or(x,y)      => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); emitEdge(y, lhs)}
-    case XOr(x,y)     => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); emitEdge(y, lhs)}
-    case XNor(x,y)    => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); emitEdge(y, lhs)}
-    case RandomBoolean(x) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); }
+    case Not(x)       => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs);}
+    case And(x,y)     => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); emitEdge(y, lhs)}
+    case Or(x,y)      => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); emitEdge(y, lhs)}
+    case XOr(x,y)     => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); emitEdge(y, lhs)}
+    case XNor(x,y)    => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); emitEdge(y, lhs)}
+    case RandomBoolean(x) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x, lhs); }
     case _ => super.emitNode(lhs, rhs)
   }
 }

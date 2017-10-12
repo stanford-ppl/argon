@@ -1,7 +1,6 @@
 package argon.lang
 
 import argon.core._
-import argon.core.Config
 import argon.nodes._
 import forge._
 
@@ -92,7 +91,7 @@ object Struct {
 
   // TODO: Should struct unwrapping be disabled for mutable structs?
   @internal def field_apply[S:StructType,T:Type](struct: Exp[S], index: CString): Exp[T] = struct match {
-    case Struct(_) if Config.unwrapStructs => unwrapStruct[S,T](struct, index) match {
+    case Struct(_) if config.unwrapStructs => unwrapStruct[S,T](struct, index) match {
       case Some(x) => x
       case None => stage(FieldApply[S,T](struct, index))(ctx)
     }

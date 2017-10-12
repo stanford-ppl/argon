@@ -10,11 +10,11 @@ trait CppFileGen extends FileGen {
   override protected def process[S:Type](b: Block[S]): Block[S] = {
     // Forcefully create the following streams
     withStream(getStream("TopHost")) {
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Begin!")}
+      if (config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Begin!")}
       preprocess(b)
       emitMain(b)
       postprocess(b)
-      if (Config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Complete!")}
+      if (config.emitDevel > 0) { Console.println(s"[ ${lang}gen ] Complete!")}
       b
     }
   }

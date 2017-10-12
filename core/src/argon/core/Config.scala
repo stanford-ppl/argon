@@ -3,7 +3,53 @@ package argon.core
 import com.typesafe.config.ConfigFactory
 import pureconfig._
 
-object Config {
+class Config {
+
+  def sep = "/"
+  var cwd: String = new java.io.File(".").getAbsolutePath
+
+  var verbosity: Int = 0
+  var showWarn: Boolean = true
+
+  var unsafe: Boolean = false
+  var lib:  Boolean = false
+  var name: String = "App"
+  var logDir: String = ""
+  var genDir: String = ""
+  var clearLogs: Boolean = true
+  var clearGen: Boolean = true
+  var multifile: Int = 4
+  var enableNaming: Boolean = false
+  var dotDetail: Int = 0
+  var unwrapStructs: Boolean = true
+  var emitDevel: Int = 0
+  var allowAtomicWrites: Boolean = true
+
+  var useAffine: Boolean = false
+
+  def showWarnings: Boolean = showWarn && verbosity > - 1
+  def showErrors: Boolean = verbosity > - 1
+
+  //debugger interpreter
+  var exit: () => Unit = () => ()
+
+
+  case class ArgonConf(
+    cwd: String,
+    verbosity:Int,
+    unsafe: Boolean,
+    lib: Boolean,
+    //name: String,
+    log: String,
+    out: String,
+    clearLogs: Boolean,
+    clearGen: Boolean,
+    multifile: Int,
+    detail: Int,
+    unwrap: Boolean,
+    emission: Int,
+    atomicw: Boolean
+  )
 
   def init() {
 
@@ -26,24 +72,6 @@ argon {
 """)
 
     val mergedConf = ConfigFactory.load().withFallback(default).resolve()
-
-    case class ArgonConf(
-      cwd: String,
-      verbosity:Int,
-      unsafe: Boolean,
-      lib: Boolean,
-      //name: String,
-      log: String,
-      out: String,
-      clearLogs: Boolean,
-      clearGen: Boolean,
-      multifile: Int,
-      detail: Int, 
-      unwrap: Boolean,
-      emission: Int,
-      atomicw: Boolean
-    )
-
     val conf = loadConfig[ArgonConf](mergedConf, "argon").right.get
 
     cwd = conf.cwd
@@ -63,29 +91,4 @@ argon {
     emitDevel = conf.emission// level of conservativeness and debug printing when emitting nodes
     allowAtomicWrites = conf.atomicw
   }
-
-  def sep = "/"
-  var cwd: String = _
-
-  var verbosity: Int = _
-  var showWarn: Boolean = true
-
-  var unsafe: Boolean = _
-  var lib:  Boolean = _
-  var name: String = _
-  var logDir: String = _
-  var genDir: String = _
-  var clearLogs: Boolean = _
-  var clearGen: Boolean = _
-  var multifile: Int = _
-  var dotDetail: Int = _
-  var unwrapStructs: Boolean = _
-  var emitDevel: Int = _
-  var allowAtomicWrites: Boolean = _
-
-  var useAffine: Boolean = false
-
-  //debugger interpreter
-  var exit: () => Unit = () => ()
-  
 }

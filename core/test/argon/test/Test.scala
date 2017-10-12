@@ -1,7 +1,7 @@
 package argon.test
 
 import argon.ArgonAppRunner
-import argon.core.{Config, State}
+import argon.core._
 import argon.codegen.scalagen._
 import argon.lang.cake.ArgonLangExternal
 import argon.lang.direct.{AssertApi, PrintApi}
@@ -63,7 +63,7 @@ trait TestBase extends ArgonAppRunner {
   }
 
   override def settings() {
-    Config.verbosity = 3
+    config.verbosity = 3
     super.settings()
   }
 }

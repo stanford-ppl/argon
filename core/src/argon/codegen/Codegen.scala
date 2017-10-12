@@ -12,8 +12,15 @@ trait Codegen extends Traversal {
 
   val lang: String
   val ext: String
-  def out: String = s"${Config.genDir}${Config.sep}$lang${Config.sep}"
+  def out: String = s"${config.genDir}${config.sep}$lang${config.sep}"
   var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
+  var boolMap = collection.mutable.HashMap[String, Int]()
+  var uintMap = collection.mutable.HashMap[String, Int]()
+  var sintMap = collection.mutable.HashMap[String, Int]()
+  var fixs32_0Map = collection.mutable.HashMap[String, Int]()
+  var fixu32_0Map = collection.mutable.HashMap[String, Int]()
+  var fixs10_22Map = collection.mutable.HashMap[String, Int]()
+  var compressorMap = collection.mutable.HashMap[String, (String,Int)]()
 
   val maxLinesPerFile = 300  // Specific hacks for chisel             
   val numTraitsPerMixer = 50 // Specific hacks for chisel
@@ -34,28 +41,28 @@ trait Codegen extends Traversal {
     if (emitEn | forceful) {
       stream.println(tabbed + x)
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   } 
   protected def open(x: String, forceful: Boolean = false): Unit = {
     if (emitEn | forceful) {
       stream.println(tabbed + x); if (streamTab contains streamName) streamTab(streamName) += 1 
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   }
   protected def close(x: String, forceful: Boolean = false): Unit = { 
     if (emitEn | forceful) {
       if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x)
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   } 
   protected def closeopen(x: String, forceful: Boolean = false): Unit = { // Good for "} else {" lines
     if (emitEn | forceful) {
       if (streamTab contains streamName) streamTab(streamName) -= 1; stream.println(tabbed + x); streamTab(streamName) += 1
     } else { 
-      if (Config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of $x does not belong in this backend")}
     }
   } 
 
@@ -64,12 +71,12 @@ trait Codegen extends Traversal {
 
   final protected def toggleEn(): Unit = {
     if (emitEn) {
-      if (Config.emitDevel == 2) {
+      if (config.emitDevel == 2) {
         Console.println(s"[ ${lang}gen-NOTE ] Disabling emits")
       }
       emitEn = false
     } else {
-      if (Config.emitDevel == 2) {
+      if (config.emitDevel == 2) {
         Console.println(s"[ ${lang}gen-NOTE ] Enabling emits")
       }
       emitEn = true      
@@ -118,9 +125,70 @@ trait Codegen extends Traversal {
     }
   }
 
+  final protected def listHandle(rhs: String): String = {
+    if (rhs.contains("Bool()")) {
+      "b"
+    } else if (rhs.contains("UInt(")) {
+      val extractor = ".*UInt\\(([0-9]+).W\\).*".r
+      val extractor(width) = rhs
+      s"u${width}"
+    } else if (rhs.contains("SInt(")) {
+      val extractor = ".*SInt\\(([0-9]+).W\\).*".r
+      val extractor(width) = rhs
+      s"s${width}"      
+    } else if (rhs.contains(" FixedPoint(")) {
+      val extractor = ".*FixedPoint\\([ ]*(.*)[ ]*,[ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+      val extractor(s,i,f) = rhs
+      val ss = if (s.contains("rue")) "s" else "u"
+      s"fp${ss}${i}_${f}"            
+    } else if (rhs.contains(" FloatingPoint(")) {
+      val extractor = ".*FloatingPoint\\([ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+      val extractor(m,e) = rhs
+      s"flt${m}_${e}"            
+    } else if (rhs.contains(" NBufFF(") && !rhs.contains("numWriters")) {
+      val extractor = ".*NBufFF\\([ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+      val extractor(d,w) = rhs
+      s"nbufff${d}_${w}"  
+    } else if (rhs.contains(" NBufFF(") && rhs.contains("numWriters")) {
+      val extractor = ".*FF\\([ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*,[ ]*numWriters[ ]*=[ ]*([0-9]+)[ ]*\\).*".r
+      val extractor(d,w,n) = rhs
+      s"ff${d}_${w}_${n}wr"  
+    } else if (rhs.contains(" templates.FF(")) {
+      val extractor = ".*FF\\([ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+      val extractor(d,w) = rhs
+      s"ff${d}_${w}"  
+    } else {
+      throw new Exception(s"Cannot compress ${rhs}!")
+    }
+  }
+
+  final protected def wireMap(x: String): String = { 
+    if (config.multifile == 5 | config.multifile == 6) {
+      if (compressorMap.contains(x)) {
+        src"${listHandle(compressorMap(x)._1)}(${compressorMap(x)._2})"
+      // if (boolMap.contains(x)) {
+      //   src"b(${boolMap(x)})"
+      // } else if (uintMap.contains(x)) {
+      //   src"u(${uintMap(x)})"
+      // } else if (sintMap.contains(x)) {
+      //   src"s(${sintMap(x)})"
+      // } else if (fixs32_0Map.contains(x)) {
+      //   src"fs32_0(${fixs32_0Map(x)})"
+      // } else if (fixu32_0Map.contains(x)) {
+      //   src"fu32_0(${fixu32_0Map(x)})"
+      // } else if (fixs10_22Map.contains(x)) {
+      //   src"fu32_0(${fixs10_22Map(x)})"
+      } else {
+        x
+      }
+    } else {
+      x
+    }
+  }
+
   protected def remap(tp: Type[_]): String = tp.toString
   protected def quoteConst(c: Const[_]): String = {
-    if (Config.emitDevel > 0) {
+    if (config.emitDevel > 0) {
       if (emitEn) { // Want to emit but can't
         Console.println(s"[ ${lang}gen-ERROR ] No quote for $c")  
       } else { // No need to emit
@@ -132,10 +200,25 @@ trait Codegen extends Traversal {
       throw new ConstantGenFailedException(c)
     }
   }
+
+  protected def name(s: Dyn[_]): String = s match {
+    case b: Bound[_] => s"b${b.id}"
+    case s: Sym[_]   => wireMap(s"x${s.id}")
+      // s.tp match {
+      //   // case BooleanType => wireMap(s"x${s.id}")
+      //   case _ => wireMap(s"x${s.id}")
+      // }
+  }
+
   protected def quote(s: Exp[_]): String = s match {
     case c: Const[_] => quoteConst(c)
+    case d: Dyn[_] if config.enableNaming => wireMap(name(d))
     case b: Bound[_] => s"b${b.id}"
-    case s: Sym[_] => s"x${s.id}"
+    case s: Sym[_] => wireMap(s"x${s.id}")
+      // s.tp match {
+      //   // case BooleanType => wireMap(s"x${s.id}")
+      //   case _ => wireMap(s"x${s.id}")
+      // }
   }
 
   protected def quoteOrRemap(arg: Any): String = arg match {
@@ -157,13 +240,13 @@ trait Codegen extends Traversal {
   protected def emitBlock(b: Block[_]): Unit = visitBlock(b)
   protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = {
     if (emitEn) {
-      if (Config.emitDevel == 0) {
+      if (config.emitDevel == 0) {
         throw new GenerationFailedException(rhs)
       } else {
         Console.println(s"[ ${lang}gen-ERROR ] no backend for $lhs = $rhs in $lang")  
       } 
     } else {
-      if (Config.emitDevel == 2) Console.println(s"[ ${lang}gen-NOTE ] Emission of $lhs = $rhs does not belong in this backend")
+      if (config.emitDevel == 2) Console.println(s"[ ${lang}gen-NOTE ] Emission of $lhs = $rhs does not belong in this backend")
     }
   }
 

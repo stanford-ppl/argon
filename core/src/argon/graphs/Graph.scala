@@ -8,18 +8,21 @@ import forge.stateful
 
 import scala.collection.mutable
 
-class Graph[E<:Edge,N<:Node] {
+class Graph[E<:Edge,N<:Node](implicit state: State) {
   type EdgeId = Int
   type NodeId = Int
 
   final val VERBOSE_SCHEDULING = false
-  var glog: PrintStream = if (VERBOSE_SCHEDULING) createLog(Config.logDir + "/sched/", "0000 Staging.log") else null
+  var glog: PrintStream = if (VERBOSE_SCHEDULING) createLog(config.logDir + "/sched/", "0000 Staging.log") else null
   @inline private def xlog(x: => Any) = if (VERBOSE_SCHEDULING) glog.println(x)
 
   implicit class EdgeIdToInt(x: EdgeId) { @inline def toInt: Int = x.asInstanceOf[Int] }
   implicit class NodeIdToInt(x: NodeId) { @inline def toInt: Int = x.asInstanceOf[Int] }
   implicit class IntToEdgeId(x: Int) { @inline def toEdgeId: EdgeId = x.asInstanceOf[EdgeId] }
   implicit class IntToNodeId(x: Int) { @inline def toNodeId: NodeId = x.asInstanceOf[NodeId] }
+
+  var inGlobal: Boolean = true
+  var firstNonGlobal: NodeId = 0
 
   type Triple = (Iterable[E], N, Iterable[E]) // outputs, node, inputs
 
@@ -86,6 +89,18 @@ class Graph[E<:Edge,N<:Node] {
     that.NodeData.freqs ++= this.NodeData.freqs
     that
   }
+  def copyNodesTo(nodes: Iterable[NodeId], that: Graph[E,N]): Graph[E,N] = {
+    nodes.foreach{nodeId =>
+      val ins = nodeInputs(nodeId).map{edgeId => edgeOf(edgeId) }
+      val outs = nodeOutputs(nodeId).map{edgeId => edgeOf(edgeId) }
+      val binds = nodeBounds(nodeId).map{edgeId => edgeOf(edgeId) }
+      val tunnels = nodeTunnels(nodeId).map{case (id,ids) => (edgeOf(id), ids.map(edgeOf)) }
+      val freqs = nodeFreqs(nodeId)
+      val node = nodeOf(nodeId)
+      that.addNode(ins, outs, binds, tunnels, freqs, node)
+    }
+    that
+  }
 
   def nodeOutputs(node: NodeId): Seq[EdgeId] = {
     (NodeData.outputs(node.toInt).toInt until NodeData.outputs(node.toInt+1).toInt).map(_.toEdgeId)
@@ -150,6 +165,7 @@ class Graph[E<:Edge,N<:Node] {
     NodeData.tunnels += tunnel.map{case (tun,results) => (tun.id.toEdgeId, results.map(_.id.toEdgeId)) }
     NodeData.freqs += freqs
     curNodeId = (curNodeId.toInt + 1).toNodeId
+    if (inGlobal) firstNonGlobal = curNodeId
 
     outs
   }

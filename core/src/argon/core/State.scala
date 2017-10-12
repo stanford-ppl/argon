@@ -7,11 +7,14 @@ import java.io.PrintStream
 import scala.collection.mutable
 
 /**
-  * Threadsafe compiler state
+  * Thread-safe compiler state
   */
 class State {
+  /** Compiler configuration **/
+  var config: Config = new Config()
+
   /** The IR Graph **/
-  val graph: Graph[Dyn[_],Def] = new Graph[Dyn[_],Def]
+  val graph: Graph[Dyn[_],Def] = new Graph[Dyn[_],Def]()(this)
 
   /** List of effectful statements in the current scope **/
   var context: List[Sym[_]] = _
@@ -110,4 +113,6 @@ class State {
     that.useBasicBlocks = this.useBasicBlocks
     that
   }
+
+
 }

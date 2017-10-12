@@ -26,23 +26,23 @@ trait DotGenFixPt extends DotCodegen {
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
     case FixInv(x)   => 
     case FixNeg(x)   => 
-    case FixAdd(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixSub(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixMul(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixDiv(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixAnd(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixOr(x,y)  => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixXor(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixLt(x,y)  => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixLeq(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixNeq(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixEql(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
-    case FixMod(x,y) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixAdd(x,y) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixSub(x,y) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixMul(x,y) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixDiv(x,y) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixAnd(x,y) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixOr(x,y)  => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixXor(x,y) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixLt(x,y)  => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixLeq(x,y) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixNeq(x,y) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixEql(x,y) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
+    case FixMod(x,y) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs); emitEdge(y,lhs)}
     case FixRandom(x) => lhs.tp match {
       case IntType()  => 
       case LongType() => 
     }
-    case FixConvert(x) => if (Config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs);}
+    case FixConvert(x) => if (config.dotDetail > 0) {emitVert(lhs); emitEdge(x,lhs);}
     case _ => super.emitNode(lhs, rhs)
   }
 }

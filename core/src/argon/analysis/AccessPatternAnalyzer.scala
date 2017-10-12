@@ -3,7 +3,6 @@ package argon.analysis
 import argon.core._
 import argon.compiler._
 import argon.UndefinedAccessPatternException
-import argon.transform.Transformer
 import argon.traversal.Traversal
 import forge._
 
@@ -229,7 +228,7 @@ trait AccessPatternAnalyzer extends Traversal {
     case Times(a, LoopIndex(i)) if isInvariant(a,i) => Seq(StridedAccess(a,i))                               // a*i
     case LoopIndex(i) => Seq(LinearAccess(i))                                                                // i
     case b if isInvariantForAll(b) => Seq(InvariantAccess(b))                                                // b
-    case _ if Config.useAffine => findGeneralAffinePattern(x)                                                // other
+    case _ if config.useAffine => findGeneralAffinePattern(x)                                                // other
     case _ => Seq(RandomAccess)
   }
   def extractAccessPatterns(xs: Seq[Exp[Index]]): Seq[IndexPattern] = xs.flatMap{
