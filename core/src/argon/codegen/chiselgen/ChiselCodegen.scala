@@ -57,8 +57,10 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   final protected def emitGlobalWireMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
     val stripped = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
     if (config.multifile == 5 | config.multifile == 6) {
-      if (rhs.contains("Vec")) {
-        emitGlobalWire(src"val $lhs = $rhs", forceful)
+      if (!compressorMap.contains(lhs) & rhs.contains("Vec")) {
+        val id = compressorMap.values.map(_._1).filter(_ == stripped).size
+        compressorMap += (lhs -> (stripped, id))
+        // emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
       if (!compressorMap.contains(lhs) & !rhs.contains("Vec")) {
         val id = compressorMap.values.map(_._1).filter(_ == stripped).size
@@ -81,8 +83,9 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   final protected def emitGlobalModuleMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
     val stripped = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
     if (config.multifile == 5 | config.multifile == 6) {
-      if (rhs.contains("Vec")) {
-        emitGlobalModule(src"val $lhs = $rhs", forceful)
+      if (!compressorMap.contains(lhs) & rhs.contains("Vec")) {
+        val id = compressorMap.values.map(_._1).filter(_ == stripped).size
+        compressorMap += (lhs -> (stripped, id))
       }
       if (!compressorMap.contains(lhs) & !rhs.contains("Vec")) {
         val id = compressorMap.values.map(_._1).filter(_ == stripped).size
