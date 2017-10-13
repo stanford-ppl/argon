@@ -14,13 +14,8 @@ trait Codegen extends Traversal {
   val ext: String
   def out: String = s"${config.genDir}${config.sep}$lang${config.sep}"
   var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
-  var boolMap = collection.mutable.HashMap[String, Int]()
-  var uintMap = collection.mutable.HashMap[String, Int]()
-  var sintMap = collection.mutable.HashMap[String, Int]()
-  var fixs32_0Map = collection.mutable.HashMap[String, Int]()
-  var fixu32_0Map = collection.mutable.HashMap[String, Int]()
-  var fixs10_22Map = collection.mutable.HashMap[String, Int]()
   var compressorMap = collection.mutable.HashMap[String, (String,Int)]()
+  var retimeMap = collection.mutable.HashMap[Int, String]()
 
   val maxLinesPerFile = 300  // Specific hacks for chisel             
   val numTraitsPerMixer = 50 // Specific hacks for chisel
@@ -172,6 +167,13 @@ trait Codegen extends Traversal {
       val extractor(n,dims,w) = rhs
       val d = dims.replace(" ", "").replace(",","_")
       s"${vec}mdw${n}_${d}_${w}"  
+    } else if (rhs.contains(" multidimRegW(")) {
+      val extractor = ".*multidimRegW\\([ ]*([0-9]+)[ ]*,[ ]*List\\(([0-9,]+)\\)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+      val extractor(n,dims,w) = rhs
+      val d = dims.replace(" ", "").replace(",","_")
+      s"${vec}mdrw${n}_${d}_${w}"  
+    } else if (rhs.contains("_retime")) {
+      "rt"
     } else {
       throw new Exception(s"Cannot compress ${rhs}!")
     }

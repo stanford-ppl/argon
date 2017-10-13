@@ -57,22 +57,13 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   final protected def emitGlobalWireMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
     val stripped = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
     if (config.multifile == 5 | config.multifile == 6) {
-      if (!compressorMap.contains(lhs) & rhs.contains("Vec")) {
+      if (!compressorMap.contains(lhs)) {
         val id = compressorMap.values.map(_._1).filter(_ == stripped).size
         compressorMap += (lhs -> (stripped, id))
-        // emitGlobalWire(src"val $lhs = $rhs", forceful)
-      }
-      if (!compressorMap.contains(lhs) & !rhs.contains("Vec")) {
-        val id = compressorMap.values.map(_._1).filter(_ == stripped).size
-        compressorMap += (lhs -> (stripped, id))
-      } else {
-        // emitGlobalWire(src"val $lhs = $rhs", forceful)
       }
     } else {
       if (compressorMap.contains(lhs)) {
         emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-      } else if (rhs.contains("Vec")) {
-        emitGlobalWire(src"val $lhs = $rhs", forceful)
       } else {
         compressorMap += (lhs -> (stripped, 0))
         emitGlobalWire(src"val $lhs = $rhs", forceful)
@@ -80,24 +71,26 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     }
   }
 
+  final protected def emitGlobalRetimeMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
+    val stripped = rhs.replace(" ", "")
+    if (config.multifile == 5 | config.multifile == 6) {
+      // Assume _retime values only emitted once
+      val id = compressorMap.values.map(_._1).filter(_ == "_retime").size
+      compressorMap += (lhs -> ("_retime", id))
+      retimeMap += (id -> rhs)
+    }
+  }
+
   final protected def emitGlobalModuleMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
     val stripped = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
     if (config.multifile == 5 | config.multifile == 6) {
-      if (!compressorMap.contains(lhs) & rhs.contains("Vec")) {
+      if (!compressorMap.contains(lhs)) {
         val id = compressorMap.values.map(_._1).filter(_ == stripped).size
         compressorMap += (lhs -> (stripped, id))
-      }
-      if (!compressorMap.contains(lhs) & !rhs.contains("Vec")) {
-        val id = compressorMap.values.map(_._1).filter(_ == stripped).size
-        compressorMap += (lhs -> (stripped, id))
-      } else {
-        // emitGlobalModule(src"val $lhs = $rhs", forceful)
       }
     } else {
       if (compressorMap.contains(lhs)) {
         emitGlobalModule(src"// val $lhs = $rhs already emitted", forceful)
-      } else if (rhs.contains("Vec")) {
-        emitGlobalModule(src"val $lhs = $rhs", forceful)
       } else {
         compressorMap += (lhs -> (stripped, 0))
         emitGlobalModule(src"val $lhs = $rhs", forceful)
