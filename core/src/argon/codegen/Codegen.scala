@@ -15,7 +15,7 @@ trait Codegen extends Traversal {
   def out: String = s"${config.genDir}${config.sep}$lang${config.sep}"
   var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
   var compressorMap = collection.mutable.HashMap[String, (String,Int)]()
-  var retimeMap = collection.mutable.HashMap[Int, String]()
+  var retimeList = collection.mutable.ListBuffer[String]()
 
   val maxLinesPerFile = 300  // Specific hacks for chisel             
   val numTraitsPerMixer = 50 // Specific hacks for chisel

@@ -77,7 +77,9 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       // Assume _retime values only emitted once
       val id = compressorMap.values.map(_._1).filter(_ == "_retime").size
       compressorMap += (lhs -> ("_retime", id))
-      retimeMap += (id -> rhs)
+      retimeList += rhs
+    } else {
+      emitGlobalWire(src"val $lhs = $rhs")
     }
   }
 
