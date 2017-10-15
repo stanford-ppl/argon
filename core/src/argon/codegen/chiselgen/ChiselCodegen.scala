@@ -79,18 +79,31 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       compressorMap += (lhs -> ("_retime", id))
       retimeList += rhs
     } else {
-      emitGlobalWire(src"val $lhs = $rhs")
+      emitGlobalWire(src"val $lhs = $rhs", forceful)
     }
   }
 
   final protected def emitGlobalModuleMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
-    val stripped = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
+    val stripped_white = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
+    var rtid = "na"
     if (config.multifile == 5 | config.multifile == 6) {
+      val stripped = if (stripped_white.contains("retime=")) {
+        val extract = ".*retime=rt\\(([0-9]+)\\),.*".r
+        val extract(x) = stripped_white
+        rtid = x
+        stripped_white.replace(s"retime=rt(${rtid}),","")
+      } else {
+        stripped_white
+      }
       if (!compressorMap.contains(lhs)) {
         val id = compressorMap.values.map(_._1).filter(_ == stripped).size
         compressorMap += (lhs -> (stripped, id))
+        if (rtid != "na") {
+          pipeRtMap += ((stripped, id) -> rtid)
+        }
       }
     } else {
+      val stripped = stripped_white
       if (compressorMap.contains(lhs)) {
         emitGlobalModule(src"// val $lhs = $rhs already emitted", forceful)
       } else {

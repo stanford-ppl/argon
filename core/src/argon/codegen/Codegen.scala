@@ -16,6 +16,7 @@ trait Codegen extends Traversal {
   var emitEn: Boolean = true // Hack for masking Cpp from FPGA gen, usually always true except for chisel and cpp gen
   var compressorMap = collection.mutable.HashMap[String, (String,Int)]()
   var retimeList = collection.mutable.ListBuffer[String]()
+  val pipeRtMap = collection.mutable.HashMap[(String,Int), String]()
 
   val maxLinesPerFile = 300  // Specific hacks for chisel             
   val numTraitsPerMixer = 50 // Specific hacks for chisel
@@ -168,10 +169,46 @@ trait Codegen extends Traversal {
       val d = dims.replace(" ", "").replace(",","_")
       s"${vec}mdw${n}_${d}_${w}"  
     } else if (rhs.contains(" multidimRegW(")) {
-      val extractor = ".*multidimRegW\\([ ]*([0-9]+)[ ]*,[ ]*List\\(([0-9,]+)\\)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+      val extractor = ".*multidimRegW\\([ ]*([0-9]+)[ ]*,[ ]*List\\(([0-9, ]+)\\)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
       val extractor(n,dims,w) = rhs
       val d = dims.replace(" ", "").replace(",","_")
       s"${vec}mdrw${n}_${d}_${w}"  
+    } else if (rhs.contains(" Seqpipe(")) {
+      val extractor = ".*Seqpipe\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(stages,fsm,ctrd,stw,static) = rhs
+      val f = fsm.replace("false", "f").replace("true", "t")
+      val s = static.replace("false", "f").replace("true", "t")
+      s"${vec}seq${stages}_${f}_${ctrd}_${stw}_${s}"  
+    } else if (rhs.contains(" Metapipe(")) {
+      val extractor = ".*Metapipe\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(stages,fsm,ctrd,stw,static) = rhs
+      val f = fsm.replace("false", "f").replace("true", "t")
+      val s = static.replace("false", "f").replace("true", "t")
+      s"${vec}meta${stages}_${f}_${ctrd}_${stw}_${s}"  
+    } else if (rhs.contains(" Innerpipe(")) {
+      val extractor = ".*Innerpipe\\([ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(strm,ctrd,stw,static) = rhs
+      val st = strm.replace("false", "f").replace("true", "t")
+      val s = static.replace("false", "f").replace("true", "t")
+      s"${vec}inner${st}_${ctrd}_${stw}_${s}"  
+    } else if (rhs.contains(" Streaminner(")) {
+      val extractor = ".*Streaminner\\([ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(strm,ctrd,stw,static) = rhs
+      val st = strm.replace("false", "f").replace("true", "t")
+      val s = static.replace("false", "f").replace("true", "t")
+      s"${vec}strinner${st}_${ctrd}_${stw}_${s}"  
+    } else if (rhs.contains(" Parallel(")) {
+      val extractor = ".*Parallel\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(stages,fsm,ctrd,stw,static) = rhs
+      val f = fsm.replace("false", "f").replace("true", "t")
+      val s = static.replace("false", "f").replace("true", "t")
+      s"${vec}parallel${stages}_${f}_${ctrd}_${stw}_${s}"  
+    } else if (rhs.contains(" Streampipe(")) {
+      val extractor = ".*Streampipe\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(stages,fsm,ctrd,stw,static) = rhs
+      val f = fsm.replace("false", "f").replace("true", "t")
+      val s = static.replace("false", "f").replace("true", "t")
+      s"${vec}strmpp${stages}_${f}_${ctrd}_${stw}_${s}"  
     } else if (rhs.contains("_retime")) {
       "rt"
     } else {
