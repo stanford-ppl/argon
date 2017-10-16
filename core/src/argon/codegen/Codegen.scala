@@ -129,6 +129,8 @@ trait Codegen extends Traversal {
     } else {""}
     if (rhs.contains("Bool()")) {
       s"${vec}b"
+    } else if (rhs.contains("SRFF()")) {
+      s"${vec}srff"
     } else if (rhs.contains("UInt(")) {
       val extractor = ".*UInt\\(([0-9]+).W\\).*".r
       val extractor(width) = rhs
