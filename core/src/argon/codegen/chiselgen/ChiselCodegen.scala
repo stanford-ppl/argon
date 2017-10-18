@@ -213,6 +213,8 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= FileDep(resourcesPath, "app-level/vcs.mk", "../", Some("vcs.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/build.sbt", "../", Some("build.sbt"))
     dependencies ::= FileDep(resourcesPath, "app-level/run.sh", "../", Some("run.sh"))
+    dependencies ::= FileDep(resourcesPath, "app-level/scrape.sh", "../", Some("scrape.sh"))
+    dependencies ::= FileDep(resourcesPath, "app-level/scrape.py", "../", Some("scrape.py"))
     dependencies ::= FileDep(resourcesPath, "app-level/Top.scala", outputPath = Some("Top.scala")) 
     super.copyDependencies(out)
   }
