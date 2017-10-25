@@ -55,63 +55,60 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
   }
 
   final protected def emitGlobalWireMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
+    val stripped = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
     if (config.multifile == 5 | config.multifile == 6) {
-      if (rhs == "Wire(Bool())") {
-        boolMap.getOrElseUpdate(lhs, boolMap.size)
-        ()
-      } else if (rhs == "Wire(UInt(32.W))") { // Other mappings
-        uintMap.getOrElseUpdate(lhs, uintMap.size)
-        ()
-      } else if (rhs == "Wire(SInt(32.W))") { // Other mappings
-        sintMap.getOrElseUpdate(lhs, sintMap.size)
-        ()
-      } else if (rhs == "Wire(new FixedPoint(true, 32, 0))") { // Other mappings
-        fixs32Map.getOrElseUpdate(lhs, fixs32Map.size)
-        ()
-      } else if (rhs == "Wire(new FixedPoint(false, 32, 0))") { // Other mappings
-        fixu32Map.getOrElseUpdate(lhs, fixu32Map.size)
-        ()
-      } else {
-        emitGlobalWire(src"val $lhs = $rhs", forceful)
+      if (!compressorMap.contains(lhs)) {
+        val id = compressorMap.values.map(_._1).filter(_ == stripped).size
+        compressorMap += (lhs -> (stripped, id))
       }
     } else {
-      if (rhs == "Wire(Bool())") {
-        if (boolMap.contains(lhs)) {
-          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-        } else {
-          emitGlobalWire(src"val $lhs = $rhs", forceful)
-        }
-        boolMap.getOrElseUpdate(lhs, boolMap.size)
-      } else if (rhs == "Wire(UInt(32.W))") {
-        if (uintMap.contains(lhs)) {
-          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-        } else {
-          emitGlobalWire(src"val $lhs = $rhs", forceful)
-        }
-        uintMap.getOrElseUpdate(lhs, uintMap.size)
-      } else if (rhs == "Wire(SInt(32.W))") {
-        if (sintMap.contains(lhs)) {
-          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-        } else {
-          emitGlobalWire(src"val $lhs = $rhs", forceful)
-        }
-        sintMap.getOrElseUpdate(lhs, sintMap.size)
-      } else if (rhs == "Wire(new FixedPoint(true, 32, 0))"){
-        if (fixs32Map.contains(lhs)) {
-          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-        } else {
-          emitGlobalWire(src"val $lhs = $rhs", forceful)
-        }
-        fixs32Map.getOrElseUpdate(lhs, fixs32Map.size)
-      } else if (rhs == "Wire(new FixedPoint(false, 32, 0))"){
-        if (fixu32Map.contains(lhs)) {
-          emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
-        } else {
-          emitGlobalWire(src"val $lhs = $rhs", forceful)
-        }
-        fixu32Map.getOrElseUpdate(lhs, fixu32Map.size)
+      if (compressorMap.contains(lhs)) {
+        emitGlobalWire(src"// val $lhs = $rhs already emitted", forceful)
       } else {
+        compressorMap += (lhs -> (stripped, 0))
         emitGlobalWire(src"val $lhs = $rhs", forceful)
+      }
+    }
+  }
+
+  final protected def emitGlobalRetimeMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
+    val stripped = rhs.replace(" ", "")
+    if (config.multifile == 5 | config.multifile == 6) {
+      // Assume _retime values only emitted once
+      val id = compressorMap.values.map(_._1).filter(_ == "_retime").size
+      compressorMap += (lhs -> ("_retime", id))
+      retimeList += rhs
+    } else {
+      emitGlobalWire(src"val $lhs = $rhs", forceful)
+    }
+  }
+
+  final protected def emitGlobalModuleMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
+    val stripped_white = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
+    var rtid = "na"
+    if (config.multifile == 5 | config.multifile == 6) {
+      val stripped = if (stripped_white.contains("retime=")) {
+        val extract = ".*retime=rt\\(([0-9]+)\\),.*".r
+        val extract(x) = stripped_white
+        rtid = x
+        stripped_white.replace(s"retime=rt(${rtid}),","")
+      } else {
+        stripped_white
+      }
+      if (!compressorMap.contains(lhs)) {
+        val id = compressorMap.values.map(_._1).filter(_ == stripped).size
+        compressorMap += (lhs -> (stripped, id))
+        if (rtid != "na") {
+          pipeRtMap += ((stripped, id) -> rtid)
+        }
+      }
+    } else {
+      val stripped = stripped_white
+      if (compressorMap.contains(lhs)) {
+        emitGlobalModule(src"// val $lhs = $rhs already emitted", forceful)
+      } else {
+        compressorMap += (lhs -> (stripped, 0))
+        emitGlobalModule(src"val $lhs = $rhs", forceful)
       }
     }
   }
@@ -216,6 +213,8 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= FileDep(resourcesPath, "app-level/vcs.mk", "../", Some("vcs.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/build.sbt", "../", Some("build.sbt"))
     dependencies ::= FileDep(resourcesPath, "app-level/run.sh", "../", Some("run.sh"))
+    dependencies ::= FileDep(resourcesPath, "app-level/scrape.sh", "../", Some("scrape.sh"))
+    dependencies ::= FileDep(resourcesPath, "app-level/scrape.py", "../", Some("scrape.py"))
     dependencies ::= FileDep(resourcesPath, "app-level/Top.scala", outputPath = Some("Top.scala")) 
     super.copyDependencies(out)
   }

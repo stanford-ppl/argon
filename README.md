@@ -4,11 +4,11 @@ This project is based on [LMS](https://github.com/TiarkRompf/virtualization-lms-
 
 Argon currently requires the macro project scala-virtualized, although this may be merged into the project eventually.
 
-#Prerequisites
+# Prerequisites
 - [Scala SBT](http://www.scala-sbt.org)
 - [Java JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 
-#Installation
+# Installation
 ```bash
 git clone https://github.com/stanford-ppl/argon.git
 sbt compile
