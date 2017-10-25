@@ -9,6 +9,7 @@ class Config {
   var cwd: String = new java.io.File(".").getAbsolutePath
 
   var verbosity: Int = 0
+  var exitOnBug: Boolean = true
   var showWarn: Boolean = true
 
   var unsafe: Boolean = false

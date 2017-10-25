@@ -47,6 +47,7 @@ package object cake {
 
   type Lattice[T] = argon.core.Lattice[T]
   type Metadata[M] = argon.core.Metadata[M]
+  type Globaldata[M] = argon.core.Globaldata[M]
   type Effects = argon.core.Effects
   val Effects = argon.core.Effects
   type AntiDeps = argon.core.AntiDeps

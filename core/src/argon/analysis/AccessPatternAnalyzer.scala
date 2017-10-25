@@ -10,6 +10,7 @@ sealed abstract class AffineFunction {
   type Tx = argon.transform.Transformer
   def mirror(f:Tx): AffineFunction
   def eval(f: Exp[Index] => Int): Int
+  def getEval(f: PartialFunction[Exp[Index],Int]): Option[Int]
 }
 class Prod(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction {
   def mirror(f:Tx) = new Prod(x.map{
@@ -20,6 +21,10 @@ class Prod(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction
     case Left(e) => f(e)
     case Right(af) => af.eval(f)
   }.product
+  def getEval(f: PartialFunction[Exp[Index],Int]): Option[Int] = {
+    val parts = x.map{case Left(e) if f.isDefinedAt(e) => Some(f(e)); case Right(af) => af.getEval(f); case _ => None }
+    if (parts.forall(_.isDefined)) Some(parts.map(_.get).product) else None
+  }
 
   override def toString: String = x.map{case Left(e) => c"$e"; case Right(af) => af.toString}.mkString(" * ")
 }
@@ -35,6 +40,10 @@ class Sum(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction 
     case Left(e) => f(e)
     case Right(af) => af.eval(f)
   }.sum
+  def getEval(f: PartialFunction[Exp[Index],Int]): Option[Int] = {
+    val parts = x.map{case Left(e) if f.isDefinedAt(e) => Some(f(e)); case Right(af) => af.getEval(f); case _ => None }
+    if (parts.forall(_.isDefined)) Some(parts.map(_.get).sum) else None
+  }
 
   override def toString: String = x.map{case Left(e) => c"$e"; case Right(af) => af.toString}.mkString(" + ")
 }

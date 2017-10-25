@@ -21,4 +21,10 @@ trait LayerMetadata { this: ArgonCake =>
     @stateful def clearAll[M<:Metadata[M]:Manifest] = state.metadata.clearAll[M]
   }
 
+  object globaldata {
+    @stateful def add[M<:Globaldata[M]:Manifest](m: M): Unit = state.globaldata.add[M](m)
+    @stateful def get[M<:Globaldata[M]:Manifest]: Option[M] = state.globaldata.get[M]
+    @stateful def invalidateStale(): Unit = state.globaldata.invalidateStale()
+  }
+
 }

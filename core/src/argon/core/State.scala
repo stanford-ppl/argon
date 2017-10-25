@@ -43,6 +43,7 @@ class State {
 
   /** Graph Metadata **/
   val metadata: IRMetadata = new IRMetadata
+  val globaldata: GlobalMetadata = new GlobalMetadata
 
   /** The number of the current compiler pass **/
   var pass: Int = 1
@@ -78,6 +79,7 @@ class State {
   def reset(): Unit = {
     graph.reset()
     metadata.reset()
+    globaldata.clear()
     context = null
     defCache = Map.empty
     shallowAliasCache.clear()
@@ -97,6 +99,7 @@ class State {
     that.reset()
     this.graph.copyTo(that.graph)
     this.metadata.copyTo(that.metadata)
+    this.globaldata.copyTo(that.globaldata)
     that.context = this.context
     that.defCache = this.defCache
     that.shallowAliasCache ++= this.shallowAliasCache

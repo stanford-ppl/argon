@@ -26,8 +26,8 @@ package object util {
     }
   }
 
+  def isPow2(x: Int): Boolean = (x & (x-1)) == 0
   def isPow2(x: FixedPoint): Boolean = isPow2(x.toBigDecimal)
-
   def isPow2(x: BigDecimal): Boolean = {
     x.isWhole && {
       val y = x.toBigInt

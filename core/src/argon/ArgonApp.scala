@@ -29,6 +29,7 @@ trait ArgonCompiler { self =>
   protected def checkBugs(start: Long, stageName: String): Unit = if (IR.hadBug) {
     onException(new Exception(s"Encountered compiler bug during pass $stageName"))
     if (testbench) throw new TestBenchFailed(1)
+    else if (!config.exitOnBug) throw new Exception(s"Encountered compiler bug during pass $stageName")
     else System.exit(1)
   }
 
@@ -38,6 +39,7 @@ trait ArgonCompiler { self =>
     error(s"""${IR.errors} ${plural(IR.errors,"error","errors")} found during $stageName""")
     error(s"Total time: " + "%.4f".format(time/1000) + " seconds")
     if (testbench) throw new TestBenchFailed(IR.errors)
+    else if (!config.exitOnBug) throw new Exception(s"""${IR.errors} ${plural(IR.errors,"error","errors")} found during $stageName""")
     else System.exit(IR.errors)
   }
   protected def checkWarnings(): Unit = if (IR.hadWarnings) {
@@ -202,7 +204,7 @@ trait ArgonApp extends ArgonCompiler { self =>
       case t: TestBenchFailed => throw t
       case t: Throwable =>
         onException(t)
-        if (!testbench && config.verbosity < 1) sys.exit(-1) else throw t
+        if (config.exitOnBug && (!testbench && config.verbosity < 1)) sys.exit(-1) else throw t
     }
   }
 }
