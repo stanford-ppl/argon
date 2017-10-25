@@ -30,10 +30,9 @@ trait FileDependencies extends Codegen {
         FileUtils.copyURLToFile(from, dest)
       }
       catch {case e: NullPointerException =>
-        error(s"Cannot copy file dependency $this: ")
-        error("  src: " + folder + "/" + name)
-        error("  dst: " + out + relPathApp)
-        sys.exit(1)
+        bug(s"Cannot copy file dependency $this: ")
+        bug("  src: " + folder + "/" + name)
+        bug("  dst: " + out + relPathApp)
       }
     }
   }
