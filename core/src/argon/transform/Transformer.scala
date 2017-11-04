@@ -118,6 +118,7 @@ trait Transformer { self =>
 
 
   /** Helper functions for mirroring **/
+  def transferMetadata(pair: (Exp[_], Exp[_])): Unit = transferMetadata(pair._1, pair._2)
   def transferMetadata(a: Exp[_], b: Exp[_]): Unit = {
     val m2 = mirror(metadata.get(a))
     b.name = a.name

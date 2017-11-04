@@ -147,6 +147,10 @@ object FixPt {
   @internal def int32(x: BigDecimal): Index = wrap(const[TRUE,_32,_0](x, force = false))
   @internal def int64(x: BigDecimal): Int64 = wrap(const[TRUE,_64,_0](x, force = false))
 
+  @internal def int8s(x: Int): Const[Int8] = const[TRUE,_8,_0](x, force = false)
+  @internal def int32s(x: Int): Const[Index] = const[TRUE,_32,_0](x, force = false)
+  @internal def int64s(x: Int): Const[Int64] = const[TRUE,_64,_0](x, force = false)
+
   @internal def int8s(x: BigDecimal): Const[Int8] = const[TRUE,_8,_0](x, force = false)
   @internal def int32s(x: BigDecimal): Const[Index] = const[TRUE,_32,_0](x, force = false)
   @internal def int64s(x: BigDecimal): Const[Int64] = const[TRUE,_64,_0](x, force = false)

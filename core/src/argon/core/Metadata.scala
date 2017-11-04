@@ -57,9 +57,10 @@ class GlobalMetadata {
   private def add(k: Class[_], m: Globaldata[_]): Unit = { data += k -> m }
   def add[M<:Globaldata[M]:Manifest](m : M): Unit = { data += m.key -> m }
   def get[M<:Globaldata[M]:Manifest]: Option[M] = data.get(keyOf[M]).map(_.asInstanceOf[M])
+  def clear[M<:Globaldata[M]:Manifest]: Unit = data.remove(keyOf[M])
 
   def invalidateStale(): Unit = data.foreach{case (k,v) => if (v.staleOnTransform) data.remove(k) }
 
   def copyTo(that: GlobalMetadata): Unit = data.foreach{case (k,v) => that.add(k,v) }
-  def clear(): Unit = data.clear()
+  def reset(): Unit = data.clear()
 }

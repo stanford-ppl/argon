@@ -11,6 +11,7 @@ sealed abstract class AffineFunction {
   def mirror(f:Tx): AffineFunction
   def eval(f: Exp[Index] => Int): Int
   def getEval(f: PartialFunction[Exp[Index],Int]): Option[Int]
+  def negate: AffineFunction
 }
 class Prod(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction {
   def mirror(f:Tx) = new Prod(x.map{
@@ -24,6 +25,9 @@ class Prod(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction
   def getEval(f: PartialFunction[Exp[Index],Int]): Option[Int] = {
     val parts = x.map{case Left(e) if f.isDefinedAt(e) => Some(f(e)); case Right(af) => af.getEval(f); case _ => None }
     if (parts.forall(_.isDefined)) Some(parts.map(_.get).product) else None
+  }
+  def negate: AffineFunction = {
+    new Prod(Left(FixPt.int32s(-1)) +: x)
   }
 
   override def toString: String = x.map{case Left(e) => c"$e"; case Right(af) => af.toString}.mkString(" * ")
@@ -45,6 +49,11 @@ class Sum(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction 
     if (parts.forall(_.isDefined)) Some(parts.map(_.get).sum) else None
   }
 
+  def negate: AffineFunction = new Sum(x.map{
+    case Left(e) => Right(Prod(FixPt.int32s(-1),e))
+    case Right(af) => Right(af.negate)
+  })
+
   override def toString: String = x.map{case Left(e) => c"$e"; case Right(af) => af.toString}.mkString(" + ")
 }
 object Sum {
@@ -54,44 +63,42 @@ object Sum {
 case object One extends Prod(Nil) { override def toString: String = "One" }
 case object Zero extends Sum(Nil) { override def toString: String = "Zero" }
 
-// Variations used here allow Index to be abstract (otherwise can't as easily define stride of 1)
+case class AffineProduct(a: AffineFunction, i: Exp[Index]) {
+  def negate: AffineProduct = AffineProduct(a.negate, i)
+}
+
 sealed abstract class IndexPattern {
-  def index: Option[Exp[Index]]
-  def isGeneral: Boolean = this.isInstanceOf[GeneralAffine]
+  type Tx = argon.transform.Transformer
+  def mirror(f:Tx): IndexPattern
+  def lastIndex: Exp[Index]
 }
 
 // product(a)*i + sum(b), where all elements in a and b must be loop invariant relative to i
-case class AffineProduct(a: AffineFunction, i: Exp[Index])
-case class GeneralAffine(sums: Seq[AffineProduct], offset: AffineFunction) extends IndexPattern { def index = None }
-
-// a*i + b, where a and b must be loop invariant
-case class AffineAccess(a: Exp[Index], i: Exp[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
-// i + b, where b must be loop invariant
-case class OffsetAccess(i: Exp[Index], b: Exp[Index]) extends IndexPattern { def index = Some(i) }
-// a*i, where a must be loop invariant
-case class StridedAccess(a: Exp[Index], i: Exp[Index]) extends IndexPattern { def index = Some(i) }
-// linear access with some loop iterator
-case class LinearAccess(i: Exp[Index]) extends IndexPattern { def index = Some(i) }
-// loop invariant access (but may change with outer loops)
-case class InvariantAccess(b: Exp[Index]) extends IndexPattern { def index = None }
-// anything else
-case object RandomAccess extends IndexPattern { def index = None }
+case class SymbolicAffine(sums: Seq[AffineProduct], offset: AffineFunction) extends IndexPattern {
+  def mirror(f:Tx) = {
+    val sums2 = sums.map{case AffineProduct(a,i) => AffineProduct(a.mirror(f),f(i)) }
+    val offset2 = offset.mirror(f)
+    SymbolicAffine(sums2, offset2)
+  }
+  def lastIndex: Exp[Index] = sums.last.i
+}
+// denotes vectorized access pattern x::stride::x+length
+/*case class VectorAccess(ofs: IndexPattern, stride: Int, length: Int, innermost: Exp[Index]) extends IndexPattern {
+  def mirror(f:Tx) = VectorAccess(ofs.mirror(f), stride, length, f(innermost))
+}*/
+// denotes random access pattern which is invariant with all loop indices below lastIndex (possibly none)
+case class RandomAccess(lastIndex: Exp[Index]) extends IndexPattern {
+  def mirror(f:Tx) = RandomAccess(f(lastIndex))
+}
 
 case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPattern] {
-  def mirror(f:Tx) = AccessPattern(indices.map{
-    case GeneralAffine(sums, offset) =>
-      val sums2 = sums.map{case AffineProduct(a,i) => AffineProduct(a.mirror(f),f(i)) }
-      val offset2 = offset.mirror(f)
-      GeneralAffine(sums2, offset2)
-
-    case AffineAccess(a,i,b) => AffineAccess(f(a),f(i),f(b))
-    case OffsetAccess(i,b)   => OffsetAccess(f(i), f(b))
-    case StridedAccess(a,i)  => StridedAccess(f(a),f(i))
-    case LinearAccess(i)     => LinearAccess(f(i))
-    case InvariantAccess(b)  => InvariantAccess(f(b))
-    case RandomAccess        => RandomAccess
-  })
+  def mirror(f:Tx) = AccessPattern(indices.map(_.mirror(f)))
 }
+
+object LinearAccess {
+  def apply(i: Bound[Index]): SymbolicAffine = SymbolicAffine(Seq(AffineProduct(One,i)), Zero)
+}
+
 
 @data object accessPatternOf {
   def apply(x: Exp[_]): Seq[IndexPattern] = accessPatternOf.get(x).getOrElse{ throw new UndefinedAccessPatternException(x) }
@@ -102,9 +109,9 @@ case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPatt
 trait AccessPatternAnalyzer extends Traversal {
 
   // All loop indices encountered above the current scope
-  var loopIndices = Set[Bound[Index]]()
+  var loopIndices = List[Bound[Index]]()    // Innermost index is last
   var loopFromIndex = Map[Bound[Index], Exp[_]]()
-  var boundIndexPatterns = Map[Exp[Index], Seq[IndexPattern]]()
+  var boundIndexPatterns = Map[Exp[Index], IndexPattern]()
 
   // The list of statements which can be scheduled prior to block traversals
   // (All statements in all scopes below this scope)
@@ -120,14 +127,14 @@ trait AccessPatternAnalyzer extends Traversal {
 
     val prevIndices = loopIndices
     val prevLoops = loopFromIndex
-    loopIndices ++= indices
+    loopIndices = loopIndices ++ indices
     loopFromIndex ++= indices.map{i => i -> loop}
     val result = blk
     loopIndices = prevIndices
     loopFromIndex = prevLoops
     result
   }
-  override protected def visitBlock[S](block: Block[S]) = {
+  override protected def visitBlock[S](block: Block[S]): Block[S] = {
     tab += 1
     traverseStmsInBlock(block, {stms =>
       val prevLoopScope = loopScope
@@ -144,6 +151,8 @@ trait AccessPatternAnalyzer extends Traversal {
     * without mucking with the (symbol,def) table.
     * Use Def or Op unapply methods to get corresponding Def of symbols
     **/
+  // Pair of symbols for nodes used in address calculation subtraction nodes
+  def indexMinusApply(x: Exp[Index]): Option[(Exp[Index], Exp[Index])]
   // Pair of symbols for nodes used in address calculation addition nodes
   def indexPlusUnapply(x: Exp[Index]): Option[(Exp[Index], Exp[Index])]
   // Pair of symbols for nodes used in address calculation multiplication nodes
@@ -154,18 +163,25 @@ trait AccessPatternAnalyzer extends Traversal {
   def readUnapply(x: Exp[_]): Option[(Exp[_], Seq[Exp[Index]])]
   // Memory being written + list of addresses (for N-D access)
   def writeUnapply(x: Exp[_]): Option[(Exp[_], Seq[Exp[Index]])]
+  // Memory being read + list of addresses (for N-D access) + dimension + stride + length
+  //def vectorReadUnapply(x: Exp[_]): Option[(Exp[_], Seq[Exp[Index]], Int, Int, Int)]
+  // Memory being written + list of addresses (for N-D access) + dimension + stride + length
+  //def vectorWriteUnapply(x: Exp[_]): Option[(Exp[_], Seq[Exp[Index]], Int, Int, Int)]
 
   def indexUnapply(x: Exp[Index]): Option[Bound[Index]] = x match {
     case s: Bound[_] if loopIndices.contains(s.asInstanceOf[Bound[Index]]) => Some(s.asInstanceOf[Bound[Index]])
     case _ => None
   }
 
-  object Plus       { def unapply(x: Exp[Index]) = indexPlusUnapply(x) }
-  object Times      { def unapply(x: Exp[Index]) = indexTimesUnapply(x) }
-  object LoopLevels { def unapply(x: Exp[_]) = loopUnapply(x) }
-  object MemRead    { def unapply(x: Exp[_]) = readUnapply(x) }
-  object MemWrite   { def unapply(x: Exp[_]) = writeUnapply(x) }
-  object LoopIndex  { def unapply(x: Exp[Index]) = indexUnapply(x) }
+  object Minus       { def unapply(x: Exp[Index]) = indexMinusApply(x) }
+  object Plus        { def unapply(x: Exp[Index]) = indexPlusUnapply(x) }
+  object Times       { def unapply(x: Exp[Index]) = indexTimesUnapply(x) }
+  object LoopLevels  { def unapply(x: Exp[_]) = loopUnapply(x) }
+  object MemRead     { def unapply(x: Exp[_]) = readUnapply(x) }
+  object MemWrite    { def unapply(x: Exp[_]) = writeUnapply(x) }
+  //object VectorRead  { def unapply(x: Exp[_]) = vectorReadUnapply(x) }
+  //object VectorWrite { def unapply(x: Exp[_]) = vectorWriteUnapply(x) }
+  object LoopIndex   { def unapply(x: Exp[Index]) = indexUnapply(x) }
 
   def offsetOf(i: Bound[Index]): Option[Exp[Index]] = None
   def strideOf(i: Bound[Index]): Option[Exp[Index]] = None
@@ -182,10 +198,18 @@ trait AccessPatternAnalyzer extends Traversal {
   }
   def isInvariantForAll(b: Exp[Index]): Boolean = loopIndices.forall{i => isInvariant(b,i) }
 
-  def findGeneralAffinePattern(x: Exp[Index]): Seq[IndexPattern] = {
+  def extractIndexPattern(x: Exp[Index]): IndexPattern = {
     dbg(c"Looking for affine access patterns from ${str(x)}")
 
     def extractPattern(x: Exp[Index]): Option[(Seq[AffineProduct],AffineFunction)] = x match {
+      case Minus(a,b) => (extractPattern(a), extractPattern(b)) match {
+        case (Some((is,c1)), Some((is2,c2))) =>
+          val offset = Sum(Seq(Right(c1), Right(c2.negate)))
+          val negis2 = is2.map{_.negate}
+          Some((is ++ negis2, offset))
+        case _ => None
+      }
+
       case Plus(a,b) => (extractPattern(a), extractPattern(b)) match {
         case (Some((is1,c1)), Some((is2,c2))) =>
           val offset = Sum(Seq(Right(c1),Right(c2)))
@@ -206,9 +230,9 @@ trait AccessPatternAnalyzer extends Traversal {
       case LoopIndex(i) =>
         val stride = strideOf(i).map{s => Prod(s) }.getOrElse(One)
         val offset = offsetOf(i).map{o => Sum(o) }.getOrElse(Zero)
-        Some(Seq(AffineProduct(stride,i)), offset)                                     // i
+        Some(Seq(AffineProduct(stride,i)), offset)  // i
 
-      case b if isInvariantForAll(b) => Some(Nil, Zero)                            // b
+      case b if isInvariantForAll(b) => Some(Nil, Zero) // b
       case _ => None
     }
 
@@ -220,27 +244,18 @@ trait AccessPatternAnalyzer extends Traversal {
       val products = p._1
       val groupedProducts = products.groupBy(_.i)
                                     .mapValues{funcs => funcs.map(af => Right(af.a) )}
-                                    .toList.map{case (i, as) => AffineProduct(Sum(as),i) }
+                                    .toList
+                                    .sortBy{case (i, _) => loopIndices.indexOf(i) }
+                                    .map{case (i, as) => AffineProduct(Sum(as),i) }
 
-      Seq(GeneralAffine(groupedProducts, p._2))
-    }.getOrElse(Seq(RandomAccess))
+      SymbolicAffine(groupedProducts, p._2)
+    }.getOrElse{
+      val lastIndex = loopIndices( loopIndices.lastIndexWhere{i => isInvariant(x,i) } )
+      RandomAccess(lastIndex)
+    }
   }
 
-  def extractIndexPattern(x: Exp[Index]): Seq[IndexPattern] = x match {
-    case Plus(Times(LoopIndex(i), a), b) if isInvariant(a,i) && isInvariant(b,i) => Seq(AffineAccess(a,i,b)) // i*a + b
-    case Plus(Times(a, LoopIndex(i)), b) if isInvariant(a,i) && isInvariant(b,i) => Seq(AffineAccess(a,i,b)) // a*i + b
-    case Plus(b, Times(LoopIndex(i), a)) if isInvariant(a,i) && isInvariant(b,i) => Seq(AffineAccess(a,i,b)) // b + i*a
-    case Plus(b, Times(a, LoopIndex(i))) if isInvariant(a,i) && isInvariant(b,i) => Seq(AffineAccess(a,i,b)) // b + a*i
-    case Plus(LoopIndex(i), b) if isInvariant(b,i)  => Seq(OffsetAccess(i,b))                                // i + b
-    case Plus(b, LoopIndex(i)) if isInvariant(b,i)  => Seq(OffsetAccess(i,b))                                // b + i
-    case Times(LoopIndex(i), a) if isInvariant(a,i) => Seq(StridedAccess(a,i))                               // i*a
-    case Times(a, LoopIndex(i)) if isInvariant(a,i) => Seq(StridedAccess(a,i))                               // a*i
-    case LoopIndex(i) => Seq(LinearAccess(i))                                                                // i
-    case b if isInvariantForAll(b) => Seq(InvariantAccess(b))                                                // b
-    case _ if config.useAffine => findGeneralAffinePattern(x)                                                // other
-    case _ => Seq(RandomAccess)
-  }
-  def extractAccessPatterns(xs: Seq[Exp[Index]]): Seq[IndexPattern] = xs.flatMap{
+  def extractAccessPatterns(xs: Seq[Exp[Index]]): Seq[IndexPattern] = xs.map{
     case x if boundIndexPatterns.contains(x) => boundIndexPatterns(x)
     case x => extractIndexPattern(x)
   }
@@ -256,6 +271,20 @@ trait AccessPatternAnalyzer extends Traversal {
           blocks.foreach { blk => visitBlock(blk) }
         }
       }
+
+    /*case VectorRead(mem, addresses, dim, stride, len) =>
+      accessPatternOf(lhs) = addresses.zipWithIndex.map{case (addr,d) =>
+        if (dim == d) {
+          val lastIndex = loopIndices( loopIndices.lastIndexWhere{i => isInvariant(addr,i) } )
+          VectorAccess(extractIndexPattern(addr),stride,len,lastIndex)
+        }
+        else extractIndexPattern(addr)
+      }
+      dbgs(s"[Vector Read] $lhs = $rhs")
+      dbgs(s"  Memory: $mem")
+      dbgs(s"  ND Address: $addresses")
+      dbgs(s"  Current indices: $loopIndices")
+      dbgs(s"  Access pattern: ${accessPatternOf(lhs)}")*/
 
     case MemRead(mem, addresses) =>
       accessPatternOf(lhs) = extractAccessPatterns(addresses)
