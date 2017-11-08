@@ -65,7 +65,6 @@ import chisel3._
 import chisel3.util._
 """)
       open(s"trait RootController extends InstrumentationMixer {")
-      emit(src"// Root controller for app: ${config.name}")
 
     }
 
