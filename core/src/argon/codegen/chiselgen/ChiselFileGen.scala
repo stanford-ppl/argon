@@ -65,7 +65,6 @@ import chisel3._
 import chisel3.util._
 """)
       open(s"trait RootController extends InstrumentationMixer {")
-      emit(src"// Root controller for app: ${config.name}")
 
     }
 
@@ -186,8 +185,8 @@ import types._
         emit("")
         emit("// DRAM IO")
         emit("val memStreams = Flipped(new AppStreams(")
-        emit("  io_loadStreamInfo ++ (if (io_loadStreamInfo.size == 0) List(StreamParInfo(io_w, io_v)) else List[StreamParInfo]()),")
-        emit("  io_storeStreamInfo ++ (if (io_storeStreamInfo.size == 0) List(StreamParInfo(io_w, io_v)) else List[StreamParInfo]()))")
+        emit("  io_loadStreamInfo ++ (if (io_loadStreamInfo.size == 0) List(StreamParInfo(io_w, io_v, 0)) else List[StreamParInfo]()),")
+        emit("  io_storeStreamInfo ++ (if (io_storeStreamInfo.size == 0) List(StreamParInfo(io_w, io_v, 0)) else List[StreamParInfo]()))")
         emit(")")
         emit("")
         emit("// Scalar IO")
