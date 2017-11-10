@@ -79,7 +79,7 @@ class State {
   def reset(): Unit = {
     graph.reset()
     metadata.reset()
-    globaldata.clear()
+    globaldata.reset()
     context = null
     defCache = Map.empty
     shallowAliasCache.clear()

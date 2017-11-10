@@ -11,7 +11,7 @@ sealed abstract class AffineFunction {
   def mirror(f:Tx): AffineFunction
   def eval(f: Exp[Index] => Int): Int
   def getEval(f: PartialFunction[Exp[Index],Int]): Option[Int]
-  def negate: AffineFunction
+  @internal def negate: AffineFunction
 }
 class Prod(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction {
   def mirror(f:Tx) = new Prod(x.map{
@@ -26,7 +26,7 @@ class Prod(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction
     val parts = x.map{case Left(e) if f.isDefinedAt(e) => Some(f(e)); case Right(af) => af.getEval(f); case _ => None }
     if (parts.forall(_.isDefined)) Some(parts.map(_.get).product) else None
   }
-  def negate: AffineFunction = {
+  @internal def negate: AffineFunction = {
     new Prod(Left(FixPt.int32s(-1)) +: x)
   }
 
@@ -49,7 +49,7 @@ class Sum(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction 
     if (parts.forall(_.isDefined)) Some(parts.map(_.get).sum) else None
   }
 
-  def negate: AffineFunction = new Sum(x.map{
+  @internal def negate: AffineFunction = new Sum(x.map{
     case Left(e) => Right(Prod(FixPt.int32s(-1),e))
     case Right(af) => Right(af.negate)
   })
@@ -64,7 +64,7 @@ case object One extends Prod(Nil) { override def toString: String = "One" }
 case object Zero extends Sum(Nil) { override def toString: String = "Zero" }
 
 case class AffineProduct(a: AffineFunction, i: Exp[Index]) {
-  def negate: AffineProduct = AffineProduct(a.negate, i)
+  @internal def negate: AffineProduct = AffineProduct(a.negate, i)
 }
 
 sealed abstract class IndexPattern {
@@ -204,6 +204,7 @@ trait AccessPatternAnalyzer extends Traversal {
     def extractPattern(x: Exp[Index]): Option[(Seq[AffineProduct],AffineFunction)] = x match {
       case Minus(a,b) => (extractPattern(a), extractPattern(b)) match {
         case (Some((is,c1)), Some((is2,c2))) =>
+          implicit val ctx: SrcCtx = x.ctx
           val offset = Sum(Seq(Right(c1), Right(c2.negate)))
           val negis2 = is2.map{_.negate}
           Some((is ++ negis2, offset))
