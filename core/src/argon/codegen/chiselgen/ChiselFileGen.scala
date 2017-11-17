@@ -9,7 +9,7 @@ trait ChiselFileGen extends FileGen {
 
   override protected def process[S:Type](b: Block[S]): Block[S] = {
     // // Forcefully create the following streams
-    // val baseStream = getStream("GlobalWires")
+    // val baseSQtream = getStream("GlobalWires")
     // val ioModule = getStream("IOModule")
     // val AccelTop = getStream("AccelTop")
     // val bufferControl = getStream("BufferControlCxns")
