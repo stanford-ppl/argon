@@ -27,6 +27,29 @@ class Config {
 
   var useAffine: Boolean = false
 
+  def createInstance(): Config = new Config()
+
+  def createClone(): Config = {
+    val cfg = createInstance()
+    cfg.verbosity = this.verbosity
+    cfg.showWarn = this.showWarn
+    cfg.unsafe = this.unsafe
+    cfg.lib = this.lib
+    cfg.name = this.name
+    cfg.logDir = this.logDir
+    cfg.genDir = this.genDir
+    cfg.clearLogs = this.clearLogs
+    cfg.clearGen = this.clearGen
+    cfg.multifile = this.multifile
+    cfg.enableNaming = this.enableNaming
+    cfg.dotDetail = this.dotDetail
+    cfg.unwrapStructs = this.unwrapStructs
+    cfg.emitDevel = this.emitDevel
+    cfg.allowAtomicWrites = this.allowAtomicWrites
+    cfg.useAffine = this.useAffine
+    cfg
+  }
+
   def showWarnings: Boolean = showWarn && verbosity > - 1
   def showErrors: Boolean = verbosity > - 1
 

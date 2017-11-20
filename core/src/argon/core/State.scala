@@ -95,6 +95,7 @@ class State {
   }
   def copyTo(that: State): State = {
     that.reset()
+    that.config = this.config.createClone()
     this.graph.copyTo(that.graph)
     this.metadata.copyTo(that.metadata)
     that.context = this.context
