@@ -101,6 +101,9 @@ object FltPt {
       case x: Float      => withCheck(FloatPoint(x, fmt)){_.toFloat == x }
       case x: Double     => withCheck(FloatPoint(x, fmt)){_.toDouble == x }
       case x: CString    => withCheck(FloatPoint(x, fmt)){_.toBigDecimal == BigDecimal(x) }
+      case x: FixedPoint => withCheck(x.toFloatPoint(fmt)){_.toFixedPoint(x.fmt) == x }
+      case x: FloatPoint if x.fmt == fmt => x
+      case x: FloatPoint => withCheck(x.toFloatPoint(fmt)){_.toFloatPoint(fmt) == x }
       case c =>
         error(s"$c cannot be lifted to a floating point value")
         sys.exit()

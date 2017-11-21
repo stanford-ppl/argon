@@ -197,6 +197,7 @@ object FixPt {
       case x: CString    => withCheck(FixedPoint(x, fmt)){ _.toBigDecimal == BigDecimal(x) }
       case x: FixedPoint if x.fmt == fmt => x
       case x: FixedPoint => withCheck(x.toFixedPoint(fmt)){ _.toFixedPoint(x.fmt) == x }
+      case x: FloatPoint => withCheck(x.toFixedPoint(fmt)){ _.toFloatPoint(x.fmt) == x }
       case c =>
         error(ctx, s"$c cannot be lifted to a fixed point value")
         error(ctx)
