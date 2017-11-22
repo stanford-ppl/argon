@@ -5,16 +5,13 @@ import argon.nodes._
 
 trait DotGenBoolean extends DotCodegen {
 
-  override def attr(n:Exp[_]) = n match {
-    case lhs: Sym[_] => lhs match {
-      case Def(Not(x)       ) => super.attr(n).label("~")
-      case Def(And(x,y)     ) => super.attr(n).label("&")
-      case Def(Or(x,y)      ) => super.attr(n).label("|")
-      case Def(XOr(x,y)     ) => super.attr(n).label("^")
-      case Def(XNor(x,y)    ) => super.attr(n).label("xnor")
-      case Def(RandomBoolean(x)) => super.attr(n).label("rnd")
-      case _ => super.attr(n)
-    }
+  override def attr(n: Exp[_]) = n match {
+    case Def(_:Not)  => super.attr(n).shape(circle).label("~")
+    case Def(_:And)  => super.attr(n).shape(circle).label("&")
+    case Def(_:Or)   => super.attr(n).shape(circle).label("|")
+    case Def(_:XOr)  => super.attr(n).shape(circle).label("!=")
+    case Def(_:XNor) => super.attr(n).shape(circle).label("==")
+    case Def(_:RandomBoolean) => super.attr(n).shape(diamond).label("rnd")
     case _ => super.attr(n)
   }
 

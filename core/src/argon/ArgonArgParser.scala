@@ -57,8 +57,8 @@ class ArgonArgParser(config: Config) extends ArgParser {
     config.dotDetail = x
   ).text(
     """Amount of detail to emit when generating graphviz.
-      false = control nodes only (legacy mode for PIR debugging)
-      true = include info about primitives and retiming""")
+      0 = control nodes only (legacy mode for PIR debugging)
+      1 = include info about primitives and retiming""")
 
 
 

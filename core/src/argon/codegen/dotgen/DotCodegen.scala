@@ -26,16 +26,20 @@ trait DotCodegen extends Codegen with FileDependencies with DotEnum { // FileDep
     case lhs: Sym[_] => s"x${lhs.id}"
   }
 
-  val regex = "\\[[0-9]*\\]".r
-  def q(s:Any) = regex.replaceAllIn(s.toString, "")
+  private val regex = "\\[[0-9]*\\]".r
+  def q(s: Any): String = s match {
+    case Const(c) => regex.replaceAllIn(c.toString, "")
+    case Param(c) => regex.replaceAllIn(c.toString, "")
+    case _ => regex.replaceAllIn(s.toString, "")
+  }
 
-  def emitblk[T](s:String)(block: =>T) = {
+  def emitblk[T](s: String)(block: => T): T = {
     open(s"$s {")
     val res = block
     close(s"}")
     res
   }
-  def emitVert(n:Exp[_], forceful:Boolean = false):Unit = emitVert(n, attr(n), forceful)
+  def emitVert(n: Exp[_], forceful: Boolean = false): Unit = emitVert(n, attr(n), forceful)
   // def emitVert(n:Exp[_], label:String, forceful:Boolean = false):Unit = {
   //   emit(s"""${q(n)} [label="${q(label)}"];""", forceful = forceful)
   // }
@@ -49,7 +53,7 @@ trait DotCodegen extends Codegen with FileDependencies with DotEnum { // FileDep
     emitEdge(from, to, DotAttr().label(label))
   }
   def emitEdge(from:Any, to:Any, attr:DotAttr):Unit = {
-    def buffered() = { emit(s"""${q(from)} -> ${q(to)} ${if (attr.attrMap.size!=0) s"[${attr.list}]" else ""}""") }
+    def buffered() = { emit(s"""${q(from)} -> ${q(to)} ${if (attr.attrMap.nonEmpty) s"[${attr.list}]" else ""}""") }
     if (emitEn) {
       edges += buffered _
     }
@@ -87,38 +91,36 @@ trait DotCodegen extends Codegen with FileDependencies with DotEnum { // FileDep
 		emitSubGraph(n, DotAttr().label(label.toString))(block)
 	}
   def emitSubGraph(n:Any, attr:DotAttr)(block: =>Any):Unit = {
-		emitblk(s"""subgraph cluster_${n}""") {
+		emitblk(s"""subgraph cluster_$n""") {
       emit(attr.expand)
 			block
 		}
   }
 
-  def attr(n:Exp[_]):DotAttr = {
-    DotAttr().label(quote(n))
-  }
+  def attr(n:Exp[_]): DotAttr = DotAttr().label(quote(n))
 
 }
 
 class DotAttr() {
-  val attrMap:Map[String, String] = Map.empty 
-  val graphAttrMap:Map[String, String] = Map.empty 
+  val attrMap: Map[String, String] = Map.empty
+  val graphAttrMap: Map[String, String] = Map.empty
 
   def + (rec:(String, String)):DotAttr = { attrMap += rec; this}
 
-  def shape(s:Shape) = { attrMap += "shape" -> s.field; this }
-  def color(s:Color) = { attrMap += "color" -> s.field; this }
-  def fillcolor(s:Color) = { attrMap += "fillcolor" -> s.field; this }
-  def labelfontcolor(s:Color) = { attrMap += "labelfontcolor" -> s.field; this }
-  def style(ss:Style*) = { attrMap += "style" -> ss.map(_.field).mkString(","); this }
-  def graphStyle(s:Style) = { graphAttrMap += "style" -> s"${s.field}"; this }
-  def label(s:Any) = { attrMap += "label" -> s.toString; this }
-  def label = { attrMap.get("label") }
-  def dir(s:Direction) = { attrMap += "dir" -> s.field; this }
-  def pos(coord:(Double,Double)) = { attrMap += "pos" -> s"${coord._1},${coord._2}!"; this }
+  def shape(s: Shape): DotAttr = { attrMap += "shape" -> s.field; this }
+  def color(s: Color): DotAttr = { attrMap += "color" -> s.field; this }
+  def fillcolor(s: Color): DotAttr = { attrMap += "fillcolor" -> s.field; this }
+  def labelfontcolor(s: Color): DotAttr = { attrMap += "labelfontcolor" -> s.field; this }
+  def style(ss: Style*): DotAttr = { attrMap += "style" -> ss.map(_.field).mkString(","); this }
+  def graphStyle(s: Style): DotAttr = { graphAttrMap += "style" -> s"${s.field}"; this }
+  def label(s: Any): DotAttr = { attrMap += "label" -> s.toString; this }
+  def label: Option[String] = { attrMap.get("label") }
+  def dir(s: Direction): DotAttr = { attrMap += "dir" -> s.field; this }
+  def pos(coord: (Double,Double)): DotAttr = { attrMap += "pos" -> s"${coord._1},${coord._2}!"; this }
 
   def elements:List[String] = {
     var elems = attrMap.map{case (k,v) => s"""$k="$v""""}.toList
-    if (graphAttrMap.size!=0)
+    if (graphAttrMap.nonEmpty)
       elems = elems :+ s"graph[${graphAttrMap.map{case(k,v) => s"""$k="$v"""" }.mkString(",")}]"
     elems
   }
