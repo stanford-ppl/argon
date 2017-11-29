@@ -96,7 +96,7 @@ class Config {
     val default = ConfigFactory.parseString(s"""
 argon {
   cwd = $${user.dir}
-  verbosity = 1
+  verbosity = 0
   unsafe = false
   lib = true
   log = $${argon.cwd}"/logs/"${name}

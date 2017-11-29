@@ -70,7 +70,11 @@ case class AffineProduct(a: AffineFunction, i: Exp[Index]) {
 sealed abstract class IndexPattern {
   type Tx = argon.transform.Transformer
   def mirror(f:Tx): IndexPattern
-  def lastIndex: Exp[Index]
+
+  /** Returns the innermost (last) index which this access varies with.
+    * If undefined, this index pattern is invariant to ALL loop iterators
+    */
+  def lastVariantIndex: Option[Exp[Index]]
 }
 
 // product(a)*i + sum(b), where all elements in a and b must be loop invariant relative to i
@@ -80,15 +84,12 @@ case class SymbolicAffine(sums: Seq[AffineProduct], offset: AffineFunction) exte
     val offset2 = offset.mirror(f)
     SymbolicAffine(sums2, offset2)
   }
-  def lastIndex: Exp[Index] = sums.last.i
+  def lastVariantIndex: Option[Exp[Index]] = sums.lastOption.map(_.i)
 }
-// denotes vectorized access pattern x::stride::x+length
-/*case class VectorAccess(ofs: IndexPattern, stride: Int, length: Int, innermost: Exp[Index]) extends IndexPattern {
-  def mirror(f:Tx) = VectorAccess(ofs.mirror(f), stride, length, f(innermost))
-}*/
-// denotes random access pattern which is invariant with all loop indices below lastIndex (possibly none)
-case class RandomAccess(lastIndex: Exp[Index]) extends IndexPattern {
-  def mirror(f:Tx) = RandomAccess(f(lastIndex))
+
+// Random access pattern invariant with all loop indices below lastIndex (possibly none)
+case class RandomAccess(lastVariantIndex: Option[Exp[Index]]) extends IndexPattern {
+  def mirror(f:Tx) = RandomAccess(f(lastVariantIndex))
 }
 
 case class AccessPattern(indices: Seq[IndexPattern]) extends Metadata[AccessPattern] {
@@ -251,8 +252,9 @@ trait AccessPatternAnalyzer extends Traversal {
 
       SymbolicAffine(groupedProducts, p._2)
     }.getOrElse{
-      val lastIndex = loopIndices( loopIndices.lastIndexWhere{i => isInvariant(x,i) } )
-      RandomAccess(lastIndex)
+      val idxOfLastInvariant = loopIndices.lastIndexWhere{i => !isInvariant(x,i) }
+      val lastVariantIndex = if (idxOfLastInvariant >= 0) Some(loopIndices(idxOfLastInvariant)) else None
+      RandomAccess(lastVariantIndex)
     }
   }
 

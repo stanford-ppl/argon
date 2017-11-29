@@ -14,13 +14,19 @@ class ArgonArgParser(config: Config) extends ArgParser {
     config.name = x
   ).text("name of the app [app]")*/
 
+  // Note: this is now the default
   parser.opt[Unit]('q', "quiet").action( (_,_) =>
     config.verbosity = 0
   ).text("disable background logging")
 
   parser.opt[Unit]('v', "verbose").action( (_,_) =>
+    config.verbosity = 1
+  ).text("enable verbose printout")
+
+  parser.opt[Unit]("vv").action( (_,_) =>
     config.verbosity = 2
   ).text("enable verbose printout")
+
 
   parser.opt[Int]("verbosity").action( (x,_) =>
     config.verbosity = x
