@@ -5,6 +5,17 @@ import argon.nodes._
 import forge._
 import org.virtualized.EmptyContext
 
+
+//case class FuncStaged[L:Type,R:Type](s: Exp[FuncStaged[Type[List[Type[_]]],R]]) {
+//case class FuncStaged[L:Type,R:Type](s: Exp[FuncStaged[L,R]]) {
+case class FuncStaged[R:Type](s: Exp[FuncStaged[R]]) extends MetaAny[FuncStaged[R]]{
+  @api def ===(that: FuncStaged[R]) = ???
+  @api def =!=(that: FuncStaged[R]) = ???
+  @api def toText = String.ify(this)
+
+}
+
+
 case class Func1[A:Type,R:Type](s: Exp[Func1[A,R]]) extends MetaAny[Func1[A,R]] with Function2[A,State,R] {
   @api def ===(that: Func1[A,R]) = ???
   @api def =!=(that: Func1[A,R]) = ???
@@ -97,6 +108,7 @@ case class Func10[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type
 }
 
 object Func {
+  @internal def applyStaged[R:Type](fun: Exp[FuncStaged[R]], l: List[Exp[_]]): Exp[R] = stage(FunApplyStaged(fun, l))(ctx)
   @internal def apply1[A:Type,R:Type](fun: Exp[Func1[A,R]], a: Exp[A]): Exp[R] = stage(FunApply1(fun, a: Exp[A]))(ctx)
   @internal def apply2[A:Type,B:Type,R:Type](fun: Exp[Func2[A,B,R]], a: Exp[A], b: Exp[B]): Exp[R] = stage(FunApply2(fun, a: Exp[A], b: Exp[B]))(ctx)
   @internal def apply3[A:Type,B:Type,C:Type,R:Type](fun: Exp[Func3[A,B,C,R]], a: Exp[A], b: Exp[B], c: Exp[C]): Exp[R] = stage(FunApply3(fun, a: Exp[A], b: Exp[B], c: Exp[C]))(ctx)
@@ -108,6 +120,10 @@ object Func {
   @internal def apply9[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type,R:Type](fun: Exp[Func9[A,B,C,D,E,F,G,H,I,R]], a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F], g: Exp[G], h: Exp[H], i: Exp[I]): Exp[R] = stage(FunApply9(fun, a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F], g: Exp[G], h: Exp[H], i: Exp[I]))(ctx)
   @internal def apply10[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:Type,J:Type,R:Type](fun: Exp[Func10[A,B,C,D,E,F,G,H,I,J,R]], a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F], g: Exp[G], h: Exp[H], i: Exp[I], j: Exp[J]): Exp[R] = stage(FunApply10(fun, a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F], g: Exp[G], h: Exp[H], i: Exp[I], j: Exp[J]))(ctx)
 
+  @internal def declStaged[R:Type](l: List[Bound[_]], b: ()=>Exp[R]): Exp[FuncStaged[R]] = {
+    val blk = stageBlock{ b() }
+    stageEffectful(FunDeclStaged(l, blk), blk.effects)(ctx)
+  }
   @internal def decl1[A:Type,R:Type](func: Function1[A,R]): Func1[A,R] = {
     val a = fresh[A]
     val blk = stageBlock{ func(wrap(a)).s }
@@ -205,6 +221,9 @@ object Func {
   }
 }
 
+object FuncStaged {
+  implicit def funcStagedIsStaged[R:Type]: Type[FuncStaged[R]] = FuncStagedType(typ[R])
+}
 object Func1 {
   implicit def func1IsStaged[A:Type,R:Type]: Type[Func1[A,R]] = Func1Type(typ[A],typ[R])
 }

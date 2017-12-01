@@ -3,6 +3,15 @@ package argon.nodes
 import argon.core._
 import argon.compiler._
 
+
+case class FuncStagedType[R](r: Type[R]) extends Type[FuncStaged[R]] {
+  override def wrapped(x: Exp[FuncStaged[R]]) = new FuncStaged(x)(r)
+  override def unwrapped(x: FuncStaged[R]) = x.s
+  override def stagedClass = classOf[FuncStaged[R]]
+  override def typeArguments = List(r)
+  override def isPrimitive: CBoolean = false
+}
+
 case class Func1Type[A,R](a: Type[A], r: Type[R]) extends Type[Func1[A,R]] {
   override def wrapped(x: Exp[Func1[A,R]]) = new Func1(x)(a, r)
   override def unwrapped(x: Func1[A,R]) = x.s
@@ -74,7 +83,12 @@ case class Func10Type[A,B,C,D,E,F,G,H,I,J,R](a: Type[A], b: Type[B], c: Type[C],
   override def isPrimitive: CBoolean = false
 }
 
-
+case class FunApplyStaged[R:Type](
+  fun: Exp[FuncStaged[R]],
+  l: List[Exp[_]]
+) extends Op[R] {
+  def mirror(tx:Tx) = Func.applyStaged(tx(fun),tx.tx(l))
+}
 case class FunApply1[A:Type,R:Type](
   fun: Exp[Func1[A,R]],
   a: Exp[A]
@@ -136,6 +150,14 @@ case class FunApply10[A:Type,B:Type,C:Type,D:Type,E:Type,F:Type,G:Type,H:Type,I:
   def mirror(tx:Tx) = Func.apply10(tx(fun),tx(a), tx(b), tx(c), tx(d), tx(e), tx(f), tx(g), tx(h), tx(i), tx(j))
 }
 
+case class FunDeclStaged[R:Type](
+  l: List[Bound[_]],
+  block: Block[R]
+) extends Op[FuncStaged[R]] {
+  def mirror(tx:Tx) = {
+    Func.declStaged(l, tx(block))
+  }
+}
 case class FunDecl1[A:Type,R:Type](
   a: Exp[A],
   block: Block[R]

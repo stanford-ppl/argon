@@ -68,6 +68,8 @@ trait ArgonCommonAliases extends ArgonLangAliases {
   type FixPt[S,I,F] = argon.lang.FixPt[S,I,F]
   type FltPt[G,E] = argon.lang.FltPt[G,E]
 
+  type FuncStaged[R] = argon.lang.FuncStaged[R]
+  
   type Func1[A,R] = argon.lang.Func1[A,R]
   type Func2[A,B,R] = argon.lang.Func2[A,B,R]
   type Func3[A,B,C,R] = argon.lang.Func3[A,B,C,R]
