@@ -1,6 +1,8 @@
 package argon.core.cake
 
+import argon.core.BlockProperties
 import forge._
+
 import scala.collection.mutable
 
 trait LayerBlocks { self: ArgonCake =>
@@ -30,29 +32,54 @@ trait LayerBlocks { self: ArgonCake =>
   /**
     * Stage the effects of an isolated block.
     * No assumptions about the current context remain valid.
+    *
+    * isolated: disallow CSE from outside of block, override outer 'sealed' block (inner statements aren't sticky)
+    * seal:     disallow CSE from outside of block, add 'sticky' effects to all staged symbols
+    * prog:     keep all 'Funcd' (function definition) effects as anti-dependencies
+    * temp:     frequency hints to code motion - Cold also disallows CSE from outside block
     */
-  @stateful private def stageScope[R](block: => Exp[R], temp: Freq, isolated: Boolean = false, seal: Boolean = false): (Exp[R], Effects, Seq[Sym[_]], List[Stm]) = {
+  @stateful private def stageScope[R](block: => Exp[R], properties: BlockProperties): (Exp[R], Effects, Seq[Sym[_]], List[Stm]) = {
+    val isolated = properties.isolated
+    val seal = properties.seal
+    val temp = properties.temp
+    val prog = properties.prog
     if (state == null) throw new argon.NullStateException
 
     val saveContext = state.context
     val saveCache = state.defCache
     val saveBlock = state.currentBlock
+    val saveEffects = state.blockEffects
     state.context = Nil
     state.currentBlock = Nil
     // In an isolated or sealed blocks, don't allow CSE with outside statements
     // CSE with outer scopes should only occur if symbols are not allowed to escape,
     // which isn't true in either of these cases
     if (isolated || seal || temp == Freq.Cold) state.defCache = Map.empty
+    if (isolated) state.blockEffects = Pure
 
     val result = if (seal) inSealed{ block } else block
 
-    val deps = if (seal) state.context.collect{case sym@Effectful(eff,_) if eff != Pure => sym}
-               else      state.context.collect{case sym@Effectful(eff,_) if eff != Sticky && eff != Pure => sym}
+    def keepEffect(e: Effects): Boolean = {
+      if (e.isFunction) prog          // Only keep function definitions at the program level
+      else if (seal) e != Pure        // Keep everything except pure effects
+      else e != Sticky && e != Pure   // Keep everything except pure and sticky effects
+    }
+
+    val (deps,remain) = state.context.partition{
+      case sym@Effectful(e,_) =>
+        val keep = keepEffect(e)
+        log(c"${str(sym)} [effects: $e, keep: $keep]")
+        keep
+      case sym =>
+        log(c"${str(sym)} [Was pure in context list?]")
+        false
+    }
 
     val basicBlock = if (state.useBasicBlocks) state.currentBlock.reverse.distinct else Nil
 
-    state.context = saveContext
+    state.context = if (saveContext ne null) saveContext ++ remain else null // let all other effects go if we've reached end of program
     state.currentBlock = saveBlock
+    state.blockEffects = saveEffects
 
     // Reset contents of defCache
     // -- prevents CSEing across inescapable blocks
@@ -62,76 +89,84 @@ trait LayerBlocks { self: ArgonCake =>
     (result, effects, deps, basicBlock)
   }
 
-  @stateful def stageBlock[R](block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Block[R] = {
-    val (result, effects, effectful, bb) = stageScope(block, temp, isolated, seal)
-    val blk = Block(Nil, result, effects, effectful, temp, isolated, seal)
-    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
-    blk
-  }
-  @stateful def stageLambda1[A,R](a: Exp[A])(block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Lambda1[A,R] = {
-    val (result, effects, effectful, bb) = stageScope(block, temp, isolated, seal)
-    val blk = Lambda1(a, result, effects, effectful, temp, isolated, seal)
-    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
-    blk
-  }
-  @stateful def stageLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Lambda2[A,B,R] = {
-    val (result, effects, effectful, bb) = stageScope(block, temp, isolated, seal)
-    val blk = Lambda2(a, b, result, effects, effectful, temp, isolated, seal)
-    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
-    blk
-  }
-  @stateful def stageLambda3[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Lambda3[A,B,C,R] = {
-    val (result, effects, effectful, bb) = stageScope(block, temp, isolated, seal)
-    val blk = Lambda3(a, b, c, result, effects, effectful, temp, isolated, seal)
-    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
-    blk
-  }
-  @stateful def stageLambda4[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Lambda4[A,B,C,D,R] = {
-    val (result, effects, effectful, bb) = stageScope(block, temp, isolated, seal)
-    val blk = Lambda4(a, b, c, d, result, effects, effectful, temp, isolated, seal)
-    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
-    blk
-  }
-  @stateful def stageLambda5[A,B,C,D,E,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E])(block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Lambda5[A,B,C,D,E,R] = {
-    val (result, effects, effectful, bb) = stageScope(block, temp, isolated, seal)
-    val blk = Lambda5(a, b, c, d, e, result, effects, effectful, temp, isolated, seal)
-    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
-    blk
-  }
-  @stateful def stageLambda6[A,B,C,D,E,F,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F])(block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Lambda6[A,B,C,D,E,F,R] = {
-    val (result, effects, effectful, bb) = stageScope(block, temp, isolated, seal)
-    val blk = Lambda6(a, b, c, d, e, f, result, effects, effectful, temp, isolated, seal)
-    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
-    blk
-  }
-  @stateful def stageLambdaN[R](inputs: Seq[Exp[_]], block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Block[R] = {
-    val (result, effects, effectful, bb) = stageScope(block, temp, isolated, seal)
-    val blk = Block(inputs, result, effects, effectful, temp, isolated, seal)
+  @stateful def stageProgramBlock[R](block: => Exp[R]): Block[R] = {
+    val properties = Block.Program
+    val (result, effects, effectful, bb) = stageScope(block, properties)
+    val blk = Block(Nil, result, effects, effectful, properties)
     if (state.useBasicBlocks) state.basicBlocks(blk) = bb
     blk
   }
 
-  @stateful def stageIsolatedBlock[T](block: => Exp[T], seal: Boolean = false): Block[T] = stageBlock[T](block, temp = Freq.Cold, isolated = true, seal)
+  @stateful def stageBlock[R](block: => Exp[R], properties: BlockProperties = Block.Normal): Block[R] = {
+    val (result, effects, effectful, bb) = stageScope(block, properties)
+    val blk = Block(Nil, result, effects, effectful, properties)
+    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
+    blk
+  }
+  @stateful def stageLambda1[A,R](a: Exp[A])(block: => Exp[R], properties: BlockProperties = Block.Normal): Lambda1[A,R] = {
+    val (result, effects, effectful, bb) = stageScope(block, properties)
+    val blk = Lambda1(a, result, effects, effectful, properties)
+    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
+    blk
+  }
+  @stateful def stageLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R], properties: BlockProperties = Block.Normal): Lambda2[A,B,R] = {
+    val (result, effects, effectful, bb) = stageScope(block, properties)
+    val blk = Lambda2(a, b, result, effects, effectful, properties)
+    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
+    blk
+  }
+  @stateful def stageLambda3[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R], properties: BlockProperties = Block.Normal): Lambda3[A,B,C,R] = {
+    val (result, effects, effectful, bb) = stageScope(block, properties)
+    val blk = Lambda3(a, b, c, result, effects, effectful, properties)
+    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
+    blk
+  }
+  @stateful def stageLambda4[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R], properties: BlockProperties = Block.Normal): Lambda4[A,B,C,D,R] = {
+    val (result, effects, effectful, bb) = stageScope(block, properties)
+    val blk = Lambda4(a, b, c, d, result, effects, effectful, properties)
+    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
+    blk
+  }
+  @stateful def stageLambda5[A,B,C,D,E,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E])(block: => Exp[R], properties: BlockProperties = Block.Normal): Lambda5[A,B,C,D,E,R] = {
+    val (result, effects, effectful, bb) = stageScope(block, properties)
+    val blk = Lambda5(a, b, c, d, e, result, effects, effectful, properties)
+    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
+    blk
+  }
+  @stateful def stageLambda6[A,B,C,D,E,F,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F])(block: => Exp[R], properties: BlockProperties = Block.Normal): Lambda6[A,B,C,D,E,F,R] = {
+    val (result, effects, effectful, bb) = stageScope(block, properties)
+    val blk = Lambda6(a, b, c, d, e, f, result, effects, effectful, properties)
+    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
+    blk
+  }
+  @stateful def stageLambdaN[R](inputs: Seq[Exp[_]], block: => Exp[R], properties: BlockProperties = Block.Normal): Block[R] = {
+    val (result, effects, effectful, bb) = stageScope(block, properties)
+    val blk = Block(inputs, result, effects, effectful, properties)
+    if (state.useBasicBlocks) state.basicBlocks(blk) = bb
+    blk
+  }
 
-  @stateful def stageColdBlock[R](block: => Exp[R]) = stageBlock(block, temp = Freq.Cold)
-  @stateful def stageColdLambda1[A,R](a: Exp[A])(block: => Exp[R]) = stageLambda1(a)(block, temp = Freq.Cold)
-  @stateful def stageColdLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R]) = stageLambda2(a,b)(block, temp = Freq.Cold)
-  @stateful def stageColdLambda3[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R])= stageLambda3(a,b,c)(block, temp = Freq.Cold)
-  @stateful def stageColdLambda4[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R])= stageLambda4(a,b,c,d)(block, temp = Freq.Cold)
-  @stateful def stageColdLambda5[A,B,C,D,E,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E])(block: => Exp[R])= stageLambda5(a,b,c,d,e)(block, temp = Freq.Cold)
-  @stateful def stageColdLambda6[A,B,C,D,E,F,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F])(block: => Exp[R])= stageLambda6(a,b,c,d,e,f)(block, temp = Freq.Cold)
+  @stateful def stageIsolatedBlock[T](block: => Exp[T]): Block[T] = stageBlock[T](block, Block.Isolated)
 
-  @stateful def stageHotBlock[R](block: => Exp[R]) = stageBlock(block, temp = Freq.Hot)
-  @stateful def stageHotLambda1[A,R](a: Exp[A])(block: => Exp[R]) = stageLambda1(a)(block, temp = Freq.Hot)
-  @stateful def stageHotLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R]) = stageLambda2(a,b)(block, temp = Freq.Hot)
-  @stateful def stageHotLambda3[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R])= stageLambda3(a,b,c)(block, temp = Freq.Hot)
-  @stateful def stageHotLambda4[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R])= stageLambda4(a,b,c,d)(block, temp = Freq.Hot)
-  @stateful def stageHotLambda5[A,B,C,D,E,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E])(block: => Exp[R])= stageLambda5(a,b,c,d,e)(block, temp = Freq.Hot)
-  @stateful def stageHotLambda6[A,B,C,D,E,F,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F])(block: => Exp[R])= stageLambda6(a,b,c,d,e,f)(block, temp = Freq.Hot)
+  @stateful def stageColdBlock[R](block: => Exp[R]) = stageBlock(block, Block.Cold)
+  @stateful def stageColdLambda1[A,R](a: Exp[A])(block: => Exp[R]) = stageLambda1(a)(block, Block.Cold)
+  @stateful def stageColdLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R]) = stageLambda2(a,b)(block, Block.Cold)
+  @stateful def stageColdLambda3[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R])= stageLambda3(a,b,c)(block, Block.Cold)
+  @stateful def stageColdLambda4[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R])= stageLambda4(a,b,c,d)(block, Block.Cold)
+  @stateful def stageColdLambda5[A,B,C,D,E,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E])(block: => Exp[R])= stageLambda5(a,b,c,d,e)(block, Block.Cold)
+  @stateful def stageColdLambda6[A,B,C,D,E,F,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F])(block: => Exp[R])= stageLambda6(a,b,c,d,e,f)(block, Block.Cold)
 
-  @stateful def stageSealedBlock[R](block: => Exp[R]): Block[R] = stageBlock[R](block, seal = true)
-  @stateful def stageSealedLambda1[A,R](a: Exp[A])(block: => Exp[R]): Lambda1[A,R] = stageLambda1[A,R](a)(block, seal = true)
-  @stateful def stageSealedLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: Exp[R]): Lambda2[A,B,R] = stageLambda2[A,B,R](a,b)(block, seal = true)
+  @stateful def stageHotBlock[R](block: => Exp[R]) = stageBlock(block, Block.Hot)
+  @stateful def stageHotLambda1[A,R](a: Exp[A])(block: => Exp[R]) = stageLambda1(a)(block, Block.Hot)
+  @stateful def stageHotLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R]) = stageLambda2(a,b)(block, Block.Hot)
+  @stateful def stageHotLambda3[A,B,C,R](a: Exp[A], b: Exp[B], c: Exp[C])(block: => Exp[R])= stageLambda3(a,b,c)(block, Block.Hot)
+  @stateful def stageHotLambda4[A,B,C,D,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D])(block: => Exp[R])= stageLambda4(a,b,c,d)(block, Block.Hot)
+  @stateful def stageHotLambda5[A,B,C,D,E,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E])(block: => Exp[R])= stageLambda5(a,b,c,d,e)(block, Block.Hot)
+  @stateful def stageHotLambda6[A,B,C,D,E,F,R](a: Exp[A], b: Exp[B], c: Exp[C], d: Exp[D], e: Exp[E], f: Exp[F])(block: => Exp[R])= stageLambda6(a,b,c,d,e,f)(block, Block.Hot)
+
+  @stateful def stageSealedBlock[R](block: => Exp[R]): Block[R] = stageBlock[R](block, Block.Sealed)
+  @stateful def stageSealedLambda1[A,R](a: Exp[A])(block: => Exp[R]): Lambda1[A,R] = stageLambda1[A,R](a)(block, Block.Sealed)
+  @stateful def stageSealedLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: Exp[R]): Lambda2[A,B,R] = stageLambda2[A,B,R](a,b)(block, Block.Sealed)
 
   /**
     * Stage the effects of a block that is executed 'here' (if it is executed at all).

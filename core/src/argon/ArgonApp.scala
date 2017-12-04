@@ -89,7 +89,7 @@ trait ArgonCompiler { self =>
     * Stage block
     */
   final protected def stageProgram[R:Type](blk: => R): Block[R] = withLog(config.logDir, "0000 Staging.log") {
-    stageBlock { blk.s }
+    stageProgramBlock { blk.s }
   }
 
   final protected def runTraversals[R:Type](startTime: Long, b: Block[R], timingLog: Log): Unit = {

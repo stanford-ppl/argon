@@ -104,13 +104,13 @@ trait Transformer { self =>
     * Utility function - calls inlineBlock in all cases
     */
   final protected def transformBlock[T, B[T]<:Block[T]](block: B[T]): B[T] = (block match {
-    case Lambda1(input,_,_,_,temp,isol,seal)       => stageLambda1(f(input))({ inlineBlock(block) }, temp, isol, seal)
-    case Lambda2(a,b, _,_,_,temp,isol,seal)        => stageLambda2(f(a),f(b))({ inlineBlock(block) }, temp, isol, seal)
-    case Lambda3(a,b,c,_,_,_,temp,isol,seal)       => stageLambda3(f(a),f(b),f(c))( {inlineBlock(block) }, temp, isol, seal)
-    case Lambda4(a,b,c,d,_,_,_,temp,isol,seal)     => stageLambda4(f(a),f(b),f(c),f(d))({ inlineBlock(block)}, temp, isol, seal)
-    case Lambda5(a,b,c,d,e,_,_,_,temp,isol,seal)   => stageLambda5(f(a),f(b),f(c),f(d),f(e))({ inlineBlock(block)}, temp, isol, seal)
-    case Lambda6(a,b,c,d,e,x,_,_,_,temp,isol,seal) => stageLambda6(f(a),f(b),f(c),f(d),f(e),f(x))({ inlineBlock(block)}, temp, isol, seal)
-    case Block(inputs,_,_,_,temp,isol,seal)        => stageLambdaN(f.tx(inputs), { inlineBlock(block) }, temp, isol, seal)
+    case Lambda1(input,_,_,_,props)       => stageLambda1(f(input))({ inlineBlock(block) }, props)
+    case Lambda2(a,b, _,_,_,props)        => stageLambda2(f(a),f(b))({ inlineBlock(block) }, props)
+    case Lambda3(a,b,c,_,_,_,props)       => stageLambda3(f(a),f(b),f(c))( {inlineBlock(block) }, props)
+    case Lambda4(a,b,c,d,_,_,_,props)     => stageLambda4(f(a),f(b),f(c),f(d))({ inlineBlock(block)}, props)
+    case Lambda5(a,b,c,d,e,_,_,_,props)   => stageLambda5(f(a),f(b),f(c),f(d),f(e))({ inlineBlock(block)}, props)
+    case Lambda6(a,b,c,d,e,x,_,_,_,props) => stageLambda6(f(a),f(b),f(c),f(d),f(e),f(x))({ inlineBlock(block)}, props)
+    case Block(inputs,_,_,_,props)        => stageLambdaN(f.tx(inputs), { inlineBlock(block) }, props)
   }).asInstanceOf[B[T]]
 
 

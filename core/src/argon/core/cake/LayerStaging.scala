@@ -102,6 +102,7 @@ trait LayerStaging { this: ArgonCake =>
         ss.foreach { s =>
           effectsOf(s) = effectsOf(s) andAlso effects
           depsOf(s) = depsOf(s) ++ deps
+          log(c"  Added to context")
           state.context +:= s // prepend
         }
 

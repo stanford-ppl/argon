@@ -15,10 +15,11 @@ case class Effects(
   global:  Boolean = false,           // Modifies execution of entire program (e.g. exceptions, exiting)
   mutable: Boolean = false,           // Allocates a mutable structure
   throws:  Boolean = false,           // May throw exceptions (speculative execution may be unsafe)
+  func:    Boolean = false,           // Represents a function declaration
   reads:   Set[Sym[_]] = Set.empty,   // Reads given mutable symbols
   writes:  Set[Sym[_]] = Set.empty    // Writes given mutable symbols
 ) extends Metadata[Effects] with CompilerFacing {
-  def mirror(f: Tx) = Effects(unique, sticky, simple, global, mutable, throws, f.txSyms(reads), f.txSyms(writes))
+  def mirror(f: Tx) = Effects(unique, sticky, simple, global, mutable, throws, func, f.txSyms(reads), f.txSyms(writes))
   override val ignoreOnTransform = true // Mirroring already takes care of effects
 
   private def combine(that: Effects, m1: Boolean, m2: Boolean) = Effects(
@@ -28,6 +29,7 @@ case class Effects(
     global  = this.global || that.global,
     mutable = (m1 && this.mutable) || (m2 && that.mutable),
     throws  = this.throws || that.throws,
+    func    = this.func || that.func,
     reads   = this.reads union that.reads,
     writes  = this.writes union that.writes
   )
@@ -39,6 +41,7 @@ case class Effects(
   def isPure = this == Pure
   def isMutable = mutable
   def isIdempotent = !simple && !global && !mutable && writes.isEmpty
+  def isFunction = func
   def mayCSE = isIdempotent && !unique
 
   def onlyThrows = this == Throws
@@ -61,6 +64,7 @@ case class Effects(
           (if (this.global) List(c"global=${this.global}") else Nil) ++
           (if (this.mutable)  List("mutable") else Nil) ++
           (if (this.throws) List("throws") else Nil) ++
+          (if (this.func) List("function") else Nil) ++
           (if (this.reads.nonEmpty) List(c"""reads={${this.reads.map(x=> c"$x").mkString(",")}}""") else Nil) ++
           (if (this.writes.nonEmpty) List(c"""writes={${this.writes.map(x=> c"$x").mkString(",")}}""") else Nil)).mkString(", ") + ")"
     }

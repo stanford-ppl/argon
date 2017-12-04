@@ -21,14 +21,21 @@ case class IRPrinter(var IR: State) extends Traversal {
     tab += 1
     dbgs(c"block $i: $blk {")
     tab += 1
-    dbgs(c"effects: ${blk.effects}")
-    dbgs(c"anti-deps: ${blk.effectful}")
-    dbgs(c"isolated: ${blk.isolated}")
-    dbgs(c"seal: ${blk.seal}")
+    dbgs(c"effects:    ${blk.effects}")
+    dbgs(c"anti-deps:  ${blk.effectful}")
+    dbgs(c"properties: ${blk.properties}")
     visitBlock(blk)
     tab -= 1
     dbgs(c"} // End of $lhs block #$i")
     tab -= 1
+  }
+
+  override protected def process[S:Type](block: Block[S]): Block[S] = {
+    dbg(c"Program: ")
+    dbg(s"  effects:    ${block.effects}")
+    dbg(c"  anti-deps:  ${block.effectful}")
+    dbg(c"  properties: ${block.properties}")
+    super.process(block)
   }
 
   override protected def visit(lhs: Sym[_], rhs: Op[_]) = {

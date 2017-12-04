@@ -29,7 +29,7 @@ trait LayerDefs { this: ArgonCake =>
   final def syms(a: Any*): Seq[Sym[_]] = dyns(a).collect{case s: Sym[_] => s}
 
   private def symsFreq(a: Any*): Seq[(Dyn[_],Freq)] = recursive.collectSeqs {
-    case s: Dyn[_] => Iterable((s, Freq.Normal))
+    case s: Dyn[_]    => Iterable((s, Freq.Normal))
     case b: Block[_]  => symsFreq(b.result) ++ symsFreq(b.effectful)
     case d: Def       => d.freqs
   }(a)
