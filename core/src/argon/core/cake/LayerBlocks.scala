@@ -62,6 +62,14 @@ trait LayerBlocks { self: ArgonCake =>
     (result, effects, deps, basicBlock)
   }
 
+  @stateful def fakeStageScopeHack[R](x: => Exp[R]): List[Stm] = {
+    val prevBB = state.useBasicBlocks
+    state.useBasicBlocks = true
+    val (result,effects,deps,bblock) = stageScope(x, Freq.Cold, isolated = true, seal = true)
+    state.useBasicBlocks = prevBB
+    bblock
+  }
+
   @stateful def stageBlock[R](block: => Exp[R], temp: Freq = Freq.Normal, isolated: Boolean = false, seal: Boolean = false): Block[R] = {
     val (result, effects, effectful, bb) = stageScope(block, temp, isolated, seal)
     val blk = Block(Nil, result, effects, effectful, temp, isolated, seal)
