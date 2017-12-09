@@ -16,6 +16,7 @@ class Config {
   var lib:  Boolean = false
   var name: String = "App"
   var logDir: String = ""
+  var reportDir: String = ""
   var genDir: String = ""
   var clearLogs: Boolean = true
   var clearGen: Boolean = true
@@ -38,6 +39,7 @@ class Config {
     cfg.lib = this.lib
     cfg.name = this.name
     cfg.logDir = this.logDir
+    cfg.reportDir = this.reportDir
     cfg.genDir = this.genDir
     cfg.clearLogs = this.clearLogs
     cfg.clearGen = this.clearGen
@@ -81,6 +83,7 @@ class Config {
     lib: Boolean,
     //name: String,
     log: String,
+    report: String,
     out: String,
     clearLogs: Boolean,
     clearGen: Boolean,
@@ -100,6 +103,7 @@ argon {
   unsafe = false
   lib = true
   log = $${argon.cwd}"/logs/"${name}
+  report = $${argon.cwd}"/report/"${name}
   out = $${argon.cwd}"/gen/"${name}
   clear-logs = true
   clear-gen = false
@@ -122,6 +126,7 @@ argon {
     lib    = conf.lib
     //name = conf.name
     logDir = conf.log
+    reportDir = conf.report
     genDir = conf.out
     clearLogs = conf.clearLogs
     clearGen = conf.clearGen

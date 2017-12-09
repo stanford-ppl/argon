@@ -62,6 +62,9 @@ object Sum {
 }
 case object One extends Prod(Nil) { override def toString: String = "One" }
 case object Zero extends Sum(Nil) { override def toString: String = "Zero" }
+case object Constant {
+  def apply(x: Exp[Index]): AffineFunction = Sum(Seq(Left(x)))
+}
 
 case class AffineProduct(a: AffineFunction, i: Exp[Index]) {
   @internal def negate: AffineProduct = AffineProduct(a.negate, i)
@@ -200,7 +203,7 @@ trait AccessPatternAnalyzer extends Traversal {
   def isInvariantForAll(b: Exp[Index]): Boolean = loopIndices.forall{i => isInvariant(b,i) }
 
   def extractIndexPattern(x: Exp[Index]): IndexPattern = {
-    dbg(c"Looking for affine access patterns from ${str(x)}")
+    dbgs(c"Looking for affine access patterns from ${str(x)}")
 
     def extractPattern(x: Exp[Index]): Option[(Seq[AffineProduct],AffineFunction)] = x match {
       case Minus(a,b) => (extractPattern(a), extractPattern(b)) match {
@@ -234,13 +237,13 @@ trait AccessPatternAnalyzer extends Traversal {
         val offset = offsetOf(i).map{o => Sum(o) }.getOrElse(Zero)
         Some(Seq(AffineProduct(stride,i)), offset)  // i
 
-      case b if isInvariantForAll(b) => Some(Nil, Zero) // b
+      case b if isInvariantForAll(b) => Some((Nil, Constant(b))) // b
       case _ => None
     }
 
     val pattern = extractPattern(x)
 
-    dbg(c"Extracted pattern: " + pattern.mkString(" + "))
+    dbgs(c"Extracted pattern: " + pattern.mkString(" + "))
 
     pattern.map{p =>
       val products = p._1
