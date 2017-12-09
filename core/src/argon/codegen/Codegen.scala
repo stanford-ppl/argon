@@ -286,6 +286,7 @@ trait Codegen extends Traversal {
     case c: Int => c.toString
     case b: Boolean => b.toString
     case l: Long => l.toString
+    case d: Double => d.toString
     case l: BigDecimal => l.toString
     case l: BigInt => l.toString
     case l: FloatPoint => l.toString
