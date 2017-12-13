@@ -10,6 +10,7 @@ trait LayerStaging { this: ArgonCake =>
     state.graph.addBound(bnd)
     bnd
   }
+
   // TODO: Investigate changing T to T<:MetaAny[_] and c to T#Internal
   @internal def constant[T](tp: Type[T])(c: Any): Const[T] = {
     val cc = new Const[T](tp)(c)
