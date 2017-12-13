@@ -105,6 +105,9 @@ trait LayerStaging { this: ArgonCake =>
           depsOf(s) = depsOf(s) ++ deps
           log(c"  Added to context")
           state.context +:= s // prepend
+          log(c"  <context>")
+          state.context.foreach{sym => log(s"  ${str(sym)}") }
+          log(c"  <end of context>")
         }
 
         // Correctness checks -- cannot have mutable aliases, cannot mutate immutable symbols

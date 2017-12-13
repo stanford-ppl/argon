@@ -65,15 +65,20 @@ trait LayerBlocks { self: ArgonCake =>
       else e != Sticky && e != Pure   // Keep everything except pure and sticky effects
     }
 
+    log("")
+    log(c"Completing staging of block. Context: ")
+    state.context.foreach{sym => log(s"  ${str(sym)}") }
+
     val (deps,remain) = state.context.partition{
       case sym@Effectful(e,_) =>
         val keep = keepEffect(e)
-        log(c"${str(sym)} [effects: $e, keep: $keep]")
+        log(c"  ${str(sym)} [effects: $e, keep: $keep]")
         keep
       case sym =>
-        log(c"${str(sym)} [Was pure in context list?]")
+        log(c"  ${str(sym)} [Was pure in context list?]")
         false
     }
+    log("<End of context>")
 
     val basicBlock = if (state.useBasicBlocks) state.currentBlock.reverse.distinct else Nil
 
@@ -166,7 +171,7 @@ trait LayerBlocks { self: ArgonCake =>
 
   @stateful def stageSealedBlock[R](block: => Exp[R]): Block[R] = stageBlock[R](block, Block.Sealed)
   @stateful def stageSealedLambda1[A,R](a: Exp[A])(block: => Exp[R]): Lambda1[A,R] = stageLambda1[A,R](a)(block, Block.Sealed)
-  @stateful def stageSealedLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: Exp[R]): Lambda2[A,B,R] = stageLambda2[A,B,R](a,b)(block, Block.Sealed)
+  @stateful def stageSealedLambda2[A,B,R](a: Exp[A], b: Exp[B])(block: => Exp[R]): Lambda2[A,B,R] = stageLambda2[A,B,R](a,b)(block, Block.Sealed)
 
   /**
     * Stage the effects of a block that is executed 'here' (if it is executed at all).
