@@ -11,8 +11,8 @@ object IfThenElseOps {
     case Const(false) if state.context != null => elsep()
     case Op(Not(x)) => ifThenElse(x, elsep, thenp)
     case _ =>
-      val thenBlk = stageColdBlock(thenp())
-      val elseBlk = stageColdBlock(elsep())
+      val thenBlk = stageSealedBlock(thenp())
+      val elseBlk = stageSealedBlock(elsep())
       val effects = thenBlk.effects orElse elseBlk.effects
       stageEffectful(IfThenElse(cond, thenBlk, elseBlk), effects)(ctx)
   }

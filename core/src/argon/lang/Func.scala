@@ -16,7 +16,7 @@ object Func {
   @internal def call[R:Type](fun: Exp[Func[R]], l: List[Exp[_]]): Exp[R] = stage(FuncCall(fun, l))(ctx)
 
   @internal def decl[R:Type](l: List[Bound[_]], b: ()=>Exp[R]): Exp[Func[R]] = {
-    val blk = stageIsolatedBlock{ b() }
+    val blk = stageSealedBlock{ b() }
     stageEffectful(FuncDecl(l, blk), blk.effects andAlso Funcd)(ctx)
   }
 }
