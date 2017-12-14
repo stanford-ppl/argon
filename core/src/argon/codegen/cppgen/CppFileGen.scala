@@ -73,7 +73,34 @@ typedef __int128 int128_t;
     }
 
     withStream(getStream("functions","cpp")) {
-      emitIncludes()
+      emit(s"""#include <stdint.h>
+#include <sys/time.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <stdarg.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <pwd.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include "DeliteCpp.h"
+#include "argmap.h"
+#include "cppDeliteArraystring.h"
+#include "cppDeliteArrays.h"
+#include "cppDeliteArraydouble.h"
+#include "functions.h"
+#include <vector>
+using std::vector;
+
+#ifndef ZYNQ
+typedef __int128 int128_t;
+#endif
+
+""")
     }
 
     withStream(getStream("argmap","h")) {
