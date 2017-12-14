@@ -19,14 +19,13 @@ trait CppFileGen extends FileGen {
     }
   }
 
-
-  override protected def emitFileHeader() {
+  def emitIncludes(): Unit = {
     emit(s"""#include <stdint.h>
 #include <sys/time.h>
 #include <iostream>
 #include <fstream>
-#include <string> 
-#include <sstream> 
+#include <string>
+#include <sstream>
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -50,6 +49,10 @@ typedef __int128 int128_t;
 #endif
 
 """)
+  }
+
+  override protected def emitFileHeader() {
+    emitIncludes()
 
   open(s"void Application(int numThreads, vector<string> * args) {")
   emit("// Create an execution context.")
@@ -70,7 +73,7 @@ typedef __int128 int128_t;
     }
 
     withStream(getStream("functions","cpp")) {
-      emit("""#include "functions.h" """)
+      emitIncludes()
     }
 
     withStream(getStream("argmap","h")) {
