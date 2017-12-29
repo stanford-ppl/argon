@@ -42,6 +42,7 @@ trait CppFileGen extends FileGen {
 #include "cppDeliteArraydouble.h"
 #include "FringeContext.h"
 #include "functions.h"
+#include "ArgAPI.h"
 #include <vector>
 using std::vector;
 
@@ -71,6 +72,10 @@ typedef __int128 int128_t;
 
     withStream(getStream("functions","cpp")) {
       emit("""#include "functions.h" """)
+    }
+
+    withStream(getStream("ArgAPI", "h")) {
+      emit(s"// API for args in app ${config.name}")
     }
 
     withStream(getStream("argmap","h")) {
