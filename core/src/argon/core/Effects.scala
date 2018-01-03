@@ -7,9 +7,6 @@ case class AntiDeps(syms: Seq[Exp[_]]) extends Metadata[AntiDeps] with CompilerF
   override val ignoreOnTransform = true // Mirroring of symbol already takes care of identifying anti-dependencies
   override def toStringCompiler = c"$syms"
 }
-@data object antiDepsOf {
-  def apply(x: Exp[_]): Seq[Exp[_]] = metadata[AntiDeps](x).map(_.syms).getOrElse(Nil)
-}
 
 case class Effects(
   unique:  Boolean = false,           // Should not be CSEd
