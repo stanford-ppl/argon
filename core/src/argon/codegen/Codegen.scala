@@ -176,41 +176,47 @@ trait Codegen extends Traversal {
       val d = dims.replace(" ", "").replace(",","_")
       s"${vec}mdrw${n}_${d}_${w}"  
     } else if (rhs.contains(" Seqpipe(")) {
-      val extractor = ".*Seqpipe\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
-      val extractor(stages,fsm,ctrd,stw,static) = rhs
+      val extractor = ".*Seqpipe\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+),[ ]*isReduce[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(stages,fsm,ctrd,stw,static,isRed) = rhs
       val f = fsm.replace("false", "f").replace("true", "t")
       val s = static.replace("false", "f").replace("true", "t")
-      s"${vec}seq${stages}_${f}_${ctrd}_${stw}_${s}"  
+      val ir = isRed.replace("false", "f").replace("true", "t")
+      s"${vec}seq${stages}_${f}_${ctrd}_${stw}_${s}_${ir}"
     } else if (rhs.contains(" Metapipe(")) {
-      val extractor = ".*Metapipe\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
-      val extractor(stages,fsm,ctrd,stw,static) = rhs
+      val extractor = ".*Metapipe\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+),[ ]*isReduce[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(stages,fsm,ctrd,stw,static,isRed) = rhs
       val f = fsm.replace("false", "f").replace("true", "t")
       val s = static.replace("false", "f").replace("true", "t")
-      s"${vec}meta${stages}_${f}_${ctrd}_${stw}_${s}"  
+      val ir = isRed.replace("false", "f").replace("true", "t")
+      s"${vec}meta${stages}_${f}_${ctrd}_${stw}_${s}_${ir}"
     } else if (rhs.contains(" Innerpipe(")) {
-      val extractor = ".*Innerpipe\\([ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
-      val extractor(strm,ctrd,stw,static) = rhs
+      val extractor = ".*Innerpipe\\([ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+),[ ]*isReduce[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(strm,ctrd,stw,static,isRed) = rhs
       val st = strm.replace("false", "f").replace("true", "t")
       val s = static.replace("false", "f").replace("true", "t")
-      s"${vec}inner${st}_${ctrd}_${stw}_${s}"  
+      val ir = isRed.replace("false", "f").replace("true", "t")
+      s"${vec}inner${st}_${ctrd}_${stw}_${s}_${ir}"
     } else if (rhs.contains(" Streaminner(")) {
-      val extractor = ".*Streaminner\\([ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
-      val extractor(strm,ctrd,stw,static) = rhs
+      val extractor = ".*Streaminner\\([ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+),[ ]*isReduce[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(strm,ctrd,stw,static,isRed) = rhs
       val st = strm.replace("false", "f").replace("true", "t")
       val s = static.replace("false", "f").replace("true", "t")
-      s"${vec}strinner${st}_${ctrd}_${stw}_${s}"  
+      val ir = isRed.replace("false", "f").replace("true", "t")
+      s"${vec}strinner${st}_${ctrd}_${stw}_${s}_${ir}"
     } else if (rhs.contains(" Parallel(")) {
-      val extractor = ".*Parallel\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
-      val extractor(stages,fsm,ctrd,stw,static) = rhs
+      val extractor = ".*Parallel\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+),[ ]*isReduce[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(stages,fsm,ctrd,stw,static,isRed) = rhs
       val f = fsm.replace("false", "f").replace("true", "t")
       val s = static.replace("false", "f").replace("true", "t")
-      s"${vec}parallel${stages}_${f}_${ctrd}_${stw}_${s}"  
+      val ir = isRed.replace("false", "f").replace("true", "t")
+      s"${vec}parallel${stages}_${f}_${ctrd}_${stw}_${s}_${ir}"
     } else if (rhs.contains(" Streampipe(")) {
-      val extractor = ".*Streampipe\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+)\\).*".r
-      val extractor(stages,fsm,ctrd,stw,static) = rhs
+      val extractor = ".*Streampipe\\([ ]*([0-9]+)[ ]*,[ ]*isFSM[ ]*=[ ]*([falsetrue]+)[ ]*,[ ]*ctrDepth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*stateWidth[ ]*=[ ]*([0-9]+)[ ]*,[ ]*staticNiter[ ]*=[ ]*([falsetrue]+),[ ]*isReduce[ ]*=[ ]*([falsetrue]+)\\).*".r
+      val extractor(stages,fsm,ctrd,stw,static,isRed) = rhs
       val f = fsm.replace("false", "f").replace("true", "t")
       val s = static.replace("false", "f").replace("true", "t")
-      s"${vec}strmpp${stages}_${f}_${ctrd}_${stw}_${s}"  
+      val ir = isRed.replace("false", "f").replace("true", "t")
+      s"${vec}strmpp${stages}_${f}_${ctrd}_${stw}_${s}_${ir}"
     } else if (rhs.contains("_retime")) {
       "rt"
     } else {
@@ -286,6 +292,7 @@ trait Codegen extends Traversal {
     case c: Int => c.toString
     case b: Boolean => b.toString
     case l: Long => l.toString
+    case d: Double => d.toString
     case l: BigDecimal => l.toString
     case l: BigInt => l.toString
     case l: FloatPoint => l.toString
