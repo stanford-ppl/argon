@@ -11,7 +11,6 @@ val paradiseVersion = "2.1.0"
 val virtualizedVersion = "0.2"
 
 val commonSettings = Seq(
-
   libraryDependencies += "org.virtualized" %% "virtualized" % virtualizedVersion,
   libraryDependencies += "org.scalatest" %% "scalatest" % scalatestVersion % "test",
 

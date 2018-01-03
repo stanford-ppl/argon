@@ -85,6 +85,7 @@ trait LayerReporting { self: ArgonCake =>
   @stateful def str(lhs: Exp[_]): String = lhs match {
     case Def(rhs) => Report.readable(lhs) + " = " + Report.readable(rhs)
     case Const(c) => Report.readable(lhs) + " = " + Report.readable(c)
+    case Param(p) => Report.readable(lhs) + " = " + Report.readable(p)
     case _: Bound[_] => Report.readable(lhs) + " [bound]"
   }
   @stateful def str(lhs: Seq[Exp[_]]): String = lhs.head match {
