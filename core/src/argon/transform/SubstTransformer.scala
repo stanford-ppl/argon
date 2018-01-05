@@ -11,24 +11,20 @@ trait SubstTransformer extends Transformer {
 
   // Syntax is, e.g.: register(x -> y)
   // Technically original and replacement should have the same type, but this type currently can be "Any"
-  def register[T](rule: (Exp[T], Exp[T])) = {
+  def register[T](rule: (Exp[T], Exp[T])): Unit = {
     if (!allowUnsafeSubst) {
       assert(rule._2.tp <:< rule._1.tp, c"When creating substitution ${rule._1} -> ${rule._2}, type ${rule._2.tp} was not a subtype of ${rule._1.tp}")
     }
     subst += rule
   }
   // Only use if you know what you're doing!
-  def registerUnsafe[A,B](rule: (Exp[A],Exp[B])): Unit = {
-    subst += rule
-  }
-  def remove[T](key: Exp[T]) = subst -= key
+  def registerUnsafe[A,B](rule: (Exp[A],Exp[B])): Unit = { subst += rule }
+  def remove[T](key: Exp[T]): Unit = subst -= key
 
-  def registerOrRemove[T](rule: (Exp[T], Option[Exp[T]])) = rule._2 match {
+  def registerOrRemove[T](rule: (Exp[T], Option[Exp[T]])): Unit = rule._2 match {
     case Some(s) => register(rule._1,s)
     case None => remove(rule._1)
   }
-
-  def getSubst[T](key: Exp[T]): Option[Exp[T]] = subst.get(key).asInstanceOf[Option[Exp[T]]]
 
   final override protected def blockToFunction0[R](b: Block[R], copy: Boolean): () => Exp[R] = isolateIf(copy){
     () => inlineBlock(b)
@@ -89,9 +85,12 @@ trait SubstTransformer extends Transformer {
     }
   }
 
-  override protected def transformExp[T:Type](s: Exp[T]): Exp[T] = subst.get(s) match {
+  override protected def transformExp[T:Type](e: Exp[T]): Exp[T] = subst.get(e) match {
     case Some(y) => y.asInstanceOf[Exp[T]]
-    case None => s
+    case None => e match {
+      case s: Sym[_] => throw new Exception(s"Used untransformed symbol $s during mirroring!")
+      case _ => e
+    }
   }
 
   def withSubstScope[A](extend: (Exp[Any],Exp[Any])*)(block: => A): A =

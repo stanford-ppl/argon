@@ -83,11 +83,12 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
   }
 
   private def createSubstRule[T:Type](lhs: Sym[T], rhs: Op[T])(implicit ctx: SrcCtx): Unit = {
-    val lhs2 = if (f(lhs) == lhs) {
+    val lhs2 = if (!subst.contains(lhs)) {
       val lhs2 = transform(lhs, rhs)
+      val lhs3 = subst.get(lhs)
 
       // Substitution must not have any rule for lhs besides (optionally) lhs -> lhs2
-      if (f(lhs) != lhs && f(lhs) != lhs2) throw new argon.IllegalSubstException(name, lhs, f(lhs), lhs2)
+      if (lhs3.isDefined && !lhs3.contains(lhs2)) throw new argon.IllegalSubstException(name, lhs, f(lhs), lhs2)
       lhs2
     }
     else {
@@ -120,7 +121,8 @@ trait ForwardTransformer extends Traversal with SubstTransformer {
   final override protected def visitFat(lhs: Seq[Sym[_]], rhs: Def) = transformFat(lhs, rhs)(lhs.head.ctx)
 
   override protected def preprocess[S:Type](block: Block[S]) = {
-    subst = Map.empty // Reset substitutions across runs (if transformer used more than once)
+    subst = Map.empty          // Reset substitutions across runs (if transformer used more than once)
+    state.defCache = Map.empty // Reset CSE cache
     super.preprocess(block)
   }
 

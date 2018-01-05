@@ -85,7 +85,8 @@ object String {
   @internal def slice(x: Exp[MString], start: Exp[Index], end: Exp[Index])(implicit ctx: SrcCtx): Exp[MString] = {
     stage( StringSlice(x,start,end) )(ctx)
   }
-  @internal def length(x: Exp[MString])(implicit ctx: SrcCtx): Exp[Int32] = {
-    stage( StringLength(x) )(ctx)
+  @internal def length(x: Exp[MString])(implicit ctx: SrcCtx): Exp[Int32] = x match {
+    case Const(a: CString) => FixPt.int32s(a.length)
+    case _ => stage( StringLength(x) )(ctx)
   }
 }

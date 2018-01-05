@@ -72,13 +72,10 @@ trait LayerReporting { self: ArgonCake =>
     if (!noError) state.logError()
   }
 
-  @stateful def bug(x: => Any): Unit = Report.bug(x)
-  @stateful def bug(ctx: SrcCtx): Unit = Report.bug(ctx)
-  @stateful def bug(ctx: SrcCtx, showCaret: Boolean): Unit = Report.bug(ctx, showCaret)
-  @stateful def bug(ctx: SrcCtx, x: => Any, noError: Boolean = false): Unit = {
-    Report.bug(ctx, x)
-    if (!noError) state.logBug()
-  }
+  @stateful def bug(x: => Any): Unit = { state.logBug(); Report.bug(x) }
+  @stateful def bug(ctx: SrcCtx): Unit = { state.logBug(); Report.bug(ctx) }
+  @stateful def bug(ctx: SrcCtx, showCaret: Boolean): Unit = { state.logBug(); Report.bug(ctx, showCaret) }
+  @stateful def bug(ctx: SrcCtx, x: => Any, noError: Boolean = false): Unit = { state.logBug(); Report.bug(ctx, x) }
 
   @stateful def info(x: => Any): Unit = Report.info(x)
 

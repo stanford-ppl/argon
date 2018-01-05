@@ -1,6 +1,7 @@
 package argon.transform
 
 import argon.core._
+import scala.language.existentials
 
 trait Transformer { self =>
   var IR: State
@@ -177,7 +178,18 @@ trait Transformer { self =>
   final def mirror(props: Map[Class[_],Metadata[_]]): Map[Class[_],Metadata[_]] = {
     // Somehow, using mapValues here causes the metadata to be call by name, causing it to re-mirror on every fetch...
     // Also, scala docs lie about the return type of collect on flatMap apparently
-    props.collect{case (key,meta) if !meta.ignoreOnTransform => key -> mirror(meta) }.toMap
+    props.flatMap{
+      case (key,meta) if !meta.ignoreOnTransform =>
+        // Attempt to mirror metadata, only keep the ones that don't fail mirroring
+        val meta2: Option[Metadata[_]] = try {
+          Some(mirror(meta))
+        }
+        catch {case _:Throwable => None }
+
+        meta2.map{m => key -> m } : Option[(Class[_],Metadata[_])]
+
+      case _ => None
+    }.toMap
   }
   final def mirror[M<:Metadata[_]](m: M): M = m.mirror(self).asInstanceOf[M]
 
