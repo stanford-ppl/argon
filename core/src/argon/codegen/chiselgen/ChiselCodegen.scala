@@ -208,6 +208,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile"))
     dependencies ::= FileDep(resourcesPath, "app-level/verilator.mk", "../", Some("verilator.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/zynq.mk", "../", Some("zynq.mk"))
+    dependencies ::= FileDep(resourcesPath, "app-level/arria10.mk", "../", Some("arria10.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/xsim.mk", "../", Some("xsim.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/zcu.mk", "../", Some("zcu.mk"))
     dependencies ::= FileDep(resourcesPath, "app-level/instrument.sh", "../", Some("instrument.sh"))
