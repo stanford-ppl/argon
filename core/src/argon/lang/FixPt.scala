@@ -178,9 +178,9 @@ object FixPt {
     val fmt = FixFormat(sign,ibits,fbits)
     val tp  = FixPtType[S,I,F]
 
-    def withCheck[T](x: T)(eql: T => CBoolean): T = {
+    def withCheck[T,A](x: T, full_x: A)(eql: T => CBoolean): T = {
       if (!force && !eql(x)) {
-        error(ctx, u"Loss of precision detected in implicit lift: $tp cannot fully represent value ${escapeConst(x)}.")
+        error(ctx, u"Loss of precision detected in implicit lift: $tp cannot fully represent value ${escapeConst(x)} =/= ${full_x} (actual).")
         error(u"""Use the explicit annotation "${escapeConst(x)}.to[$tp]" to ignore this error.""")
         error(ctx)
       }
@@ -188,16 +188,16 @@ object FixPt {
     }
 
     x match {
-      case x: BigDecimal => withCheck(FixedPoint(x, fmt)){ _.toBigDecimal == x }
-      case x: BigInt     => withCheck(FixedPoint(x, fmt)){ _.toBigInt == x }
-      case x: Int        => withCheck(FixedPoint(x, fmt)){ _.toInt == x }
-      case x: Long       => withCheck(FixedPoint(x, fmt)){ _.toLong == x }
-      case x: Float      => withCheck(FixedPoint(x, fmt)){ _.toFloat == x }
-      case x: Double     => withCheck(FixedPoint(x, fmt)){ _.toDouble == x }
-      case x: CString    => withCheck(FixedPoint(x, fmt)){ _.toBigDecimal == BigDecimal(x) }
+      case x: BigDecimal => withCheck(FixedPoint(x, fmt), x){ _.toBigDecimal == x }
+      case x: BigInt     => withCheck(FixedPoint(x, fmt), x){ _.toBigInt == x }
+      case x: Int        => withCheck(FixedPoint(x, fmt), x){ _.toInt == x }
+      case x: Long       => withCheck(FixedPoint(x, fmt), x){ _.toLong == x }
+      case x: Float      => withCheck(FixedPoint(x, fmt), x){ _.toFloat == x }
+      case x: Double     => withCheck(FixedPoint(x, fmt), x){ _.toDouble == x }
+      case x: CString    => withCheck(FixedPoint(x, fmt), x){ _.toBigDecimal == BigDecimal(x) }
       case x: FixedPoint if x.fmt == fmt => x
-      case x: FixedPoint => withCheck(x.toFixedPoint(fmt)){ _.toFixedPoint(x.fmt) == x }
-      case x: FloatPoint => withCheck(x.toFixedPoint(fmt)){ _.toFloatPoint(x.fmt) == x }
+      case x: FixedPoint => withCheck(x.toFixedPoint(fmt), x){ _.toFixedPoint(x.fmt) == x }
+      case x: FloatPoint => withCheck(x.toFixedPoint(fmt), x){ _.toFloatPoint(x.fmt) == x }
       case c =>
         error(ctx, s"$c cannot be lifted to a fixed point value")
         error(ctx)
