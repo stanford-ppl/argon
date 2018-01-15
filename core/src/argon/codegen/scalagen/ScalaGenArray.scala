@@ -2,6 +2,7 @@ package argon.codegen.scalagen
 
 import argon.core._
 import argon.nodes._
+import argon.emul.FixedPoint
 
 trait ScalaGenArray extends ScalaCodegen {
   override protected def remap(tp: Type[_]): String = tp match {
@@ -18,9 +19,22 @@ trait ScalaGenArray extends ScalaCodegen {
     case op@ArrayNew(size)      => emit(src"val $lhs = new Array[${op.mA}]($size)")
     case op@ArrayFromSeq(seq)   => emit(src"""val $lhs = Array[${op.mA}](${seq.map(quote).mkString(",")})""")
 
-    case ArrayApply(array, i)   => emit(src"val $lhs = $array.apply($i)")
+    case ArrayApply(array, i)   => 
+      emit(src"val $lhs = $array.apply($i)")
+      array match {
+        case Def(InputArguments()) => 
+          if (lhs.name.isDefined) {
+            val ii = i match {case c: Const[_] => c match {case Const(c: FixedPoint) => c.toInt; case _ => -1}; case _ => -1}
+            if (cliArgs.contains(ii)) cliArgs += (ii -> s"${cliArgs(ii)} / ${lhs.name.get}")
+            else cliArgs += (ii -> lhs.name.get)
+          }
+        case _ =>
+      }
+
     case ArrayLength(array)     => emit(src"val $lhs = $array.length")
-    case InputArguments()       => emit(src"val $lhs = args")
+    case InputArguments()       => 
+      emit(src"val $lhs = args")
+      emit(src"""if (args.contains("--help") || args.contains("-h")) {printHelp()}""")
 
     case ArrayUpdate(array, i, data) => emit(src"val $lhs = $array.update($i, $data)")
     case MapIndices(size, func, i)   =>
