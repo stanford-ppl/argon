@@ -299,6 +299,17 @@ trait Codegen extends Traversal {
       // }
   }
 
+  protected def rawquote(s: Exp[_]): String = s match {
+    case c: Const[_] => quoteConst(c)
+    case d: Dyn[_] if config.enableNaming => name(d)
+    case b: Bound[_] => s"b${b.id}"
+    case s: Sym[_] => s"x${s.id}"
+      // s.tp match {
+      //   // case BooleanType => wireMap(s"x${s.id}")
+      //   case _ => wireMap(s"x${s.id}")
+      // }
+  }
+
   protected def quoteOrRemap(arg: Any): String = arg match {
     case p: Seq[_] => p.map(quoteOrRemap).mkString(", ")  // By default, comma separate Seq
     case s: Set[_] => s.map(quoteOrRemap).mkString(", ")  // TODO: Is this expected? Sets are unordered..
