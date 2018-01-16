@@ -28,6 +28,7 @@ trait Codegen extends Traversal {
   var streamExtensions = collection.mutable.Map[String, List[Int]]() // Map from filename to number of extensions it has
   var streamMap = collection.mutable.Map[PrintWriter, String]() // Map from PrintWriter to its string name
   var streamMapReverse = collection.mutable.Map[String, PrintWriter]() // Map from PrintWriter to its string name
+  var cliArgs = collection.mutable.HashMap[Int, String]()
   var topLayerTraits = List[String]() // List of top layer nodes, used in multifile==4 generation
   val tabWidth: Int = 2
 

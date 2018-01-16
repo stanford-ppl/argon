@@ -115,11 +115,26 @@ typedef __int128 int128_t;
   override protected def emitFileFooter() {
     emit("delete c1;")
     close("}")
+    val argInts = cliArgs.toSeq.map(_._1)
+    val argsList = if (argInts.length > 0) {
+      (0 to argInts.max).map{i => 
+        if (cliArgs.contains(i)) s"<$i- ${cliArgs(i)}>"
+        else s"<${i}- UNUSED>"
+      }.mkString(" ")
+    } else {"<No input args>"}
+    emit(s"""
+void printHelp() {
+  fprintf(stderr, "Help for app: ${config.name}\\n");
+  fprintf(stderr, "  -- bash run.sh ${argsList}\\n\\n");
+  exit(0);
+}
+""")
     emit(s"""
 int main(int argc, char *argv[]) {
   vector<string> *args = new vector<string>(argc-1);
   for (int i=1; i<argc; i++) {
     (*args)[i-1] = std::string(argv[i]);
+    if (std::string(argv[i]) == "--help" | std::string(argv[i]) == "-h") {printHelp();}
   }
   int numThreads = 1;
   char *env_threads = getenv("DELITE_NUM_THREADS");

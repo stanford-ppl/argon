@@ -70,11 +70,24 @@ trait CppGenFixPt extends CppCodegen {
       case DoubleType() => emit(src"${lhs.tp} $lhs = (double) $x;")
       case FloatType()  => emit(src"${lhs.tp} $lhs = (double) $x;")
     }
-    case StringToFixPt(x) => lhs.tp match {
-      case IntType()  => emit(src"int32_t $lhs = atoi(${x}.c_str());")
-      case LongType() => emit(src"long $lhs = std::stol($x);")
-      case FixPtType(s,d,f) => emit(src"float $lhs = std::stof($x);")
-    }
+    case StringToFixPt(x) => 
+      lhs.tp match {
+        case IntType()  => emit(src"int32_t $lhs = atoi(${x}.c_str());")
+        case LongType() => emit(src"long $lhs = std::stol($x);")
+        case FixPtType(s,d,f) => emit(src"float $lhs = std::stof($x);")
+      }
+      x match {
+        case Def(ArrayApply(array, i)) => 
+          array match {
+            case Def(InputArguments()) => 
+              val ii = i match {case c: Const[_] => c match {case Const(c: FixedPoint) => c.toInt; case _ => -1}; case _ => -1}
+              if (cliArgs.contains(ii)) cliArgs += (ii -> s"${cliArgs(ii)} / ${lhs.name.getOrElse(s"${lhs.ctx}")}")
+              else cliArgs += (ii -> lhs.name.getOrElse(s"${lhs.ctx}"))
+            case _ =>
+          }
+        case _ =>          
+      }
+
     case Char2Int(x) => 
       emit(src"${lhs.tp} $lhs = (${lhs.tp}) ${x}[0];")
     case Int2Char(x) => 
