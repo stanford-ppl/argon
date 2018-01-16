@@ -160,13 +160,28 @@ trait Codegen extends Traversal {
       val extractor = ".*FF\\([ ]*([0-9]+)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
       val extractor(d,w) = rhs
       s"${vec}ff${d}_${w}"  
-    } else if (rhs.contains(" multidimR(")) {
-      val extractor = ".*multidimR\\([ ]*([0-9]+)[ ]*,[ ]*List\\(([0-9,]+)\\)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
-      val extractor(n,dims,w) = rhs
+    // } else if (rhs.contains(" multidimR(")) {
+    //   val extractor = ".*multidimR\\([ ]*([0-9]+)[ ]*,[ ]*List\\(([0-9,]+)\\)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+    //   val extractor(n,dims,w) = rhs
+    //   val d = dims.replace(" ", "").replace(",","_")
+    //   s"${vec}mdr${n}_${d}_${w}"  
+    // } else if (rhs.contains(" multidimW(")) {
+    //   val extractor = ".*multidimW\\([ ]*([0-9]+)[ ]*,[ ]*List\\(([0-9,]+)\\)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+    //   val extractor(n,dims,w) = rhs
+    //   val d = dims.replace(" ", "").replace(",","_")
+    //   s"${vec}mdw${n}_${d}_${w}"  
+    // } else if (rhs.contains(" multidimRegW(")) {
+    //   val extractor = ".*multidimRegW\\([ ]*([0-9]+)[ ]*,[ ]*List\\(([0-9, ]+)\\)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+    //   val extractor(n,dims,w) = rhs
+    //   val d = dims.replace(" ", "").replace(",","_")
+    //   s"${vec}mdrw${n}_${d}_${w}"  
+    } else if (rhs.contains(" R_Info(")) {
+      val extractor = ".*R_Info\\([ ]*([0-9]+)[ ]*,[ ]*List\\(([0-9,]+)\\)[ ]*\\).*".r
+      val extractor(n,dims) = rhs
       val d = dims.replace(" ", "").replace(",","_")
-      s"${vec}mdr${n}_${d}_${w}"  
-    } else if (rhs.contains(" multidimW(")) {
-      val extractor = ".*multidimW\\([ ]*([0-9]+)[ ]*,[ ]*List\\(([0-9,]+)\\)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
+      s"${vec}mdr${n}_${d}"  
+    } else if (rhs.contains(" W_Info(")) {
+      val extractor = ".*W_Info\\([ ]*([0-9]+)[ ]*,[ ]*List\\(([0-9,]+)\\)[ ]*,[ ]*([0-9]+)[ ]*\\).*".r
       val extractor(n,dims,w) = rhs
       val d = dims.replace(" ", "").replace(",","_")
       s"${vec}mdw${n}_${d}_${w}"  
