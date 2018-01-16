@@ -4,6 +4,7 @@ import argon.core._
 import argon.codegen.{Codegen, FileDependencies}
 import sys.process._
 import scala.language.postfixOps
+import scala.collection.mutable
 
 trait CppCodegen extends Codegen with FileDependencies  {
   override val name = "Cpp Codegen"

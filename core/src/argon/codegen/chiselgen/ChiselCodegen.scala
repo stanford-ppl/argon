@@ -199,6 +199,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     // dependencies ::= DirDep(resourcesPath, "template-level/templates/hardfloat")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeHW")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeZynq")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeASIC")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeDE1SoC")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeVCS")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeXSIM")
@@ -220,6 +221,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= FileDep(resourcesPath, "app-level/scrape.py", "../", Some("scrape.py"))
     dependencies ::= FileDep(resourcesPath, "app-level/report.py", "../", Some("report.py"))
     dependencies ::= FileDep(resourcesPath, "app-level/Top.scala", outputPath = Some("Top.scala"))
+    dependencies ::= DirDep(resourcesPath, "app-level/scripts", "../", Some("scripts/"))
     super.copyDependencies(out)
   }
 
