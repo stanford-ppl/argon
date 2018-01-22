@@ -10,7 +10,12 @@ sealed abstract class AffineFunction {
   type Tx = argon.transform.Transformer
   def mirror(f:Tx): AffineFunction
   def eval(f: Exp[Index] => Int): Int
-  def getEval(f: PartialFunction[Exp[Index],Int]): Option[Int]
+  def getEval(f: PartialFunction[Exp[Index],Int]): Option[Int] = {
+    val (c,g) = partialEval(f)
+    if (g.isEmpty) Some(c) else None
+  }
+  def partialEval(f: PartialFunction[Exp[Index],Int]): (Int, Option[AffineFunction])
+  def symbols: Seq[Exp[Index]]
   @internal def negate: AffineFunction
 }
 class Prod(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction {
@@ -22,10 +27,20 @@ class Prod(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction
     case Left(e) => f(e)
     case Right(af) => af.eval(f)
   }.product
-  def getEval(f: PartialFunction[Exp[Index],Int]): Option[Int] = {
+
+  def partialEval(f: PartialFunction[Exp[Index],Int]): (Int, Option[AffineFunction]) = {
     val parts = x.map{case Left(e) if f.isDefinedAt(e) => Some(f(e)); case Right(af) => af.getEval(f); case _ => None }
-    if (parts.forall(_.isDefined)) Some(parts.map(_.get).product) else None
+    val cs = parts.filter(_.isDefined)
+    val c = cs.map(_.get).product
+    val g = x.zip(parts).filter(_._2.isEmpty).map(_._1)
+    val func = if (g.isEmpty) None else Some(new Prod(g))
+    (c,func)
   }
+  def symbols: Seq[Exp[Index]] = x.flatMap{
+    case Left(x) => Seq(x)
+    case Right(func) => func.symbols
+  }
+
   @internal def negate: AffineFunction = {
     new Prod(Left(FixPt.int32s(-1)) +: x)
   }
@@ -44,9 +59,18 @@ class Sum(val x: Seq[Either[Exp[Index],AffineFunction]]) extends AffineFunction 
     case Left(e) => f(e)
     case Right(af) => af.eval(f)
   }.sum
-  def getEval(f: PartialFunction[Exp[Index],Int]): Option[Int] = {
+
+  def partialEval(f: PartialFunction[Exp[Index],Int]): (Int, Option[AffineFunction]) = {
     val parts = x.map{case Left(e) if f.isDefinedAt(e) => Some(f(e)); case Right(af) => af.getEval(f); case _ => None }
-    if (parts.forall(_.isDefined)) Some(parts.map(_.get).sum) else None
+    val cs = parts.filter(_.isDefined)
+    val c = cs.map(_.get).sum
+    val g = x.zip(parts).filter(_._2.isEmpty).map(_._1)
+    val func = if (g.isEmpty) None else Some(new Sum(g))
+    (c,func)
+  }
+  def symbols: Seq[Exp[Index]] = x.flatMap{
+    case Left(x) => Seq(x)
+    case Right(func) => func.symbols
   }
 
   @internal def negate: AffineFunction = new Sum(x.map{
@@ -62,8 +86,17 @@ object Sum {
 }
 case object One extends Prod(Nil) { override def toString: String = "One" }
 case object Zero extends Sum(Nil) { override def toString: String = "Zero" }
-case object Constant {
+case object Unknown {
   def apply(x: Exp[Index]): AffineFunction = Sum(Seq(Left(x)))
+}
+object SumOfProds {
+  // TODO: Could distribute here in the case of Sum(Prod(x, Sum()), etc.
+  def unapply(sum: Sum): Option[Seq[Either[Exp[Index],Prod]]] = sum.x.foldLeft(Some(Nil) : Option[Seq[Either[Exp[Index],Prod]]] ){
+    case (Some(left), Left(c))              => Some(left :+ Left(c))
+    case (Some(left), Right(SumOfProds(s))) => Some(left ++ s)
+    case (Some(left), Right(p: Prod)) if !p.x.exists{case Right(_: Sum) => true; case _ => false} => Some(left :+ Right(p))
+    case _ => None
+  }
 }
 
 case class AffineProduct(a: AffineFunction, i: Exp[Index]) {
@@ -194,7 +227,7 @@ trait AccessPatternAnalyzer extends Traversal {
     * Check if expression b is invariant with respect to loop index i
     * An expression b is invariant to loop index i if it is defined outside of the loop scope of i
     */
-  def isInvariant(b: Exp[Index], i: Bound[Index]): Boolean = b match {
+  def isInvariant(b: Exp[Index], i: Exp[Index]): Boolean = b match {
     case Const(_) => true
     case Param(_) => true
     case s: Sym[_] => !innerScopes(i).exists{stm => stm.lhs.contains(s)}
@@ -237,23 +270,29 @@ trait AccessPatternAnalyzer extends Traversal {
         val offset = offsetOf(i).map{o => Sum(o) }.getOrElse(Zero)
         Some(Seq(AffineProduct(stride,i)), offset)  // i
 
-      case b if isInvariantForAll(b) => Some((Nil, Constant(b))) // b
-      case _ => None
+      case b => Some((Nil, Unknown(b))) // b - anything else
     }
 
     val pattern = extractPattern(x)
 
     dbgs(c"Extracted pattern: " + pattern.mkString(" + "))
 
-    pattern.map{p =>
+    pattern.flatMap{p =>
       val products = p._1
+      val offset = p._2
       val groupedProducts = products.groupBy(_.i)
                                     .mapValues{funcs => funcs.map(af => Right(af.a) )}
                                     .toList
                                     .sortBy{case (i, _) => loopIndices.indexOf(i) }
                                     .map{case (i, as) => AffineProduct(Sum(as),i) }
 
-      SymbolicAffine(groupedProducts, p._2)
+      val indices = groupedProducts.map(_.i)
+
+      if (offset.symbols.forall{x => indices.forall{i => isInvariant(x,i) }}) {
+        Some(SymbolicAffine(groupedProducts, offset))
+      }
+      else None
+
     }.getOrElse{
       val idxOfLastInvariant = loopIndices.lastIndexWhere{i => !isInvariant(x,i) }
       val lastVariantIndex = if (idxOfLastInvariant >= 0) Some(loopIndices(idxOfLastInvariant)) else None

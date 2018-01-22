@@ -157,7 +157,7 @@ trait Transformer { self =>
 
   final def mirror[T](lhs: Sym[T], rhs: Op[T]): Exp[T] = mirror(Seq(lhs),rhs).head.asInstanceOf[Exp[T]]
 
-  def mirror(lhs: Seq[Sym[_]], rhs: Def): Seq[Exp[_]] = {
+  def mirror(lhs: Seq[Sym[_]], rhs: Def): Seq[Exp[_]] = try {
     log(c"Mirror: $lhs = $rhs")
     lhs.foreach{s =>
       if (lhs.length > 1) log(c"$s")
@@ -173,6 +173,9 @@ trait Transformer { self =>
     }
 
     lhs2
+  } catch {case t: Throwable =>
+    bug(s"An exception occurred while mirroring $lhs = $rhs")
+    throw t
   }
 
   final def mirror(props: Map[Class[_],Metadata[_]]): Map[Class[_],Metadata[_]] = {
