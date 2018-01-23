@@ -40,12 +40,13 @@ trait CppCodegen extends Codegen with FileDependencies  {
 
     // FIXME: Should be OS-independent. Ideally want something that also supports wildcards, maybe recursive copy
     // Kill old datastructures
-    s"""rm -rf ${out}/datastructures""".! 
+    s"""rm -rf ${out}/datastructures""".!
     // Register files that are always there for cppgen
     // TODO: Matt
     dependencies ::= DirDep(cppResourcesPath, "datastructures")
     dependencies ::= DirDep(cppResourcesPath, "fringeSW")
     dependencies ::= DirDep(cppResourcesPath, "fringeZynq")
+    dependencies ::= DirDep(cppResourcesPath, "fringeArria10")
     dependencies ::= DirDep(cppResourcesPath, "fringeDE1SoC")
     dependencies ::= DirDep(cppResourcesPath, "fringeVCS")
     dependencies ::= DirDep(cppResourcesPath, "fringeXSIM")
