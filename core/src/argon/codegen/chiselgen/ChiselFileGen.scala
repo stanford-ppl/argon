@@ -85,7 +85,7 @@ import templates._
 import templates.ops._
 import chisel3._
 import chisel3.util._
-import types._ 
+import types._
 """)
       open(s"""trait GlobalModules extends GlobalWiresMixer {""")
     }
@@ -96,7 +96,7 @@ import templates._
 import templates.ops._
 import chisel3._
 import chisel3.util._
-import types._ 
+import types._
 """)
       open(s"""trait Instrumentation extends GlobalModulesMixer {""")
     }
@@ -161,7 +161,7 @@ import types._
     // for (i <- 0 until numGlobalFiles) {
     //   withStream(getStream("GlobalWires"+ i)) {
     //   // // Get each all unique reg strings
-    //   // emitted_argins.toList.map{a=>a._2}.distinct.foreach{ a => 
+    //   // emitted_argins.toList.map{a=>a._2}.distinct.foreach{ a =>
     //   //   emit(s"""val ${a} = io.ArgIn.ports(${argInsByName.indexOf(a)})""")
     //   // }
 
@@ -227,11 +227,11 @@ import types._
         emit("val buffout_writedata         = Output(UInt(16.W))")
         emit("val buffout_waitrequest       = Input(UInt(1.W))")
         emit("")
-        emit("// GPI1 Read (Avalon mmapped master)") 
+        emit("// GPI1 Read (Avalon mmapped master)")
 //	      emit("val gpi1_streamin_chipselect  = Output(UInt(1.W))")
-	      emit("val gpi1_streamin_readdata    = Input(UInt(32.W))")                             
+	      emit("val gpi1_streamin_readdata    = Input(UInt(32.W))")
 //	      emit("val gpi1_streamin_address     = Output(UInt(4.W))")
-//	      emit("val gpi1_streamin_read        = Output(UInt(1.W))") 
+//	      emit("val gpi1_streamin_read        = Output(UInt(1.W))")
         emit("")
         emit("// GPO1 Write (Avalon mmapped master), write_n")
 //	      emit("val gpo1_streamout_chipselect = Output(UInt(1.W))")
@@ -239,11 +239,11 @@ import types._
 	      emit("val gpo1_streamout_writedata  = Output(UInt(32.W))")
 //	      emit("val gpo1_streamout_write      = Output(UInt(1.W))")
         emit("")
-        emit("// GPI2 Read (Avalon mmapped master)") 
+        emit("// GPI2 Read (Avalon mmapped master)")
 //	      emit("val gpi2_streamin_chipselect  = Output(UInt(1.W))")
-	      emit("val gpi2_streamin_readdata    = Input(UInt(32.W))")                             
+	      emit("val gpi2_streamin_readdata    = Input(UInt(32.W))")
 //	      emit("val gpi2_streamin_address     = Output(UInt(4.W))")
-//	      emit("val gpi2_streamin_read        = Output(UInt(1.W))") 
+//	      emit("val gpi2_streamin_read        = Output(UInt(1.W))")
         emit("")
         emit("// GPO1 Write (Avalon imapped master), write_n")
 //	      emit("val gpo2_streamout_chipselect = Output(UInt(1.W))")
@@ -294,12 +294,12 @@ import types._
       close("}")
     }
 
-    streamExtensions("RootController").foreach{i => 
+    streamExtensions("RootController").foreach{i =>
       val fname = if (i == 0) "RootController" else src"RootController_${i}"
       withStream(getStream(fname)) { stream.println("}")}
     }
 
-    streamExtensions("BufferControlCxns").foreach{i => 
+    streamExtensions("BufferControlCxns").foreach{i =>
       val fname = if (i == 0) "BufferControlCxns" else src"BufferControlCxns_${i}"
       withStream(getStream(fname)) { stream.println("}")}
     }
@@ -357,15 +357,15 @@ trait InstrumentationMixer extends ${instruments.mkString("\n with ")}""")
       var methodList = scala.collection.mutable.ListBuffer[String]()
       val methodized_trait_pattern = "^x[0-9]+".r
       val traits = (streamMapReverse.keySet.toSet.map{
-        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */
       }.toSet - "AccelTop" - "Instantiator" - "Mapping").toList
 
       var numMixers = 0
       (0 until traits.length by numTraitsPerMixer).foreach { i =>
         val numLocalTraits = {traits.length - i} min numTraitsPerMixer
-        val thisTraits = (0 until numLocalTraits).map { j => 
+        val thisTraits = (0 until numLocalTraits).map { j =>
           if (methodized_trait_pattern.findFirstIn(traits(i+j)).isDefined) {methodList += traits(i+j)}
-          traits(i+j) 
+          traits(i+j)
         }
         withStream(getStream("Mixer"+numMixers)) {
           emit(s"""package accel
@@ -403,7 +403,7 @@ ${methodList.map{i => src"method_${i}()"}.mkString("\n")}
       }
     } else if (config.multifile == 3 | config.multifile == 4) {
       val traits = (streamMapReverse.keySet.toSet.map{
-        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */
       }.toSet - "AccelTop" - "Instantiator" - "Mapping").toList
 
       var numMixers = 0
@@ -448,7 +448,7 @@ class AccelTop(
     } else {
     // Get traits that need to be mixed in
       val traits = streamMapReverse.keySet.toSet.map{
-        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */ 
+        f:String => f.split('.').dropRight(1).mkString(".")  /*strip extension */
       }.toSet - "AccelTop" - "Instantiator" - "Mapping"
       withStream(getStream("AccelTop")) {
         emit(s"""package accel
@@ -473,7 +473,7 @@ class AccelTop(
 }
   // AccelTop class mixes in all the other traits and is instantiated by tester""")
       }
-        
+
     }
 
 
