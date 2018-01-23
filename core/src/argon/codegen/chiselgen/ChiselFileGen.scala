@@ -152,7 +152,7 @@ import types._
           emit("val numArgIOs = numArgIOs_reg")
           emit("val numArgInstrs = numArgOuts_instr")
           emit("val numArgBreakpts = numArgOuts_breakpts")
-          emit("new Top(w, numArgIns, numArgOuts, numArgIOs, numArgOuts_instr + numArgBreakpts, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
+          emit("new Top(w, numArgIns, numArgOuts, numArgIOs, numArgOuts_instr + numArgBreakpts, io_argOutLoopbacksMap, loadStreamInfo, storeStreamInfo, streamInsInfo, streamOutsInfo, target)")
         close("}")
         emit("def tester = { c: DUTType => new TopUnitTester(c) }")
       close("}")
@@ -177,6 +177,7 @@ import types._
       emit("// Combine values")
       emit("val io_numArgIns = math.max(1, io_numArgIns_reg + io_numArgIns_mem + io_numArgIOs_reg)")
       emit("val io_numArgOuts = math.max(1, io_numArgOuts_reg + io_numArgIOs_reg + io_numArgOuts_instr + io_numArgOuts_breakpts)")
+      emit("val io_numArgOutLoopbacks = math.max(1, io_argOutLoopbacksMap.toList.length)")
       emit("val io_numArgIOs = io_numArgIOs_reg")
       emit("val io_numArgInstrs = io_numArgOuts_instr")
       emit("val io_numArgBreakpts = io_numArgOuts_breakpts")
@@ -194,6 +195,7 @@ import types._
         emit("// Scalar IO")
         emit("val argIns = Input(Vec(io_numArgIns, UInt(64.W)))")
         emit("val argOuts = Vec(io_numArgOuts, Decoupled((UInt(64.W))))")
+        emit("val argOutLoopbacks = Input(Vec(io_numArgOutLoopbacks, UInt(64.W)))")
         emit("")
         emit("// Stream IO")
         emit("// val genericStreams = new GenericStreams(io_streamInsInfo, io_streamOutsInfo)")
@@ -389,6 +391,7 @@ class AccelTop(
   val numArgOuts: Int,
   val numArgIOs: Int,
   val numArgInstrs: Int,
+  val argOutLoopbacksMap: scala.collection.immutable.Map[Int,Int],
   val loadStreamInfo: List[StreamParInfo],
   val storeStreamInfo: List[StreamParInfo],
   val streamInsInfo: List[StreamParInfo],
@@ -431,6 +434,7 @@ class AccelTop(
   val numArgOuts: Int,
   val numArgIOs: Int,
   val numArgInstrs: Int,
+  val argOutLoopbacksMap: scala.collection.immutable.Map[Int,Int],
   val loadStreamInfo: List[StreamParInfo],
   val storeStreamInfo: List[StreamParInfo],
   val streamInsInfo: List[StreamParInfo],
@@ -459,6 +463,7 @@ class AccelTop(
   val numArgOuts: Int,
   val numArgIOs: Int,
   val numArgInstrs: Int,
+  val argOutLoopbacksMap: scala.collection.immutable.Map[Int,Int],
   val loadStreamInfo: List[StreamParInfo],
   val storeStreamInfo: List[StreamParInfo],
   val numStreamIns: List[StreamParInfo],
