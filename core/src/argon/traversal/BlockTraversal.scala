@@ -81,7 +81,7 @@ trait BlockTraversal {
       inputs.foreach{s => log(c"  ${str(s)}")}
     }
 
-    (inputs, stms)
+    (inputs.distinct, stms)
   }
   final protected def blockInputs(block: Block[_]): Seq[Exp[_]] = blockInputsAndNestedContents(block)._1
   final protected def blockNestedContents(block: Block[_]): Seq[Stm] = blockInputsAndNestedContents(block)._2
