@@ -390,12 +390,12 @@ object FixPt {
       x.asInstanceOf[Exp[FixPt[S2,I2,F2]]]
     }
     else {*/
-      stage(FixConvert[S,I,F,S2,I2,F2](x.asInstanceOf[Exp[FixPt[S,I,F]]]))(ctx)
+      stage(FixConvert[S,I,F,S2,I2,F2](x.asInstanceOf[Exp[FixPt[S,I,F]]],BOOL[S2],INT[I2],INT[F2]))(ctx)
     //}
   }
 
   @internal def to_flt[S:BOOL,I:INT,F:INT,G:INT,E:INT](x: Exp[FixPt[S,I,F]]): Exp[FltPt[G,E]] = {
-    stage(FixPtToFltPt[S,I,F,G,E](x))(ctx)
+    stage(FixPtToFltPt[S,I,F,G,E](x,INT[G],INT[E]))(ctx)
   }
 
   @internal def from_string[S:BOOL,I:INT,F:INT](x: Exp[MString]): Exp[FixPt[S,I,F]] = x match {
@@ -409,6 +409,6 @@ object FixPt {
       else {
         FixPt[S,I,F](c).s
       }
-    case _ => stage(StringToFixPt[S,I,F](x))(ctx)
+    case _ => stage(StringToFixPt[S,I,F](x,BOOL[S],INT[I],INT[F]))(ctx)
   }
 }

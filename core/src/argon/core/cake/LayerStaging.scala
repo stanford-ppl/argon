@@ -123,8 +123,10 @@ trait LayerStaging { this: ArgonCake =>
 
       if (effects.mayCSE) {
         // CSE statements which are idempotent and have identical effect summaries (e.g. repeated reads w/o writes)
+        // Output types must also match
         val symsWithSameDef = state.defCache.getOrElse(d, Nil) intersect state.context
-        val symsWithSameEffects = symsWithSameDef.filter { case Effectful(u2, es) => u2 == effects && es == deps }
+        val symsWithSameType = symsWithSameDef.zip(d.outputTypes).filter{case (s,t) => s.tp == t }.map(_._1)
+        val symsWithSameEffects = symsWithSameType.filter{case Effectful(u2, es) => u2 == effects && es == deps }
 
         if (symsWithSameEffects.isEmpty) {
           val syms = stageEffects()
