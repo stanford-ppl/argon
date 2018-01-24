@@ -23,7 +23,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     if (alphaconv.contains(x)) {
       val suf = alphaconv(x).replace("_reuse","")
       if (suf == "") {
-        alphaconv += (x -> "_reuse1") // If already used, increment suffix  
+        alphaconv += (x -> "_reuse1") // If already used, increment suffix
       } else {
         val newsuf = suf.toInt + 1
         alphaconv += (x -> s"_reuse$newsuf")
@@ -48,13 +48,13 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     emit(src"// results in ${b.result}")
   }
 
-  final protected def emitGlobalWire(x: String, forceful: Boolean = false): Unit = { 
+  final protected def emitGlobalWire(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("GlobalWires")) {
-      emit(x, forceful) 
+      emit(x, forceful)
     }
   }
 
-  final protected def emitGlobalWireMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
+  final protected def emitGlobalWireMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = {
     val stripped = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
     if (config.multifile == 5 | config.multifile == 6) {
       if (!compressorMap.contains(lhs)) {
@@ -71,7 +71,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     }
   }
 
-  final protected def emitGlobalRetimeMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
+  final protected def emitGlobalRetimeMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = {
     val stripped = rhs.replace(" ", "")
     if (config.multifile == 5 | config.multifile == 6) {
       // Assume _retime values only emitted once
@@ -83,7 +83,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     }
   }
 
-  final protected def emitGlobalModuleMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = { 
+  final protected def emitGlobalModuleMap(lhs: String, rhs: String, forceful: Boolean = false): Unit = {
     val stripped_white = rhs.replace("new ", "newnbsp").replace(" ", "").replace("nbsp", " ")
     var rtid = "na"
     if (config.multifile == 5 | config.multifile == 6) {
@@ -113,69 +113,69 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     }
   }
 
-  final protected def emitInstrumentation(x: String, forceful: Boolean = false): Unit = { 
+  final protected def emitInstrumentation(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("Instrumentation")) {
-      emit(x, forceful) 
+      emit(x, forceful)
     }
   }
 
-  final protected def emitGlobalModule(x: String, forceful: Boolean = false): Unit = { 
+  final protected def emitGlobalModule(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("GlobalModules")) {
-      emit(x, forceful) 
+      emit(x, forceful)
     }
   }
 
-  final protected def emitGlobalRetiming(x: String, forceful: Boolean = false): Unit = { 
+  final protected def emitGlobalRetiming(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("GlobalRetiming")) {
-      emit(x, forceful) 
+      emit(x, forceful)
     }
   }
 
-  final protected def openGlobalWire(x: String, forceful: Boolean = false): Unit = { 
+  final protected def openGlobalWire(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("GlobalWires")) {
-      open(x, forceful) 
+      open(x, forceful)
     }
   }
 
-  final protected def openInstrumentation(x: String, forceful: Boolean = false): Unit = { 
+  final protected def openInstrumentation(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("Instrumentation")) {
-      open(x, forceful) 
+      open(x, forceful)
     }
   }
 
-  final protected def openGlobalModule(x: String, forceful: Boolean = false): Unit = { 
+  final protected def openGlobalModule(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("GlobalModules")) {
-      open(x, forceful) 
+      open(x, forceful)
     }
   }
 
-  final protected def openGlobalRetiming(x: String, forceful: Boolean = false): Unit = { 
+  final protected def openGlobalRetiming(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("GlobalRetiming")) {
-      open(x, forceful) 
+      open(x, forceful)
     }
   }
 
-  final protected def closeGlobalWire(x: String, forceful: Boolean = false): Unit = { 
+  final protected def closeGlobalWire(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("GlobalWires")) {
-      close(x, forceful) 
+      close(x, forceful)
     }
   }
 
-  final protected def closeInstrumentation(x: String, forceful: Boolean = false): Unit = { 
+  final protected def closeInstrumentation(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("Instrumentation")) {
-      close(x, forceful) 
+      close(x, forceful)
     }
   }
 
-  final protected def closeGlobalModule(x: String, forceful: Boolean = false): Unit = { 
+  final protected def closeGlobalModule(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("GlobalModules")) {
-      close(x, forceful) 
+      close(x, forceful)
     }
   }
 
-  final protected def closeGlobalRetiming(x: String, forceful: Boolean = false): Unit = { 
+  final protected def closeGlobalRetiming(x: String, forceful: Boolean = false): Unit = {
     withStream(getStream("GlobalRetiming")) {
-      close(x, forceful) 
+      close(x, forceful)
     }
   }
 
@@ -204,13 +204,15 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= DirDep(resourcesPath, "template-level/fringeVCS")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeXSIM")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeAWS")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeArria10")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeASIC")
     dependencies ::= DirDep(resourcesPath, "app-level/scripts", "../", Some("scripts/"))
-    
-    dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile")) 
+
+    dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile"))
     dependencies ::= FileDep(resourcesPath, "app-level/build.sbt", "../", Some("build.sbt"))
-    dependencies ::= FileDep(resourcesPath, "app-level/run.sh", "../", Some("run.sh"))    
-    dependencies ::= FileDep(resourcesPath, "app-level/Top.scala", outputPath = Some("Top.scala")) 
+    dependencies ::= FileDep(resourcesPath, "app-level/run.sh", "../", Some("run.sh"))
+    dependencies ::= FileDep(resourcesPath, "app-level/Top.scala", outputPath = Some("Top.scala"))
+
     super.copyDependencies(out)
   }
 
@@ -229,7 +231,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
       if ((cur_tabbing == 1) & !disableSplit) streamLines(strip_ext(curStream)) += 1
       val global_lines = streamLines(strip_ext(curStream))
       val file_num = global_lines / maxLinesPerFile
-      if (global_lines % maxLinesPerFile == 0 & (!streamExtensions(strip_ext(curStream)).contains(file_num))) { 
+      if (global_lines % maxLinesPerFile == 0 & (!streamExtensions(strip_ext(curStream)).contains(file_num))) {
         val next = newStream(strip_ext(curStream) + "_" + file_num)
         val curlist = streamExtensions(strip_ext(curStream))
 
@@ -252,7 +254,7 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
           stream.println(src"""def method_${strip_ext(curStream)}_${file_num}() {""")
         }
 
-          streamTab(strip_ext(curStream) + "_" + file_num + "." + get_ext(curStream)) = 1 
+          streamTab(strip_ext(curStream) + "_" + file_num + "." + get_ext(curStream)) = 1
 
         }
       }
@@ -263,7 +265,7 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
 
 
 
-  override protected def emit(x: String, forceful: Boolean = false): Unit = { 
+  override protected def emit(x: String, forceful: Boolean = false): Unit = {
     if (emitEn | forceful) {
 
       // val current_ext = streamExtensions(strip_ext(streamName)).last
@@ -276,42 +278,42 @@ trait ${strip_ext(curStream)}_${file_num} extends ${prnt} {
 
       val realstream = get_real_stream(streamName)
       withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x /*+ debug_stuff*/)}
-    } else { 
-      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
-    }
-  } 
-  override protected def open(x: String, forceful: Boolean = false): Unit = {
-    if (emitEn | forceful) {
-      val realstream = get_real_stream(streamName)
-      withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x)}; 
-      if (streamTab contains {realstream + "." + get_ext(streamName)}) streamTab(realstream + "." + get_ext(streamName)) += 1 
-    } else { 
+    } else {
       if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
   }
-  override protected def close(x: String, forceful: Boolean = false): Unit = { 
+  override protected def open(x: String, forceful: Boolean = false): Unit = {
+    if (emitEn | forceful) {
+      val realstream = get_real_stream(streamName)
+      withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x)};
+      if (streamTab contains {realstream + "." + get_ext(streamName)}) streamTab(realstream + "." + get_ext(streamName)) += 1
+    } else {
+      if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
+    }
+  }
+  override protected def close(x: String, forceful: Boolean = false): Unit = {
     if (emitEn | forceful) {
       val realstream = get_real_stream(streamName)
       if (streamTab contains {realstream + "." + get_ext(streamName)}) {
-        streamTab(realstream + "." + get_ext(streamName)) -= 1; 
+        streamTab(realstream + "." + get_ext(streamName)) -= 1;
         withStream(getStream(realstream)) {stream.println(tabbing(realstream + "." + get_ext(streamName)) + x)}
       }
-    } else { 
+    } else {
       if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
-  } 
+  }
   override protected def closeopen(x: String, forceful: Boolean = false): Unit = { // Good for "} else {" lines
     if (emitEn | forceful) {
       val realstream = get_real_stream(streamName)
       if (streamTab contains {realstream + "." + get_ext(streamName)}) {
-        streamTab(realstream + "." + get_ext(streamName)) -= 1; 
+        streamTab(realstream + "." + get_ext(streamName)) -= 1;
         withStream(getStream(realstream)) {stream.println(x);}
         streamTab(realstream + "." + get_ext(streamName)) += 1
       }
-    } else { 
+    } else {
       if (config.emitDevel == 2) {Console.println(s"[ ${lang}gen-NOTE ] Emission of ${x} does not belong in this backend")}
     }
-  } 
+  }
 
 
   final protected def withSubStream[A](name: String, parent: String, inner: Boolean = false)(body: => A): A = { // Places body inside its own trait file and includes it at the end
@@ -329,9 +331,9 @@ import chisel3.util._
 """)
           open(src"""trait ${name} extends ${prnts} {
 def method_${name}() {""")
-          try { body } 
-          finally { 
-            streamExtensions(name).foreach{i => 
+          try { body }
+          finally {
+            streamExtensions(name).foreach{i =>
               val fname = if (i == 0) src"$name" else src"${name}_${i}"
               withStream(getStream(fname)) { stream.println("}}")}
             }
@@ -350,9 +352,9 @@ import chisel3._
 import chisel3.util._
 """)
           open(src"""trait ${name} extends ${prnts} {""")
-          try { body } 
-          finally { 
-            streamExtensions(name).foreach{i => 
+          try { body }
+          finally {
+            streamExtensions(name).foreach{i =>
               val fname = if (i == 0) src"$name" else src"${name}_${i}"
               withStream(getStream(fname)) { stream.println("}")}
             }
@@ -371,9 +373,9 @@ import chisel3._
 import chisel3.util._
 """)
           open(src"""trait ${name} extends ${prnts} {""")
-          try { body } 
-          finally { 
-            streamExtensions(name).foreach{i => 
+          try { body }
+          finally {
+            streamExtensions(name).foreach{i =>
               val fname = if (i == 0) src"$name" else src"${name}_${i}"
               withStream(getStream(fname)) { stream.println("}")}
             }
@@ -389,24 +391,24 @@ import chisel3.util._
   import chisel3.util._
   """)
             open(src"""trait ${name} extends RootController {""")
-            try { body } 
-            finally { 
+            try { body }
+            finally {
               close("}")
             }
         }
-      
+
     } else if (config.multifile == 2) {
       open(src";{ // Multifile disabled, emitting $name kernel here")
-      try { body } 
+      try { body }
       finally { close("}") }
     } else if (config.multifile == 1 & inner) {
       open(src";{ // Multifile disabled, emitting $name kernel here")
-      try { body } 
+      try { body }
       finally { close("}") }
     } else {
       open(src"// Multifile disabled, emitting $name kernel here without scoping")
-      try { body } 
-      finally { close("") }      
+      try { body }
+      finally { close("") }
     }
   }
 
