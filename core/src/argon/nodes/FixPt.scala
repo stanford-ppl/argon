@@ -133,15 +133,33 @@ case class FixRandom[S:BOOL,I:INT,F:INT](max: Option[Exp[FixPt[S,I,F]]]) extends
 
 case class FixUnif[S:BOOL,I:INT,F:INT]() extends FixPtOp1[S,I,F] { def mirror(f:Tx) = FixPt.unif[S,I,F]() }
 
-case class FixConvert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[S,I,F]]) extends FixPtOp1[S2,I2,F2] {
+case class FixConvert[S:BOOL,I:INT,F:INT,S2:BOOL,I2:INT,F2:INT](x: Exp[FixPt[S,I,F]], s2: BOOL[S2], i2: INT[I2], f2: INT[F2]) extends FixPtOp1[S2,I2,F2] {
   def mirror(f:Tx) = fix.convert[S,I,F,S2,I2,F2](f(x))
 }
-
-case class FixPtToFltPt[S:BOOL,I:INT,F:INT,G:INT,E:INT](x: Exp[FixPt[S,I,F]]) extends FltPtOp1[G,E] {
-  def mirror(f:Tx) = FixPt.to_flt[S,I,F,G,E](f(x))
+object FixConvert {
+  def unapply(x: Any): Option[Exp[FixPt[_,_,_]]] = x match {
+    case op: FixConvert[_,_,_,_,_,_] => Some(op.x)
+    case _ => None
+  }
 }
 
-case class StringToFixPt[S:BOOL,I:INT,F:INT](x: Exp[MString]) extends FixPtOp1[S,I,F] {
+case class FixPtToFltPt[S:BOOL,I:INT,F:INT,G:INT,E:INT](x: Exp[FixPt[S,I,F]], g: INT[G], e: INT[E]) extends FltPtOp1[G,E] {
+  def mirror(f:Tx) = FixPt.to_flt[S,I,F,G,E](f(x))
+}
+object FixPtToFltPt {
+  def unapply(x: Any): Option[Exp[FixPt[_,_,_]]] = x match {
+    case op: FixPtToFltPt[_,_,_,_,_] => Some(op.x)
+    case _ => None
+  }
+}
+
+case class StringToFixPt[S:BOOL,I:INT,F:INT](x: Exp[MString], s: BOOL[S], i: INT[I], f: INT[F]) extends FixPtOp1[S,I,F] {
   def mirror(f:Tx) = fix.from_string[S,I,F](f(x))
+}
+object StringToFixPt {
+  def unapply(x: Any): Option[Exp[MString]] = x match {
+    case op: StringToFixPt[_,_,_] => Some(op.x)
+    case _ => None
+  }
 }
 

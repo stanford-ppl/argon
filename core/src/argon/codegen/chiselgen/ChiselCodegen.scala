@@ -205,6 +205,7 @@ trait ChiselCodegen extends Codegen with FileDependencies { // FileDependencies 
     dependencies ::= DirDep(resourcesPath, "template-level/fringeXSIM")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeAWS")
     dependencies ::= DirDep(resourcesPath, "template-level/fringeArria10")
+    dependencies ::= DirDep(resourcesPath, "template-level/fringeASIC")
     dependencies ::= DirDep(resourcesPath, "app-level/scripts", "../", Some("scripts/"))
 
     dependencies ::= FileDep(resourcesPath, "app-level/Makefile", "../", Some("Makefile"))
