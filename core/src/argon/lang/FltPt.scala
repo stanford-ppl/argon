@@ -159,13 +159,14 @@ object FltPt {
   }
 
   @internal def convert[G:INT,E:INT,G2:INT,E2:INT](x: Exp[FltPt[_,_]]): Exp[FltPt[G2,E2]] = {
-    stage(FltConvert[G,E,G2,E2](x.asInstanceOf[Exp[FltPt[G,E]]]))(ctx)
+    stage(FltConvert[G,E,G2,E2](x.asInstanceOf[Exp[FltPt[G,E]]],INT[G2],INT[E2]))(ctx)
   }
+
   @internal def to_fix[G:INT,E:INT,S:BOOL,I:INT,F:INT](x: Exp[FltPt[_,_]]): Exp[FixPt[S,I,F]] = {
-    stage(FltPtToFixPt[G,E,S,I,F](x.asInstanceOf[Exp[FltPt[G,E]]]))(ctx)
+    stage(FltPtToFixPt[G,E,S,I,F](x.asInstanceOf[Exp[FltPt[G,E]]],BOOL[S],INT[I],INT[F]))(ctx)
   }
   @internal def from_string[G:INT,E:INT](x: Exp[MString]): Exp[FltPt[G,E]] = x match {
     case Const(c: CString) => string2fltpt[G,E](c).s
-    case _ => stage(StringToFltPt[G,E](x))(ctx)
+    case _ => stage(StringToFltPt[G,E](x,INT[G],INT[E]))(ctx)
   }
 }

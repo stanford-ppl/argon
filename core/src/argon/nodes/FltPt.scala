@@ -112,13 +112,31 @@ case class FltEql[G:INT,E:INT](x: Exp[FltPt[G,E]], y: Exp[FltPt[G,E]]) extends F
 
 case class FltRandom[G:INT,E:INT](max: Option[Exp[FltPt[G,E]]]) extends FltPtOp1[G,E] { def mirror(f:Tx) = flt.random[G,E](f(max)) }
 
-case class FltConvert[G:INT,E:INT,G2:INT,E2:INT](x: Exp[FltPt[G,E]]) extends FltPtOp1[G2,E2] {
+case class FltConvert[G:INT,E:INT,G2:INT,E2:INT](x: Exp[FltPt[G,E]], g2: INT[G2], e2: INT[E2]) extends FltPtOp1[G2,E2] {
   def mirror(f:Tx) = flt.convert[G,E,G2,E2](f(x))
 }
-case class FltPtToFixPt[G:INT,E:INT,S:BOOL,I:INT,F:INT](x: Exp[FltPt[G,E]]) extends FixPtOp1[S,I,F] {
+object FltConvert {
+  def unapply(x: Any): Option[Exp[FltPt[_,_]]] = x match {
+    case op: FltConvert[_,_,_,_] => Some(op.x)
+    case _ => None
+  }
+}
+case class FltPtToFixPt[G:INT,E:INT,S:BOOL,I:INT,F:INT](x: Exp[FltPt[G,E]], s: BOOL[S], i: INT[I], f: INT[F]) extends FixPtOp1[S,I,F] {
   def mirror(f:Tx) = FltPt.to_fix[G,E,S,I,F](f(x))
 }
-case class StringToFltPt[G:INT,E:INT](x: Exp[MString]) extends FltPtOp1[G,E] {
+object FltPtToFixPt {
+  def unapply(x: Any): Option[Exp[FltPt[_,_]]] = x match {
+    case op: FltPtToFixPt[_,_,_,_,_] => Some(op.x)
+    case _ => None
+  }
+}
+case class StringToFltPt[G:INT,E:INT](x: Exp[MString], g: INT[G], e: INT[E]) extends FltPtOp1[G,E] {
   def mirror(f:Tx) = flt.from_string[G,E](f(x))
+}
+object StringToFltPt {
+  def unapply(x: Any): Option[Exp[MString]] = x match {
+    case op: StringToFltPt[_,_] => Some(op.x)
+    case _ => None
+  }
 }
 
