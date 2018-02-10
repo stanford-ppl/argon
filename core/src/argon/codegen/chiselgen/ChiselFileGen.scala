@@ -146,7 +146,7 @@ import types._
     // emitBufferControlCxns()
 
     withStream(getStream("Instantiator")) {
-          emit("val w = if (FringeGlobals.target == \"zcu\") 32 else 32")
+          emit("""val w = if (target == "zcu") 32 else if (target == "vcs") 8 else 32""")
           emit("val numArgIns = numArgIns_mem  + numArgIns_reg + numArgIOs_reg")
           emit("val numArgOuts = numArgOuts_reg + numArgIOs_reg + numArgOuts_instr + numArgOuts_breakpts")
           emit("val numArgIOs = numArgIOs_reg")
