@@ -40,8 +40,8 @@ import fringe._
 import types._
 """)
       open("trait IOModule extends Module {")
-      emit("val io_w = 64 // TODO: How to generate these properly?")
-      emit("val io_v = 16 // TODO: How to generate these properly?")
+      emit("""val io_w = if (FringeGlobals.target == "vcs") 8 else 64 // TODO: How to generate these properly?""")
+      emit("""val io_v = if (FringeGlobals.target == "vcs") 64 else 16 // TODO: How to generate these properly?""")
     }
 
     withStream(getStream("BufferControlCxns")) {
