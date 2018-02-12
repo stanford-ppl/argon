@@ -40,8 +40,8 @@ import fringe._
 import types._
 """)
       open("trait IOModule extends Module {")
-      emit("""val io_w = if (FringeGlobals.target == "vcs") 8 else 64 // TODO: How to generate these properly?""")
-      emit("""val io_v = if (FringeGlobals.target == "vcs") 64 else 16 // TODO: How to generate these properly?""")
+      emit("""val io_w = if (FringeGlobals.target == "vcs" || FringeGlobals.target == "asic") 8 else 64 // TODO: How to generate these properly?""")
+      emit("""val io_v = if (FringeGlobals.target == "vcs" || FringeGlobals.target == "asic") 64 else 16 // TODO: How to generate these properly?""")
     }
 
     withStream(getStream("BufferControlCxns")) {
@@ -146,7 +146,7 @@ import types._
     // emitBufferControlCxns()
 
     withStream(getStream("Instantiator")) {
-          emit("""val w = if (target == "zcu") 32 else if (target == "vcs") 8 else 32""")
+          emit("""val w = if (target == "zcu") 32 else if (target == "vcs" || target == "asic") 8 else 32""")
           emit("val numArgIns = numArgIns_mem  + numArgIns_reg + numArgIOs_reg")
           emit("val numArgOuts = numArgOuts_reg + numArgIOs_reg + numArgOuts_instr + numArgOuts_breakpts")
           emit("val numArgIOs = numArgIOs_reg")
