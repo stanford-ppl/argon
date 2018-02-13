@@ -40,7 +40,7 @@ import fringe._
 import types._
 """)
       open("trait IOModule extends Module {")
-      emit("""val io_w = if (FringeGlobals.target == "vcs" || FringeGlobals.target == "asic") 8 else 64 // TODO: How to generate these properly?""")
+      emit("""val io_w = if (FringeGlobals.target == "vcs" || FringeGlobals.target == "asic") 8 else 32 // TODO: How to generate these properly?""")
       emit("""val io_v = if (FringeGlobals.target == "vcs" || FringeGlobals.target == "asic") 64 else 16 // TODO: How to generate these properly?""")
     }
 
