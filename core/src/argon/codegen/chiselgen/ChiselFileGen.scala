@@ -185,6 +185,7 @@ import types._
         emit("// Control IO")
         emit("val enable = Input(Bool())")
         emit("val done = Output(Bool())")
+        emit("val reset = Input(Bool())")
         emit("")
         emit("// DRAM IO")
         emit("val memStreams = Flipped(new AppStreams(")

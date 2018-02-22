@@ -78,37 +78,7 @@ typedef __int128 int128_t;
       emit(s"// API for args in app ${config.name}")
     }
 
-    withStream(getStream("argmap","h")) {
-      open("""struct argtp {""")
-        emit("int id;")
-        emit("bool isIO;")
-      close("};")
-    }
 
-//     withStream(getStream("DRAM","h")){
-//       emit(s"""
-// #include <stdint.h>
-// #include <vector>
-// #include <iostream>
-
-// class DRAM {
-// public:
-//   uint64_t baseAddr;
-//   uint32_t size;
-
-//   DRAM(uint64_t base, int size) {
-//     this->baseAddr = base;
-//     this->size = size;
-//   }
-//   void add_mem(long num) { data.push_back(num); }
-//   long get_mem(int i) { return data[i]; }
-//   long data_length() { return data.size(); }
-
-// private:
-//   std::vector<long> data;
-
-// };""")
-//     }
     super.emitFileHeader()
   }
 
