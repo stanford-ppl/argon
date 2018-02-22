@@ -36,7 +36,6 @@ trait CppFileGen extends FileGen {
 #include <stdio.h>
 #include <errno.h>
 #include "DeliteCpp.h"
-#include "argmap.h"
 #include "cppDeliteArraystring.h"
 #include "cppDeliteArrays.h"
 #include "cppDeliteArraydouble.h"
