@@ -30,8 +30,8 @@ trait CppGenFltPt extends CppCodegen {
     case FltNeq(x,y) => emit(src"${lhs.tp} $lhs = $x != $y;")
     case FltEql(x,y) => emit(src"${lhs.tp} $lhs = $x == $y;")
     case FltRandom(x) => lhs.tp match {
-      case FloatType()  => emit(src"${lhs.tp} $lhs = ((float) (rand() % ${x.getOrElse(100)})) / ${x.getOrElse(100)};")
-      case DoubleType() => emit(src"${lhs.tp} $lhs = ((double) (rand() % ${x.getOrElse(100)})) / ${x.getOrElse(100)};")
+      case FloatType()  => emit(src"${lhs.tp} $lhs = ((float) (rand() / double(RAND_MAX))) * ${x.getOrElse(100)};")
+      case DoubleType() => emit(src"${lhs.tp} $lhs = ((double) (rand() / double(RAND_MAX))) * ${x.getOrElse(100)};")
     }
     case FltConvert(x) => lhs.tp match {
       case FloatType()  => emit(src"${lhs.tp} $lhs = (${lhs.tp}) $x;")
