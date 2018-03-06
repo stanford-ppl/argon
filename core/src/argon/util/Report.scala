@@ -2,7 +2,7 @@ package argon.util
 
 import argon.core._
 
-import org.virtualized.{SourceContext => SrcCtx}
+import virtualized.{SourceContext => SrcCtx}
 
 object Report {
   def plural(x: Int, sing: String, plur: String): String = if (x == 1) sing else plur

@@ -3,7 +3,7 @@ package argon.test
 import argon.core._
 import argon.compiler._
 import argon.transform.ForwardTransformer
-import org.virtualized._
+import virtualized._
 
 object MirroringTest extends Test { self =>
   import api._

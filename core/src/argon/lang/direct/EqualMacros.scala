@@ -1,7 +1,7 @@
 package argon.lang.direct
 
 import argon.core._
-import org.virtualized.EmbeddedControls
+import virtualized.EmbeddedControls
 
 import scala.reflect.macros.whitebox
 import scala.language.experimental.macros

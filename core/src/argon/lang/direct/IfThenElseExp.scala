@@ -2,7 +2,7 @@ package argon.lang.direct
 
 import argon.core._
 import forge._
-import org.virtualized.EmbeddedControls
+import virtualized.EmbeddedControls
 
 trait IfThenElseExp extends EmbeddedControls {
   @internal def __ifThenElse[A, B, T<:MetaAny[T]](cond: MBoolean, thenp: => A, elsep: => B)(implicit liftA: Lift[A,T], liftB: Lift[B,T]): T = {

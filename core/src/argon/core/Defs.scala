@@ -3,7 +3,7 @@ package argon.core
 import argon.graphs._
 import argon.util.recursive
 import forge._
-import org.virtualized.{SourceContext, EmptyContext}
+import virtualized.{SourceContext, EmptyContext}
 
 /** Generalized Def representation which can have arbitrary output(s) -- roughly equivalent to LMS's FatDef **/
 abstract class Def extends Node with Product {

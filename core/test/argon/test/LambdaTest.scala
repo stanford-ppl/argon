@@ -4,7 +4,7 @@ import argon.core._
 import argon.compiler._
 import argon.codegen.scalagen.ScalaCodegen
 import forge._
-import org.virtualized._
+import virtualized._
 
 object SimpleLambdaOps {
   /** Constructors **/

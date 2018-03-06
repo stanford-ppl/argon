@@ -1,6 +1,6 @@
 package argon.test
 
-import org.virtualized._
+import virtualized._
 
 object TextVirtualization extends Test {
   import api._

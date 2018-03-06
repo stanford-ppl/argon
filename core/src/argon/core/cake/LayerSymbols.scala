@@ -1,7 +1,7 @@
 package argon.core.cake
 
 import forge._
-import org.virtualized.EmptyContext
+import virtualized.EmptyContext
 
 trait LayerSymbols { self: ArgonCake =>
 

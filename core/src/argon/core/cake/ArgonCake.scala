@@ -15,7 +15,7 @@ trait ArgonCake
     with LayerStatements
     with LayerSymbols
 {
-  type SrcCtx = org.virtualized.SourceContext
+  type SrcCtx = virtualized.SourceContext
   def ctx(implicit context: SrcCtx): SrcCtx = context
   def state(implicit state: State): State = state
   def config(implicit state: State): Config = state.config

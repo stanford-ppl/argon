@@ -1,7 +1,7 @@
 package argon.test
 
 import org.scalatest.{FlatSpec, Matchers}
-import org.virtualized._
+import virtualized._
 import argon.TestBenchFailed
 
 object Test1 extends Test {

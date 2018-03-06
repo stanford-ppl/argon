@@ -1,7 +1,7 @@
 package argon.test
 
 import org.scalatest.{FlatSpec, Matchers}
-import org.virtualized._
+import virtualized._
 import api._
 
 @struct case class MyStruct(x: Int, y: Int)
