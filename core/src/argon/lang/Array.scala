@@ -57,7 +57,7 @@ case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
 
   /** Concatenates two Arrays. **/
   @api def ++(that: Array[T]): Array[T]
-    = Array.tabulate(this.length + that.length){i => ifThenElse(i < this.length, this.apply(i), that.apply(i))}
+    = Array.tabulate(this.length + that.length){i => ifThenElse(i < this.length, this.apply(i), that.apply(i-this.length))}
 
   @api def toText: MString = String.ify(this)
 }
