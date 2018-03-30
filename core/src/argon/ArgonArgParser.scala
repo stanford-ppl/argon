@@ -41,6 +41,10 @@ class ArgonArgParser(config: Config) extends ArgParser {
       3 <DEPRECATED> = splitting for inner pipes only
       4 = all blocks""")
 
+  parser.opt[String]("result").action((x,_) =>
+    config.resDir = x
+  ).text("Location of data result output")
+
   parser.opt[String]('o', "out").action( (x,_) =>
     config.genDir = x
   ).text("location of output directory. Default is ./gen/<appname>")

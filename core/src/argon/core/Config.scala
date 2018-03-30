@@ -16,6 +16,7 @@ class Config {
   var name: String = "App"
   var logDir: String = ""
   var genDir: String = ""
+  var resDir: String = "results"
   var clearLogs: Boolean = true
   var clearGen: Boolean = true
   var multifile: Int = 4
