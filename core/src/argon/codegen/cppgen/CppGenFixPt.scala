@@ -12,13 +12,13 @@ trait CppGenFixPt extends CppCodegen {
     case FixPtType(s,d,f) => 
       val u = if (!s) "u" else ""
       if (f > 0) {"double"} else {
-        if (d > 64) s"${u}int128_t"
-        else if (d > 32) s"${u}int64_t"
-        else if (d > 16) s"${u}int32_t"
-        else if (d > 8) s"${u}int16_t"
-        else if (d > 4) s"${u}int8_t"
-        else if (d > 2) s"${u}int8_t"
-        else if (d == 2) s"${u}int8_t"
+        if (d+f > 64) s"${u}int128_t"
+        else if (d+f > 32) s"${u}int64_t"
+        else if (d+f > 16) s"${u}int32_t"
+        else if (d+f > 8) s"${u}int16_t"
+        else if (d+f > 4) s"${u}int8_t"
+        else if (d+f > 2) s"${u}int8_t"
+        else if (d+f == 2) s"${u}int8_t"
         else "bool"
       }
     case _ => super.remap(tp)
@@ -39,8 +39,14 @@ trait CppGenFixPt extends CppCodegen {
   }
 
   override protected def emitNode(lhs: Sym[_], rhs: Op[_]): Unit = rhs match {
-    case FixLsh(x,y) => emit(src"${lhs.tp} $lhs = $x << $y;")
-    case FixRsh(x,y) => emit(src"${lhs.tp} $lhs = $x >> $y;")
+    case FixLsh(x,y) => lhs.tp match {
+        case FixPtType(s,d,f) if (f > 0) => emit(src"${lhs.tp} $lhs = $x * pow(2.,$y);")
+        case _ => emit(src"${lhs.tp} $lhs = $x << $y;")
+      }
+    case FixRsh(x,y) => lhs.tp match {
+        case FixPtType(s,d,f) if (f > 0) => emit(src"${lhs.tp} $lhs = $x / pow(2.,$y);")
+        case _ => emit(src"${lhs.tp} $lhs = $x >> $y;")
+      }
     case FixURsh(x,y) => emit(src"${lhs.tp} $lhs = $x >>> $y; // Need to do this correctly for cpp")
     case FixInv(x)   => emit(src"${lhs.tp} $lhs = ~$x;")
     case FixNeg(x)   => emit(src"${lhs.tp} $lhs = -$x;")
@@ -70,11 +76,24 @@ trait CppGenFixPt extends CppCodegen {
       case DoubleType() => emit(src"${lhs.tp} $lhs = (double) $x;")
       case FloatType()  => emit(src"${lhs.tp} $lhs = (double) $x;")
     }
-    case StringToFixPt(x) => lhs.tp match {
-      case IntType()  => emit(src"int32_t $lhs = atoi(${x}.c_str());")
-      case LongType() => emit(src"long $lhs = std::stol($x);")
-      case FixPtType(s,d,f) => emit(src"float $lhs = std::stof($x);")
-    }
+    case StringToFixPt(x) => 
+      lhs.tp match {
+        case IntType()  => emit(src"int32_t $lhs = atoi(${x}.c_str());")
+        case LongType() => emit(src"long $lhs = std::stol($x);")
+        case FixPtType(s,d,f) => emit(src"float $lhs = std::stof($x);")
+      }
+      x match {
+        case Def(ArrayApply(array, i)) => 
+          array match {
+            case Def(InputArguments()) => 
+              val ii = i match {case c: Const[_] => c match {case Const(c: FixedPoint) => c.toInt; case _ => -1}; case _ => -1}
+              if (cliArgs.contains(ii)) cliArgs += (ii -> s"${cliArgs(ii)} / ${lhs.name.getOrElse(s"${lhs.ctx}")}")
+              else cliArgs += (ii -> lhs.name.getOrElse(s"${lhs.ctx}"))
+            case _ =>
+          }
+        case _ =>          
+      }
+
     case Char2Int(x) => 
       emit(src"${lhs.tp} $lhs = (${lhs.tp}) ${x}[0];")
     case Int2Char(x) => 

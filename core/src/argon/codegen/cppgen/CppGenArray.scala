@@ -2,6 +2,7 @@ package argon.codegen.cppgen
 
 import argon.core._
 import argon.nodes._
+import argon.emul.FixedPoint
 
 trait CppGenArray extends CppCodegen {
   protected def isArrayType(tp: Type[_]): Boolean = tp match {
@@ -63,7 +64,18 @@ trait CppGenArray extends CppCodegen {
       emit(src"""${lhs.tp} ${lhs}_v(${lhs}_vs, ${lhs}_vs + ${seq.length});""")
       emit(src"${lhs.tp}* $lhs = &${lhs}_v;")
 
-    case ArrayApply(array, i)   => emitApply(lhs, array, src"$i")
+    case ArrayApply(array, i)   => 
+      emitApply(lhs, array, src"$i")
+      array match {
+        case Def(InputArguments()) => 
+          if (lhs.name.isDefined) {
+            val ii = i match {case c: Const[_] => c match {case Const(c: FixedPoint) => c.toInt; case _ => -1}; case _ => -1}
+            if (cliArgs.contains(ii)) cliArgs += (ii -> s"${cliArgs(ii)} / ${lhs.name.get}")
+            else cliArgs += (ii -> lhs.name.get)
+          }
+        case _ =>
+      }
+
     case ArrayLength(array)     => emit(src"${lhs.tp} $lhs = ${getSize(array)};")
     case InputArguments()       => emit(src"${lhs.tp}* $lhs = args;")
     case _ => super.emitNode(lhs, rhs)

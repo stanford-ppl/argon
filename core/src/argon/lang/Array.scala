@@ -55,6 +55,10 @@ case class Array[T:Type](s: Exp[Array[T]]) extends MetaAny[Array[T]] {
   /** Returns true if this Array and `that` differ by at least one element, false otherwise. **/
   @api def =!=(that: Array[T]): MBoolean = this.zip(that){(x,y) => x =!= y }.reduce{_ || _}
 
+  /** Concatenates two Arrays. **/
+  @api def ++(that: Array[T]): Array[T]
+    = Array.tabulate(this.length + that.length){i => ifThenElse(i < this.length, this.apply(i), that.apply(i-this.length))}
+
   @api def toText: MString = String.ify(this)
 }
 

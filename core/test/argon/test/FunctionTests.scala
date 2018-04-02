@@ -1,6 +1,6 @@
 package argon.test
 
-import org.virtualized._
+import virtualized._
 import org.scalatest.{FlatSpec, Matchers}
 
 object ScalaFunTest extends Test {

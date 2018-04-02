@@ -3,7 +3,7 @@ package argon.lang
 import argon.core._
 import argon.nodes._
 import forge._
-import org.virtualized.EmptyContext
+import virtualized.EmptyContext
 
 case class Func1[A:Type,R:Type](s: Exp[Func1[A,R]]) extends MetaAny[Func1[A,R]] with Function2[A,State,R] {
   @api def ===(that: Func1[A,R]) = ???

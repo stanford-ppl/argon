@@ -1,7 +1,7 @@
 package argon.test
 
 import org.scalatest.{FlatSpec, Matchers}
-import org.virtualized._
+import virtualized._
 
 object NestedArrayTest extends Test {
   import api._

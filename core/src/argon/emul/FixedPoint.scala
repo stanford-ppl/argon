@@ -64,10 +64,10 @@ class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) exte
 
   def bits: Array[Bool] = Array.tabulate(fmt.bits){i => Bool(value.testBit(i)) }
 
-  def <+>(that: FixedPoint): FixedPoint = FixedPoint.saturating(this.value + that.value, this.valid && that.valid, fmt)
-  def <->(that: FixedPoint): FixedPoint = FixedPoint.saturating(this.value - that.value, this.valid && that.valid, fmt)
-  def <*>(that: FixedPoint): FixedPoint = FixedPoint.saturating((this.value * that.value) >> fmt.bits, this.valid && that.valid, fmt)
-  def </>(that: FixedPoint): FixedPoint = FixedPoint.saturating((this.value << fmt.bits) / that.value, this.valid && that.valid, fmt)
+  def +!(that: FixedPoint): FixedPoint = FixedPoint.saturating(this.value + that.value, this.valid && that.valid, fmt)
+  def -!(that: FixedPoint): FixedPoint = FixedPoint.saturating(this.value - that.value, this.valid && that.valid, fmt)
+  def *!(that: FixedPoint): FixedPoint = FixedPoint.saturating((this.value * that.value) >> fmt.bits, this.valid && that.valid, fmt)
+  def /!(that: FixedPoint): FixedPoint = FixedPoint.saturating((this.value << fmt.bits) / that.value, this.valid && that.valid, fmt)
 
   def *&(that: FixedPoint): FixedPoint = {
     FixedPoint.unbiased(((this.value << 2) * (that.value << 2)) >> fmt.fbits, this.valid && that.valid, fmt)
@@ -75,10 +75,10 @@ class FixedPoint(val value: BigInt, val valid: Boolean, val fmt: FixFormat) exte
   def /&(that: FixedPoint): FixedPoint = valueOrX {
     FixedPoint.unbiased((this.value << fmt.fbits+4) / that.value, this.valid && that.valid, fmt)
   }
-  def <*&>(that: FixedPoint): FixedPoint = {
+  def *&!(that: FixedPoint): FixedPoint = {
     FixedPoint.unbiased((this.value << 2) * (that.value << 2) >> fmt.fbits, this.valid && that.valid, fmt, saturate = true)
   }
-  def </&>(that: FixedPoint): FixedPoint = valueOrX {
+  def /&!(that: FixedPoint): FixedPoint = valueOrX {
     FixedPoint.unbiased((this.value << fmt.fbits+4) / that.value, this.valid && that.valid, fmt, saturate = true)
   }
 

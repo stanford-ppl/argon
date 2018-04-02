@@ -2,7 +2,7 @@ package argon.nodes
 
 import argon.core._
 import argon.compiler._
-import org.virtualized.EmptyContext
+import virtualized.EmptyContext
 
 case class ArrayType[T](child: Type[T]) extends Type[MArray[T]] {
   override def wrapped(s: Exp[MArray[T]]): MArray[T] = new MArray(s)(child)

@@ -36,12 +36,12 @@ trait CppFileGen extends FileGen {
 #include <stdio.h>
 #include <errno.h>
 #include "DeliteCpp.h"
-#include "argmap.h"
 #include "cppDeliteArraystring.h"
 #include "cppDeliteArrays.h"
 #include "cppDeliteArraydouble.h"
 #include "FringeContext.h"
 #include "functions.h"
+#include "ArgAPI.h"
 #include <vector>
 using std::vector;
 
@@ -73,48 +73,37 @@ typedef __int128 int128_t;
       emit("""#include "functions.h" """)
     }
 
-    withStream(getStream("argmap","h")) {
-      open("""struct argtp {""")
-        emit("int id;")
-        emit("bool isIO;")
-      close("};")
+    withStream(getStream("ArgAPI", "h")) {
+      emit(s"// API for args in app ${config.name}")
     }
 
-//     withStream(getStream("DRAM","h")){
-//       emit(s"""
-// #include <stdint.h>
-// #include <vector>
-// #include <iostream>
 
-// class DRAM {
-// public:
-//   uint64_t baseAddr;
-//   uint32_t size;
-
-//   DRAM(uint64_t base, int size) {
-//     this->baseAddr = base;
-//     this->size = size;
-//   }
-//   void add_mem(long num) { data.push_back(num); }
-//   long get_mem(int i) { return data[i]; }
-//   long data_length() { return data.size(); }
-
-// private:
-//   std::vector<long> data;
-
-// };""")
-//     }
     super.emitFileHeader()
   }
 
   override protected def emitFileFooter() {
     emit("delete c1;")
     close("}")
+    val argInts = cliArgs.toSeq.map(_._1)
+    val argsList = if (argInts.length > 0) {
+      (0 to argInts.max).map{i => 
+        if (cliArgs.contains(i)) s"<$i- ${cliArgs(i)}>"
+        else s"<${i}- UNUSED>"
+      }.mkString(" ")
+    } else {"<No input args>"}
+    emit(s"""
+void printHelp() {
+  fprintf(stderr, "Help for app: ${config.name}\\n");
+  fprintf(stderr, "  -- bash run.sh ${argsList}\\n\\n");
+  exit(0);
+}
+""")
     emit(s"""
 int main(int argc, char *argv[]) {
   vector<string> *args = new vector<string>(argc-1);
   for (int i=1; i<argc; i++) {
     (*args)[i-1] = std::string(argv[i]);
+    if (std::string(argv[i]) == "--help" | std::string(argv[i]) == "-h") {printHelp();}
   }
   int numThreads = 1;
   char *env_threads = getenv("DELITE_NUM_THREADS");

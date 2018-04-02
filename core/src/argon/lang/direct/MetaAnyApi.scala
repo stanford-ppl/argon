@@ -2,7 +2,7 @@ package argon.lang.direct
 
 import argon.core._
 import forge._
-import org.virtualized.EmbeddedControls
+import virtualized.EmbeddedControls
 
 trait MetaAnyLowPriorityImplicits {
   // Has to be an implicit class to not conflict with higher priority implicits on +

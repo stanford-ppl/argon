@@ -86,25 +86,25 @@ case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt
     *
     * Addition which saturates at the largest or smallest representable number upon over/underflow.
     */
-  @api def <+> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.add_sat(this.s,that.s))
+  @api def +! (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.add_sat(this.s,that.s))
   /**
     * Saturating fixed point subtraction.
     *
     * Subtraction which saturates at the largest or smallest representable number upon over/underflow.
     */
-  @api def <-> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.sub_sat(this.s,that.s))
+  @api def -! (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.sub_sat(this.s,that.s))
   /**
     * Saturating fixed point multiplication.
     *
     * Multiplication which saturates at the largest or smallest representable number upon over/underflow.
     */
-  @api def <*> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul_sat(this.s,that.s))
+  @api def *! (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul_sat(this.s,that.s))
   /**
     * Saturating fixed point division.
     *
     * Division which saturates at the largest or smallest representable number upon over/underflow.
     */
-  @api def </> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div_sat(this.s,that.s))
+  @api def /! (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div_sat(this.s,that.s))
 
   // Saturating and unbiased rounding operators
   /**
@@ -113,14 +113,14 @@ case class FixPt[S:BOOL,I:INT,F:INT](s: Exp[FixPt[S,I,F]]) extends MetaAny[FixPt
     * After multiplication, probabilistically rounds up or down to the closest representable number.
     * After rounding, also saturates at the largest or smallest representable number upon over/underflow.
     */
-  @api def <*&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul_unb_sat(this.s,that.s))
+  @api def *&! (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.mul_unb_sat(this.s,that.s))
   /**
     * Saturating fixed point division with unbiased rounding.
     *
     * After division, probabilistically rounds up or down to the closest representable number.
     * After rounding, also saturates at the largest or smallest representable number upon over/underflow.
     */
-  @api def </&> (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div_unb_sat(this.s,that.s))
+  @api def /&! (that: FixPt[S,I,F]): FixPt[S,I,F] = FixPt(fix.div_unb_sat(this.s,that.s))
 
   @api def ===(that: FixPt[S,I,F]) = Boolean(fix.eql(this.s, that.s))
   @api def =!=(that: FixPt[S,I,F]) = Boolean(fix.neq(this.s, that.s))
@@ -227,7 +227,7 @@ object FixPt {
     case _ => stage(FixAdd(x,y))(ctx)
   }
   @internal def add_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Literal(a), Literal(b)) => const[S,I,F](a <+> b)
+    case (Literal(a), Literal(b)) => const[S,I,F](a +! b)
     case (a, Literal(b)) if b == 0      => a                   // a + 0 => a
     case (Literal(a), b) if a == 0      => b                   // 0 + a => a
     case (a, Op(FixNeg(b))) if a == b   => const[S,I,F](0)     // a + -a => 0
@@ -246,7 +246,7 @@ object FixPt {
     case _ => stage(FixSub(x,y))(ctx)
   }
   @internal def sub_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Literal(a), Literal(b))       => const[S,I,F](a <-> b)
+    case (Literal(a), Literal(b))       => const[S,I,F](a -! b)
     case (a, Literal(b)) if b == 0      => a                          // a - 0 => a
     case (Literal(a), b) if a == 0      => stage(FixNeg(b))(ctx)      // 0 - a => -a
     case (Op(FixAdd(a,b)), c) if a == c => b                          // a + b - a => b
@@ -272,7 +272,7 @@ object FixPt {
     case _ => stage(FixMul(x, y) )(ctx)
   }
   @internal def mul_unb_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Literal(a), Literal(b)) => const[S,I,F](a <*&> b)
+    case (Literal(a), Literal(b)) => const[S,I,F](a *&! b)
     case (_, Literal(b)) if b == 0 => const[S,I,F](0)
     case (Literal(a), _) if a == 0 => const[S,I,F](0)
     case (a, Literal(b)) if b == 1 => a
@@ -280,7 +280,7 @@ object FixPt {
     case _ => stage(UnbSatMul(x, y) )(ctx)
   }
   @internal def mul_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Literal(a), Literal(b)) => const[S,I,F](a <*> b)
+    case (Literal(a), Literal(b)) => const[S,I,F](a *! b)
     case (_, Literal(b)) if b == 0 => const[S,I,F](0)
     case (Literal(a), _) if a == 0 => const[S,I,F](0)
     case (a, Literal(b)) if b == 1 => a
@@ -306,13 +306,13 @@ object FixPt {
     case _ => stage(FixDiv(x,y))(ctx)
   }
   @internal def div_unb_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Literal(a), Literal(b))  => const[S,I,F](a </&> b)
+    case (Literal(a), Literal(b))  => const[S,I,F](a /&! b)
     case (a, Literal(b)) if b == 1 => a
     case (_, Literal(b)) if b == 0 => warn(ctx, "Division by constant 0 detected"); stage(FixDiv(x,y))(ctx)
     case _ => stage(UnbSatDiv(x,y))(ctx)
   }
   @internal def div_sat[S:BOOL,I:INT,F:INT](x: Exp[FixPt[S,I,F]], y: Exp[FixPt[S,I,F]]): Exp[FixPt[S,I,F]] = (x,y) match {
-    case (Literal(a), Literal(b))  => const[S,I,F](a </> b)
+    case (Literal(a), Literal(b))  => const[S,I,F](a /! b)
     case (a, Literal(b)) if b == 1 => a
     case (_, Literal(b)) if b == 0 => warn(ctx, "Division by constant 0 detected"); stage(FixDiv(x,y))(ctx)
     case _ => stage(SatDiv(x,y))(ctx)
@@ -390,12 +390,12 @@ object FixPt {
       x.asInstanceOf[Exp[FixPt[S2,I2,F2]]]
     }
     else {*/
-      stage(FixConvert[S,I,F,S2,I2,F2](x.asInstanceOf[Exp[FixPt[S,I,F]]]))(ctx)
+      stage(FixConvert[S,I,F,S2,I2,F2](x.asInstanceOf[Exp[FixPt[S,I,F]]],BOOL[S2],INT[I2],INT[F2]))(ctx)
     //}
   }
 
   @internal def to_flt[S:BOOL,I:INT,F:INT,G:INT,E:INT](x: Exp[FixPt[S,I,F]]): Exp[FltPt[G,E]] = {
-    stage(FixPtToFltPt[S,I,F,G,E](x))(ctx)
+    stage(FixPtToFltPt[S,I,F,G,E](x,INT[G],INT[E]))(ctx)
   }
 
   @internal def from_string[S:BOOL,I:INT,F:INT](x: Exp[MString]): Exp[FixPt[S,I,F]] = x match {
@@ -409,6 +409,6 @@ object FixPt {
       else {
         FixPt[S,I,F](c).s
       }
-    case _ => stage(StringToFixPt[S,I,F](x))(ctx)
+    case _ => stage(StringToFixPt[S,I,F](x,BOOL[S],INT[I],INT[F]))(ctx)
   }
 }

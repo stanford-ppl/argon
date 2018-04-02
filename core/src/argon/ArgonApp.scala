@@ -8,7 +8,7 @@ import argon.transform.Transformer
 import argon.util.deleteExts
 
 import scala.collection.mutable.ArrayBuffer
-import org.virtualized.SourceContext
+import virtualized.SourceContext
 
 trait ArgonCompiler { self =>
   protected var __IR: State = new State

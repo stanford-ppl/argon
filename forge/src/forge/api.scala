@@ -85,7 +85,7 @@ object FrontendAnnotation {
   def impl(c: blackbox.Context)(annottees: c.Tree*): c.Tree = {
     import c.universe._
 
-    val srcCtx = q"ctx: org.virtualized.SourceContext"
+    val srcCtx = q"ctx: virtualized.SourceContext"
 
     val tree = annottees.head match {
       case DefDef(mods,name,tparams,vparamss,tpt,rhs) =>
@@ -95,7 +95,7 @@ object FrontendAnnotation {
         val params = if (hasImplicits) {
           val hasCtx = vparamss.lastOption.exists(_.exists{
             case ValDef(_,_,Ident(TypeName(n)),_) => n == "SrcCtx" || n == "SourceContext"
-            case ValDef(_,_,Select(Select(Ident(TermName("org")), TermName("virtualized")), TypeName("SourceContext")), EmptyTree) => true
+            case ValDef(_,_,Select(TermName("virtualized"), TypeName("SourceContext")), EmptyTree) => true
             case _ => false
           })
           if (!hasCtx) {
