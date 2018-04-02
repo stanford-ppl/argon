@@ -110,7 +110,9 @@ trait ArgonCompiler { self =>
 
       if (t.needsInit) t.init()
 
+      if (IR.config.verbosity > -1) println(s"${t.name}")
       block = t.run(block)
+      if (IR.config.verbosity > -1) println(s"${t.name} [done: " + "%.4f".format(t.lastTime / 1000) + "]")
       // After each traversal, check whether there were any reported errors
       checkBugs(startTime, t.name)
       checkErrors(startTime, t.name)
