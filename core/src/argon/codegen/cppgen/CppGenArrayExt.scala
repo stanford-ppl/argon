@@ -33,13 +33,14 @@ trait CppGenArrayExt extends CppGenArray {
     else {
       tp match {
         case FixPtType(s,d,f) if (f == 0) => 
-          val intermediate_tp = if (d+f > 64) s"int128_t"
-                   else if (d+f > 32) s"int64_t"
-                   else if (d+f > 16) s"int32_t"
-                   else if (d+f > 8) s"int16_t"
-                   else if (d+f > 4) s"int8_t"
-                   else if (d+f > 2) s"int8_t"
-                   else if (d+f == 2) s"int8_t"
+          val u = if (!s) "u" else ""
+          val intermediate_tp = if (d+f > 64) s"${u}int128_t"
+                   else if (d+f > 32) s"${u}int64_t"
+                   else if (d+f > 16) s"${u}int32_t"
+                   else if (d+f > 8) s"${u}int16_t"
+                   else if (d+f > 4) s"${u}int8_t"
+                   else if (d+f > 2) s"${u}int8_t"
+                   else if (d+f == 2) s"${u}int8_t"
                    else "bool"
 
           emit(src"(*$lhs)[$i] = (${intermediate_tp}) ${value};") // Always convert to signed, then to unsigned if on the boards
