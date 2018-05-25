@@ -85,7 +85,7 @@ trait CppGenFixPt extends CppCodegen {
           else {
             emit(src"${lhs.tp} $lhs;")
             emit(src"std::istringstream iss$lhs($x);")
-            emit(src"iss$lhs >> $lhs ")
+            emit(src"iss$lhs >> $lhs;")
           }
       }
       x match {
