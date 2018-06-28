@@ -80,8 +80,9 @@ trait CppGenFixPt extends CppCodegen {
       lhs.tp match {
         case IntType()  => emit(src"int32_t $lhs = atoi(${x}.c_str());")
         case LongType() => emit(src"long $lhs = std::stol($x);")
+        // case FixPtType(s,d,f) => emit(src"float $lhs = std::stof($x);")
         case FixPtType(s,d,f) => 
-          if (f > 0) emit(src"float $lhs = std::stof($x);") 
+          if (f > 0 || f+d <= 8) emit(src"float $lhs = std::stof($x);") 
           else {
             emit(src"${lhs.tp} $lhs;")
             emit(src"std::istringstream iss$lhs($x);")
