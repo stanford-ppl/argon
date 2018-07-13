@@ -16,6 +16,8 @@ trait CppGenStruct extends CppCodegen with StructCodegen {
     case LongType() => 64
     case FixPtType(s,d,f) => d+f
     case BooleanType() => 1
+    case e: Tuple2Type[_,_] => bw(e.typeArguments(0)) + bw(e.typeArguments(1))
+    case e: StructType[_] => e.fields.map{case (field, t) => bw(t)}.sum
     case _ => throw new Exception(s"No bitwidth for $tp")
   }
 
